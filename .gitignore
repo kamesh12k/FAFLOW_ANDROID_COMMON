@@ -1,0 +1,82 @@
+# FAFLOW — Gitignore (Unified Monorepo)
+
+# ── Python / Backend ──────────────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+.eggs/
+dist/
+build/
+*.egg
+*.whl
+
+# Virtual environments
+venv/
+.venv/
+ENV/
+env/
+
+# Environment / secrets — NEVER COMMIT REAL .env FILES
+backend/.env
+frontend/.env
+.env
+*.env
+!*.env.example
+!*.env.template
+
+# Test and coverage
+.pytest_cache/
+.coverage
+htmlcov/
+*.db
+test.db
+
+# ── Node / Frontend ───────────────────────────────────────────────────────────
+frontend/node_modules/
+frontend/dist/
+frontend/.vite/
+*.log
+npm-debug.log*
+yarn-debug.log*
+
+# ── Android ───────────────────────────────────────────────────────────────────
+android/.gradle/
+android/local.properties
+android/app/build/
+android/build/
+android/*.keystore
+android/*.jks
+android/release/
+
+# IDE files
+android/.idea/
+android/**/*.iml
+*.iml
+
+# APK / AAB outputs
+*.apk
+*.aab
+
+# ── VS Code ───────────────────────────────────────────────────────────────────
+.vscode/settings.json
+*.code-workspace
+
+# ── Database ──────────────────────────────────────────────────────────────────
+*.sqlite
+*.sqlite3
+*.db-journal
+
+# ── Deployment / Secrets ──────────────────────────────────────────────────────
+deployment/secrets/
+*.pem
+*.key
+*.p12
+*.pfx
+
+# ── General ───────────────────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+*.tmp
+*.swp
+*.orig
