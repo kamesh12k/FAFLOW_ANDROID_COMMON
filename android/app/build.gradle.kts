@@ -35,17 +35,56 @@ android {
     buildFeatures {
         compose = true
     }
+    sourceSets {
+        getByName("main") {
+            jniLibs.srcDirs("src/main/jniLibs")
+        }
+    }
     packaging {
         jniLibs {
             useLegacyPackaging = false
+            pickFirsts.add("**/libonnxruntime4j_jni.so")
         }
     }
+
     kotlin {
         compilerOptions {
             freeCompilerArgs.add("-Xannotation-default-target=param-property")
         }
     }
 }
+
+tasks.matching { it.name.startsWith("merge") && it.name.endsWith("NativeLibs") }.configureEach {
+    doLast {
+        val mergedDir = layout.buildDirectory.dir("intermediates/merged_native_libs").get().asFile
+        if (mergedDir.exists()) {
+            ProcessBuilder("py", "${rootDir}/scripts/align_native_libs.py", mergedDir.absolutePath).inheritIO().start().waitFor()
+        }
+    }
+}
+
+tasks.matching { it.name.startsWith("strip") && it.name.endsWith("DebugSymbols") }.configureEach {
+    doLast {
+        val strippedDir = layout.buildDirectory.dir("intermediates/stripped_native_libs").get().asFile
+        if (strippedDir.exists()) {
+            ProcessBuilder("py", "${rootDir}/scripts/align_native_libs.py", strippedDir.absolutePath).inheritIO().start().waitFor()
+        }
+    }
+}
+
+tasks.matching { it.name.startsWith("package") && (it.name.endsWith("Debug") || it.name.endsWith("Release")) }.configureEach {
+    doLast {
+        val apkDir = layout.buildDirectory.dir("outputs/apk").get().asFile
+        if (apkDir.exists()) {
+            apkDir.walkTopDown().filter { it.extension == "apk" }.forEach { apkFile ->
+                ProcessBuilder("py", "${rootDir}/scripts/align_apk.py", apkFile.absolutePath).inheritIO().start().waitFor()
+            }
+        }
+    }
+}
+
+
+
 
 
 dependencies {

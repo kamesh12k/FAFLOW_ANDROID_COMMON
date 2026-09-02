@@ -75,7 +75,8 @@ data class TimetableSlotOutDto(
     @Json(name = "subject_code") val subjectCode: String? = null,
     @Json(name = "class_name") val className: String? = null,
     @Json(name = "class_section") val classSection: String? = null,
-    @Json(name = "room_number") val roomNumber: String? = null
+    @Json(name = "room_number") val roomNumber: String? = null,
+    @Json(name = "teacher_name") val teacherName: String? = null
 )
 
 // ---------- Leave DTOs ----------
@@ -230,8 +231,12 @@ data class AttendanceRecordOutDto(
     @Json(name = "liveness_verified") val livenessVerified: Boolean = false,
     @Json(name = "verification_method") val verificationMethod: String = "FACE_ON_DEVICE",
     @Json(name = "working_hours") val workingHours: String? = null,
-    @Json(name = "is_synced") val isSynced: Boolean = true
-)
+    @Json(name = "is_synced") val isSynced: Boolean = true,
+    @Json(name = "late_minutes") val lateMinutes: Int = 0
+) {
+    val staffId: Int get() = userId
+    val workingDuration: String? get() = workingHours
+}
 
 @JsonClass(generateAdapter = true)
 data class AttendanceTodaySummaryOutDto(
