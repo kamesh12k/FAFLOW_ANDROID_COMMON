@@ -55,11 +55,14 @@ class StandardDeviceIntegrityVerifier(
                 message = "Development emulator detected; hardware attestation unavailable"
             )
         } else {
+            @Suppress("DEPRECATION")
+            val serialId = try { Build.SERIAL } catch (_: Exception) { "DEVICE" }
             DeviceIntegrityResult(
                 state = IntegrityState.VERIFIED,
-                attestationToken = "HARDWARE_ATTESTED_${Build.SERIAL ?: "DEVICE"}",
+                attestationToken = "HARDWARE_ATTESTED_${serialId ?: Build.MODEL}",
                 message = "Hardware integrity verified"
             )
         }
     }
 }
+

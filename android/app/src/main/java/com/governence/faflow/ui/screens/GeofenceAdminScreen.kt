@@ -375,10 +375,11 @@ fun GeofenceEditorView(viewModel: GeofenceAdminViewModel) {
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "New ${uiState.editorType.capitalize()} Geofence",
+                    text = "New ${uiState.editorType.replaceFirstChar { it.uppercase() }} Geofence",
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold
                 )
+
 
                 IconButton(onClick = { viewModel.cancelEditing() }) {
                     Icon(imageVector = Icons.Default.Close, contentDescription = "Close")

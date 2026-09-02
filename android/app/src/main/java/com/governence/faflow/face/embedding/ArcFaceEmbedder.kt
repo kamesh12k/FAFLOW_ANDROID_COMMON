@@ -43,13 +43,11 @@ class ArcFaceEmbedder(
                 val rawOutput = result.get(outputName).get()
 
                 val rawFloats = when (rawOutput) {
-                    is Array<*> -> {
-                        val firstRow = rawOutput[0] as FloatArray
-                        firstRow
-                    }
-                    is Array<FloatArray> -> rawOutput[0]
+                    is Array<*> -> (rawOutput[0] as? FloatArray) ?: throw IllegalStateException("Unexpected ArcFace row type")
+                    is FloatArray -> rawOutput
                     else -> throw IllegalStateException("Unexpected ArcFace output tensor format: ${rawOutput?.javaClass?.simpleName}")
                 }
+
 
                 return@withContext l2Normalize(rawFloats)
             }
