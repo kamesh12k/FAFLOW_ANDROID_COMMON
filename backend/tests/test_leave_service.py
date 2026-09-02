@@ -1,8 +1,10 @@
 """Tests for app.services.leave_service."""
 import pytest
-from datetime import date
+from datetime import date, timedelta
 from fastapi import HTTPException
 from unittest.mock import patch
+
+from app.core.timezone import get_institution_today
 
 from app.services.leave_service import (
     submit_leave, get_all_leaves, get_teacher_leaves,
@@ -122,7 +124,7 @@ class TestAssignSubstitute:
     def _setup(self, db_session):
         teacher = _make_user(db_session, email="lt@test.com")
         sub = _make_user(db_session, email="sub@test.com")
-        test_date = date(2026, 9, 1)
+        test_date = get_institution_today() + timedelta(days=7)
         create_calendar_day(db_session, test_date, DayType.working, day_order=1)
         leave = create_leave_request(
             db_session, teacher.id, the_date=test_date, status=LeaveStatus.approved,
@@ -139,7 +141,7 @@ class TestAssignSubstitute:
     def test_not_approved(self, db_session):
         teacher = _make_user(db_session, email="na@test.com")
         sub = _make_user(db_session, email="nas@test.com")
-        test_date = date(2026, 9, 1)
+        test_date = get_institution_today() + timedelta(days=7)
         leave = create_leave_request(db_session, teacher.id, the_date=test_date, status=LeaveStatus.pending)
         with pytest.raises(HTTPException) as exc:
             assign_substitute(leave.id, sub.id, db_session)
@@ -147,7 +149,7 @@ class TestAssignSubstitute:
 
     def test_self_assign(self, db_session):
         teacher = _make_user(db_session, email="self@test.com")
-        test_date = date(2026, 9, 1)
+        test_date = get_institution_today() + timedelta(days=7)
         create_calendar_day(db_session, test_date, DayType.working, day_order=1)
         leave = create_leave_request(db_session, teacher.id, the_date=test_date, status=LeaveStatus.approved)
         with pytest.raises(HTTPException) as exc:
@@ -156,7 +158,7 @@ class TestAssignSubstitute:
 
     def test_teacher_not_found(self, db_session):
         teacher = _make_user(db_session, email="tnf@test.com")
-        test_date = date(2026, 9, 1)
+        test_date = get_institution_today() + timedelta(days=7)
         create_calendar_day(db_session, test_date, DayType.working, day_order=1)
         leave = create_leave_request(db_session, teacher.id, the_date=test_date, status=LeaveStatus.approved)
         with pytest.raises(HTTPException) as exc:

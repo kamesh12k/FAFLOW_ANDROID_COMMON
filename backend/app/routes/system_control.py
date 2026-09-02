@@ -216,20 +216,40 @@ def get_institution_policy(
     geofence_status = svc.get_effective_feature_status(db, institution_id, FK.GEOFENCING)
     liveness_status = svc.get_effective_feature_status(db, institution_id, FK.LIVENESS)
 
+    user_authorized = bool(current_user and current_user.is_active)
+    global_face_enrollment_enabled = (face_enrollment_status.value == "ENABLED")
+    global_face_update_enabled = (face_update_status.value == "ENABLED")
+    institution_face_enrollment_policy = bool(policy.allow_face_enrollment)
+    institution_face_update_policy = bool(policy.allow_face_enrollment_update)
+    institution_face_reenrollment_policy = bool(policy.allow_face_reenrollment)
+
+    # Server-calculated effective permissions:
+    effective_face_enrollment = (
+        global_face_enrollment_enabled
+        and institution_face_enrollment_policy
+        and user_authorized
+    )
+    effective_face_update = (
+        global_face_update_enabled
+        and institution_face_update_policy
+        and user_authorized
+    )
+    effective_face_reenrollment = (
+        global_face_enrollment_enabled
+        and institution_face_reenrollment_policy
+        and user_authorized
+    )
+
     return {
         "institution_id": institution_id,
-        "face_enrollment_allowed": (
-            policy.allow_face_enrollment
-            and face_enrollment_status.value == "ENABLED"
-        ),
-        "face_enrollment_update_allowed": (
-            policy.allow_face_enrollment_update
-            and face_update_status.value == "ENABLED"
-        ),
-        "face_reenrollment_allowed": (
-            policy.allow_face_reenrollment
-            and face_enrollment_status.value == "ENABLED"
-        ),
+        "global_face_enrollment_enabled": global_face_enrollment_enabled,
+        "global_face_update_enabled": global_face_update_enabled,
+        "institution_face_enrollment_policy": institution_face_enrollment_policy,
+        "institution_face_update_policy": institution_face_update_policy,
+        "user_authorized": user_authorized,
+        "face_enrollment_allowed": effective_face_enrollment,
+        "face_enrollment_update_allowed": effective_face_update,
+        "face_reenrollment_allowed": effective_face_reenrollment,
         "biometric_attendance_enabled": biometric_status.value == "ENABLED",
         "geofencing_enabled": geofence_status.value == "ENABLED",
         "liveness_enabled": liveness_status.value == "ENABLED",
