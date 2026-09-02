@@ -41,11 +41,33 @@ interface FaflowApiService {
         @Path("teacher_id") teacherId: Int
     ): Response<List<TimetableSlotOutDto>>
 
+    @GET("timetable/")
+    suspend fun getTimetable(
+        @Query("class_id") classId: Int? = null,
+        @Query("department_id") departmentId: Int? = null,
+        @Query("teacher_id") teacherId: Int? = null,
+        @Query("day_order") dayOrder: Int? = null
+    ): Response<List<TimetableSlotOutDto>>
+
+    // ---------- Classes & Teachers ----------
+    @GET("classes/")
+    suspend fun getClasses(
+        @Query("department_id") departmentId: Int? = null
+    ): Response<List<ClassOutDto>>
+
+    @GET("teachers/")
+    suspend fun getTeachers(
+        @Query("department_id") departmentId: Int? = null
+    ): Response<List<TeacherOutDto>>
+
     // ---------- Leaves ----------
     @GET("leaves/my")
     suspend fun getMyLeaves(
         @Query("include_expired") includeExpired: Boolean = false
     ): Response<List<LeaveOutDto>>
+
+    @GET("leaves/")
+    suspend fun getAllLeaves(): Response<List<LeaveOutDto>>
 
     @POST("leaves/")
     suspend fun applyLeave(
@@ -61,6 +83,41 @@ interface FaflowApiService {
     suspend fun cancelLeave(
         @Path("leave_id") leaveId: Int
     ): Response<Unit>
+
+    @PATCH("leaves/{leave_id}/approve")
+    suspend fun approveLeave(
+        @Path("leave_id") leaveId: Int
+    ): Response<LeaveApproveResponseDto>
+
+    @PATCH("leaves/{leave_id}/reject")
+    suspend fun rejectLeave(
+        @Path("leave_id") leaveId: Int
+    ): Response<LeaveOutDto>
+
+    @PATCH("leaves/{leave_id}/status")
+    suspend fun updateLeaveStatus(
+        @Path("leave_id") leaveId: Int,
+        @Body request: LeaveStatusUpdateDto
+    ): Response<Map<String, Any>>
+
+    @POST("leaves/{leave_id}/assign")
+    suspend fun assignSubstitute(
+        @Path("leave_id") leaveId: Int,
+        @Body request: LeaveAlterAssignmentCreateDto
+    ): Response<AlterAssignmentOutDto>
+
+    // ---------- Today Coverage ----------
+    @GET("substitutions/today")
+    suspend fun getTodayCoverage(
+        @Query("date") date: String? = null
+    ): Response<TodaySubstitutionCoverageDto>
+
+    // ---------- System Policy ----------
+    @GET("system/institutions/{institution_id}/policy")
+    suspend fun getEffectivePolicy(
+        @Path("institution_id") institutionId: Int
+    ): Response<InstitutionPolicyDto>
+
 
     // ---------- Credits ----------
     @GET("teachers/{teacher_id}/credits")

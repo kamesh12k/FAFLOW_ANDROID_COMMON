@@ -299,3 +299,90 @@ data class SupervisorLiveStatusOutDto(
     @Json(name = "checked_out_count") val checkedOutCount: Int,
     @Json(name = "records") val records: List<AttendanceRecordOutDto> = emptyList()
 )
+
+// ---------- Class & Teacher DTOs ----------
+
+@JsonClass(generateAdapter = true)
+data class ClassOutDto(
+    @Json(name = "id") val id: Int,
+    @Json(name = "name") val name: String,
+    @Json(name = "section") val section: String? = null,
+    @Json(name = "department_id") val departmentId: Int? = null,
+    @Json(name = "semester") val semester: Int? = null
+)
+
+@JsonClass(generateAdapter = true)
+data class TeacherOutDto(
+    @Json(name = "id") val id: Int,
+    @Json(name = "name") val name: String,
+    @Json(name = "email") val email: String? = null,
+    @Json(name = "username") val username: String? = null,
+    @Json(name = "role") val role: String = "teacher",
+    @Json(name = "department") val department: String? = null,
+    @Json(name = "department_id") val departmentId: Int? = null,
+    @Json(name = "is_active") val isActive: Boolean = true
+)
+
+// ---------- Leave Action DTOs ----------
+
+@JsonClass(generateAdapter = true)
+data class LeaveStatusUpdateDto(
+    @Json(name = "status") val status: String,
+    @Json(name = "admin_notes") val adminNotes: String? = null
+)
+
+@JsonClass(generateAdapter = true)
+data class LeaveAlterAssignmentCreateDto(
+    @Json(name = "substitute_teacher_id") val substituteTeacherId: Int,
+    @Json(name = "assignment_type") val assignmentType: String = "admin_assigned",
+    @Json(name = "period_number") val periodNumber: Int? = null,
+    @Json(name = "date") val date: String? = null,
+    @Json(name = "notes") val notes: String? = null
+)
+
+@JsonClass(generateAdapter = true)
+data class LeaveApproveResponseDto(
+    @Json(name = "leave") val leave: LeaveOutDto,
+    @Json(name = "free_teachers") val freeTeachers: List<TeacherOutDto> = emptyList()
+)
+
+// ---------- Today Coverage DTOs ----------
+
+@JsonClass(generateAdapter = true)
+data class TodaySubstitutionItemDto(
+    @Json(name = "id") val id: Int,
+    @Json(name = "leave_id") val leaveId: Int? = null,
+    @Json(name = "period_number") val periodNumber: Int,
+    @Json(name = "day_order") val dayOrder: Int? = null,
+    @Json(name = "class_name") val className: String? = null,
+    @Json(name = "subject_name") val subjectName: String? = null,
+    @Json(name = "original_teacher_name") val originalTeacherName: String? = null,
+    @Json(name = "substitute_teacher_name") val substituteTeacherName: String? = null,
+    @Json(name = "status") val status: String = "assigned",
+    @Json(name = "date") val date: String? = null
+)
+
+@JsonClass(generateAdapter = true)
+data class TodaySubstitutionCoverageDto(
+    @Json(name = "date") val date: String,
+    @Json(name = "day_order") val dayOrder: Int? = null,
+    @Json(name = "total_leaves_today") val totalLeavesToday: Int = 0,
+    @Json(name = "covered_slots") val coveredSlots: Int = 0,
+    @Json(name = "uncovered_slots") val uncoveredSlots: Int = 0,
+    @Json(name = "substitutions") val substitutions: List<TodaySubstitutionItemDto> = emptyList()
+)
+
+// ---------- System Policy DTOs ----------
+
+@JsonClass(generateAdapter = true)
+data class InstitutionPolicyDto(
+    @Json(name = "id") val id: Int? = null,
+    @Json(name = "institution_id") val institutionId: Int? = null,
+    @Json(name = "face_enrollment_allowed") val faceEnrollmentAllowed: Boolean = true,
+    @Json(name = "face_enrollment_update_allowed") val faceEnrollmentUpdateAllowed: Boolean = true,
+    @Json(name = "biometric_attendance_enabled") val biometricAttendanceEnabled: Boolean = true,
+    @Json(name = "max_geofence_radius_meters") val maxGeofenceRadiusMeters: Double = 500.0,
+    @Json(name = "require_device_integrity") val requireDeviceIntegrity: Boolean = false,
+    @Json(name = "allowed_auth_roles") val allowedAuthRoles: List<String> = emptyList()
+)
+

@@ -379,3 +379,144 @@ class AcademicSummaryRepository(
         NetworkResult.Error(-1, e.localizedMessage ?: "Date resolution error", e)
     }
 }
+
+/**
+ * HOD Repository managing department level operations, leave approvals, coverage, and directory.
+ */
+class HodRepositoryImpl(
+    private val apiService: FaflowApiService
+) {
+    suspend fun getDepartmentLeaves() = try {
+        val res = apiService.getAllLeaves()
+        if (res.isSuccessful && res.body() != null) {
+            NetworkResult.Success(res.body()!!)
+        } else {
+            NetworkResult.Error(res.code(), "Failed to fetch department leaves (${res.code()})")
+        }
+    } catch (e: Exception) {
+        NetworkResult.Error(-1, e.localizedMessage ?: "Error fetching department leaves", e)
+    }
+
+    suspend fun approveLeave(leaveId: Int) = try {
+        val res = apiService.approveLeave(leaveId)
+        if (res.isSuccessful && res.body() != null) {
+            NetworkResult.Success(res.body()!!)
+        } else {
+            NetworkResult.Error(res.code(), "Failed to approve leave (${res.code()})")
+        }
+    } catch (e: Exception) {
+        NetworkResult.Error(-1, e.localizedMessage ?: "Error approving leave", e)
+    }
+
+    suspend fun rejectLeave(leaveId: Int) = try {
+        val res = apiService.rejectLeave(leaveId)
+        if (res.isSuccessful && res.body() != null) {
+            NetworkResult.Success(res.body()!!)
+        } else {
+            NetworkResult.Error(res.code(), "Failed to reject leave (${res.code()})")
+        }
+    } catch (e: Exception) {
+        NetworkResult.Error(-1, e.localizedMessage ?: "Error rejecting leave", e)
+    }
+
+    suspend fun assignSubstitute(
+        leaveId: Int,
+        substituteTeacherId: Int,
+        assignmentType: String = "admin_assigned",
+        periodNumber: Int? = null,
+        date: String? = null,
+        notes: String? = null
+    ) = try {
+        val res = apiService.assignSubstitute(
+            leaveId,
+            com.governence.faflow.core.network.LeaveAlterAssignmentCreateDto(
+                substituteTeacherId = substituteTeacherId,
+                assignmentType = assignmentType,
+                periodNumber = periodNumber,
+                date = date,
+                notes = notes
+            )
+        )
+        if (res.isSuccessful && res.body() != null) {
+            NetworkResult.Success(res.body()!!)
+        } else {
+            NetworkResult.Error(res.code(), "Failed to assign substitute (${res.code()})")
+        }
+    } catch (e: Exception) {
+        NetworkResult.Error(-1, e.localizedMessage ?: "Error assigning substitute", e)
+    }
+
+    suspend fun getDepartmentTeachers(departmentId: Int? = null) = try {
+        val res = apiService.getTeachers(departmentId)
+        if (res.isSuccessful && res.body() != null) {
+            NetworkResult.Success(res.body()!!)
+        } else {
+            NetworkResult.Error(res.code(), "Failed to fetch department faculty (${res.code()})")
+        }
+    } catch (e: Exception) {
+        NetworkResult.Error(-1, e.localizedMessage ?: "Error fetching faculty", e)
+    }
+
+    suspend fun getClasses(departmentId: Int? = null) = try {
+        val res = apiService.getClasses(departmentId)
+        if (res.isSuccessful && res.body() != null) {
+            NetworkResult.Success(res.body()!!)
+        } else {
+            NetworkResult.Error(res.code(), "Failed to fetch classes (${res.code()})")
+        }
+    } catch (e: Exception) {
+        NetworkResult.Error(-1, e.localizedMessage ?: "Error fetching classes", e)
+    }
+
+    suspend fun getTodayCoverage(date: String? = null) = try {
+        val res = apiService.getTodayCoverage(date)
+        if (res.isSuccessful && res.body() != null) {
+            NetworkResult.Success(res.body()!!)
+        } else {
+            NetworkResult.Error(res.code(), "Failed to fetch coverage (${res.code()})")
+        }
+    } catch (e: Exception) {
+        NetworkResult.Error(-1, e.localizedMessage ?: "Error fetching coverage", e)
+    }
+
+    suspend fun getSupervisorLiveStatus(date: String? = null, departmentId: Int? = null) = try {
+        val res = apiService.getSupervisorLiveStatus(date = date, departmentId = departmentId)
+        if (res.isSuccessful && res.body() != null) {
+            NetworkResult.Success(res.body()!!)
+        } else {
+            NetworkResult.Error(res.code(), "Failed to fetch live attendance (${res.code()})")
+        }
+    } catch (e: Exception) {
+        NetworkResult.Error(-1, e.localizedMessage ?: "Error fetching live attendance", e)
+    }
+
+    suspend fun getTimetable(classId: Int? = null, departmentId: Int? = null, teacherId: Int? = null, dayOrder: Int? = null) = try {
+        val res = apiService.getTimetable(classId = classId, departmentId = departmentId, teacherId = teacherId, dayOrder = dayOrder)
+        if (res.isSuccessful && res.body() != null) {
+            NetworkResult.Success(res.body()!!)
+        } else {
+            NetworkResult.Error(res.code(), "Failed to fetch timetable (${res.code()})")
+        }
+    } catch (e: Exception) {
+        NetworkResult.Error(-1, e.localizedMessage ?: "Error fetching timetable", e)
+    }
+}
+
+/**
+ * System Policy Repository for reading institution security policies.
+ */
+class SystemPolicyRepositoryImpl(
+    private val apiService: FaflowApiService
+) {
+    suspend fun getEffectivePolicy(institutionId: Int = 1) = try {
+        val res = apiService.getEffectivePolicy(institutionId)
+        if (res.isSuccessful && res.body() != null) {
+            NetworkResult.Success(res.body()!!)
+        } else {
+            NetworkResult.Error(res.code(), "Failed to fetch security policy (${res.code()})")
+        }
+    } catch (e: Exception) {
+        NetworkResult.Error(-1, e.localizedMessage ?: "Error loading security policy", e)
+    }
+}
+

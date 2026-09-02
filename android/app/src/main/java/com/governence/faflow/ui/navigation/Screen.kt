@@ -1,8 +1,10 @@
 package com.governence.faflow.ui.navigation
 
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AssignmentTurnedIn
 import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material.icons.filled.Fingerprint
+import androidx.compose.material.icons.filled.Groups
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.MoreHoriz
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -14,13 +16,15 @@ sealed class Screen(val route: String) {
     data object Splash : Screen("splash")
     data object Login : Screen("login")
     
-    // Bottom Bar Primary Tabs
+    // Bottom Bar Primary Tabs (Common/Teacher)
     data object Home : Screen("home")
     data object Timetable : Screen("timetable")
     data object Attendance : Screen("attendance")
     data object More : Screen("more")
     
-    // Secondary & Feature Screens
+    // Teacher Secondary Screens
+    data object ClasswiseTimetable : Screen("classwise_timetable")
+    data object TodayCoverage : Screen("today_coverage")
     data object AttendanceHistory : Screen("attendance_history")
     data object AttendanceCheckInOut : Screen("attendance_check_in_out")
     data object ApplyLeave : Screen("apply_leave")
@@ -33,8 +37,14 @@ sealed class Screen(val route: String) {
     data object Settings : Screen("settings")
     data object SyncStatus : Screen("sync_status")
     data object FaceEnrollment : Screen("face_enrollment")
-    data object GeofenceAdmin : Screen("geofence_admin")
-    data object SupervisorLiveStatus : Screen("supervisor_live_status")
+
+    // HOD Dedicated Screens
+    data object HodDashboard : Screen("hod_dashboard")
+    data object HodLeaveApprovals : Screen("hod_leave_approvals")
+    data object HodCoverage : Screen("hod_coverage")
+    data object HodFacultyDirectory : Screen("hod_faculty_directory")
+    data object HodDepartmentTimetable : Screen("hod_department_timetable")
+    data object HodAttendance : Screen("hod_attendance")
 }
 
 sealed class BottomNavItem(
@@ -42,8 +52,16 @@ sealed class BottomNavItem(
     val title: String,
     val icon: ImageVector
 ) {
+    // Teacher Tabs
     data object Home : BottomNavItem(Screen.Home.route, "Home", Icons.Default.Home)
     data object Timetable : BottomNavItem(Screen.Timetable.route, "Timetable", Icons.Default.CalendarMonth)
     data object Attendance : BottomNavItem(Screen.Attendance.route, "Attendance", Icons.Default.Fingerprint)
     data object More : BottomNavItem(Screen.More.route, "More", Icons.Default.MoreHoriz)
+
+    // HOD Tabs
+    data object HodHome : BottomNavItem(Screen.HodDashboard.route, "Overview", Icons.Default.Home)
+    data object HodLeaves : BottomNavItem(Screen.HodLeaveApprovals.route, "Leaves", Icons.Default.AssignmentTurnedIn)
+    data object HodTimetable : BottomNavItem(Screen.ClasswiseTimetable.route, "Timetable", Icons.Default.CalendarMonth)
+    data object HodAttendanceTab : BottomNavItem(Screen.HodAttendance.route, "Attendance", Icons.Default.Fingerprint)
+    data object HodMore : BottomNavItem(Screen.More.route, "More", Icons.Default.MoreHoriz)
 }

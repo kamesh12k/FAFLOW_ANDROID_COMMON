@@ -15,12 +15,13 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowForwardIos
 import androidx.compose.material.icons.automirrored.filled.EventNote
 import androidx.compose.material.icons.filled.AccountBalanceWallet
+import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material.icons.filled.Face
+import androidx.compose.material.icons.filled.Fingerprint
 import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Person
@@ -41,13 +42,12 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.governence.faflow.ui.components.AppTopBar
-import com.governence.faflow.ui.theme.CardHighlight
-import com.governence.faflow.ui.theme.PrimaryBlue
-import com.governence.faflow.ui.theme.SecondaryTeal
-import com.governence.faflow.ui.theme.StatusInfo
-import com.governence.faflow.ui.theme.StatusSuccess
-import com.governence.faflow.ui.theme.StatusWarning
+import androidx.compose.ui.unit.sp
+import com.governence.faflow.ui.components.PremiumTopBar
+import com.governence.faflow.ui.theme.FaflowRoleColors
+import com.governence.faflow.ui.theme.FaflowShapes
+import com.governence.faflow.ui.theme.FaflowSpacing
+import com.governence.faflow.ui.theme.FaflowStatusColors
 
 @Composable
 fun MoreScreen(
@@ -55,139 +55,133 @@ fun MoreScreen(
     onNavigateToLeaveHistory: () -> Unit,
     onNavigateToCredits: () -> Unit,
     onNavigateToSubstitution: () -> Unit,
+    onNavigateToClassTimetable: () -> Unit,
+    onNavigateToTodayCoverage: () -> Unit,
+    onNavigateToFaceEnrollment: () -> Unit,
     onNavigateToPreferences: () -> Unit,
     onNavigateToNotifications: () -> Unit,
     onNavigateToProfile: () -> Unit,
-    onNavigateToSettings: () -> Unit,
-    onNavigateToGeofenceAdmin: () -> Unit = {}
+    onNavigateToSettings: () -> Unit
 ) {
     Scaffold(
         topBar = {
-            AppTopBar(
+            PremiumTopBar(
                 title = "Faculty Hub",
-                canNavigateBack = false
+                subtitle = "Services, preferences & management",
+                onNavigateBack = null
             )
-        },
-        containerColor = MaterialTheme.colorScheme.background
+        }
     ) { innerPadding ->
         LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(innerPadding),
-            contentPadding = PaddingValues(16.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
+                .padding(innerPadding)
+                .background(MaterialTheme.colorScheme.background),
+            contentPadding = PaddingValues(FaflowSpacing.lg),
+            verticalArrangement = Arrangement.spacedBy(FaflowSpacing.lg)
         ) {
             item {
                 Text(
-                    text = "Leave & Workload",
-                    style = MaterialTheme.typography.titleSmall,
+                    text = "ACADEMIC & SCHEDULE",
+                    style = MaterialTheme.typography.labelSmall,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
-            }
-
-            item {
+                Spacer(modifier = Modifier.height(FaflowSpacing.xs))
                 Card(
                     modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(16.dp),
+                    shape = FaflowShapes.card,
                     colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
                 ) {
                     Column {
                         MoreMenuItem(
-                            title = "Apply Faculty Leave",
-                            subtitle = "Period or Full-Day absence with auto-sub",
+                            title = "Class Timetable",
+                            subtitle = "View schedules by class, section, and day order",
+                            icon = Icons.Default.CalendarMonth,
+                            iconTint = MaterialTheme.colorScheme.primary,
+                            onClick = onNavigateToClassTimetable
+                        )
+                        MoreMenuDivider()
+                        MoreMenuItem(
+                            title = "Today's Slot Coverage",
+                            subtitle = "Substitution and coverage schedule",
+                            icon = Icons.Default.SwapHoriz,
+                            iconTint = FaflowStatusColors.Pending,
+                            onClick = onNavigateToTodayCoverage
+                        )
+                    }
+                }
+            }
+
+            item {
+                Text(
+                    text = "LEAVES & CREDITS",
+                    style = MaterialTheme.typography.labelSmall,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Spacer(modifier = Modifier.height(FaflowSpacing.xs))
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = FaflowShapes.card,
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+                ) {
+                    Column {
+                        MoreMenuItem(
+                            title = "Apply for Leave",
+                            subtitle = "Single period or full-day leave request",
                             icon = Icons.AutoMirrored.Filled.EventNote,
-                            iconTint = StatusWarning,
-                            iconBg = Color(0x1AF59E0B),
+                            iconTint = FaflowRoleColors.TeacherPrimary,
                             onClick = onNavigateToApplyLeave
                         )
+                        MoreMenuDivider()
                         MoreMenuItem(
-                            title = "Leave Request History",
-                            subtitle = "View status, alter assignments & cancellation",
+                            title = "Leave History",
+                            subtitle = "Review and track status of submitted leaves",
                             icon = Icons.Default.History,
-                            iconTint = StatusInfo,
-                            iconBg = Color(0x1A3B82F6),
+                            iconTint = FaflowStatusColors.Approved,
                             onClick = onNavigateToLeaveHistory
                         )
+                        MoreMenuDivider()
                         MoreMenuItem(
-                            title = "Workload Credit Ledger",
-                            subtitle = "Duty credits (+1), leave deductions & balance",
+                            title = "Casual Leave Credits",
+                            subtitle = "Credit ledger and transaction breakdown",
                             icon = Icons.Default.AccountBalanceWallet,
-                            iconTint = StatusSuccess,
-                            iconBg = Color(0x1A10B981),
+                            iconTint = FaflowStatusColors.Approved,
                             onClick = onNavigateToCredits
                         )
-                        MoreMenuItem(
-                            title = "Substitution Allocation",
-                            subtitle = "Assigned substitute duties & handed over classes",
-                            icon = Icons.Default.SwapHoriz,
-                            iconTint = SecondaryTeal,
-                            iconBg = Color(0x1A06B6D4),
-                            onClick = onNavigateToSubstitution
-                        )
                     }
                 }
             }
 
             item {
                 Text(
-                    text = "Campus Operations & Administration",
-                    style = MaterialTheme.typography.titleSmall,
+                    text = "BIOMETRICS & PREFERENCES",
+                    style = MaterialTheme.typography.labelSmall,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
-            }
-
-            item {
+                Spacer(modifier = Modifier.height(FaflowSpacing.xs))
                 Card(
                     modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(16.dp),
+                    shape = FaflowShapes.card,
                     colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
                 ) {
                     Column {
                         MoreMenuItem(
-                            title = "Campus Geofence Perimeters",
-                            subtitle = "Configure circular & polygon attendance boundaries",
-                            icon = Icons.Default.Tune,
-                            iconTint = SecondaryTeal,
-                            iconBg = Color(0x1A06B6D4),
-                            onClick = onNavigateToGeofenceAdmin
+                            title = "Face Biometrics Enrollment",
+                            subtitle = "Institutional face capture & template update",
+                            icon = Icons.Default.Face,
+                            iconTint = MaterialTheme.colorScheme.primary,
+                            onClick = onNavigateToFaceEnrollment
                         )
-                    }
-                }
-            }
-
-            item {
-                Text(
-                    text = "Preferences & Communication",
-                    style = MaterialTheme.typography.titleSmall,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
-
-            item {
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(16.dp),
-                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
-                ) {
-                    Column {
+                        MoreMenuDivider()
                         MoreMenuItem(
                             title = "Substitution Preferences",
-                            subtitle = "Daily/weekly limits & cross-department settings",
+                            subtitle = "Daily limits and cross-department options",
                             icon = Icons.Default.Tune,
-                            iconTint = PrimaryBlue,
-                            iconBg = CardHighlight,
+                            iconTint = FaflowRoleColors.TeacherPrimary,
                             onClick = onNavigateToPreferences
-                        )
-                        MoreMenuItem(
-                            title = "Institutional Notifications",
-                            subtitle = "Duty assignments, approvals and system alerts",
-                            icon = Icons.Default.Notifications,
-                            iconTint = PrimaryBlue,
-                            iconBg = CardHighlight,
-                            onClick = onNavigateToNotifications
                         )
                     }
                 }
@@ -195,38 +189,47 @@ fun MoreScreen(
 
             item {
                 Text(
-                    text = "Account & System",
-                    style = MaterialTheme.typography.titleSmall,
+                    text = "ACCOUNT & SETTINGS",
+                    style = MaterialTheme.typography.labelSmall,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
-            }
-
-            item {
+                Spacer(modifier = Modifier.height(FaflowSpacing.xs))
                 Card(
                     modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(16.dp),
+                    shape = FaflowShapes.card,
                     colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
                 ) {
                     Column {
                         MoreMenuItem(
-                            title = "Faculty Profile",
-                            subtitle = "Identity, department & biometric status",
+                            title = "Staff Profile",
+                            subtitle = "View personal, institutional, and role details",
                             icon = Icons.Default.Person,
-                            iconTint = PrimaryBlue,
-                            iconBg = CardHighlight,
+                            iconTint = MaterialTheme.colorScheme.onSurface,
                             onClick = onNavigateToProfile
                         )
+                        MoreMenuDivider()
                         MoreMenuItem(
-                            title = "Server Connection & Settings",
-                            subtitle = "FAFLOW API URL and network preferences",
+                            title = "Notifications",
+                            subtitle = "Review institutional alerts and status updates",
+                            icon = Icons.Default.Notifications,
+                            iconTint = FaflowStatusColors.Pending,
+                            onClick = onNavigateToNotifications
+                        )
+                        MoreMenuDivider()
+                        MoreMenuItem(
+                            title = "App Settings",
+                            subtitle = "Server endpoint, cache, and sync diagnostics",
                             icon = Icons.Default.Settings,
-                            iconTint = Color.Gray,
-                            iconBg = Color.Gray.copy(alpha = 0.15f),
+                            iconTint = MaterialTheme.colorScheme.onSurfaceVariant,
                             onClick = onNavigateToSettings
                         )
                     }
                 }
+            }
+
+            item {
+                Spacer(modifier = Modifier.height(FaflowSpacing.xl))
             }
         }
     }
@@ -238,38 +241,59 @@ fun MoreMenuItem(
     subtitle: String,
     icon: ImageVector,
     iconTint: Color,
-    iconBg: Color,
     onClick: () -> Unit
 ) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .clickable(onClick = onClick)
-            .padding(16.dp),
+            .padding(horizontal = FaflowSpacing.lg, vertical = FaflowSpacing.md),
         verticalAlignment = Alignment.CenterVertically
     ) {
         Box(
             modifier = Modifier
                 .size(40.dp)
-                .clip(RoundedCornerShape(10.dp))
-                .background(iconBg),
+                .clip(FaflowShapes.small)
+                .background(iconTint.copy(alpha = 0.12f)),
             contentAlignment = Alignment.Center
         ) {
-            Icon(imageVector = icon, contentDescription = null, tint = iconTint, modifier = Modifier.size(22.dp))
+            Icon(
+                imageVector = icon,
+                contentDescription = null,
+                tint = iconTint,
+                modifier = Modifier.size(20.dp)
+            )
         }
-
-        Spacer(modifier = Modifier.width(16.dp))
-
+        Spacer(modifier = Modifier.width(FaflowSpacing.md))
         Column(modifier = Modifier.weight(1f)) {
-            Text(text = title, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
-            Text(text = subtitle, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text(
+                text = title,
+                style = MaterialTheme.typography.titleSmall,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onSurface
+            )
+            Text(
+                text = subtitle,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
         }
-
         Icon(
             imageVector = Icons.AutoMirrored.Filled.ArrowForwardIos,
             contentDescription = null,
-            tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
-            modifier = Modifier.size(16.dp)
+            tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
+            modifier = Modifier.size(12.dp)
         )
     }
+}
+
+@Composable
+fun MoreMenuDivider() {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(1.dp)
+            .padding(horizontal = FaflowSpacing.lg)
+            .background(MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f))
+    )
 }

@@ -12,19 +12,32 @@ import androidx.navigation.NavController
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.compose.currentBackStackEntryAsState
 import com.governence.faflow.ui.navigation.BottomNavItem
-import com.governence.faflow.ui.theme.DarkSurfaceVariant
+import com.governence.faflow.ui.theme.FaflowRoleColors
 import com.governence.faflow.ui.theme.PrimaryBlue
 
 @Composable
 fun MainBottomNavigation(
-    navController: NavController
+    navController: NavController,
+    userRole: String? = "teacher"
 ) {
-    val items = listOf(
-        BottomNavItem.Home,
-        BottomNavItem.Timetable,
-        BottomNavItem.Attendance,
-        BottomNavItem.More
-    )
+    val isHod = userRole?.lowercase() == "admin" || userRole?.lowercase() == "hod"
+
+    val items = if (isHod) {
+        listOf(
+            BottomNavItem.HodHome,
+            BottomNavItem.HodLeaves,
+            BottomNavItem.HodTimetable,
+            BottomNavItem.HodAttendanceTab,
+            BottomNavItem.HodMore
+        )
+    } else {
+        listOf(
+            BottomNavItem.Home,
+            BottomNavItem.Timetable,
+            BottomNavItem.Attendance,
+            BottomNavItem.More
+        )
+    }
 
     val navBackStackEntry = navController.currentBackStackEntryAsState().value
     val currentRoute = navBackStackEntry?.destination?.route
@@ -33,6 +46,7 @@ fun MainBottomNavigation(
     val isTopLevelDestination = items.any { it.route == currentRoute }
 
     if (isTopLevelDestination) {
+        val activeColor = if (isHod) FaflowRoleColors.HodPrimary else PrimaryBlue
         NavigationBar(
             containerColor = MaterialTheme.colorScheme.surface,
             contentColor = MaterialTheme.colorScheme.onSurface
@@ -55,9 +69,9 @@ fun MainBottomNavigation(
                         }
                     },
                     colors = NavigationBarItemDefaults.colors(
-                        selectedIconColor = PrimaryBlue,
-                        selectedTextColor = PrimaryBlue,
-                        indicatorColor = PrimaryBlue.copy(alpha = 0.15f),
+                        selectedIconColor = activeColor,
+                        selectedTextColor = activeColor,
+                        indicatorColor = activeColor.copy(alpha = 0.15f),
                         unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
                         unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant
                     )

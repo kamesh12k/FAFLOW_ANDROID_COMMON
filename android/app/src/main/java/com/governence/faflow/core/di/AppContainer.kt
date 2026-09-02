@@ -37,6 +37,9 @@ class AppContainer(context: Context) {
     val preferencesRepository: PreferencesRepositoryImpl = PreferencesRepositoryImpl(apiService)
     val notificationRepository: NotificationRepositoryImpl = NotificationRepositoryImpl(apiService)
     val academicSummaryRepository: AcademicSummaryRepository = AcademicSummaryRepository(apiService)
+    val hodRepository: com.governence.faflow.faflow.data.HodRepositoryImpl = com.governence.faflow.faflow.data.HodRepositoryImpl(apiService)
+    val systemPolicyRepository: com.governence.faflow.faflow.data.SystemPolicyRepositoryImpl = com.governence.faflow.faflow.data.SystemPolicyRepositoryImpl(apiService)
+
 
     // Milestone 4: Geofence & Location Subsystem
     val staffLocationProvider: StaffLocationProvider = StaffLocationProvider(context.applicationContext)
