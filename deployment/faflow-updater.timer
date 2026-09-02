@@ -1,0 +1,12 @@
+[Unit]
+Description=FAFLOW Automatic Update Periodic Timer
+After=network-online.target
+
+[Timer]
+# Run every 5 minutes (checks git remote; only updates if new commits are found)
+OnBootSec=2min
+OnUnitActiveSec=5min
+Persistent=true
+
+[Install]
+WantedBy=timers.target

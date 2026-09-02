@@ -1,0 +1,15 @@
+[Unit]
+Description=FAFLOW Automatic System Updater
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=root
+WorkingDirectory=/home/faflowadmin/FACULTY_FLOW
+ExecStart=/bin/bash /home/faflowadmin/FACULTY_FLOW/scripts/auto_update.sh
+StandardOutput=append:/var/log/faflow/updater.log
+StandardError=append:/var/log/faflow/updater.log
+
+[Install]
+WantedBy=multi-user.target
