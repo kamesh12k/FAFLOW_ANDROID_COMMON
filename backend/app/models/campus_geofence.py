@@ -16,7 +16,7 @@ class CampusGeofence(Base):
     type = Column(String(20), nullable=False, default="circle")  # 'circle' or 'polygon'
     center_latitude = Column(Float, nullable=False)
     center_longitude = Column(Float, nullable=False)
-    radius_meters = Column(Float, nullable=False, default=150.0)
+    radius_meters = Column(Float, nullable=True, default=150.0)
     geometry = Column(JSONB, nullable=False)  # GeoJSON structure with vertices / radius
     tolerance_meters = Column(Float, nullable=False, default=15.0)
     area_sq_meters = Column(Float, nullable=True)

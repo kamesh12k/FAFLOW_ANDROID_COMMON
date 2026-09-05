@@ -22,6 +22,29 @@ function TrashNavIcon() {
   )
 }
 
+function GeofenceIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round" style={{width:'100%',height:'100%'}}>
+      <circle cx="12" cy="12" r="9" />
+      <circle cx="12" cy="12" r="4" />
+      <path d="M12 3v3m0 12v3M3 12h3m12 0h3" />
+    </svg>
+  )
+}
+
+function BiometricIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round" style={{width:'100%',height:'100%'}}>
+      <path d="M9 3a3 3 0 0 1 6 0" />
+      <path d="M6 9a6 6 0 0 1 12 0" />
+      <path d="M12 9v6" />
+      <path d="M9 15a3 3 0 0 0 6 0" />
+      <path d="M7 19a5 5 0 0 0 10 0" />
+      <path d="M12 19v2" />
+    </svg>
+  )
+}
+
 export const ADMIN_NAV = [
   {
     section: null,
@@ -96,9 +119,11 @@ export const SYSTEM_ADMIN_NAV = [
     ],
   },
   {
-    section: 'System Setup',
+    section: 'System & Security Setup',
     items: [
       { to: '/admin/setup', label: 'Setup Guide', icon: <DocIcon /> },
+      { to: '/admin/geofences', label: 'Campus Geofences', icon: <GeofenceIcon /> },
+      { to: '/admin/biometrics', label: 'Biometrics & Face Profiles', icon: <BiometricIcon /> },
       { to: '/admin/departments', label: 'Departments', icon: <UsersIcon />, end: true },
       { to: '/admin/managers', label: 'Managers', icon: <UsersIcon /> },
       { to: '/admin/classes', label: 'Classes', icon: <UsersIcon /> },

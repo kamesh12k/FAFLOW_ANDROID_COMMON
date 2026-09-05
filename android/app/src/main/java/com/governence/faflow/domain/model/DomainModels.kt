@@ -56,7 +56,7 @@ data class StaffFaceProfile(
 }
 
 /**
- * Daily Palgeo-style Staff Attendance Record (Check-In & Check-Out).
+ * Daily FAFLOW Staff Attendance Record (Check-In & Check-Out).
  */
 data class StaffAttendanceRecord(
     val id: String,

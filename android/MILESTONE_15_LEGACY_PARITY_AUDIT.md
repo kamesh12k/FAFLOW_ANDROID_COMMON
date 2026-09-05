@@ -16,7 +16,7 @@
 | **Substitution Allocation** | Suggestion & Assignment Panel | Native Substitution Duty List | `GET /teacher/substitution`, `POST /substitutions/` | `teacher`, `hod`, `admin` | **UNIFIED & PARITY VERIFIED** |
 | **Substitution Preferences** | Max Daily/Weekly Sliders | Native Preferences Screen | `GET /preferences/`, `PUT /preferences/` | `teacher`, `hod` | **UNIFIED & PARITY VERIFIED** |
 | **Campus Geofence Management** | Web Polygon/Circle Editor | Native Canvas Geofence Screen | `GET /geofences/`, `POST /geofences/` | `admin`, `principal`, `hod`, `manager` | **UNIFIED & PARITY VERIFIED** |
-| **Biometric Face Attendance** | Manual/Web Check-in fallback | Palgeo SCRFD + ArcFace + Liveness | `POST /attendance/check-in`, `/check-out` | `teacher`, `staff`, `hod`, `principal` | **UNIFIED & PARITY VERIFIED** |
+| **Biometric Face Attendance** | Manual/Web Check-in fallback | FAFLOW SCRFD + ArcFace + Liveness | `POST /attendance/check-in`, `/check-out` | `teacher`, `staff`, `hod`, `principal` | **UNIFIED & PARITY VERIFIED** |
 | **Supervisor Live Dashboard** | Admin Attendance Table | Real-time Live Status Query | `GET /attendance/admin/live-status` | `admin`, `principal`, `hod`, `manager` | **UNIFIED & PARITY VERIFIED** |
 | **Institutional Notifications** | Notification Center | Push & Polled Notification Screen | `GET /notifications/`, `PUT /notifications/{id}/read` | All Roles | **UNIFIED & PARITY VERIFIED** |
 | **Faculty Profile & Preferences** | Profile Settings | Native Profile Screen | `GET /teacher/profile` | All Roles | **UNIFIED & PARITY VERIFIED** |

@@ -301,3 +301,92 @@ class GeofenceService:
         db.add(audit)
         db.commit()
         return {"message": f"Geofence '{geofence.name}' deactivated successfully"}
+
+    @staticmethod
+    def test_location(db: Session, lat: float, lon: float, accuracy_meters: float = 5.0) -> Dict[str, Any]:
+        active_geofences = GeofenceService.list_geofences(db, is_active_only=True)
+        if not active_geofences:
+            return {
+                "is_inside": False,
+                "status": "NO_ACTIVE_GEOFENCES",
+                "message": "No active campus geofences configured in the system.",
+                "nearest_geofence_name": None,
+                "nearest_geofence_type": None,
+                "distance_to_boundary_meters": 0.0,
+                "distance_to_center_meters": 0.0,
+                "accuracy_meters": accuracy_meters
+            }
+
+        best_geofence = None
+        min_dist_to_center = float("inf")
+        is_inside_any = False
+        nearest_boundary_dist = float("inf")
+
+        for g in active_geofences:
+            dist_to_center = haversine_distance_meters(lat, lon, g.center_latitude, g.center_longitude)
+            if dist_to_center < min_dist_to_center:
+                min_dist_to_center = dist_to_center
+                best_geofence = g
+
+            if g.type == "circle":
+                effective_radius = g.radius_meters + g.tolerance_meters
+                if dist_to_center <= effective_radius:
+                    is_inside_any = True
+                    dist_to_boundary = abs(dist_to_center - g.radius_meters)
+                    if dist_to_boundary < nearest_boundary_dist:
+                        nearest_boundary_dist = dist_to_boundary
+                        best_geofence = g
+                else:
+                    dist_to_boundary = dist_to_center - g.radius_meters
+                    if dist_to_boundary < nearest_boundary_dist:
+                        nearest_boundary_dist = dist_to_boundary
+            elif g.type == "polygon":
+                vertices = g.geometry.get("coordinates", [])
+                if vertices and len(vertices) >= 3:
+                    if is_point_in_polygon(lat, lon, vertices):
+                        is_inside_any = True
+                        nearest_boundary_dist = 0.0
+                        best_geofence = g
+                    else:
+                        # compute min distance to vertices
+                        poly_min_dist = min(haversine_distance_meters(lat, lon, v[0], v[1]) for v in vertices)
+                        if poly_min_dist < nearest_boundary_dist:
+                            nearest_boundary_dist = poly_min_dist
+
+        if is_inside_any:
+            status_str = "INSIDE_CAMPUS"
+            msg = f"Coordinate is inside campus boundary '{best_geofence.name}' (Accuracy: ±{accuracy_meters:.1f}m)."
+        else:
+            status_str = "OUTSIDE_CAMPUS"
+            msg = f"Coordinate is {nearest_boundary_dist:.1f}m outside nearest boundary '{best_geofence.name}'."
+
+        return {
+            "is_inside": is_inside_any,
+            "status": status_str,
+            "message": msg,
+            "nearest_geofence_name": best_geofence.name if best_geofence else None,
+            "nearest_geofence_type": best_geofence.type if best_geofence else None,
+            "distance_to_boundary_meters": round(nearest_boundary_dist if nearest_boundary_dist != float("inf") else 0.0, 1),
+            "distance_to_center_meters": round(min_dist_to_center if min_dist_to_center != float("inf") else 0.0, 1),
+            "accuracy_meters": accuracy_meters
+        }
+
+
+def is_point_in_polygon(lat: float, lon: float, vertices: List[List[float]]) -> bool:
+    """Ray-casting algorithm for testing if point (lat, lon) is inside a polygon."""
+    n = len(vertices)
+    if n < 3:
+        return False
+    inside = False
+    p1lat, p1lon = vertices[0][0], vertices[0][1]
+    for i in range(n + 1):
+        p2lat, p2lon = vertices[i % n][0], vertices[i % n][1]
+        if min(p1lat, p2lat) < lat <= max(p1lat, p2lat):
+            if lon <= max(p1lon, p2lon):
+                if p1lat != p2lat:
+                    xinters = (lat - p1lat) * (p2lon - p1lon) / (p2lat - p1lat) + p1lon
+                if p1lon == p2lon or lon <= xinters:
+                    inside = not inside
+        p1lat, p1lon = p2lat, p2lon
+    return inside
+

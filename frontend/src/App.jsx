@@ -39,6 +39,8 @@ const AcademicCalendarReports = lazy(() => import('./pages/admin/AcademicCalenda
 const SystemMetrics = lazy(() => import('./pages/admin/SystemMetrics'))
 const BackupRestore = lazy(() => import('./pages/admin/Backup'))
 const DataRetention = lazy(() => import('./pages/admin/DataRetention'))
+const AdminGeofences = lazy(() => import('./pages/admin/Geofences'))
+const AdminBiometrics = lazy(() => import('./pages/admin/Biometrics'))
 
 // Principal pages (lazy loaded)
 const PrincipalDashboard = lazy(() => import('./pages/admin/PrincipalDashboard'))
@@ -118,8 +120,10 @@ export default function App() {
                 <Route path="/admin/settings" element={<AdminSettings />} />
                 <Route path="/admin/backup" element={<BackupRestore />} />
 
-                {/* System Admin only routes */}
+                {/* System Admin only routes — Geofencing, Biometrics, Managers, Metrics, Retention */}
                 <Route element={<SystemAdminRoute />}>
+                  <Route path="/admin/geofences" element={<AdminGeofences />} />
+                  <Route path="/admin/biometrics" element={<AdminBiometrics />} />
                   <Route path="/admin/managers" element={<AdminManagers />} />
                   <Route path="/admin/system-metrics" element={<SystemMetrics />} />
                   <Route path="/admin/data-retention" element={<DataRetention />} />

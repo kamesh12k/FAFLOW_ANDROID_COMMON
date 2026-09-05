@@ -25,7 +25,7 @@ sealed interface AttendanceCheckResult {
 }
 
 /**
- * Contract for Palgeo-Style Staff Check-In & Check-Out orchestration.
+ * Contract for FAFLOW Staff Check-In & Check-Out orchestration.
  */
 interface StaffAttendanceManager {
     val shiftStatus: StateFlow<DailyShiftStatus>

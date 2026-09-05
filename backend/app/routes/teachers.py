@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from app.database import get_db
-from app.core.dependencies import require_admin, get_current_user, get_tenant_department_id
+from app.core.dependencies import require_admin, require_system_admin, get_current_user, get_tenant_department_id
 from app.models.user import User, Role
 from app.models.timetable import TimetableSlot
 from app.models.leave import LeaveRequest, AlterAssignment
@@ -63,7 +63,7 @@ def get_teacher_credits(
     db: Session = Depends(get_db),
     tenant_department_id: int | None = Depends(get_tenant_department_id),
 ):
-    target_teacher = db.query(User).filter(User.id == teacher_id, User.role == Role.teacher).first()
+    target_teacher = db.query(User).filter(User.id == teacher_id).first()
     if not target_teacher:
         raise HTTPException(status_code=404, detail="Teacher not found")
 
@@ -164,3 +164,47 @@ def delete_teacher(
     )
     db.delete(teacher)
     db.commit()
+
+
+@router.post("/me/biometrics/enroll", response_model=UserOut)
+def enroll_my_biometrics(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """
+    Registers that the authenticated user (faculty/staff) has captured and verified
+    their facial biometric template on their mobile device.
+    """
+    from datetime import datetime, timezone
+    current_user.has_face_enrolled = True
+    current_user.face_enrolled_at = datetime.now(timezone.utc)
+    db.commit()
+    db.refresh(current_user)
+    return current_user
+
+
+@router.post("/{teacher_id}/biometrics/reset", response_model=UserOut)
+def reset_teacher_biometrics(
+    teacher_id: int,
+    system_admin: User = Depends(require_system_admin),
+    db: Session = Depends(get_db),
+):
+    """
+    Resets the stored facial biometric registration for a faculty member.
+    SYSTEM ADMIN ONLY. All other roles receive HTTP 403 Forbidden.
+    """
+    teacher = db.query(User).filter(User.id == teacher_id).first()
+    if not teacher:
+        raise HTTPException(status_code=404, detail="Faculty member not found")
+
+    teacher.has_face_enrolled = False
+    teacher.face_enrolled_at = None
+
+    log_audit_event(
+        db, system_admin.id, "biometrics.reset", "user", teacher.id,
+        {"name": teacher.name, "email": teacher.email}
+    )
+    db.commit()
+    db.refresh(teacher)
+    return teacher
+

@@ -35,6 +35,8 @@ class UserOut(BaseModel):
     department_id: int | None = None
     must_change_credentials: bool
     is_active: bool
+    has_face_enrolled: bool = False
+    face_enrolled_at: datetime | None = None
     created_at: datetime
 
     model_config = {"from_attributes": True}

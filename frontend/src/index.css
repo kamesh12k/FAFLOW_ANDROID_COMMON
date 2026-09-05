@@ -110,3 +110,13 @@
   .text-4xl { font-size: 1.75rem; }
 }
 
+@keyframes mapPulse {
+  0% { transform: scale(0.8); opacity: 0.8; }
+  50% { transform: scale(2.2); opacity: 0; }
+  100% { transform: scale(0.8); opacity: 0; }
+}
+
+.map-pin-pulse {
+  animation: mapPulse 2s infinite ease-in-out;
+}
+

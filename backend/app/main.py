@@ -307,6 +307,7 @@ app.add_exception_handler(DomainException, domain_exception_handler)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=get_allowed_origins(),
+    allow_origin_regex=r"https?://.*",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -382,8 +383,9 @@ app.include_router(system_control.router)  # Milestone 16: Governance Control Pl
 
 
 @app.get("/health", tags=["Health"])
+@app.get("/api/v1/health", tags=["Health"])
 def health():
-    return {"status": "ok"}
+    return {"status": "ok", "service": "FAFLOW API"}
 
 
 @app.get("/settings/public", tags=["Settings"])

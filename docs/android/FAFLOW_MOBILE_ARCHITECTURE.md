@@ -3,7 +3,7 @@
 > **System Status**: **Milestone 16 Complete (Governance System Control Plane + Feature Licensing + Geofence Security)**  
 > **Target Audience**: College Faculty & Staff (Teachers, HODs, Lab Staff, Non-Teaching Staff)  
 > **Source of Truth**: Upstream FAFLOW FastAPI + PostgreSQL Backend (`https://github.com/kamesh12k/FACULTY_FLOW.git`)  
-> **Attendance Architecture**: Palgeo-style Geofenced Biometric Face Attendance with Authoritative Server Ledger  
+> **Attendance Architecture**: FAFLOW Geofenced Geofenced Biometric Face Attendance with Authoritative Server Ledger  
 > **Geofence Engine**: Haversine Circle + Ray-Casting Point-in-Polygon (Jordan Curve Theorem) + Anti-Spoof Mock Location + Interactive Admin Visualizer  
 > **Camera Subsystem**: Front-Camera CameraX (`Preview` + `ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST` + Throttled `CameraAnalyzer` + `CameraFrame` Abstraction)  
 > **Detection Engine**: InsightFace SCRFD 500M ONNX Model (`[1, 3, 640, 640]` NCHW, Multi-Stride 8/16/32 Anchor Decoding, IoU NMS, 5-Point Facial Landmarks)  
@@ -93,19 +93,19 @@ Staff Identity Verified                 ▼
 > [!IMPORTANT]
 > **STAFF / FACULTY SYSTEM ONLY**: FAFLOW Staff Mobile is strictly an enterprise application for **Institution Staff & Faculty** (Professors, Associate Professors, Assistant Professors, HODs, Lab Technicians, Non-Teaching Staff).
 > - **NO Students**: There are no student entities, no student enrollments, and no student attendance sessions.
-> - **Palgeo-Style Functional Paradigm**: Staff check in and check out using **On-Device Face Verification (InsightFace ONNX) + Campus Geofencing (GPS Boundary Validation) + Liveness Anti-Spoofing**.
+> - **FAFLOW Geofenced Functional Paradigm**: Staff check in and check out using **On-Device Face Verification (InsightFace ONNX) + Campus Geofencing (GPS Boundary Validation) + Liveness Anti-Spoofing**.
 > - **Complete FAFLOW Feature Parity**: Directly integrates with existing FAFLOW modules: Daily Timetable (Day Order 1–6 / Periods 1–5), Leave Applications & Emergency Leave, Leave History, Credit Balance Ledger ($+1/-1$), Substitution Delegation & Locking, and Department Notifications.
 
 ---
 
-## 2. Palgeo-Inspired Functional Architecture
+## 2. FAFLOW-Inspired Functional Architecture
 
 ```
 +-----------------------------------------------------------------------------------------------------------------------+
 |                                              FAFLOW STAFF MOBILE APP                                                  |
 |                                                                                                                       |
 |  +------------------------------------------------------+   +------------------------------------------------------+  |
-|  |                 ACADEMIC & WORKLOAD                  |   |            PALGEO-STYLE ATTENDANCE ENGINE            |  |
+|  |                 ACADEMIC & WORKLOAD                  |   |            FAFLOW Geofenced ATTENDANCE ENGINE            |  |
 |  | - Staff Dashboard & Shift Status                     |   | - 1-Click Fast Check-In / Check-Out                  |  |
 |  | - Timetable Matrix (Day Order 1-6 / Periods 1-5)      |   | - GPS & Campus Geofence Boundary Check (e.g. 150m)   |  |
 |  | - Leave Application & Emergency Leave Detection      |   | - Mock Location & Fake GPS Rejection                 |  |
@@ -155,7 +155,7 @@ com.governence.faflow/
   │    ├── credit/        # Credit balance, ledger history, transactions
   │    ├── substitution/  # Substitution recommendations, duties, locking, preferences
   │    └── notification/  # In-app push notifications, announcements
-  ├── attendance/         # Palgeo attendance engine:
+  ├── attendance/         # FAFLOW attendance engine:
   │    ├── model/         # AttendanceRecord, CheckInRequest, CheckOutRequest, ShiftStatus
   │    ├── engine/        # AttendanceAuthorizationEngine (combines Auth + GPS + Face + Liveness)
   │    └── repository/    # AttendanceRepository (Room DB local cache + Retrofit remote)
@@ -184,7 +184,7 @@ com.governence.faflow/
 
 | FAFLOW Web Page | Android Screen | Key UI Elements & Business Logic | Existing FAFLOW API |
 | :--- | :--- | :--- | :--- |
-| **`Dashboard.jsx`** | `StaffDashboardScreen` | - Today's Day Order & Shift Timer<br>- One-Touch Palgeo **[ Check In ] / [ Check Out ]**<br>- Today's Periods & Active Classes<br>- Credit Balance Widget & Pending Substitute Duties | `GET /teachers/me`<br>`GET /academic-calendar/today`<br>`GET /timetable/teacher/{id}`<br>`GET /teachers/{id}/credits` |
+| **`Dashboard.jsx`** | `StaffDashboardScreen` | - Today's Day Order & Shift Timer<br>- One-Touch FAFLOW **[ Check In ] / [ Check Out ]**<br>- Today's Periods & Active Classes<br>- Credit Balance Widget & Pending Substitute Duties | `GET /teachers/me`<br>`GET /academic-calendar/today`<br>`GET /timetable/teacher/{id}`<br>`GET /teachers/{id}/credits` |
 | **`Timetable.jsx`** | `TimetableScreen` | - 6-Day Order $\times$ 5-Period weekly matrix<br>- Day-wise schedule view with Room/Subject details<br>- Draft submission status & Admin approval feedback | `GET /timetable/teacher/{id}`<br>`POST /timetable/submissions` |
 | **`ApplyLeave.jsx`** | `ApplyLeaveScreen` | - Period-wise or Full-day selection<br>- Reason input & date picker<br>- Emergency leave warning badge ($<2\text{h}$)<br>- Self-substitute assignment picker | `POST /leaves/apply`<br>`GET /teacher/substitution/leave/{id}/candidates` |
 | **`LeaveHistory.jsx`**| `LeaveHistoryScreen`| - Filter by Status (Pending, Approved, Rejected, Cancelled)<br>- Assigned substitute teacher details<br>- Cancel pending leave action | `GET /leaves/my`<br>`DELETE /leaves/{id}` |
@@ -192,13 +192,13 @@ com.governence.faflow/
 | **`Substitution.jsx`**| `SubstitutionScreen`| - "My Substitute Duties" (classes assigned to me)<br>- "Classes Handed Over" (who is covering my class)<br>- Candidate recommendation list & match scores<br>- Lock/Unlock assignment toggle | `GET /teacher/substitution/my-leaves`<br>`POST /teacher/substitution/leave/{id}/assign/{sub_id}`<br>`POST /teacher/substitution/leave/{id}/lock` |
 | **`Preferences.jsx`** | `PreferencesScreen` | - Max substitutions per day/week limit<br>- Blacklisted periods / preferred subjects | `GET /teacher/substitution/preferences`<br>`PUT /teacher/substitution/preferences` |
 | **`Notifications.jsx`**| `NotificationsScreen`| - Real-time push notices & leave approval alerts<br>- Unread count & mark-as-read | `GET /notifications`<br>`PUT /notifications/{id}/read` |
-| **Palgeo Attendance** | `AttendanceCheckInScreen`| - Live CameraX Preview with Face Oval<br>- Real-time Geofence indicator (Green = Inside Campus)<br>- Automatic Face Match & Liveness verify<br>- Instant Check-In / Check-Out confirmation | `POST /staff/attendance/check-in`<br>`POST /staff/attendance/check-out` *(NEW)* |
+| **FAFLOW Attendance** | `AttendanceCheckInScreen`| - Live CameraX Preview with Face Oval<br>- Real-time Geofence indicator (Green = Inside Campus)<br>- Automatic Face Match & Liveness verify<br>- Instant Check-In / Check-Out confirmation | `POST /staff/attendance/check-in`<br>`POST /staff/attendance/check-out` *(NEW)* |
 | **Attendance Logs** | `AttendanceHistoryScreen`| - Monthly attendance calendar<br>- In-Time, Out-Time, Total Hours worked<br>- Status badges: Present, Late, Half-Day, On-Leave | `GET /staff/attendance/history` *(NEW)* |
 | **Face Setup** | `FaceEnrollmentScreen` | - 1-time guided multi-angle selfie enrollment<br>- Quality validator (lighting, pitch, yaw)<br>- Generates 512-dim ArcFace embedding | `POST /staff/attendance/enroll-face` *(NEW)* |
 
 ---
 
-## 5. End-to-End Palgeo-Style Staff Attendance Workflow
+## 5. End-to-End FAFLOW Geofenced Staff Attendance Workflow
 
 ```
 [ STAFF ARRIVES ON CAMPUS ]
@@ -307,7 +307,7 @@ $$\text{Camera Frame} \xrightarrow{\text{SCRFD ONNX}} \begin{pmatrix} \text{Boun
 
 ## 8. Minimum Backend Database Schema Changes
 
-To add Palgeo-style staff attendance to the existing FAFLOW backend without disrupting any existing table, we introduce 3 new tables:
+To add FAFLOW Geofenced staff attendance to the existing FAFLOW backend without disrupting any existing table, we introduce 3 new tables:
 
 ```sql
 -- 1. Campus Geofences Table
@@ -374,8 +374,8 @@ DELETE /api/v1/staff/attendance/my-face-profile  # Delete biometric profile (Pri
 
 # Attendance Check-In / Check-Out
 GET  /api/v1/staff/attendance/today-status       # Get today's In/Out status & shift times
-POST /api/v1/staff/attendance/check-in           # Palgeo Check-In (Auth + GPS + Face)
-POST /api/v1/staff/attendance/check-out          # Palgeo Check-Out (Auth + GPS + Face)
+POST /api/v1/staff/attendance/check-in           # FAFLOW Check-In (Auth + GPS + Face)
+POST /api/v1/staff/attendance/check-out          # FAFLOW Check-Out (Auth + GPS + Face)
 GET  /api/v1/staff/attendance/history            # Monthly attendance history log
 POST /api/v1/staff/attendance/sync               # Offline queue bulk sync (idempotent)
 ```
@@ -428,4 +428,4 @@ Room DB marks status = "SYNCED"
   - Room DB offline queue persistence and WorkManager sync.
   - Retrofit auth interceptor JWT lifecycle & token refresh.
 - **End-to-End Test**:
-  - Login as FAFLOW teacher $\rightarrow$ View today's schedule $\rightarrow$ Perform Palgeo Geofenced Face Check-In $\rightarrow$ Verify dashboard shift status.
+  - Login as FAFLOW teacher $\rightarrow$ View today's schedule $\rightarrow$ Perform FAFLOW Geofenced Face Check-In $\rightarrow$ Verify dashboard shift status.

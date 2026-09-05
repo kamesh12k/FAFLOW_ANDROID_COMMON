@@ -6,7 +6,7 @@ Native Android application for **FAFLOW Institutional Staff Attendance & Faculty
 
 ## 1. Overview
 FAFLOW Staff Mobile provides a unified, secure mobile experience for college faculty and institutional staff (Teaching Staff, HODs, Lab Technicians, Non-Teaching Staff):
-- **Palgeo-Style Attendance**: Front-camera on-device face verification combined with high-accuracy graphical campus geofencing.
+- **FAFLOW Geofenced Attendance**: Front-camera on-device face verification combined with high-accuracy graphical campus geofencing.
 - **Biometric Pipeline**: InsightFace SCRFD 500M ONNX detection ($640 \times 640$), 5-point Umeyama canonical alignment ($112 \times 112$), MobileFaceNet ArcFace 512-D embedding extraction, and active head pose liveness defense.
 - **Data Governance**: Zero raw photos or biometric embeddings are transmitted over the network or saved unencrypted. All face templates are encrypted inside the hardware Android KeyStore Trusted Execution Environment (TEE).
 - **Faculty Operations**: Day Order timetable schedules, emergency/planned leave applications with auto-substitution allocation, duty credit ledgers, substitution preference controls, and institutional notifications.

@@ -289,6 +289,25 @@ export const governanceApi = {
   assignSubstitute: (data) => api.post('/governance/assign-substitute', data),
 }
 
+export const geofencesApi = {
+  list: (isActive) => api.get('/geofences/', { params: isActive !== undefined ? { is_active: isActive } : {} }),
+  getActive: () => api.get('/geofences/active'),
+  get: (id) => api.get(`/geofences/${id}`),
+  create: (data) => api.post('/geofences/', data),
+  update: (id, data) => api.put(`/geofences/${id}`, data),
+  toggle: (id, isActive) => api.patch(`/geofences/${id}/toggle`, null, { params: { is_active: isActive } }),
+  delete: (id) => api.delete(`/geofences/${id}`),
+  testLocation: (data) => api.post('/geofences/test-location', data),
+}
+
+export const biometricsApi = {
+  listFaculty: (params) => api.get('/teachers/', { params }),
+  updateFaculty: (id, data) => api.put(`/teachers/${id}`, data),
+  resetBiometrics: (id) => api.post(`/teachers/${id}/biometrics/reset`),
+  enrollMyBiometrics: () => api.post('/teachers/me/biometrics/enroll'),
+  getAttendanceToday: () => api.get('/attendance/summary/today'),
+}
+
 
 
 

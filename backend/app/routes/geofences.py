@@ -3,12 +3,37 @@ from fastapi import APIRouter, Depends, Query, status
 from sqlalchemy.orm import Session
 
 from app.database import get_db
-from app.core.dependencies import get_current_user, require_admin, require_system_admin
+from app.core.dependencies import get_current_user, require_admin, require_system_admin, require_super_admin
 from app.models.user import User
-from app.schemas.geofence import GeofenceCreate, GeofenceUpdate, GeofenceOut, GeofenceActiveOut
+from app.schemas.geofence import (
+    GeofenceCreate,
+    GeofenceUpdate,
+    GeofenceOut,
+    GeofenceActiveOut,
+    LocationTestRequest,
+    LocationTestResponse
+)
 from app.services.geofence_service import GeofenceService
 
 router = APIRouter(prefix="/geofences", tags=["Campus Geofences"])
+
+
+@router.post("/test-location", response_model=LocationTestResponse)
+def test_campus_location(
+    data: LocationTestRequest,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """
+    Authoritative test of a GPS coordinate against active campus geofences.
+    Calculates exact boundary containment, distance to perimeter, and radius tolerance.
+    """
+    return GeofenceService.test_location(
+        db=db,
+        lat=data.latitude,
+        lon=data.longitude,
+        accuracy_meters=data.accuracy_meters or 5.0
+    )
 
 
 @router.get("/active", response_model=List[GeofenceActiveOut])
@@ -53,19 +78,18 @@ def get_geofence_admin(
 
 
 # ─────────────────────────────────────────────────────────────────────────────
-# MUTATION ENDPOINTS — SYSTEM_ADMIN ONLY
-# ADMIN, PRINCIPAL, HOD, MANAGER, TEACHER, STAFF → HTTP 403
+# MUTATION ENDPOINTS — ADMINISTRATOR & SYSTEM ADMIN
 # ─────────────────────────────────────────────────────────────────────────────
 
 @router.post("/", response_model=GeofenceOut, status_code=status.HTTP_201_CREATED)
-def create_geofence_system_admin(
+def create_geofence_admin(
     data: GeofenceCreate,
-    current_user: User = Depends(require_system_admin),
+    current_user: User = Depends(require_admin),
     db: Session = Depends(get_db)
 ):
     """
     Creates a new circular or polygonal campus geofence.
-    SYSTEM_ADMIN ONLY. All other roles receive HTTP 403.
+    ADMIN & SYSTEM_ADMIN.
     """
     g = GeofenceService.create_geofence(db, data, current_user.id)
     out = GeofenceOut.from_orm(g)
@@ -74,15 +98,15 @@ def create_geofence_system_admin(
 
 
 @router.put("/{geofence_id}", response_model=GeofenceOut)
-def update_geofence_system_admin(
+def update_geofence_admin(
     geofence_id: int,
     data: GeofenceUpdate,
-    current_user: User = Depends(require_system_admin),
+    current_user: User = Depends(require_admin),
     db: Session = Depends(get_db)
 ):
     """
     Updates an existing campus geofence boundary, radius, or polygon vertices.
-    SYSTEM_ADMIN ONLY. All other roles receive HTTP 403.
+    ADMIN & SYSTEM_ADMIN.
     """
     g = GeofenceService.update_geofence(db, geofence_id, data, current_user.id)
     out = GeofenceOut.from_orm(g)
@@ -91,15 +115,15 @@ def update_geofence_system_admin(
 
 
 @router.patch("/{geofence_id}/toggle", response_model=GeofenceOut)
-def toggle_geofence_system_admin(
+def toggle_geofence_admin(
     geofence_id: int,
     is_active: bool = Query(..., description="Target active state"),
-    current_user: User = Depends(require_system_admin),
+    current_user: User = Depends(require_admin),
     db: Session = Depends(get_db)
 ):
     """
     Activates or deactivates an institutional geofence.
-    SYSTEM_ADMIN ONLY. All other roles receive HTTP 403.
+    ADMIN & SYSTEM_ADMIN.
     """
     g = GeofenceService.toggle_geofence(db, geofence_id, is_active, current_user.id)
     out = GeofenceOut.from_orm(g)
@@ -108,14 +132,14 @@ def toggle_geofence_system_admin(
 
 
 @router.delete("/{geofence_id}")
-def delete_geofence_system_admin(
+def delete_geofence_admin(
     geofence_id: int,
-    current_user: User = Depends(require_system_admin),
+    current_user: User = Depends(require_admin),
     db: Session = Depends(get_db)
 ):
     """
     Soft-deletes/deactivates a campus geofence.
-    SYSTEM_ADMIN ONLY. All other roles receive HTTP 403.
+    ADMIN & SYSTEM_ADMIN.
     """
     return GeofenceService.delete_geofence(db, geofence_id, current_user.id)
 

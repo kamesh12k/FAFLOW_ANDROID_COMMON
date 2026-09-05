@@ -15,7 +15,7 @@
 6. Android Leave History instantly updates status badge to "APPROVED".
 
 [ SCENARIO 2: ATTENDANCE CHECK-IN ON ANDROID ──► REFLECTED ON WEB ]
-1. Faculty completes verified Palgeo-style check-in on Android at 08:32 AM.
+1. Faculty completes verified FAFLOW Geofenced check-in on Android at 08:32 AM.
 2. Server validates GPS (inside campus geofence) and records check-in.
 3. Administrator opens Web Live Attendance Dashboard.
 4. Faculty member appears in "Currently Present Staff" table with 08:32 AM timestamp.

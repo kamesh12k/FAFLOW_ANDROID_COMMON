@@ -57,6 +57,8 @@ class User(Base):
     # except the first-login-setup endpoint until this is cleared.
     must_change_credentials = Column(Boolean, default=False, nullable=False)
     is_active = Column(Boolean, default=True, nullable=False)
+    has_face_enrolled = Column(Boolean, default=False, nullable=False)
+    face_enrolled_at = Column(DateTime(timezone=True), nullable=True)
     created_by_admin_id = Column(Integer, ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
 
     created_at = Column(DateTime(timezone=True), server_default=func.now())

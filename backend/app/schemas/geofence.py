@@ -14,20 +14,28 @@ class GeofenceCreate(GeofenceBase):
     center_latitude: Optional[float] = Field(None, ge=-90.0, le=90.0)
     center_longitude: Optional[float] = Field(None, ge=-180.0, le=180.0)
     radius_meters: Optional[float] = Field(150.0, ge=5.0, le=10000.0)
-    polygon_vertices: Optional[List[List[float]]] = None  # List of [lat, lng] pairs
+    polygon_vertices: Optional[Any] = None  # List of [lat, lng] pairs or dicts
 
-    @validator("polygon_vertices")
+    @validator("polygon_vertices", pre=True)
     def validate_vertices(cls, v, values):
-        if values.get("type") == "polygon":
-            if not v or len(v) < 3:
-                raise ValueError("Polygons must contain at least 3 distinct coordinate vertices")
-            for pt in v:
-                if len(pt) != 2:
-                    raise ValueError("Each polygon vertex must have [latitude, longitude]")
-                lat, lng = pt[0], pt[1]
-                if not (-90.0 <= lat <= 90.0 and -180.0 <= lng <= 180.0):
-                    raise ValueError(f"Invalid coordinate in polygon: {lat}, {lng}")
-        return v
+        if not v:
+            return v
+        normalized = []
+        for pt in v:
+            if isinstance(pt, (list, tuple)) and len(pt) >= 2:
+                lat, lng = float(pt[0]), float(pt[1])
+            elif isinstance(pt, dict):
+                lat = float(pt.get("latitude", pt.get("lat", 0)))
+                lng = float(pt.get("longitude", pt.get("lng", 0)))
+            else:
+                raise ValueError("Invalid coordinate format in polygon")
+            if not (-90.0 <= lat <= 90.0 and -180.0 <= lng <= 180.0):
+                raise ValueError(f"Invalid coordinate in polygon: {lat}, {lng}")
+            normalized.append([lat, lng])
+
+        if values.get("type") == "polygon" and len(normalized) < 3:
+            raise ValueError("Polygons must contain at least 3 distinct coordinate vertices")
+        return normalized
 
 
 class GeofenceUpdate(BaseModel):
@@ -37,9 +45,28 @@ class GeofenceUpdate(BaseModel):
     center_latitude: Optional[float] = Field(None, ge=-90.0, le=90.0)
     center_longitude: Optional[float] = Field(None, ge=-180.0, le=180.0)
     radius_meters: Optional[float] = Field(None, ge=5.0, le=10000.0)
-    polygon_vertices: Optional[List[List[float]]] = None
+    polygon_vertices: Optional[Any] = None
     tolerance_meters: Optional[float] = Field(None, ge=0.0, le=100.0)
     is_active: Optional[bool] = None
+
+    @validator("polygon_vertices", pre=True)
+    def validate_vertices(cls, v, values):
+        if not v:
+            return v
+        normalized = []
+        for pt in v:
+            if isinstance(pt, (list, tuple)) and len(pt) >= 2:
+                lat, lng = float(pt[0]), float(pt[1])
+            elif isinstance(pt, dict):
+                lat = float(pt.get("latitude", pt.get("lat", 0)))
+                lng = float(pt.get("longitude", pt.get("lng", 0)))
+            else:
+                raise ValueError("Invalid coordinate format in polygon")
+            if not (-90.0 <= lat <= 90.0 and -180.0 <= lng <= 180.0):
+                raise ValueError(f"Invalid coordinate in polygon: {lat}, {lng}")
+            normalized.append([lat, lng])
+        return normalized
+
 
 
 class GeofenceOut(BaseModel):
@@ -49,7 +76,7 @@ class GeofenceOut(BaseModel):
     type: str
     center_latitude: float
     center_longitude: float
-    radius_meters: float
+    radius_meters: Optional[float] = None
     geometry: Dict[str, Any]
     tolerance_meters: float
     area_sq_meters: Optional[float]
@@ -74,7 +101,7 @@ class GeofenceActiveOut(BaseModel):
     type: str
     center_latitude: float
     center_longitude: float
-    radius_meters: float
+    radius_meters: Optional[float] = None
     geometry: Dict[str, Any]
     tolerance_meters: float
     is_active: bool
@@ -82,3 +109,21 @@ class GeofenceActiveOut(BaseModel):
     class Config:
         orm_mode = True          # Pydantic v1 compat
         from_attributes = True   # Pydantic v2 compat
+
+
+class LocationTestRequest(BaseModel):
+    latitude: float = Field(..., ge=-90.0, le=90.0)
+    longitude: float = Field(..., ge=-180.0, le=180.0)
+    accuracy_meters: Optional[float] = Field(5.0, ge=0.0, le=1000.0)
+
+
+class LocationTestResponse(BaseModel):
+    is_inside: bool
+    status: str
+    message: str
+    nearest_geofence_name: Optional[str] = None
+    nearest_geofence_type: Optional[str] = None
+    distance_to_boundary_meters: float
+    distance_to_center_meters: float
+    accuracy_meters: float
+
