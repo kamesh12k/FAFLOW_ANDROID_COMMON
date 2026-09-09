@@ -38,7 +38,10 @@ class Settings(BaseSettings):
     PRIMARY_COLOR: str = "#4f46e5"  # Tailwind indigo-600; surfaced to the frontend via /settings/public
 
     # ---------- Customization: deployment ----------
-    FRONTEND_ORIGIN: List[str] = ["http://localhost:5173"]
+    FRONTEND_ORIGIN: List[str] = [
+        "http://localhost:5173",
+        "https://faflow-android-common.vercel.app",
+    ]
     MAX_SECONDARY_ADMINS: int = 3
     TIMEZONE: str = "Asia/Kolkata"
 

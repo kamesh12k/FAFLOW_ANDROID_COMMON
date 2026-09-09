@@ -333,6 +333,8 @@ def get_allowed_origins():
             origins.append(f"https://{ip}:5173")
             origins.append(f"http://{ip}:8000")
             origins.append(f"https://{ip}:8000")
+    if "https://faflow-android-common.vercel.app" not in origins:
+        origins.append("https://faflow-android-common.vercel.app")
     return list(set(origins))
 
 limiter = Limiter(key_func=get_remote_address)
@@ -395,37 +397,41 @@ async def traffic_logger_middleware(request: Request, call_next):
                 client_ip=client_ip
             )
 
-app.include_router(auth.router)
-app.include_router(admin.router)
-app.include_router(teachers.router)
-app.include_router(timetable.router)
-app.include_router(leaves.router)
-app.include_router(credits.router)
-app.include_router(notifications.router)
-app.include_router(departments.router)
-app.include_router(subjects.router)
-app.include_router(classes.router)
-app.include_router(rooms.router)
-app.include_router(day_order.router)
-app.include_router(academic_calendar.router)
-app.include_router(campus_operations.router)
-app.include_router(teacher_substitution.router)
-app.include_router(substitutions.router)
-app.include_router(principal.router)
-app.include_router(manager.router)
-app.include_router(staff.router)
-app.include_router(backup.router)
-app.include_router(governance.router)
-app.include_router(data_retention.router)
-app.include_router(geofences.router)
-app.include_router(attendance.router)
-app.include_router(system_control.router)  # Milestone 16: Governance Control Plane
+ROUTERS = [
+    auth.router,
+    admin.router,
+    teachers.router,
+    timetable.router,
+    leaves.router,
+    credits.router,
+    notifications.router,
+    departments.router,
+    subjects.router,
+    classes.router,
+    rooms.router,
+    day_order.router,
+    academic_calendar.router,
+    campus_operations.router,
+    teacher_substitution.router,
+    substitutions.router,
+    principal.router,
+    manager.router,
+    staff.router,
+    backup.router,
+    governance.router,
+    data_retention.router,
+    geofences.router,
+    attendance.router,
+    system_control.router,  # Milestone 16: Governance Control Plane
+]
 
-
-
+for r in ROUTERS:
+    app.include_router(r)
+    app.include_router(r, prefix="/api")
 
 
 @app.get("/health", tags=["Health"])
+@app.get("/api/health", tags=["Health"])
 @app.get("/api/v1/health", tags=["Health"])
 def health():
     """Liveness and database readiness probe."""
@@ -450,6 +456,7 @@ def health():
 
 
 @app.get("/settings/public", tags=["Settings"])
+@app.get("/api/settings/public", tags=["Settings"])
 def public_settings(db = Depends(get_db)):
     """Branding values the frontend reads on load — no auth required since
     this only exposes display customization (app name, accent color),
