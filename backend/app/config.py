@@ -43,8 +43,10 @@ class Settings(BaseSettings):
     TIMEZONE: str = "Asia/Kolkata"
 
     # ---------- Database Connection Pool ----------
-    DB_POOL_SIZE: int = 50
-    DB_MAX_OVERFLOW: int = 30
+    # Sized conservatively by default (10 + 10 = 20 max) to stay within
+    # Supabase free/nano tier & pooler limits. Override via env vars if needed.
+    DB_POOL_SIZE: int = 10
+    DB_MAX_OVERFLOW: int = 10
     DB_POOL_TIMEOUT: int = 30
     DB_POOL_RECYCLE: int = 300
 

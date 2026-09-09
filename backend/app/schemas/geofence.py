@@ -90,8 +90,7 @@ class GeofenceOut(BaseModel):
     updated_at: datetime
 
     class Config:
-        orm_mode = True          # Pydantic v1 compat
-        from_attributes = True   # Pydantic v2 compat
+        from_attributes = True
 
 
 class GeofenceActiveOut(BaseModel):
@@ -107,8 +106,7 @@ class GeofenceActiveOut(BaseModel):
     is_active: bool
 
     class Config:
-        orm_mode = True          # Pydantic v1 compat
-        from_attributes = True   # Pydantic v2 compat
+        from_attributes = True
 
 
 class LocationTestRequest(BaseModel):

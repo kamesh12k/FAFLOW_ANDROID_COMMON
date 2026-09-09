@@ -8,6 +8,7 @@ import os
 
 # ── Set env vars BEFORE any app imports so pydantic-settings picks them up ──
 os.environ.setdefault("DATABASE_URL", "sqlite:///./test.db")
+os.environ.setdefault("SKIP_DB_INIT", "1")
 os.environ.setdefault("SECRET_KEY", "test-secret-key-for-unit-tests")
 os.environ.setdefault("ALGORITHM", "HS256")
 os.environ.setdefault("ACCESS_TOKEN_EXPIRE_MINUTES", "60")

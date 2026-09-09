@@ -1,7 +1,7 @@
 import logging
 import os
 import time
-from fastapi import FastAPI, Depends, Request
+from fastapi import FastAPI, Depends, Request, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 try:
@@ -40,155 +40,182 @@ from sqlalchemy import text
 
 logging.basicConfig(level=logging.INFO)
 
-def sync_database_schema():
-    """Sync PostgreSQL enums and table constraints, retrying if the DB is still
-    in recovery mode at startup (e.g. after a crash or fast OS restart).
-
-    Strategy:
-      - Up to 10 attempts, exponential back-off: 2s, 4s, 6s … 18s  (≈ 90 s total)
-      - Only retries on transient errors (recovery mode, connection refused, …)
-      - Logs clearly at each step so the admin can follow progress in the console
-      - Falls through gracefully on failure so the app still starts and individual
-        routes surface proper DB errors instead of a hard crash at boot time.
+def sync_postgres_enums():
+    """Ensure all required PostgreSQL ENUM types exist and contain all active values.
+    Runs with isolation_level='AUTOCOMMIT' because ALTER TYPE ADD VALUE cannot run inside
+    a multi-statement transaction block in PostgreSQL.
     """
     logger = logging.getLogger(__name__)
+    if engine.dialect.name != "postgresql":
+        return
 
-    # ── PostgreSQL path ───────────────────────────────────────────────────────
-    if engine.dialect.name == "postgresql":
-        max_retries = 10
-        base_wait   = 2  # seconds
-
-        for attempt in range(1, max_retries + 1):
-            try:
-                with engine.connect().execution_options(isolation_level="AUTOCOMMIT") as conn:
-
-                    # 1) Enum value additions
-                    try:
-                        conn.execute(text("ALTER TYPE role ADD VALUE IF NOT EXISTS 'governance'"))
-                    except Exception as e:
-                        logger.warning("Could not add 'governance' to role enum: %s", e)
-
-                    try:
-                        conn.execute(text("ALTER TYPE assignment_type ADD VALUE IF NOT EXISTS 'combined_class'"))
-                    except Exception as e:
-                        logger.warning("Could not add 'combined_class' to assignment_type enum: %s", e)
-
-                    # 2) Table constraint syncs
-                    try:
-                        conn.execute(text("""
-                            DO $$
-                            BEGIN
-                                IF EXISTS (
-                                    SELECT 1 FROM pg_constraint WHERE conname = 'chk_user_department_role'
-                                ) THEN
-                                    ALTER TABLE users DROP CONSTRAINT chk_user_department_role;
-                                    ALTER TABLE users ADD CONSTRAINT chk_user_department_role CHECK (
-                                        (role IN ('admin', 'teacher') AND department_id IS NOT NULL) OR
-                                        (role IN ('manager', 'lab_staff', 'non_teaching_staff')) OR
-                                        (role IN ('system_admin', 'principal', 'governance') AND department_id IS NULL)
-                                    );
-                                END IF;
-
-                                IF EXISTS (
-                                    SELECT 1 FROM pg_constraint WHERE conname = 'chk_user_identity'
-                                ) THEN
-                                    ALTER TABLE users DROP CONSTRAINT chk_user_identity;
-                                    ALTER TABLE users ADD CONSTRAINT chk_user_identity CHECK (
-                                        (role = 'teacher' AND email IS NOT NULL) OR
-                                        (role IN ('admin', 'system_admin', 'principal', 'manager', 'lab_staff', 'non_teaching_staff', 'governance') AND username IS NOT NULL)
-                                    );
-                                END IF;
-
-                                IF EXISTS (
-                                    SELECT 1 FROM pg_constraint WHERE conname = 'chk_admin_level'
-                                ) THEN
-                                    ALTER TABLE users DROP CONSTRAINT chk_admin_level;
-                                    ALTER TABLE users ADD CONSTRAINT chk_admin_level CHECK (
-                                        (role = 'admin' AND admin_level IS NOT NULL) OR
-                                        (role IN ('teacher', 'system_admin', 'principal', 'manager', 'lab_staff', 'non_teaching_staff', 'governance') AND admin_level IS NULL)
-                                    );
-                                END IF;
-
-                                -- Drop strict single-staff constraints to allow multi-staff combined classes
-                                IF EXISTS (
-                                    SELECT 1 FROM pg_constraint WHERE conname = 'uq_teacher_day_period'
-                                ) THEN
-                                    ALTER TABLE timetable_slots DROP CONSTRAINT uq_teacher_day_period;
-                                END IF;
-
-                                IF EXISTS (
-                                    SELECT 1 FROM pg_constraint WHERE conname = 'uq_class_day_period'
-                                ) THEN
-                                    ALTER TABLE timetable_slots DROP CONSTRAINT uq_class_day_period;
-                                END IF;
-
-                                IF EXISTS (
-                                    SELECT 1 FROM pg_constraint WHERE conname = 'uq_room_day_period'
-                                ) THEN
-                                    ALTER TABLE timetable_slots DROP CONSTRAINT uq_room_day_period;
-                                END IF;
-
-                                IF NOT EXISTS (
-                                    SELECT 1 FROM pg_constraint WHERE conname = 'uq_teacher_class_day_period'
-                                ) THEN
-                                    ALTER TABLE timetable_slots ADD CONSTRAINT uq_teacher_class_day_period UNIQUE (teacher_id, class_id, day_order, period_number);
-                                END IF;
-
-                                -- Ensure default_room_id exists on classes table
-                                IF NOT EXISTS (
-                                    SELECT 1 FROM information_schema.columns
-                                    WHERE table_name = 'classes' AND column_name = 'default_room_id'
-                                ) THEN
-                                    ALTER TABLE classes ADD COLUMN default_room_id INTEGER REFERENCES rooms(id) ON DELETE SET NULL;
-                                END IF;
-
-                                -- Ensure only_my_classes column exists on substitution_preferences
-                                IF NOT EXISTS (
-                                    SELECT 1 FROM information_schema.columns
-                                    WHERE table_name = 'substitution_preferences' AND column_name = 'only_my_classes'
-                                ) THEN
-                                    ALTER TABLE substitution_preferences ADD COLUMN only_my_classes BOOLEAN NOT NULL DEFAULT FALSE;
-                                END IF;
-                            END $$;
-                        """))
-                    except Exception as e:
-                        logger.warning("Could not sync PostgreSQL table constraints: %s", e)
-
-                # ── All SQL completed successfully — stop retrying ─────────
-                if attempt > 1:
-                    logger.info("Database schema sync succeeded on attempt %d.", attempt)
-                break
-
-            except Exception as e:
-                err_str = str(e).lower()
-                is_recovery = "recovery mode" in err_str or "recovery" in err_str
-                is_transient = (
-                    is_recovery
-                    or "connection refused" in err_str
-                    or "could not connect" in err_str
-                    or "server closed the connection" in err_str
-                    or "no connection to the server" in err_str
-                    or "connection reset" in err_str
-                )
-
-                if is_transient and attempt < max_retries:
-                    wait = base_wait * attempt  # 2s, 4s, 6s … 18s
-                    logger.warning(
-                        "Database not ready yet (attempt %d/%d) — %s. Retrying in %ds…",
-                        attempt, max_retries,
-                        "PostgreSQL is in recovery mode" if is_recovery else "transient connection error",
-                        wait,
-                    )
-                    time.sleep(wait)
+    from sqlalchemy import Enum as SAEnum
+    enums_to_sync: dict[str, list[str]] = {}
+    for table in Base.metadata.sorted_tables:
+        for col in table.columns:
+            if isinstance(col.type, SAEnum) and col.type.name:
+                name = col.type.name
+                values = list(col.type.enums)
+                if name not in enums_to_sync:
+                    enums_to_sync[name] = list(values)
                 else:
-                    logger.error(
-                        "Could not complete schema sync after %d attempt(s): %s. "
-                        "The app will start anyway — check DB connectivity.",
-                        attempt, e,
-                    )
-                    break
+                    for v in values:
+                        if v not in enums_to_sync[name]:
+                            enums_to_sync[name].append(v)
 
-    # ── SQLite path (dev / testing) ───────────────────────────────────────────
+    with engine.connect().execution_options(isolation_level="AUTOCOMMIT") as conn:
+        # Also ensure legacy 'role' type has 'governance' if a pre-existing DB used it
+        legacy_role_exists = conn.execute(
+            text("SELECT 1 FROM pg_type WHERE typname = 'role'")
+        ).scalar()
+        if legacy_role_exists:
+            existing_role_labels = {
+                r[0] for r in conn.execute(
+                    text("SELECT enumlabel FROM pg_enum WHERE enumtypid = (SELECT oid FROM pg_type WHERE typname = 'role')")
+                ).fetchall()
+            }
+            if "governance" not in existing_role_labels:
+                try:
+                    conn.execute(text("ALTER TYPE role ADD VALUE IF NOT EXISTS 'governance'"))
+                    logger.info("Added 'governance' to legacy PostgreSQL enum 'role'.")
+                except Exception as e:
+                    logger.warning("Could not add 'governance' to legacy 'role' enum: %s", e)
+
+        for type_name, values in enums_to_sync.items():
+            type_exists = conn.execute(
+                text("SELECT 1 FROM pg_type WHERE typname = :name"),
+                {"name": type_name}
+            ).scalar()
+
+            if not type_exists:
+                quoted_vals = ", ".join(f"'{v}'" for v in values)
+                sql = f"CREATE TYPE {type_name} AS ENUM ({quoted_vals})"
+                conn.execute(text(sql))
+                logger.info("Created PostgreSQL enum type '%s' with %d values.", type_name, len(values))
+            else:
+                existing_labels = {
+                    r[0] for r in conn.execute(
+                        text("SELECT enumlabel FROM pg_enum WHERE enumtypid = (SELECT oid FROM pg_type WHERE typname = :name)"),
+                        {"name": type_name}
+                    ).fetchall()
+                }
+                for v in values:
+                    if v not in existing_labels:
+                        try:
+                            conn.execute(text(f"ALTER TYPE {type_name} ADD VALUE IF NOT EXISTS '{v}'"))
+                            logger.info("Added value '%s' to PostgreSQL enum '%s'.", v, type_name)
+                        except Exception as e:
+                            logger.warning("Could not add '%s' to %s enum: %s", v, type_name, e)
+
+
+def sync_table_constraints_and_columns():
+    """Sync table constraints and missing columns idempotently.
+    Guarded by table existence checks so it is completely safe on both fresh and existing DBs.
+    """
+    logger = logging.getLogger(__name__)
+    if engine.dialect.name == "postgresql":
+        with engine.connect().execution_options(isolation_level="AUTOCOMMIT") as conn:
+            try:
+                conn.execute(text("""
+                    DO $$
+                    BEGIN
+                        -- 1. Users table constraints
+                        IF EXISTS (
+                            SELECT 1 FROM information_schema.tables 
+                            WHERE table_schema = 'public' AND table_name = 'users'
+                        ) THEN
+                            IF EXISTS (
+                                SELECT 1 FROM pg_constraint WHERE conname = 'chk_user_department_role'
+                            ) THEN
+                                ALTER TABLE users DROP CONSTRAINT chk_user_department_role;
+                            END IF;
+                            ALTER TABLE users ADD CONSTRAINT chk_user_department_role CHECK (
+                                (role::text IN ('admin', 'teacher') AND department_id IS NOT NULL) OR
+                                (role::text IN ('manager', 'lab_staff', 'non_teaching_staff')) OR
+                                (role::text IN ('system_admin', 'principal', 'governance') AND department_id IS NULL)
+                            );
+
+                            IF EXISTS (
+                                SELECT 1 FROM pg_constraint WHERE conname = 'chk_user_identity'
+                            ) THEN
+                                ALTER TABLE users DROP CONSTRAINT chk_user_identity;
+                            END IF;
+                            ALTER TABLE users ADD CONSTRAINT chk_user_identity CHECK (
+                                (role::text = 'teacher' AND email IS NOT NULL) OR
+                                (role::text IN ('admin', 'system_admin', 'principal', 'manager', 'lab_staff', 'non_teaching_staff', 'governance') AND username IS NOT NULL)
+                            );
+
+                            IF EXISTS (
+                                SELECT 1 FROM pg_constraint WHERE conname = 'chk_admin_level'
+                            ) THEN
+                                ALTER TABLE users DROP CONSTRAINT chk_admin_level;
+                            END IF;
+                            ALTER TABLE users ADD CONSTRAINT chk_admin_level CHECK (
+                                (role::text = 'admin' AND admin_level IS NOT NULL) OR
+                                (role::text IN ('teacher', 'system_admin', 'principal', 'manager', 'lab_staff', 'non_teaching_staff', 'governance') AND admin_level IS NULL)
+                            );
+                        END IF;
+
+                        -- 2. Timetable slots table constraints (allow multi-staff combined classes)
+                        IF EXISTS (
+                            SELECT 1 FROM information_schema.tables 
+                            WHERE table_schema = 'public' AND table_name = 'timetable_slots'
+                        ) THEN
+                            IF EXISTS (
+                                SELECT 1 FROM pg_constraint WHERE conname = 'uq_teacher_day_period'
+                            ) THEN
+                                ALTER TABLE timetable_slots DROP CONSTRAINT uq_teacher_day_period;
+                            END IF;
+
+                            IF EXISTS (
+                                SELECT 1 FROM pg_constraint WHERE conname = 'uq_class_day_period'
+                            ) THEN
+                                ALTER TABLE timetable_slots DROP CONSTRAINT uq_class_day_period;
+                            END IF;
+
+                            IF EXISTS (
+                                SELECT 1 FROM pg_constraint WHERE conname = 'uq_room_day_period'
+                            ) THEN
+                                ALTER TABLE timetable_slots DROP CONSTRAINT uq_room_day_period;
+                            END IF;
+
+                            IF NOT EXISTS (
+                                SELECT 1 FROM pg_constraint WHERE conname = 'uq_teacher_class_day_period'
+                            ) THEN
+                                ALTER TABLE timetable_slots ADD CONSTRAINT uq_teacher_class_day_period UNIQUE (teacher_id, class_id, day_order, period_number);
+                            END IF;
+                        END IF;
+
+                        -- 3. Ensure default_room_id exists on classes table
+                        IF EXISTS (
+                            SELECT 1 FROM information_schema.tables 
+                            WHERE table_schema = 'public' AND table_name = 'classes'
+                        ) THEN
+                            IF NOT EXISTS (
+                                SELECT 1 FROM information_schema.columns
+                                WHERE table_schema = 'public' AND table_name = 'classes' AND column_name = 'default_room_id'
+                            ) THEN
+                                ALTER TABLE classes ADD COLUMN default_room_id INTEGER REFERENCES rooms(id) ON DELETE SET NULL;
+                            END IF;
+                        END IF;
+
+                        -- 4. Ensure only_my_classes column exists on substitution_preferences
+                        IF EXISTS (
+                            SELECT 1 FROM information_schema.tables 
+                            WHERE table_schema = 'public' AND table_name = 'substitution_preferences'
+                        ) THEN
+                            IF NOT EXISTS (
+                                SELECT 1 FROM information_schema.columns
+                                WHERE table_schema = 'public' AND table_name = 'substitution_preferences' AND column_name = 'only_my_classes'
+                            ) THEN
+                                ALTER TABLE substitution_preferences ADD COLUMN only_my_classes BOOLEAN NOT NULL DEFAULT FALSE;
+                            END IF;
+                        END IF;
+                    END $$;
+                """))
+            except Exception as e:
+                logger.warning("Could not sync PostgreSQL table constraints and columns: %s", e)
+
     elif engine.dialect.name == "sqlite":
         with engine.connect() as conn:
             try:
@@ -200,8 +227,9 @@ def sync_database_schema():
             except Exception as e:
                 logger.warning("Could not sync sqlite classes default_room_id: %s", e)
 
+
 def _db_is_ready() -> bool:
-    """Quick connection probe — returns True if Postgres accepts a connection."""
+    """Quick connection probe — returns True if database accepts a connection and executes SELECT 1."""
     try:
         with engine.connect() as conn:
             conn.execute(text("SELECT 1"))
@@ -211,56 +239,71 @@ def _db_is_ready() -> bool:
 
 
 def wait_for_db_and_init(max_wait_seconds: int = 300) -> None:
-    """Wait for PostgreSQL to finish recovery, then run all startup DB work.
-
-    Covers three steps that all need a live DB:
-      1. sync_database_schema()  — enum/constraint migrations
-      2. Base.metadata.create_all() — create missing tables
-      3. bootstrap_*()            — seed default users
-
-    Polls every 5 s until Postgres is ready, up to max_wait_seconds (default
-    5 minutes). Once ready, runs the three steps once with no further retrying
-    (if they fail for a non-transient reason that's a real error worth seeing).
+    """Wait for PostgreSQL to be ready, then run deterministic 5-stage initialization.
+    Stage 1: Connection probe with exponential backoff
+    Stage 2: PostgreSQL ENUM sync & creation
+    Stage 3: Base.metadata.create_all (create missing tables)
+    Stage 4: Table constraints and column sync
+    Stage 5: Bootstrap default super admin & governance users
     """
     logger = logging.getLogger(__name__)
-    poll_interval = 5
+    poll_interval = 2
     elapsed = 0
 
-    logger.info("Waiting for PostgreSQL to become ready (timeout %ds)…", max_wait_seconds)
+    logger.info("Stage 1: Waiting for PostgreSQL to become ready (timeout %ds)…", max_wait_seconds)
     while not _db_is_ready():
         if elapsed >= max_wait_seconds:
             logger.error(
                 "PostgreSQL did not become ready within %ds. "
-                "Schema sync and table creation skipped — check DB connectivity.",
+                "Startup initialization aborted — check DB connectivity.",
                 max_wait_seconds,
             )
             return
         logger.warning(
-            "PostgreSQL not ready yet (recovery mode or connection refused). "
-            "Retrying in %ds… [%ds elapsed / %ds max]",
+            "PostgreSQL not ready yet. Retrying in %ds… [%ds elapsed / %ds max]",
             poll_interval, elapsed, max_wait_seconds,
         )
         time.sleep(poll_interval)
         elapsed += poll_interval
+        poll_interval = min(poll_interval * 2, 10)
 
-    logger.info("PostgreSQL is ready after %ds. Running startup initialization.", elapsed)
+    logger.info("PostgreSQL is ready after %ds. Beginning startup initialization.", elapsed)
 
-    # Step 1 — enum / constraint migrations
-    sync_database_schema()
+    # Stage 2: ENUM creation & sync (must happen before create_all for PostgreSQL)
+    logger.info("Stage 2: Syncing PostgreSQL ENUM types…")
+    try:
+        sync_postgres_enums()
+    except Exception as e:
+        logger.error("Stage 2 ENUM sync failed: %s", e)
+        raise
 
-    # Step 2 — create any missing tables (idempotent)
+    # Stage 3: Create missing tables (idempotent)
+    logger.info("Stage 3: Creating tables via Base.metadata.create_all…")
     try:
         Base.metadata.create_all(bind=engine)
     except Exception as e:
-        logger.error("Base.metadata.create_all failed: %s", e)
+        logger.error("Stage 3 Base.metadata.create_all failed: %s", e)
+        raise
 
-    # Step 3 — seed default admin + governance user (no-op if already exist)
+    # Stage 4: Sync constraints and schema additions
+    logger.info("Stage 4: Syncing table constraints and column additions…")
+    try:
+        sync_table_constraints_and_columns()
+    except Exception as e:
+        logger.error("Stage 4 constraints sync failed: %s", e)
+        raise
+
+    # Stage 5: Seed default users
+    logger.info("Stage 5: Bootstrapping super admin and governance users…")
     try:
         with SessionLocal() as _bootstrap_db:
             bootstrap_default_super_admin(_bootstrap_db)
             bootstrap_governance_user(_bootstrap_db)
     except Exception as e:
-        logger.error("Bootstrap failed: %s", e)
+        logger.error("Stage 5 bootstrap failed: %s", e)
+        raise
+
+    logger.info("FAFLOW startup database initialization completed successfully.")
 
 
 # Run all DB startup work unless explicitly skipped (e.g. test environments)
@@ -385,7 +428,25 @@ app.include_router(system_control.router)  # Milestone 16: Governance Control Pl
 @app.get("/health", tags=["Health"])
 @app.get("/api/v1/health", tags=["Health"])
 def health():
-    return {"status": "ok", "service": "FAFLOW API"}
+    """Liveness and database readiness probe."""
+    try:
+        with engine.connect() as conn:
+            conn.execute(text("SELECT 1"))
+        return {
+            "status": "ok",
+            "service": "FAFLOW API",
+            "database": "connected",
+        }
+    except Exception as e:
+        logging.getLogger(__name__).warning("Health check DB probe failed: %s", e)
+        raise HTTPException(
+            status_code=503,
+            detail={
+                "status": "degraded",
+                "service": "FAFLOW API",
+                "database": "unreachable",
+            },
+        )
 
 
 @app.get("/settings/public", tags=["Settings"])

@@ -33,7 +33,12 @@ def bootstrap_governance_user(db: Session) -> None:
         bind = db.get_bind()
         if bind and bind.dialect.name == "postgresql":
             with bind.connect().execution_options(isolation_level="AUTOCOMMIT") as conn:
-                conn.execute(text("ALTER TYPE role ADD VALUE IF NOT EXISTS 'governance'"))
+                for type_name in ("user_role", "role"):
+                    exists = conn.execute(
+                        text("SELECT 1 FROM pg_type WHERE typname = :t"), {"t": type_name}
+                    ).scalar()
+                    if exists:
+                        conn.execute(text(f"ALTER TYPE {type_name} ADD VALUE IF NOT EXISTS 'governance'"))
     except Exception as e:
         logger.warning("PostgreSQL enum sync notice: %s", e)
 
