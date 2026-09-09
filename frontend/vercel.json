@@ -5,7 +5,11 @@
       "destination": "https://faflow-android-common.onrender.com/api/:path*"
     },
     {
-      "source": "/(.*)",
+      "source": "/api/(.*)",
+      "destination": "https://faflow-android-common.onrender.com/api/$1"
+    },
+    {
+      "source": "/((?!api/).*)",
       "destination": "/index.html"
     }
   ]
