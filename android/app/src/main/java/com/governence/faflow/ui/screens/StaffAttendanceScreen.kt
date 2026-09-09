@@ -1,6 +1,7 @@
 package com.governence.faflow.ui.screens
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -39,7 +40,8 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.governence.faflow.location.LocationVerificationResult
+import androidx.compose.ui.unit.sp
+import com.governence.faflow.attendance.geolocation.LocationVerificationResult
 import com.governence.faflow.ui.components.AppTopBar
 import com.governence.faflow.ui.components.PrimaryGradientButton
 import com.governence.faflow.ui.theme.PrimaryBlue
@@ -61,261 +63,259 @@ fun StaffAttendanceScreen(
     val verificationResult by viewModel.verificationResult.collectAsState()
     val liveLocation by viewModel.liveLocation.collectAsState()
     val isLocationValid = viewModel.isLocationVerifiedForAttendance()
-    val todayDateFormatted = SimpleDateFormat("EEEE, MMMM d, yyyy", Locale.getDefault()).format(Date())
+    val todayDateFormatted = SimpleDateFormat("EEEE, d MMMM yyyy", Locale.getDefault()).format(Date())
+    val hasCheckedIn = uiState.checkInTime != null
+    val hasCheckedOut = uiState.checkOutTime != null
+
+    androidx.compose.runtime.LaunchedEffect(Unit) {
+        viewModel.loadTodaySummary()
+    }
 
     Scaffold(
         topBar = {
-            AppTopBar(
-                title = "Staff Attendance",
-                canNavigateBack = false
-            )
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(com.governence.faflow.ui.theme.FaflowBg)
+                    .padding(horizontal = 18.dp, vertical = 12.dp)
+            ) {
+                Text(
+                    text = "Staff attendance",
+                    fontSize = 19.sp,
+                    fontWeight = FontWeight.Bold,
+                    letterSpacing = (-0.01).sp,
+                    color = com.governence.faflow.ui.theme.FaflowText1
+                )
+                Spacer(modifier = Modifier.height(2.dp))
+                Text(
+                    text = todayDateFormatted,
+                    fontSize = 12.sp,
+                    color = com.governence.faflow.ui.theme.FaflowText3
+                )
+            }
         },
-        containerColor = MaterialTheme.colorScheme.background
+        containerColor = com.governence.faflow.ui.theme.FaflowBg
     ) { innerPadding ->
         LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(innerPadding),
-            contentPadding = PaddingValues(20.dp),
+                .padding(innerPadding)
+                .background(com.governence.faflow.ui.theme.FaflowBg)
+                .padding(horizontal = 18.dp),
+            contentPadding = PaddingValues(top = 4.dp, bottom = 24.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            // 1. Location Verification Banner
+            // 1. CHECK-IN HERO CARD (.checkin-hero)
             item {
-                val (bgColor, borderColor, iconTint, titleText, subtitleText) = when (verificationResult) {
-                    is LocationVerificationResult.InsideGeofence, is LocationVerificationResult.Boundary -> {
-                        Tuple5(
-                            Color(0xFFECFDF5),
-                            Color(0xFFA7F3D0),
-                            StatusSuccess,
-                            "You're at campus",
-                            "Location verified for attendance check-in."
-                        )
-                    }
-                    is LocationVerificationResult.MockLocationDetected -> {
-                        Tuple5(
-                            Color(0xFFFEF2F2),
-                            Color(0xFFFECACA),
-                            StatusError,
-                            "Location Spoofing Detected",
-                            "Mock GPS provider detected. Disable mock locations to continue."
-                        )
-                    }
-                    is LocationVerificationResult.AccuracyInsufficient -> {
-                        Tuple5(
-                            Color(0xFFFFFBEB),
-                            Color(0xFFFDE68A),
-                            StatusWarning,
-                            "Acquiring GPS Precision",
-                            "Current accuracy is low. Move closer to open sky."
-                        )
-                    }
-                    is LocationVerificationResult.OutsideAllGeofences -> {
-                        Tuple5(
-                            Color(0xFFF8FAFC),
-                            Color(0xFFE2E8F0),
-                            Color(0xFF64748B),
-                            "You're outside the campus",
-                            "Move closer to your campus perimeter to record attendance."
-                        )
-                    }
-                    else -> {
-                        Tuple5(
-                            Color(0xFFF8FAFC),
-                            Color(0xFFE2E8F0),
-                            PrimaryBlue,
-                            "Verifying Campus Location...",
-                            "Acquiring high-precision GPS coordinates."
-                        )
-                    }
-                }
-
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(20.dp),
-                    colors = CardDefaults.cardColors(containerColor = bgColor)
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(16.dp))
+                        .background(com.governence.faflow.ui.theme.FaflowSurface)
+                        .border(1.dp, com.governence.faflow.ui.theme.FaflowBorder, RoundedCornerShape(16.dp))
+                        .padding(vertical = 28.dp, horizontal = 20.dp),
+                    contentAlignment = Alignment.Center
                 ) {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(18.dp),
-                        verticalAlignment = Alignment.CenterVertically
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally
                     ) {
+                        // Check-in Ring (80x80dp circle)
                         Box(
                             modifier = Modifier
-                                .size(48.dp)
+                                .size(80.dp)
                                 .clip(CircleShape)
-                                .background(iconTint.copy(alpha = 0.15f)),
+                                .background(com.governence.faflow.ui.theme.FaflowNavyTint)
+                                .border(1.5.dp, com.governence.faflow.ui.theme.FaflowBorder, CircleShape),
                             contentAlignment = Alignment.Center
                         ) {
                             Icon(
-                                imageVector = if (isLocationValid) Icons.Default.CheckCircle else Icons.Default.LocationOn,
+                                imageVector = Icons.Default.Fingerprint,
                                 contentDescription = null,
-                                tint = iconTint,
-                                modifier = Modifier.size(26.dp)
+                                tint = com.governence.faflow.ui.theme.FaflowNavy,
+                                modifier = Modifier.size(32.dp)
                             )
                         }
 
-                        Spacer(modifier = Modifier.width(16.dp))
+                        Spacer(modifier = Modifier.height(16.dp))
 
-                        Column(modifier = Modifier.weight(1f)) {
-                            Text(
-                                text = titleText,
-                                style = MaterialTheme.typography.titleMedium,
-                                fontWeight = FontWeight.Bold,
-                                color = MaterialTheme.colorScheme.onSurface
-                            )
-                            Spacer(modifier = Modifier.height(2.dp))
-                            Text(
-                                text = subtitleText,
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                            if (liveLocation != null) {
-                                Spacer(modifier = Modifier.height(4.dp))
-                                Text(
-                                    text = "Accuracy: ±${liveLocation?.accuracyMeters?.toInt() ?: 0}m",
-                                    style = MaterialTheme.typography.labelSmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
-                                )
-                            }
+                        // Status line
+                        val statusLine = when {
+                            hasCheckedOut -> "SHIFT COMPLETED TODAY"
+                            hasCheckedIn -> "CHECKED IN AT ${formatDisplayTime(uiState.checkInTime)}"
+                            else -> "NOT RECORDED TODAY"
                         }
-                    }
-                }
-            }
+                        Text(
+                            text = statusLine,
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            color = com.governence.faflow.ui.theme.FaflowText3,
+                            letterSpacing = 0.04.sp
+                        )
 
-            // 2. Today's Shift Summary Card
-            item {
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(20.dp),
-                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
-                ) {
-                    Column(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(20.dp)
-                    ) {
+                        Spacer(modifier = Modifier.height(3.dp))
+
+                        // Headline
+                        val headline = when {
+                            hasCheckedOut -> "Shift Completed"
+                            hasCheckedIn -> "Ready to check out"
+                            else -> "Ready to check in"
+                        }
+                        Text(
+                            text = headline,
+                            fontSize = 18.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = com.governence.faflow.ui.theme.FaflowText1
+                        )
+
+                        Spacer(modifier = Modifier.height(10.dp))
+
+                        // Location status with pin icon
                         Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.Center
                         ) {
-                            Column {
-                                Text(
-                                    text = "Today's Attendance",
-                                    style = MaterialTheme.typography.titleMedium,
-                                    fontWeight = FontWeight.Bold
-                                )
-                                Text(
-                                    text = todayDateFormatted,
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                                )
-                            }
-
-                            val isPresent = uiState.checkInTime != null
-                            Box(
-                                modifier = Modifier
-                                    .clip(RoundedCornerShape(10.dp))
-                                    .background(if (isPresent) StatusSuccess.copy(alpha = 0.15f) else Color.Gray.copy(alpha = 0.15f))
-                                    .padding(horizontal = 10.dp, vertical = 5.dp)
-                            ) {
-                                Text(
-                                    text = if (isPresent) "PRESENT" else "NOT RECORDED",
-                                    style = MaterialTheme.typography.labelSmall,
-                                    fontWeight = FontWeight.Bold,
-                                    color = if (isPresent) StatusSuccess else Color.Gray
-                                )
-                            }
-                        }
-
-                        Spacer(modifier = Modifier.height(18.dp))
-
-                        Row(modifier = Modifier.fillMaxWidth()) {
-                            // Check-in Time
-                            Column(modifier = Modifier.weight(1f)) {
-                                Text("Check-In Time", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                                Spacer(modifier = Modifier.height(4.dp))
-                                Text(
-                                    text = uiState.checkInTime ?: "-- : --",
-                                    style = MaterialTheme.typography.titleSmall,
-                                    fontWeight = FontWeight.Bold
-                                )
-                            }
-
-                            // Check-out Time
-                            Column(modifier = Modifier.weight(1f)) {
-                                Text("Check-Out Time", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                                Spacer(modifier = Modifier.height(4.dp))
-                                Text(
-                                    text = uiState.checkOutTime ?: "-- : --",
-                                    style = MaterialTheme.typography.titleSmall,
-                                    fontWeight = FontWeight.Bold
-                                )
-                            }
-                        }
-                    }
-                }
-            }
-
-            // 3. One-Touch Action Buttons
-            item {
-                val hasCheckedIn = uiState.checkInTime != null
-                val hasCheckedOut = uiState.checkOutTime != null
-
-                if (!hasCheckedIn) {
-                    PrimaryGradientButton(
-                        text = "Biometric Check-In",
-                        icon = Icons.Default.Fingerprint,
-                        onClick = onNavigateToCheckIn
-                    )
-                } else if (!hasCheckedOut) {
-                    PrimaryGradientButton(
-                        text = "Biometric Check-Out",
-                        icon = Icons.Default.Fingerprint,
-                        onClick = onNavigateToCheckIn
-                    )
-                } else {
-                    Card(
-                        modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(16.dp),
-                        colors = CardDefaults.cardColors(containerColor = StatusSuccess.copy(alpha = 0.1f))
-                    ) {
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(16.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Icon(Icons.Default.CheckCircle, contentDescription = null, tint = StatusSuccess)
-                            Spacer(modifier = Modifier.width(12.dp))
+                            Icon(
+                                imageVector = Icons.Default.LocationOn,
+                                contentDescription = null,
+                                tint = if (isLocationValid) com.governence.faflow.ui.theme.FaflowSuccess else com.governence.faflow.ui.theme.FaflowText3,
+                                modifier = Modifier.size(13.dp)
+                            )
+                            Spacer(modifier = Modifier.width(5.dp))
                             Text(
-                                text = "Shift Completed for Today",
-                                style = MaterialTheme.typography.bodyMedium,
-                                fontWeight = FontWeight.Bold,
-                                color = StatusSuccess
+                                text = if (isLocationValid) "Campus perimeter verified" else "Verifying you're within campus range",
+                                fontSize = 11.5.sp,
+                                color = com.governence.faflow.ui.theme.FaflowText3
                             )
                         }
                     }
                 }
             }
 
-            // 4. Attendance History Button
+            // 2. TIME GRID (.time-grid: CHECK-IN and CHECK-OUT cells)
             item {
-                Button(
-                    onClick = onNavigateToHistory,
+                Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(48.dp),
-                    shape = RoundedCornerShape(14.dp),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = MaterialTheme.colorScheme.surfaceVariant,
-                        contentColor = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
+                        .clip(RoundedCornerShape(12.dp))
+                        .background(com.governence.faflow.ui.theme.FaflowBorder)
+                        .border(1.dp, com.governence.faflow.ui.theme.FaflowBorder, RoundedCornerShape(12.dp))
                 ) {
-                    Icon(Icons.Default.History, contentDescription = null, modifier = Modifier.size(18.dp))
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(1.dp)
+                    ) {
+                        // Check-in Cell
+                        Box(
+                            modifier = Modifier
+                                .weight(1f)
+                                .background(com.governence.faflow.ui.theme.FaflowSurface)
+                                .padding(vertical = 14.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                Text(
+                                    text = "CHECK-IN",
+                                    fontSize = 10.5.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    letterSpacing = 0.04.sp,
+                                    color = com.governence.faflow.ui.theme.FaflowText3
+                                )
+                                Spacer(modifier = Modifier.height(6.dp))
+                                Text(
+                                    text = formatDisplayTime(uiState.checkInTime),
+                                    fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace,
+                                    fontSize = 17.sp,
+                                    fontWeight = FontWeight.Medium,
+                                    color = com.governence.faflow.ui.theme.FaflowText1
+                                )
+                            }
+                        }
+
+                        // Check-out Cell
+                        Box(
+                            modifier = Modifier
+                                .weight(1f)
+                                .background(com.governence.faflow.ui.theme.FaflowSurface)
+                                .padding(vertical = 14.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                Text(
+                                    text = "CHECK-OUT",
+                                    fontSize = 10.5.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    letterSpacing = 0.04.sp,
+                                    color = com.governence.faflow.ui.theme.FaflowText3
+                                )
+                                Spacer(modifier = Modifier.height(6.dp))
+                                Text(
+                                    text = formatDisplayTime(uiState.checkOutTime),
+                                    fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace,
+                                    fontSize = 17.sp,
+                                    fontWeight = FontWeight.Medium,
+                                    color = com.governence.faflow.ui.theme.FaflowText1
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+
+            // 3. BIOMETRIC ACTION BUTTON (.btn-checkin)
+            item {
+                val buttonText = when {
+                    hasCheckedOut -> "Test Another Check-In"
+                    hasCheckedIn -> "Check out with biometrics"
+                    else -> "Check in with biometrics"
+                }
+
+                Button(
+                    onClick = {
+                        if (!hasCheckedIn || hasCheckedOut) {
+                            viewModel.prepareSessionForCheckIn()
+                        } else {
+                            viewModel.prepareSessionForCheckOut()
+                        }
+                        onNavigateToCheckIn()
+                    },
+                    enabled = true,
+                    shape = RoundedCornerShape(11.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = com.governence.faflow.ui.theme.FaflowNavy,
+                        contentColor = Color.White,
+                        disabledContainerColor = com.governence.faflow.ui.theme.FaflowNavy.copy(alpha = 0.4f)
+                    ),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(50.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Fingerprint,
+                        contentDescription = null,
+                        tint = Color.White,
+                        modifier = Modifier.size(18.dp)
+                    )
                     Spacer(modifier = Modifier.width(8.dp))
-                    Text("View Attendance Ledger & History", style = MaterialTheme.typography.labelLarge)
+                    Text(
+                        text = buttonText,
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+            }
+
+            // 4. ATTENDANCE LEDGER CARD (.list-card)
+            item {
+                com.governence.faflow.ui.components.FaflowListCard {
+                    com.governence.faflow.ui.components.FaflowListRow(
+                        icon = Icons.Default.History,
+                        iconBg = com.governence.faflow.ui.theme.FaflowSlateTint,
+                        iconTint = com.governence.faflow.ui.theme.FaflowSlate,
+                        title = "Attendance ledger",
+                        subtitle = "Full check-in and check-out history",
+                        showDivider = false,
+                        onClick = onNavigateToHistory
+                    )
                 }
             }
         }
@@ -329,4 +329,30 @@ private data class Tuple5<A, B, C, D, E>(
     val d: D,
     val e: E
 )
+
+private fun formatDisplayTime(raw: String?): String {
+    if (raw.isNullOrBlank()) return "— : —"
+    return try {
+        if (raw.contains("T")) {
+            val timePart = raw.substringAfter("T").substringBefore("+").substringBefore("Z")
+            val parts = timePart.split(":")
+            if (parts.size >= 2) {
+                "${parts[0].trim()}:${parts[1].trim()}"
+            } else {
+                timePart
+            }
+        } else if (raw.contains(":")) {
+            val parts = raw.split(":")
+            if (parts.size >= 2) {
+                "${parts[0].trim()}:${parts[1].trim()}"
+            } else {
+                raw
+            }
+        } else {
+            raw
+        }
+    } catch (e: Exception) {
+        raw
+    }
+}
 

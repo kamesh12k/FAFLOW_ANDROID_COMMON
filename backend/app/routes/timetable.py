@@ -79,6 +79,27 @@ def upload_timetable(
     return timetable_service.bulk_upload(data.slots, db, tenant_department_id)
 
 
+@router.get("/", response_model=list[TimetableSlotOut])
+def get_timetable(
+    class_id: int | None = None,
+    teacher_id: int | None = None,
+    department_id: int | None = None,
+    day_order: int | None = None,
+    _user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+    tenant_department_id: int | None = Depends(get_tenant_department_id),
+):
+    """Query timetable slots by class, teacher, department, or day order."""
+    return timetable_service.list_slots(
+        db=db,
+        class_id=class_id,
+        teacher_id=teacher_id,
+        department_id=department_id,
+        day_order=day_order,
+        tenant_department_id=tenant_department_id,
+    )
+
+
 @router.get("/teacher/{teacher_id}", response_model=list[TimetableSlotOut])
 def get_timetable_by_teacher(
     teacher_id: int,

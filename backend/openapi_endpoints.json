@@ -1,0 +1,3564 @@
+[
+  {
+    "method": "POST",
+    "path": "/auth/register",
+    "summary": "Register",
+    "tags": [
+      "Auth"
+    ],
+    "parameters": [],
+    "has_request_body": true,
+    "responses": [
+      "201",
+      "422"
+    ]
+  },
+  {
+    "method": "POST",
+    "path": "/auth/login",
+    "summary": "Login",
+    "tags": [
+      "Auth"
+    ],
+    "parameters": [],
+    "has_request_body": true,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "method": "GET",
+    "path": "/admin/master-export",
+    "summary": "Master Export",
+    "tags": [
+      "Admin"
+    ],
+    "parameters": [],
+    "has_request_body": false,
+    "responses": [
+      "200"
+    ]
+  },
+  {
+    "method": "POST",
+    "path": "/admin/first-login/setup",
+    "summary": "First Login Setup",
+    "tags": [
+      "Admin"
+    ],
+    "parameters": [],
+    "has_request_body": true,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "method": "GET",
+    "path": "/admin/secondary-admins",
+    "summary": "List Secondary Admins",
+    "tags": [
+      "Admin"
+    ],
+    "parameters": [
+      "X-Department-ID"
+    ],
+    "has_request_body": false,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "method": "POST",
+    "path": "/admin/secondary-admins",
+    "summary": "Create Secondary Admin",
+    "tags": [
+      "Admin"
+    ],
+    "parameters": [
+      "X-Department-ID"
+    ],
+    "has_request_body": true,
+    "responses": [
+      "201",
+      "422"
+    ]
+  },
+  {
+    "method": "PATCH",
+    "path": "/admin/secondary-admins/{admin_id}/enable",
+    "summary": "Enable Secondary Admin",
+    "tags": [
+      "Admin"
+    ],
+    "parameters": [
+      "admin_id",
+      "X-Department-ID"
+    ],
+    "has_request_body": false,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "method": "PATCH",
+    "path": "/admin/secondary-admins/{admin_id}/disable",
+    "summary": "Disable Secondary Admin",
+    "tags": [
+      "Admin"
+    ],
+    "parameters": [
+      "admin_id",
+      "X-Department-ID"
+    ],
+    "has_request_body": false,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "method": "GET",
+    "path": "/admin/audit-logs",
+    "summary": "Get Audit Logs",
+    "tags": [
+      "Admin"
+    ],
+    "parameters": [
+      "X-Department-ID"
+    ],
+    "has_request_body": false,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "method": "POST",
+    "path": "/admin/factory-reset",
+    "summary": "Factory Reset",
+    "tags": [
+      "Admin"
+    ],
+    "parameters": [],
+    "has_request_body": true,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "method": "POST",
+    "path": "/admin/clear-credits-history",
+    "summary": "Clear Credits History",
+    "tags": [
+      "Admin"
+    ],
+    "parameters": [
+      "X-Department-ID"
+    ],
+    "has_request_body": false,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "method": "POST",
+    "path": "/admin/clear-leaves-history",
+    "summary": "Clear Leaves History",
+    "tags": [
+      "Admin"
+    ],
+    "parameters": [
+      "X-Department-ID"
+    ],
+    "has_request_body": false,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "method": "POST",
+    "path": "/admin/principal",
+    "summary": "Create Principal",
+    "tags": [
+      "Admin"
+    ],
+    "parameters": [],
+    "has_request_body": true,
+    "responses": [
+      "201",
+      "422"
+    ]
+  },
+  {
+    "method": "GET",
+    "path": "/admin/global-users",
+    "summary": "List Global Users",
+    "tags": [
+      "Admin"
+    ],
+    "parameters": [],
+    "has_request_body": false,
+    "responses": [
+      "200"
+    ]
+  },
+  {
+    "method": "DELETE",
+    "path": "/admin/global-users/{user_id}",
+    "summary": "Delete Global User",
+    "tags": [
+      "Admin"
+    ],
+    "parameters": [
+      "user_id"
+    ],
+    "has_request_body": false,
+    "responses": [
+      "204",
+      "422"
+    ]
+  },
+  {
+    "method": "GET",
+    "path": "/admin/system-metrics",
+    "summary": "Get System Metrics",
+    "tags": [
+      "Admin"
+    ],
+    "parameters": [],
+    "has_request_body": false,
+    "responses": [
+      "200"
+    ]
+  },
+  {
+    "method": "POST",
+    "path": "/admin/system-metrics/clear-traffic",
+    "summary": "Clear Traffic Logs",
+    "tags": [
+      "Admin"
+    ],
+    "parameters": [],
+    "has_request_body": false,
+    "responses": [
+      "200"
+    ]
+  },
+  {
+    "method": "GET",
+    "path": "/admin/managers",
+    "summary": "List Managers",
+    "tags": [
+      "Admin"
+    ],
+    "parameters": [],
+    "has_request_body": false,
+    "responses": [
+      "200"
+    ]
+  },
+  {
+    "method": "POST",
+    "path": "/admin/managers",
+    "summary": "Create Manager",
+    "tags": [
+      "Admin"
+    ],
+    "parameters": [],
+    "has_request_body": true,
+    "responses": [
+      "201",
+      "422"
+    ]
+  },
+  {
+    "method": "GET",
+    "path": "/admin/managers/{manager_id}",
+    "summary": "Get Manager",
+    "tags": [
+      "Admin"
+    ],
+    "parameters": [
+      "manager_id"
+    ],
+    "has_request_body": false,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "method": "PUT",
+    "path": "/admin/managers/{manager_id}",
+    "summary": "Update Manager",
+    "tags": [
+      "Admin"
+    ],
+    "parameters": [
+      "manager_id"
+    ],
+    "has_request_body": true,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "method": "DELETE",
+    "path": "/admin/managers/{manager_id}",
+    "summary": "Delete Manager",
+    "tags": [
+      "Admin"
+    ],
+    "parameters": [
+      "manager_id"
+    ],
+    "has_request_body": false,
+    "responses": [
+      "204",
+      "422"
+    ]
+  },
+  {
+    "method": "GET",
+    "path": "/teachers/",
+    "summary": "List Teachers",
+    "tags": [
+      "Teachers"
+    ],
+    "parameters": [
+      "include_cross_department",
+      "X-Department-ID"
+    ],
+    "has_request_body": false,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "method": "POST",
+    "path": "/teachers/",
+    "summary": "Create Teacher",
+    "tags": [
+      "Teachers"
+    ],
+    "parameters": [
+      "X-Department-ID"
+    ],
+    "has_request_body": true,
+    "responses": [
+      "201",
+      "422"
+    ]
+  },
+  {
+    "method": "POST",
+    "path": "/teachers/bulk",
+    "summary": "Bulk Create Teachers",
+    "tags": [
+      "Teachers"
+    ],
+    "parameters": [
+      "X-Department-ID"
+    ],
+    "has_request_body": true,
+    "responses": [
+      "201",
+      "422"
+    ]
+  },
+  {
+    "method": "GET",
+    "path": "/teachers/me",
+    "summary": "Get Me",
+    "tags": [
+      "Teachers"
+    ],
+    "parameters": [],
+    "has_request_body": false,
+    "responses": [
+      "200"
+    ]
+  },
+  {
+    "method": "GET",
+    "path": "/teachers/{teacher_id}/credits",
+    "summary": "Get Teacher Credits",
+    "tags": [
+      "Teachers"
+    ],
+    "parameters": [
+      "teacher_id",
+      "X-Department-ID"
+    ],
+    "has_request_body": false,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "method": "PUT",
+    "path": "/teachers/{teacher_id}",
+    "summary": "Update Teacher",
+    "tags": [
+      "Teachers"
+    ],
+    "parameters": [
+      "teacher_id",
+      "X-Department-ID"
+    ],
+    "has_request_body": true,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "method": "DELETE",
+    "path": "/teachers/{teacher_id}",
+    "summary": "Delete Teacher",
+    "tags": [
+      "Teachers"
+    ],
+    "parameters": [
+      "teacher_id",
+      "X-Department-ID"
+    ],
+    "has_request_body": false,
+    "responses": [
+      "204",
+      "422"
+    ]
+  },
+  {
+    "method": "POST",
+    "path": "/teachers/me/biometrics/enroll",
+    "summary": "Enroll My Biometrics",
+    "tags": [
+      "Teachers"
+    ],
+    "parameters": [],
+    "has_request_body": false,
+    "responses": [
+      "200"
+    ]
+  },
+  {
+    "method": "POST",
+    "path": "/teachers/{teacher_id}/biometrics/reset",
+    "summary": "Reset Teacher Biometrics",
+    "tags": [
+      "Teachers"
+    ],
+    "parameters": [
+      "teacher_id"
+    ],
+    "has_request_body": false,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "method": "POST",
+    "path": "/timetable/submissions",
+    "summary": "Submit My Timetable Entry",
+    "tags": [
+      "Timetable"
+    ],
+    "parameters": [],
+    "has_request_body": true,
+    "responses": [
+      "201",
+      "422"
+    ]
+  },
+  {
+    "method": "GET",
+    "path": "/timetable/submissions/my",
+    "summary": "My Timetable Submissions",
+    "tags": [
+      "Timetable"
+    ],
+    "parameters": [],
+    "has_request_body": false,
+    "responses": [
+      "200"
+    ]
+  },
+  {
+    "method": "GET",
+    "path": "/timetable/submissions/pending",
+    "summary": "Pending Timetable Submissions",
+    "tags": [
+      "Timetable"
+    ],
+    "parameters": [
+      "X-Department-ID"
+    ],
+    "has_request_body": false,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "method": "POST",
+    "path": "/timetable/submissions/{submission_id}/review",
+    "summary": "Review Timetable Submission",
+    "tags": [
+      "Timetable"
+    ],
+    "parameters": [
+      "submission_id"
+    ],
+    "has_request_body": true,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "method": "POST",
+    "path": "/timetable/submissions/bulk-review",
+    "summary": "Bulk Review Timetable Submissions",
+    "tags": [
+      "Timetable"
+    ],
+    "parameters": [],
+    "has_request_body": true,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "method": "DELETE",
+    "path": "/timetable/submissions/{submission_id}",
+    "summary": "Cancel Timetable Submission",
+    "tags": [
+      "Timetable"
+    ],
+    "parameters": [
+      "submission_id"
+    ],
+    "has_request_body": false,
+    "responses": [
+      "204",
+      "422"
+    ]
+  },
+  {
+    "method": "POST",
+    "path": "/timetable/slot",
+    "summary": "Create Slot",
+    "tags": [
+      "Timetable"
+    ],
+    "parameters": [
+      "X-Department-ID"
+    ],
+    "has_request_body": true,
+    "responses": [
+      "201",
+      "422"
+    ]
+  },
+  {
+    "method": "POST",
+    "path": "/timetable/",
+    "summary": "Upload Timetable",
+    "tags": [
+      "Timetable"
+    ],
+    "parameters": [
+      "X-Department-ID"
+    ],
+    "has_request_body": true,
+    "responses": [
+      "201",
+      "422"
+    ]
+  },
+  {
+    "method": "GET",
+    "path": "/timetable/",
+    "summary": "Get Timetable",
+    "tags": [
+      "Timetable"
+    ],
+    "parameters": [
+      "class_id",
+      "teacher_id",
+      "department_id",
+      "day_order",
+      "X-Department-ID"
+    ],
+    "has_request_body": false,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "method": "GET",
+    "path": "/timetable/teacher/{teacher_id}",
+    "summary": "Get Timetable By Teacher",
+    "tags": [
+      "Timetable"
+    ],
+    "parameters": [
+      "teacher_id",
+      "X-Department-ID"
+    ],
+    "has_request_body": false,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "method": "DELETE",
+    "path": "/timetable/teacher/{teacher_id}",
+    "summary": "Delete Teacher Timetable",
+    "tags": [
+      "Timetable"
+    ],
+    "parameters": [
+      "teacher_id",
+      "X-Department-ID"
+    ],
+    "has_request_body": false,
+    "responses": [
+      "204",
+      "422"
+    ]
+  },
+  {
+    "method": "GET",
+    "path": "/timetable/class/{class_id}",
+    "summary": "Get Timetable By Class",
+    "tags": [
+      "Timetable"
+    ],
+    "parameters": [
+      "class_id",
+      "X-Department-ID"
+    ],
+    "has_request_body": false,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "method": "DELETE",
+    "path": "/timetable/{slot_id}",
+    "summary": "Delete Slot",
+    "tags": [
+      "Timetable"
+    ],
+    "parameters": [
+      "slot_id",
+      "X-Department-ID"
+    ],
+    "has_request_body": false,
+    "responses": [
+      "204",
+      "422"
+    ]
+  },
+  {
+    "method": "POST",
+    "path": "/timetable/reset",
+    "summary": "Reset Timetable",
+    "tags": [
+      "Timetable"
+    ],
+    "parameters": [
+      "X-Department-ID"
+    ],
+    "has_request_body": true,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "method": "POST",
+    "path": "/leaves/",
+    "summary": "Apply Leave",
+    "tags": [
+      "Leaves"
+    ],
+    "parameters": [],
+    "has_request_body": true,
+    "responses": [
+      "201",
+      "422"
+    ]
+  },
+  {
+    "method": "GET",
+    "path": "/leaves/",
+    "summary": "List All Leaves",
+    "tags": [
+      "Leaves"
+    ],
+    "parameters": [
+      "X-Department-ID"
+    ],
+    "has_request_body": false,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "method": "POST",
+    "path": "/leaves/batch",
+    "summary": "Apply Leave Batch",
+    "tags": [
+      "Leaves"
+    ],
+    "parameters": [],
+    "has_request_body": true,
+    "responses": [
+      "201",
+      "422"
+    ]
+  },
+  {
+    "method": "GET",
+    "path": "/leaves/my",
+    "summary": "My Leaves",
+    "tags": [
+      "Leaves"
+    ],
+    "parameters": [],
+    "has_request_body": false,
+    "responses": [
+      "200"
+    ]
+  },
+  {
+    "method": "PATCH",
+    "path": "/leaves/{leave_id}/approve",
+    "summary": "Approve Leave",
+    "tags": [
+      "Leaves"
+    ],
+    "parameters": [
+      "leave_id",
+      "X-Department-ID"
+    ],
+    "has_request_body": false,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "method": "PATCH",
+    "path": "/leaves/{leave_id}/reject",
+    "summary": "Reject Leave",
+    "tags": [
+      "Leaves"
+    ],
+    "parameters": [
+      "leave_id",
+      "X-Department-ID"
+    ],
+    "has_request_body": false,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "method": "PATCH",
+    "path": "/leaves/{leave_id}/status",
+    "summary": "Update Leave Status",
+    "tags": [
+      "Leaves"
+    ],
+    "parameters": [
+      "leave_id",
+      "X-Department-ID"
+    ],
+    "has_request_body": true,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "method": "POST",
+    "path": "/leaves/bulk-approve",
+    "summary": "Bulk Approve",
+    "tags": [
+      "Leaves"
+    ],
+    "parameters": [
+      "X-Department-ID"
+    ],
+    "has_request_body": true,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "method": "POST",
+    "path": "/leaves/bulk-reject",
+    "summary": "Bulk Reject",
+    "tags": [
+      "Leaves"
+    ],
+    "parameters": [
+      "X-Department-ID"
+    ],
+    "has_request_body": true,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "method": "POST",
+    "path": "/leaves/{leave_id}/assign",
+    "summary": "Assign Substitute",
+    "tags": [
+      "Leaves"
+    ],
+    "parameters": [
+      "leave_id",
+      "include_cross_department",
+      "X-Department-ID"
+    ],
+    "has_request_body": true,
+    "responses": [
+      "201",
+      "422"
+    ]
+  },
+  {
+    "method": "GET",
+    "path": "/leaves/{leave_id}/candidates",
+    "summary": "Get Recommendations",
+    "tags": [
+      "Leaves"
+    ],
+    "parameters": [
+      "leave_id",
+      "limit",
+      "include_cross_department",
+      "only_handles_class",
+      "X-Department-ID"
+    ],
+    "has_request_body": false,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "method": "GET",
+    "path": "/leaves/{leave_id}/recommendations",
+    "summary": "Get Recommendations",
+    "tags": [
+      "Leaves"
+    ],
+    "parameters": [
+      "leave_id",
+      "limit",
+      "include_cross_department",
+      "only_handles_class",
+      "X-Department-ID"
+    ],
+    "has_request_body": false,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "method": "POST",
+    "path": "/leaves/{leave_id}/assign-recommended",
+    "summary": "Assign Recommended Substitute",
+    "tags": [
+      "Leaves"
+    ],
+    "parameters": [
+      "leave_id",
+      "include_cross_department",
+      "X-Department-ID"
+    ],
+    "has_request_body": true,
+    "responses": [
+      "201",
+      "422"
+    ]
+  },
+  {
+    "method": "POST",
+    "path": "/leaves/{leave_id}/override",
+    "summary": "Override Substitute",
+    "tags": [
+      "Leaves"
+    ],
+    "parameters": [
+      "leave_id",
+      "include_cross_department",
+      "X-Department-ID"
+    ],
+    "has_request_body": true,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "method": "POST",
+    "path": "/leaves/{leave_id}/undo-assignment",
+    "summary": "Undo Assignment",
+    "tags": [
+      "Leaves"
+    ],
+    "parameters": [
+      "leave_id",
+      "X-Department-ID"
+    ],
+    "has_request_body": false,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "method": "POST",
+    "path": "/leaves/{leave_id}/lock",
+    "summary": "Set Assignment Lock",
+    "tags": [
+      "Leaves"
+    ],
+    "parameters": [
+      "leave_id",
+      "X-Department-ID"
+    ],
+    "has_request_body": true,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "method": "GET",
+    "path": "/leaves/{leave_id}/free-teachers",
+    "summary": "Free Teachers",
+    "tags": [
+      "Leaves"
+    ],
+    "parameters": [
+      "leave_id",
+      "include_cross_department",
+      "only_handles_class",
+      "X-Department-ID"
+    ],
+    "has_request_body": false,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "method": "DELETE",
+    "path": "/leaves/{leave_id}",
+    "summary": "Cancel Leave",
+    "tags": [
+      "Leaves"
+    ],
+    "parameters": [
+      "leave_id"
+    ],
+    "has_request_body": false,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "method": "POST",
+    "path": "/leaves/{leave_id}/cancel",
+    "summary": "Cancel Leave",
+    "tags": [
+      "Leaves"
+    ],
+    "parameters": [
+      "leave_id"
+    ],
+    "has_request_body": false,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "method": "POST",
+    "path": "/leaves/{leave_id}/admin-cancel",
+    "summary": "Admin Cancel Leave",
+    "tags": [
+      "Leaves"
+    ],
+    "parameters": [
+      "leave_id",
+      "X-Department-ID"
+    ],
+    "has_request_body": true,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "method": "GET",
+    "path": "/leaves/{leave_id}/cancel-impact",
+    "summary": "Cancel Impact",
+    "tags": [
+      "Leaves"
+    ],
+    "parameters": [
+      "leave_id",
+      "X-Department-ID"
+    ],
+    "has_request_body": false,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "method": "POST",
+    "path": "/leaves/admin-create",
+    "summary": "Admin Create Leave",
+    "tags": [
+      "Leaves"
+    ],
+    "parameters": [
+      "X-Department-ID"
+    ],
+    "has_request_body": true,
+    "responses": [
+      "201",
+      "422"
+    ]
+  },
+  {
+    "method": "POST",
+    "path": "/credits/adjust",
+    "summary": "Adjust Credits",
+    "tags": [
+      "Credits"
+    ],
+    "parameters": [
+      "X-Department-ID"
+    ],
+    "has_request_body": true,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "method": "GET",
+    "path": "/credits/my/transactions",
+    "summary": "My Transactions",
+    "tags": [
+      "Credits"
+    ],
+    "parameters": [],
+    "has_request_body": false,
+    "responses": [
+      "200"
+    ]
+  },
+  {
+    "method": "GET",
+    "path": "/credits/transactions",
+    "summary": "All Transactions",
+    "tags": [
+      "Credits"
+    ],
+    "parameters": [
+      "X-Department-ID"
+    ],
+    "has_request_body": false,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "method": "GET",
+    "path": "/credits/report",
+    "summary": "Credit Report",
+    "tags": [
+      "Credits"
+    ],
+    "parameters": [
+      "X-Department-ID"
+    ],
+    "has_request_body": false,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "method": "GET",
+    "path": "/notifications/",
+    "summary": "List Notifications",
+    "tags": [
+      "Notifications"
+    ],
+    "parameters": [
+      "unread_only"
+    ],
+    "has_request_body": false,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "method": "GET",
+    "path": "/notifications/unread-count",
+    "summary": "Get Unread Count",
+    "tags": [
+      "Notifications"
+    ],
+    "parameters": [],
+    "has_request_body": false,
+    "responses": [
+      "200"
+    ]
+  },
+  {
+    "method": "PATCH",
+    "path": "/notifications/{notification_id}/read",
+    "summary": "Mark Read",
+    "tags": [
+      "Notifications"
+    ],
+    "parameters": [
+      "notification_id"
+    ],
+    "has_request_body": false,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "method": "PATCH",
+    "path": "/notifications/read-all",
+    "summary": "Mark All Read",
+    "tags": [
+      "Notifications"
+    ],
+    "parameters": [],
+    "has_request_body": false,
+    "responses": [
+      "200"
+    ]
+  },
+  {
+    "method": "GET",
+    "path": "/notifications/vapid-public-key",
+    "summary": "Vapid Public Key",
+    "tags": [
+      "Notifications"
+    ],
+    "parameters": [],
+    "has_request_body": false,
+    "responses": [
+      "200"
+    ]
+  },
+  {
+    "method": "POST",
+    "path": "/notifications/subscribe",
+    "summary": "Subscribe",
+    "tags": [
+      "Notifications"
+    ],
+    "parameters": [],
+    "has_request_body": true,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "method": "POST",
+    "path": "/notifications/unsubscribe",
+    "summary": "Unsubscribe",
+    "tags": [
+      "Notifications"
+    ],
+    "parameters": [],
+    "has_request_body": true,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "method": "POST",
+    "path": "/notifications/test-push",
+    "summary": "Test Push Notification",
+    "tags": [
+      "Notifications"
+    ],
+    "parameters": [],
+    "has_request_body": false,
+    "responses": [
+      "200"
+    ]
+  },
+  {
+    "method": "GET",
+    "path": "/departments/",
+    "summary": "List Departments",
+    "tags": [
+      "Departments"
+    ],
+    "parameters": [
+      "include_global",
+      "X-Department-ID"
+    ],
+    "has_request_body": false,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "method": "POST",
+    "path": "/departments/",
+    "summary": "Create Department",
+    "tags": [
+      "Departments"
+    ],
+    "parameters": [],
+    "has_request_body": true,
+    "responses": [
+      "201",
+      "422"
+    ]
+  },
+  {
+    "method": "PATCH",
+    "path": "/departments/{dept_id}",
+    "summary": "Update Department",
+    "tags": [
+      "Departments"
+    ],
+    "parameters": [
+      "dept_id",
+      "X-Department-ID"
+    ],
+    "has_request_body": true,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "method": "DELETE",
+    "path": "/departments/{dept_id}",
+    "summary": "Delete Department",
+    "tags": [
+      "Departments"
+    ],
+    "parameters": [
+      "dept_id"
+    ],
+    "has_request_body": false,
+    "responses": [
+      "204",
+      "422"
+    ]
+  },
+  {
+    "method": "POST",
+    "path": "/departments/{dept_id}/admin",
+    "summary": "Create Department Admin",
+    "tags": [
+      "Departments"
+    ],
+    "parameters": [
+      "dept_id"
+    ],
+    "has_request_body": true,
+    "responses": [
+      "201",
+      "422"
+    ]
+  },
+  {
+    "method": "GET",
+    "path": "/subjects/",
+    "summary": "List Subjects",
+    "tags": [
+      "Subjects"
+    ],
+    "parameters": [
+      "include_archived",
+      "include_cross_department",
+      "X-Department-ID"
+    ],
+    "has_request_body": false,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "method": "POST",
+    "path": "/subjects/",
+    "summary": "Create Subject",
+    "tags": [
+      "Subjects"
+    ],
+    "parameters": [
+      "X-Department-ID"
+    ],
+    "has_request_body": true,
+    "responses": [
+      "201",
+      "422"
+    ]
+  },
+  {
+    "method": "PATCH",
+    "path": "/subjects/{subject_id}",
+    "summary": "Update Subject",
+    "tags": [
+      "Subjects"
+    ],
+    "parameters": [
+      "subject_id",
+      "X-Department-ID"
+    ],
+    "has_request_body": true,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "method": "DELETE",
+    "path": "/subjects/{subject_id}",
+    "summary": "Delete Subject",
+    "tags": [
+      "Subjects"
+    ],
+    "parameters": [
+      "subject_id",
+      "X-Department-ID"
+    ],
+    "has_request_body": false,
+    "responses": [
+      "204",
+      "422"
+    ]
+  },
+  {
+    "method": "PATCH",
+    "path": "/subjects/{subject_id}/archive",
+    "summary": "Archive Subject",
+    "tags": [
+      "Subjects"
+    ],
+    "parameters": [
+      "subject_id",
+      "X-Department-ID"
+    ],
+    "has_request_body": false,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "method": "PATCH",
+    "path": "/subjects/{subject_id}/unarchive",
+    "summary": "Unarchive Subject",
+    "tags": [
+      "Subjects"
+    ],
+    "parameters": [
+      "subject_id",
+      "X-Department-ID"
+    ],
+    "has_request_body": false,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "method": "GET",
+    "path": "/classes/directory",
+    "summary": "Class Directory",
+    "tags": [
+      "Classes"
+    ],
+    "parameters": [],
+    "has_request_body": false,
+    "responses": [
+      "200"
+    ]
+  },
+  {
+    "method": "GET",
+    "path": "/classes/{class_id}/faculty",
+    "summary": "Class Faculty",
+    "tags": [
+      "Classes"
+    ],
+    "parameters": [
+      "class_id"
+    ],
+    "has_request_body": false,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "method": "GET",
+    "path": "/classes/",
+    "summary": "List Classes",
+    "tags": [
+      "Classes"
+    ],
+    "parameters": [
+      "X-Department-ID"
+    ],
+    "has_request_body": false,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "method": "POST",
+    "path": "/classes/",
+    "summary": "Create Class",
+    "tags": [
+      "Classes"
+    ],
+    "parameters": [
+      "X-Department-ID"
+    ],
+    "has_request_body": true,
+    "responses": [
+      "201",
+      "422"
+    ]
+  },
+  {
+    "method": "POST",
+    "path": "/classes/bulk",
+    "summary": "Bulk Create Classes",
+    "tags": [
+      "Classes"
+    ],
+    "parameters": [
+      "X-Department-ID"
+    ],
+    "has_request_body": true,
+    "responses": [
+      "201",
+      "422"
+    ]
+  },
+  {
+    "method": "PATCH",
+    "path": "/classes/{class_id}",
+    "summary": "Update Class",
+    "tags": [
+      "Classes"
+    ],
+    "parameters": [
+      "class_id",
+      "X-Department-ID"
+    ],
+    "has_request_body": true,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "method": "DELETE",
+    "path": "/classes/{class_id}",
+    "summary": "Delete Class",
+    "tags": [
+      "Classes"
+    ],
+    "parameters": [
+      "class_id",
+      "X-Department-ID"
+    ],
+    "has_request_body": false,
+    "responses": [
+      "204",
+      "422"
+    ]
+  },
+  {
+    "method": "GET",
+    "path": "/rooms/",
+    "summary": "List Rooms",
+    "tags": [
+      "Rooms"
+    ],
+    "parameters": [
+      "room_type"
+    ],
+    "has_request_body": false,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "method": "POST",
+    "path": "/rooms/",
+    "summary": "Create Room",
+    "tags": [
+      "Rooms"
+    ],
+    "parameters": [],
+    "has_request_body": true,
+    "responses": [
+      "201",
+      "422"
+    ]
+  },
+  {
+    "method": "POST",
+    "path": "/rooms/bulk",
+    "summary": "Bulk Create Rooms",
+    "tags": [
+      "Rooms"
+    ],
+    "parameters": [],
+    "has_request_body": true,
+    "responses": [
+      "201",
+      "422"
+    ]
+  },
+  {
+    "method": "PATCH",
+    "path": "/rooms/{room_id}",
+    "summary": "Update Room",
+    "tags": [
+      "Rooms"
+    ],
+    "parameters": [
+      "room_id"
+    ],
+    "has_request_body": true,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "method": "DELETE",
+    "path": "/rooms/{room_id}",
+    "summary": "Delete Room",
+    "tags": [
+      "Rooms"
+    ],
+    "parameters": [
+      "room_id"
+    ],
+    "has_request_body": false,
+    "responses": [
+      "204",
+      "422"
+    ]
+  },
+  {
+    "method": "GET",
+    "path": "/rooms/availability/dashboard",
+    "summary": "Availability Dashboard",
+    "tags": [
+      "Rooms"
+    ],
+    "parameters": [
+      "day_order",
+      "period_number"
+    ],
+    "has_request_body": false,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "method": "GET",
+    "path": "/rooms/{room_id}/check-availability",
+    "summary": "Check Availability",
+    "tags": [
+      "Rooms"
+    ],
+    "parameters": [
+      "room_id",
+      "day_order",
+      "period_number"
+    ],
+    "has_request_body": false,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "method": "GET",
+    "path": "/rooms/occupancy",
+    "summary": "Get Classroom Occupancy",
+    "tags": [
+      "Rooms"
+    ],
+    "parameters": [
+      "day_order",
+      "period_number",
+      "department_id",
+      "room_type"
+    ],
+    "has_request_body": false,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "method": "GET",
+    "path": "/rooms/occupancy/matrix",
+    "summary": "Get Classroom Occupancy",
+    "tags": [
+      "Rooms"
+    ],
+    "parameters": [
+      "day_order",
+      "period_number",
+      "department_id",
+      "room_type"
+    ],
+    "has_request_body": false,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "method": "GET",
+    "path": "/day-order-calendar/",
+    "summary": "Get Range",
+    "tags": [
+      "Day Order Calendar"
+    ],
+    "parameters": [
+      "start",
+      "end"
+    ],
+    "has_request_body": false,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "method": "POST",
+    "path": "/day-order-calendar/bulk-set",
+    "summary": "Bulk Set",
+    "tags": [
+      "Day Order Calendar"
+    ],
+    "parameters": [],
+    "has_request_body": true,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "method": "GET",
+    "path": "/day-order-calendar/resolve",
+    "summary": "Resolve",
+    "tags": [
+      "Day Order Calendar"
+    ],
+    "parameters": [
+      "date"
+    ],
+    "has_request_body": false,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "method": "GET",
+    "path": "/academic-calendar/academic-years",
+    "summary": "List Academic Years",
+    "tags": [
+      "Academic Calendar"
+    ],
+    "parameters": [],
+    "has_request_body": false,
+    "responses": [
+      "200"
+    ]
+  },
+  {
+    "method": "POST",
+    "path": "/academic-calendar/academic-years",
+    "summary": "Create Academic Year",
+    "tags": [
+      "Academic Calendar"
+    ],
+    "parameters": [],
+    "has_request_body": true,
+    "responses": [
+      "201",
+      "422"
+    ]
+  },
+  {
+    "method": "GET",
+    "path": "/academic-calendar/semesters",
+    "summary": "List Semesters",
+    "tags": [
+      "Academic Calendar"
+    ],
+    "parameters": [
+      "academic_year_id"
+    ],
+    "has_request_body": false,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "method": "POST",
+    "path": "/academic-calendar/semesters",
+    "summary": "Create Semester",
+    "tags": [
+      "Academic Calendar"
+    ],
+    "parameters": [],
+    "has_request_body": true,
+    "responses": [
+      "201",
+      "422"
+    ]
+  },
+  {
+    "method": "GET",
+    "path": "/academic-calendar/days",
+    "summary": "Get Calendar Range",
+    "tags": [
+      "Academic Calendar"
+    ],
+    "parameters": [
+      "start",
+      "end"
+    ],
+    "has_request_body": false,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "method": "GET",
+    "path": "/academic-calendar/days/{the_date}",
+    "summary": "Get Calendar Day",
+    "tags": [
+      "Academic Calendar"
+    ],
+    "parameters": [
+      "the_date"
+    ],
+    "has_request_body": false,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "method": "DELETE",
+    "path": "/academic-calendar/days/{the_date}",
+    "summary": "Delete Calendar Day",
+    "tags": [
+      "Academic Calendar"
+    ],
+    "parameters": [
+      "the_date"
+    ],
+    "has_request_body": false,
+    "responses": [
+      "204",
+      "422"
+    ]
+  },
+  {
+    "method": "POST",
+    "path": "/academic-calendar/days/mark",
+    "summary": "Mark Day",
+    "tags": [
+      "Academic Calendar"
+    ],
+    "parameters": [],
+    "has_request_body": true,
+    "responses": [
+      "201",
+      "422"
+    ]
+  },
+  {
+    "method": "POST",
+    "path": "/academic-calendar/days/bulk-mark",
+    "summary": "Bulk Mark Days",
+    "tags": [
+      "Academic Calendar"
+    ],
+    "parameters": [],
+    "has_request_body": true,
+    "responses": [
+      "201",
+      "422"
+    ]
+  },
+  {
+    "method": "POST",
+    "path": "/academic-calendar/days/day-order/assign",
+    "summary": "Assign Day Order",
+    "tags": [
+      "Academic Calendar"
+    ],
+    "parameters": [],
+    "has_request_body": true,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "method": "POST",
+    "path": "/academic-calendar/days/day-order/skip",
+    "summary": "Skip Day Order",
+    "tags": [
+      "Academic Calendar"
+    ],
+    "parameters": [],
+    "has_request_body": true,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "method": "DELETE",
+    "path": "/academic-calendar/days/{the_date}/override",
+    "summary": "Clear Override",
+    "tags": [
+      "Academic Calendar"
+    ],
+    "parameters": [
+      "the_date"
+    ],
+    "has_request_body": false,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "method": "GET",
+    "path": "/academic-calendar/resolve",
+    "summary": "Resolve",
+    "tags": [
+      "Academic Calendar"
+    ],
+    "parameters": [
+      "date"
+    ],
+    "has_request_body": false,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "method": "GET",
+    "path": "/academic-calendar/today-summary",
+    "summary": "Today Summary",
+    "tags": [
+      "Academic Calendar"
+    ],
+    "parameters": [
+      "date",
+      "X-Department-ID"
+    ],
+    "has_request_body": false,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "method": "GET",
+    "path": "/academic-calendar/my-today-summary",
+    "summary": "My Today Summary",
+    "tags": [
+      "Academic Calendar"
+    ],
+    "parameters": [
+      "date"
+    ],
+    "has_request_body": false,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "method": "GET",
+    "path": "/academic-calendar/reports/working-days",
+    "summary": "Working Day Report",
+    "tags": [
+      "Academic Calendar"
+    ],
+    "parameters": [
+      "start",
+      "end"
+    ],
+    "has_request_body": false,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "method": "GET",
+    "path": "/academic-calendar/reports/holidays",
+    "summary": "Holiday Report",
+    "tags": [
+      "Academic Calendar"
+    ],
+    "parameters": [
+      "start",
+      "end"
+    ],
+    "has_request_body": false,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "method": "GET",
+    "path": "/academic-calendar/reports/day-orders",
+    "summary": "Day Order Report",
+    "tags": [
+      "Academic Calendar"
+    ],
+    "parameters": [
+      "start",
+      "end"
+    ],
+    "has_request_body": false,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "method": "GET",
+    "path": "/academic-calendar/reports/faculty-workload",
+    "summary": "Faculty Workload Report",
+    "tags": [
+      "Academic Calendar"
+    ],
+    "parameters": [
+      "X-Department-ID"
+    ],
+    "has_request_body": false,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "method": "GET",
+    "path": "/campus-operations/cross-department-substitutions",
+    "summary": "Get Cross Department Substitutions",
+    "tags": [
+      "Campus Operations"
+    ],
+    "parameters": [
+      "X-Department-ID"
+    ],
+    "has_request_body": false,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "method": "PUT",
+    "path": "/campus-operations/cross-department-substitutions",
+    "summary": "Set Cross Department Substitutions",
+    "tags": [
+      "Campus Operations"
+    ],
+    "parameters": [
+      "enabled",
+      "X-Department-ID"
+    ],
+    "has_request_body": false,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "method": "GET",
+    "path": "/campus-operations/mode",
+    "summary": "Get Mode",
+    "tags": [
+      "Campus Operations"
+    ],
+    "parameters": [
+      "X-Department-ID"
+    ],
+    "has_request_body": false,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "method": "PUT",
+    "path": "/campus-operations/mode",
+    "summary": "Set Mode",
+    "tags": [
+      "Campus Operations"
+    ],
+    "parameters": [
+      "X-Department-ID"
+    ],
+    "has_request_body": true,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "method": "GET",
+    "path": "/campus-operations/preferences/me",
+    "summary": "Get My Preferences",
+    "tags": [
+      "Campus Operations"
+    ],
+    "parameters": [],
+    "has_request_body": false,
+    "responses": [
+      "200"
+    ]
+  },
+  {
+    "method": "PUT",
+    "path": "/campus-operations/preferences/me",
+    "summary": "Update My Preferences",
+    "tags": [
+      "Campus Operations"
+    ],
+    "parameters": [],
+    "has_request_body": true,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "method": "GET",
+    "path": "/campus-operations/preferences/{teacher_id}",
+    "summary": "Get Teacher Preferences",
+    "tags": [
+      "Campus Operations"
+    ],
+    "parameters": [
+      "teacher_id",
+      "X-Department-ID"
+    ],
+    "has_request_body": false,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "method": "PUT",
+    "path": "/campus-operations/preferences/{teacher_id}",
+    "summary": "Update Teacher Preferences",
+    "tags": [
+      "Campus Operations"
+    ],
+    "parameters": [
+      "teacher_id",
+      "X-Department-ID"
+    ],
+    "has_request_body": true,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "method": "GET",
+    "path": "/campus-operations/system-analytics",
+    "summary": "Get System Analytics",
+    "tags": [
+      "Campus Operations"
+    ],
+    "parameters": [],
+    "has_request_body": false,
+    "responses": [
+      "200"
+    ]
+  },
+  {
+    "method": "POST",
+    "path": "/campus-operations/dry-run",
+    "summary": "Run Dry Run",
+    "tags": [
+      "Campus Operations"
+    ],
+    "parameters": [],
+    "has_request_body": true,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "method": "POST",
+    "path": "/campus-operations/bulk-config",
+    "summary": "Bulk Config",
+    "tags": [
+      "Campus Operations"
+    ],
+    "parameters": [],
+    "has_request_body": true,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "method": "PUT",
+    "path": "/campus-operations/preferences/bulk-override",
+    "summary": "Bulk Override Preferences",
+    "tags": [
+      "Campus Operations"
+    ],
+    "parameters": [
+      "X-Department-ID"
+    ],
+    "has_request_body": true,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "method": "GET",
+    "path": "/teacher/substitution/enabled",
+    "summary": "Check Enabled",
+    "tags": [
+      "Teacher Substitution"
+    ],
+    "parameters": [],
+    "has_request_body": false,
+    "responses": [
+      "200"
+    ]
+  },
+  {
+    "method": "GET",
+    "path": "/teacher/substitution/my-leaves",
+    "summary": "Get My Leaves",
+    "tags": [
+      "Teacher Substitution"
+    ],
+    "parameters": [
+      "include_expired"
+    ],
+    "has_request_body": false,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "method": "GET",
+    "path": "/teacher/substitution/leave/{leave_id}/candidates",
+    "summary": "Get Candidates",
+    "tags": [
+      "Teacher Substitution"
+    ],
+    "parameters": [
+      "leave_id",
+      "include_cross_department",
+      "only_handles_class"
+    ],
+    "has_request_body": false,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "method": "GET",
+    "path": "/teacher/substitution/leave/{leave_id}/free-teachers",
+    "summary": "Get Free Teachers",
+    "tags": [
+      "Teacher Substitution"
+    ],
+    "parameters": [
+      "leave_id",
+      "include_cross_department",
+      "only_handles_class"
+    ],
+    "has_request_body": false,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "method": "POST",
+    "path": "/teacher/substitution/leave/{leave_id}/assign/{substitute_id}",
+    "summary": "Assign Substitute",
+    "tags": [
+      "Teacher Substitution"
+    ],
+    "parameters": [
+      "leave_id",
+      "substitute_id",
+      "include_cross_department",
+      "override_substitution_limit"
+    ],
+    "has_request_body": false,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "method": "PUT",
+    "path": "/teacher/substitution/leave/{leave_id}/override/{substitute_id}",
+    "summary": "Override Substitute",
+    "tags": [
+      "Teacher Substitution"
+    ],
+    "parameters": [
+      "leave_id",
+      "substitute_id",
+      "include_cross_department",
+      "override_substitution_limit"
+    ],
+    "has_request_body": false,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "method": "POST",
+    "path": "/teacher/substitution/leave/{leave_id}/undo-assignment",
+    "summary": "Undo Assignment",
+    "tags": [
+      "Teacher Substitution"
+    ],
+    "parameters": [
+      "leave_id"
+    ],
+    "has_request_body": false,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "method": "POST",
+    "path": "/teacher/substitution/leave/{leave_id}/lock",
+    "summary": "Set Assignment Lock",
+    "tags": [
+      "Teacher Substitution"
+    ],
+    "parameters": [
+      "leave_id"
+    ],
+    "has_request_body": true,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "method": "DELETE",
+    "path": "/teacher/substitution/clear-all-assignments",
+    "summary": "Clear All Assignments",
+    "tags": [
+      "Teacher Substitution"
+    ],
+    "parameters": [],
+    "has_request_body": false,
+    "responses": [
+      "200"
+    ]
+  },
+  {
+    "method": "DELETE",
+    "path": "/teacher/substitution/reset-preferences",
+    "summary": "Reset Preferences",
+    "tags": [
+      "Teacher Substitution"
+    ],
+    "parameters": [],
+    "has_request_body": false,
+    "responses": [
+      "200"
+    ]
+  },
+  {
+    "method": "GET",
+    "path": "/teacher/substitution/config",
+    "summary": "Get Config",
+    "tags": [
+      "Teacher Substitution"
+    ],
+    "parameters": [],
+    "has_request_body": false,
+    "responses": [
+      "200"
+    ]
+  },
+  {
+    "method": "PUT",
+    "path": "/teacher/substitution/config",
+    "summary": "Update Config",
+    "tags": [
+      "Teacher Substitution"
+    ],
+    "parameters": [],
+    "has_request_body": true,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "method": "GET",
+    "path": "/substitutions/today",
+    "summary": "Get Today Substitutions",
+    "tags": [
+      "Today's Substitutions"
+    ],
+    "parameters": [
+      "date",
+      "X-Department-ID"
+    ],
+    "has_request_body": false,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "method": "GET",
+    "path": "/principal/overview",
+    "summary": "Get Principal Overview",
+    "tags": [
+      "Principal Dashboard"
+    ],
+    "parameters": [],
+    "has_request_body": false,
+    "responses": [
+      "200"
+    ]
+  },
+  {
+    "method": "GET",
+    "path": "/manager/dashboard",
+    "summary": "Get Manager Dashboard",
+    "tags": [
+      "manager"
+    ],
+    "parameters": [
+      "X-Department-ID"
+    ],
+    "has_request_body": false,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "method": "GET",
+    "path": "/manager/staff",
+    "summary": "List Staff",
+    "tags": [
+      "manager"
+    ],
+    "parameters": [
+      "category",
+      "employment_status",
+      "assigned_room_id",
+      "search",
+      "X-Department-ID"
+    ],
+    "has_request_body": false,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "method": "POST",
+    "path": "/manager/staff",
+    "summary": "Create Staff",
+    "tags": [
+      "manager"
+    ],
+    "parameters": [],
+    "has_request_body": true,
+    "responses": [
+      "201",
+      "422"
+    ]
+  },
+  {
+    "method": "GET",
+    "path": "/manager/staff/{staff_id}",
+    "summary": "Get Staff",
+    "tags": [
+      "manager"
+    ],
+    "parameters": [
+      "staff_id",
+      "X-Department-ID"
+    ],
+    "has_request_body": false,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "method": "PUT",
+    "path": "/manager/staff/{staff_id}",
+    "summary": "Update Staff",
+    "tags": [
+      "manager"
+    ],
+    "parameters": [
+      "staff_id"
+    ],
+    "has_request_body": true,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "method": "DELETE",
+    "path": "/manager/staff/{staff_id}",
+    "summary": "Delete Staff",
+    "tags": [
+      "manager"
+    ],
+    "parameters": [
+      "staff_id"
+    ],
+    "has_request_body": false,
+    "responses": [
+      "204",
+      "422"
+    ]
+  },
+  {
+    "method": "PATCH",
+    "path": "/manager/staff/{staff_id}/status",
+    "summary": "Toggle Staff Status",
+    "tags": [
+      "manager"
+    ],
+    "parameters": [
+      "staff_id",
+      "employment_status"
+    ],
+    "has_request_body": false,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "method": "GET",
+    "path": "/manager/labs",
+    "summary": "Get Available Labs",
+    "tags": [
+      "manager"
+    ],
+    "parameters": [
+      "X-Department-ID"
+    ],
+    "has_request_body": false,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "method": "GET",
+    "path": "/manager/leaves",
+    "summary": "List Manager Staff Leaves",
+    "tags": [
+      "manager"
+    ],
+    "parameters": [
+      "status_filter",
+      "category_filter",
+      "X-Department-ID"
+    ],
+    "has_request_body": false,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "method": "POST",
+    "path": "/manager/leaves/{leave_id}/approve",
+    "summary": "Approve Staff Leave",
+    "tags": [
+      "manager"
+    ],
+    "parameters": [
+      "leave_id"
+    ],
+    "has_request_body": true,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "method": "POST",
+    "path": "/manager/leaves/{leave_id}/reject",
+    "summary": "Reject Staff Leave",
+    "tags": [
+      "manager"
+    ],
+    "parameters": [
+      "leave_id"
+    ],
+    "has_request_body": true,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "method": "GET",
+    "path": "/manager/credits",
+    "summary": "List Staff Credits",
+    "tags": [
+      "manager"
+    ],
+    "parameters": [
+      "category_filter",
+      "X-Department-ID"
+    ],
+    "has_request_body": false,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "method": "GET",
+    "path": "/manager/credits/{staff_id}/ledger",
+    "summary": "Get Staff Credit Ledger",
+    "tags": [
+      "manager"
+    ],
+    "parameters": [
+      "staff_id"
+    ],
+    "has_request_body": false,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "method": "POST",
+    "path": "/manager/credits/adjust",
+    "summary": "Adjust Staff Credit Balance",
+    "tags": [
+      "manager"
+    ],
+    "parameters": [],
+    "has_request_body": true,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "method": "POST",
+    "path": "/manager/credits/quota",
+    "summary": "Update Staff Leave Limit Quota",
+    "tags": [
+      "manager"
+    ],
+    "parameters": [],
+    "has_request_body": true,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "method": "GET",
+    "path": "/staff/me",
+    "summary": "Get My Staff Profile",
+    "tags": [
+      "Staff Portal"
+    ],
+    "parameters": [],
+    "has_request_body": false,
+    "responses": [
+      "200"
+    ]
+  },
+  {
+    "method": "GET",
+    "path": "/staff/dashboard",
+    "summary": "Get Staff Dashboard",
+    "tags": [
+      "Staff Portal"
+    ],
+    "parameters": [
+      "selected_room_id"
+    ],
+    "has_request_body": false,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "method": "POST",
+    "path": "/staff/leaves",
+    "summary": "Apply Leave",
+    "tags": [
+      "Staff Portal"
+    ],
+    "parameters": [],
+    "has_request_body": true,
+    "responses": [
+      "201",
+      "422"
+    ]
+  },
+  {
+    "method": "GET",
+    "path": "/staff/leaves",
+    "summary": "Get My Leaves",
+    "tags": [
+      "Staff Portal"
+    ],
+    "parameters": [
+      "status_filter"
+    ],
+    "has_request_body": false,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "method": "DELETE",
+    "path": "/staff/leaves/{leave_id}",
+    "summary": "Cancel Leave",
+    "tags": [
+      "Staff Portal"
+    ],
+    "parameters": [
+      "leave_id"
+    ],
+    "has_request_body": false,
+    "responses": [
+      "204",
+      "422"
+    ]
+  },
+  {
+    "method": "GET",
+    "path": "/staff/ledger",
+    "summary": "Get My Ledger",
+    "tags": [
+      "Staff Portal"
+    ],
+    "parameters": [],
+    "has_request_body": false,
+    "responses": [
+      "200"
+    ]
+  },
+  {
+    "method": "POST",
+    "path": "/staff/me/biometrics/enroll",
+    "summary": "Enroll Staff Biometrics",
+    "tags": [
+      "Staff Portal"
+    ],
+    "parameters": [],
+    "has_request_body": false,
+    "responses": [
+      "200"
+    ]
+  },
+  {
+    "method": "GET",
+    "path": "/admin/backups/schedule",
+    "summary": "Get Backup Schedule",
+    "tags": [
+      "Backup & Restore"
+    ],
+    "parameters": [],
+    "has_request_body": false,
+    "responses": [
+      "200"
+    ]
+  },
+  {
+    "method": "PUT",
+    "path": "/admin/backups/schedule",
+    "summary": "Update Backup Schedule",
+    "tags": [
+      "Backup & Restore"
+    ],
+    "parameters": [],
+    "has_request_body": true,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "method": "POST",
+    "path": "/admin/backups/schedule/run-now",
+    "summary": "Run Auto Backup Now",
+    "tags": [
+      "Backup & Restore"
+    ],
+    "parameters": [],
+    "has_request_body": false,
+    "responses": [
+      "200"
+    ]
+  },
+  {
+    "method": "POST",
+    "path": "/admin/backups/import",
+    "summary": "Import Backup File",
+    "tags": [
+      "Backup & Restore"
+    ],
+    "parameters": [],
+    "has_request_body": true,
+    "responses": [
+      "201",
+      "422"
+    ]
+  },
+  {
+    "method": "GET",
+    "path": "/admin/backups",
+    "summary": "List Backups",
+    "tags": [
+      "Backup & Restore"
+    ],
+    "parameters": [],
+    "has_request_body": false,
+    "responses": [
+      "200"
+    ]
+  },
+  {
+    "method": "POST",
+    "path": "/admin/backups",
+    "summary": "Create Backup",
+    "tags": [
+      "Backup & Restore"
+    ],
+    "parameters": [],
+    "has_request_body": false,
+    "responses": [
+      "201"
+    ]
+  },
+  {
+    "method": "GET",
+    "path": "/admin/backups/summary",
+    "summary": "Get Summary",
+    "tags": [
+      "Backup & Restore"
+    ],
+    "parameters": [],
+    "has_request_body": false,
+    "responses": [
+      "200"
+    ]
+  },
+  {
+    "method": "GET",
+    "path": "/admin/backups/{backup_id}",
+    "summary": "Get Backup",
+    "tags": [
+      "Backup & Restore"
+    ],
+    "parameters": [
+      "backup_id"
+    ],
+    "has_request_body": false,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "method": "DELETE",
+    "path": "/admin/backups/{backup_id}",
+    "summary": "Delete Backup",
+    "tags": [
+      "Backup & Restore"
+    ],
+    "parameters": [
+      "backup_id"
+    ],
+    "has_request_body": false,
+    "responses": [
+      "204",
+      "422"
+    ]
+  },
+  {
+    "method": "GET",
+    "path": "/admin/backups/{backup_id}/download",
+    "summary": "Download Backup",
+    "tags": [
+      "Backup & Restore"
+    ],
+    "parameters": [
+      "backup_id"
+    ],
+    "has_request_body": false,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "method": "POST",
+    "path": "/admin/backups/{backup_id}/validate",
+    "summary": "Validate Backup",
+    "tags": [
+      "Backup & Restore"
+    ],
+    "parameters": [
+      "backup_id"
+    ],
+    "has_request_body": false,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "method": "POST",
+    "path": "/admin/backups/{backup_id}/restore",
+    "summary": "Restore Backup",
+    "tags": [
+      "Backup & Restore"
+    ],
+    "parameters": [
+      "backup_id"
+    ],
+    "has_request_body": true,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "method": "GET",
+    "path": "/governance/overview",
+    "summary": "Get Overview",
+    "tags": [
+      "Governance Command Center"
+    ],
+    "parameters": [],
+    "has_request_body": false,
+    "responses": [
+      "200"
+    ]
+  },
+  {
+    "method": "GET",
+    "path": "/governance/search",
+    "summary": "Search Entities",
+    "tags": [
+      "Governance Command Center"
+    ],
+    "parameters": [
+      "q"
+    ],
+    "has_request_body": false,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "method": "GET",
+    "path": "/governance/candidates/{leave_id}",
+    "summary": "Get Candidates For Leave",
+    "tags": [
+      "Governance Command Center"
+    ],
+    "parameters": [
+      "leave_id"
+    ],
+    "has_request_body": false,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "method": "POST",
+    "path": "/governance/emergency-override",
+    "summary": "Emergency Override",
+    "tags": [
+      "Governance Command Center"
+    ],
+    "parameters": [],
+    "has_request_body": true,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "method": "POST",
+    "path": "/governance/assign-substitute",
+    "summary": "Assign Substitute",
+    "tags": [
+      "Governance Command Center"
+    ],
+    "parameters": [],
+    "has_request_body": true,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "method": "GET",
+    "path": "/admin/data-retention/stats",
+    "summary": "Get Storage Stats",
+    "tags": [
+      "Data Retention & Purge"
+    ],
+    "parameters": [],
+    "has_request_body": false,
+    "responses": [
+      "200"
+    ]
+  },
+  {
+    "method": "GET",
+    "path": "/admin/data-retention/policy",
+    "summary": "Get Retention Policy",
+    "tags": [
+      "Data Retention & Purge"
+    ],
+    "parameters": [],
+    "has_request_body": false,
+    "responses": [
+      "200"
+    ]
+  },
+  {
+    "method": "PUT",
+    "path": "/admin/data-retention/policy",
+    "summary": "Update Retention Policy",
+    "tags": [
+      "Data Retention & Purge"
+    ],
+    "parameters": [],
+    "has_request_body": true,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "method": "POST",
+    "path": "/admin/data-retention/run-auto-cleanup",
+    "summary": "Run Auto Cleanup Now",
+    "tags": [
+      "Data Retention & Purge"
+    ],
+    "parameters": [],
+    "has_request_body": false,
+    "responses": [
+      "200"
+    ]
+  },
+  {
+    "method": "POST",
+    "path": "/admin/data-retention/preview",
+    "summary": "Preview Selective Purge",
+    "tags": [
+      "Data Retention & Purge"
+    ],
+    "parameters": [],
+    "has_request_body": true,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "method": "POST",
+    "path": "/admin/data-retention/purge",
+    "summary": "Execute Selective Purge",
+    "tags": [
+      "Data Retention & Purge"
+    ],
+    "parameters": [],
+    "has_request_body": true,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "method": "POST",
+    "path": "/geofences/test-location",
+    "summary": "Test Campus Location",
+    "tags": [
+      "Campus Geofences"
+    ],
+    "parameters": [],
+    "has_request_body": true,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "method": "GET",
+    "path": "/geofences/active",
+    "summary": "Get Active Geofences For Mobile",
+    "tags": [
+      "Campus Geofences"
+    ],
+    "parameters": [],
+    "has_request_body": false,
+    "responses": [
+      "200"
+    ]
+  },
+  {
+    "method": "GET",
+    "path": "/geofences/",
+    "summary": "List All Geofences Admin",
+    "tags": [
+      "Campus Geofences"
+    ],
+    "parameters": [
+      "is_active"
+    ],
+    "has_request_body": false,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "method": "POST",
+    "path": "/geofences/",
+    "summary": "Create Geofence Admin",
+    "tags": [
+      "Campus Geofences"
+    ],
+    "parameters": [],
+    "has_request_body": true,
+    "responses": [
+      "201",
+      "422"
+    ]
+  },
+  {
+    "method": "GET",
+    "path": "/geofences/{geofence_id}",
+    "summary": "Get Geofence Admin",
+    "tags": [
+      "Campus Geofences"
+    ],
+    "parameters": [
+      "geofence_id"
+    ],
+    "has_request_body": false,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "method": "PUT",
+    "path": "/geofences/{geofence_id}",
+    "summary": "Update Geofence Admin",
+    "tags": [
+      "Campus Geofences"
+    ],
+    "parameters": [
+      "geofence_id"
+    ],
+    "has_request_body": true,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "method": "DELETE",
+    "path": "/geofences/{geofence_id}",
+    "summary": "Delete Geofence Admin",
+    "tags": [
+      "Campus Geofences"
+    ],
+    "parameters": [
+      "geofence_id"
+    ],
+    "has_request_body": false,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "method": "PATCH",
+    "path": "/geofences/{geofence_id}/toggle",
+    "summary": "Toggle Geofence Admin",
+    "tags": [
+      "Campus Geofences"
+    ],
+    "parameters": [
+      "geofence_id",
+      "is_active"
+    ],
+    "has_request_body": false,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "method": "POST",
+    "path": "/attendance/check-in",
+    "summary": "Check In",
+    "tags": [
+      "Staff Attendance"
+    ],
+    "parameters": [],
+    "has_request_body": true,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "method": "POST",
+    "path": "/attendance/check-out",
+    "summary": "Check Out",
+    "tags": [
+      "Staff Attendance"
+    ],
+    "parameters": [],
+    "has_request_body": true,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "method": "GET",
+    "path": "/attendance/today",
+    "summary": "Get Today Summary",
+    "tags": [
+      "Staff Attendance"
+    ],
+    "parameters": [],
+    "has_request_body": false,
+    "responses": [
+      "200"
+    ]
+  },
+  {
+    "method": "GET",
+    "path": "/attendance/my",
+    "summary": "Get My Attendance History",
+    "tags": [
+      "Staff Attendance"
+    ],
+    "parameters": [
+      "limit",
+      "offset"
+    ],
+    "has_request_body": false,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "method": "GET",
+    "path": "/attendance/admin/live-status",
+    "summary": "Get Supervisor Live Status",
+    "tags": [
+      "Staff Attendance"
+    ],
+    "parameters": [],
+    "has_request_body": false,
+    "responses": [
+      "200"
+    ]
+  },
+  {
+    "method": "GET",
+    "path": "/system/dashboard",
+    "summary": "Get Control Panel Dashboard",
+    "tags": [
+      "Governance Control Plane"
+    ],
+    "parameters": [],
+    "has_request_body": false,
+    "responses": [
+      "200"
+    ]
+  },
+  {
+    "method": "GET",
+    "path": "/system/institutions",
+    "summary": "List Institutions",
+    "tags": [
+      "Governance Control Plane"
+    ],
+    "parameters": [],
+    "has_request_body": false,
+    "responses": [
+      "200"
+    ]
+  },
+  {
+    "method": "POST",
+    "path": "/system/institutions",
+    "summary": "Create Institution",
+    "tags": [
+      "Governance Control Plane"
+    ],
+    "parameters": [],
+    "has_request_body": true,
+    "responses": [
+      "201",
+      "422"
+    ]
+  },
+  {
+    "method": "GET",
+    "path": "/system/institutions/{institution_id}",
+    "summary": "Get Institution",
+    "tags": [
+      "Governance Control Plane"
+    ],
+    "parameters": [
+      "institution_id"
+    ],
+    "has_request_body": false,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "method": "PUT",
+    "path": "/system/institutions/{institution_id}",
+    "summary": "Update Institution",
+    "tags": [
+      "Governance Control Plane"
+    ],
+    "parameters": [
+      "institution_id"
+    ],
+    "has_request_body": true,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "method": "POST",
+    "path": "/system/institutions/{institution_id}/assign-plan",
+    "summary": "Assign Plan",
+    "tags": [
+      "Governance Control Plane"
+    ],
+    "parameters": [
+      "institution_id",
+      "plan"
+    ],
+    "has_request_body": false,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "method": "GET",
+    "path": "/system/institutions/{institution_id}/features",
+    "summary": "List Features",
+    "tags": [
+      "Governance Control Plane"
+    ],
+    "parameters": [
+      "institution_id"
+    ],
+    "has_request_body": false,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "method": "POST",
+    "path": "/system/institutions/{institution_id}/features/{feature_key}/enable",
+    "summary": "Enable Feature",
+    "tags": [
+      "Governance Control Plane"
+    ],
+    "parameters": [
+      "institution_id",
+      "feature_key"
+    ],
+    "has_request_body": true,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "method": "POST",
+    "path": "/system/institutions/{institution_id}/features/{feature_key}/disable",
+    "summary": "Disable Feature",
+    "tags": [
+      "Governance Control Plane"
+    ],
+    "parameters": [
+      "institution_id",
+      "feature_key"
+    ],
+    "has_request_body": true,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "method": "POST",
+    "path": "/system/institutions/{institution_id}/features/{feature_key}/lock",
+    "summary": "Lock Feature",
+    "tags": [
+      "Governance Control Plane"
+    ],
+    "parameters": [
+      "institution_id",
+      "feature_key"
+    ],
+    "has_request_body": true,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "method": "POST",
+    "path": "/system/institutions/{institution_id}/features/{feature_key}/unlock",
+    "summary": "Unlock Feature",
+    "tags": [
+      "Governance Control Plane"
+    ],
+    "parameters": [
+      "institution_id",
+      "feature_key"
+    ],
+    "has_request_body": true,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "method": "GET",
+    "path": "/system/institutions/{institution_id}/biometric-policy",
+    "summary": "Get Biometric Policy",
+    "tags": [
+      "Governance Control Plane"
+    ],
+    "parameters": [
+      "institution_id"
+    ],
+    "has_request_body": false,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "method": "PUT",
+    "path": "/system/institutions/{institution_id}/biometric-policy",
+    "summary": "Update Biometric Policy",
+    "tags": [
+      "Governance Control Plane"
+    ],
+    "parameters": [
+      "institution_id"
+    ],
+    "has_request_body": true,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "method": "GET",
+    "path": "/system/institutions/{institution_id}/policy",
+    "summary": "Get Institution Policy",
+    "tags": [
+      "Governance Control Plane"
+    ],
+    "parameters": [
+      "institution_id"
+    ],
+    "has_request_body": false,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "method": "GET",
+    "path": "/system/audit-logs",
+    "summary": "List Audit Logs",
+    "tags": [
+      "Governance Control Plane"
+    ],
+    "parameters": [
+      "institution_id",
+      "limit",
+      "offset"
+    ],
+    "has_request_body": false,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/health",
+    "summary": "Health",
+    "tags": [
+      "Health"
+    ],
+    "parameters": [],
+    "has_request_body": false,
+    "responses": [
+      "200"
+    ]
+  },
+  {
+    "method": "GET",
+    "path": "/health",
+    "summary": "Health",
+    "tags": [
+      "Health"
+    ],
+    "parameters": [],
+    "has_request_body": false,
+    "responses": [
+      "200"
+    ]
+  },
+  {
+    "method": "GET",
+    "path": "/settings/public",
+    "summary": "Public Settings",
+    "tags": [
+      "Settings"
+    ],
+    "parameters": [],
+    "has_request_body": false,
+    "responses": [
+      "200"
+    ]
+  }
+]

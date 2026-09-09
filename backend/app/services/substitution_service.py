@@ -32,6 +32,7 @@ from app.models.department import Department
 from app.models.class_ import Class
 from app.models.substitution_preference import SubstitutionPreference
 from app.models.system_setting import SystemSetting, CAMPUS_OPERATIONS_MODES
+from app.schemas.substitution import CandidateMetrics, CandidateSignals, IneligibleCandidate
 from app.services.credit_service import apply_credit_change
 from app.services import notification_service
 from app.services.admin_service import log_audit_event
@@ -155,17 +156,33 @@ def calculate_leave_recovery(
     return best_bonus, best_reason, best_dur, best_days_ago
 
 
-# ---------- Hard eligibility ----------
+# ---------- Hard eligibility & Candidate Representation ----------
+
+@dataclass
+class IneligibleCandidateInfo:
+    teacher_id: int
+    teacher_name: str
+    reason: str
+
 
 @dataclass
 class Candidate:
     teacher: User
-    score: float = 0.0
+    rank: int = 1
+    score: int = 0
+    tier: str = "LOW"
+    eligible: bool = True
     reasons: list[str] = field(default_factory=list)
     same_subject: bool = False
     same_department: bool = False
-    workload_count: int = 0
-    fairness: float = 0.0
+    cross_department: bool = False
+    subject_compatibility_score: float = 0.0
+    department_compatibility_score: float = 0.0
+    daily_availability_score: float = 0.0
+    continuity_score: float = 0.0
+    weekly_workload_score: float = 0.0
+    fairness_score: float = 0.0
+    preference_score: float = 0.0
     today_workload: int = 0
     projected_today_workload: int = 0
     today_periods: list[int] = field(default_factory=list)
@@ -175,8 +192,34 @@ class Candidate:
     substitutions_week: int = 0
     longest_continuous_periods: int = 0
     projected_longest_continuous_periods: int = 0
+    workload_count: int = 0
+    fairness: float = 0.0
     leave_recovery: float = 0.0
     leave_recovery_reason: str | None = None
+
+    @property
+    def metrics(self) -> CandidateMetrics:
+        return CandidateMetrics(
+            daily_periods=self.today_workload,
+            projected_daily_periods=self.projected_today_workload,
+            weekly_periods=self.week_workload,
+            projected_weekly_periods=self.projected_week_workload,
+            substitutions_last_7_days=self.substitutions_week,
+            longest_continuous_before=self.longest_continuous_periods,
+            longest_continuous_after=self.projected_longest_continuous_periods,
+        )
+
+    @property
+    def signals(self) -> CandidateSignals:
+        return CandidateSignals(
+            same_department=self.same_department,
+            same_subject=self.same_subject,
+            cross_department=self.cross_department,
+        )
+
+    @property
+    def compatibility_score(self) -> float:
+        return float(self.score)
 
 
 VALID_MODES = CAMPUS_OPERATIONS_MODES
@@ -290,26 +333,7 @@ def fairness_score(db: Session, teacher_id: int) -> float:
     return round(100.0 * (1 - (this_count / max_count)), 1)
 
 
-# ---------- Hard eligibility ----------
-
-@dataclass
-class Candidate:
-    teacher: User
-    score: float = 0.0
-    reasons: list[str] = field(default_factory=list)
-    same_subject: bool = False
-    same_department: bool = False
-    workload_count: int = 0
-    fairness: float = 0.0
-    today_workload: int = 0
-    projected_today_workload: int = 0
-    today_periods: list[int] = field(default_factory=list)
-    week_workload: int = 0
-    projected_week_workload: int = 0
-    substitutions_today: int = 0
-    substitutions_week: int = 0
-    longest_continuous_periods: int = 0
-    projected_longest_continuous_periods: int = 0
+# ---------- Period Continuity & Workload Analysis ----------
 
 
 def calculate_longest_continuous_block(periods: set[int] | list[int]) -> int:
@@ -550,7 +574,7 @@ def _is_hard_eligible(
     if leave.is_emergency and require_auto_opt_in and not pref.allow_emergency_assignments:
         return False, "has opted out of emergency assignments"
 
-    if require_auto_opt_in and pref.max_weekly_substitutions is not None:
+    if pref.max_weekly_substitutions is not None:
         since = datetime.now(timezone.utc) - timedelta(days=7)
         recent = count_recent_substitutions(db, candidate.id, since)
         if recent >= pref.max_weekly_substitutions:
@@ -620,7 +644,7 @@ def _is_hard_eligible_bulk(
     if leave.is_emergency and require_auto_opt_in and not pref.allow_emergency_assignments:
         return False, "has opted out of emergency assignments"
 
-    if require_auto_opt_in and pref.max_weekly_substitutions is not None:
+    if pref.max_weekly_substitutions is not None:
         recent = recent_sub_counts.get(candidate.id, 0)
         if recent >= pref.max_weekly_substitutions:
             return False, f"at weekly substitution cap ({pref.max_weekly_substitutions})"
@@ -653,13 +677,10 @@ def _is_hard_eligible_bulk(
     return True, None
 
 
-def list_eligible_candidates(
+def list_candidates_with_ineligible(
     db: Session, leave: LeaveRequest, *, require_auto_opt_in: bool = False, tenant_department_id: int | None = None,
-) -> list[User]:
-    """Every teacher who structurally CAN cover this leave, full stop —
-    before any scoring or ranking. This is the set Autonomous mode is
-    allowed to choose from; Assisted mode scores this same set for the
-    ranked list a human picks from."""
+) -> tuple[list[User], list[IneligibleCandidateInfo]]:
+    """Separates candidates into hard-eligible and structured ineligible lists."""
     query = db.query(User).filter(User.role == Role.teacher, User.is_active == True)  # noqa: E712
     if tenant_department_id is not None:
         query = query.filter(User.department_id == tenant_department_id)
@@ -702,8 +723,9 @@ def list_eligible_candidates(
     }
 
     eligible = []
+    ineligible = []
     for t in all_teachers:
-        ok, _ = _is_hard_eligible_bulk(
+        ok, reason = _is_hard_eligible_bulk(
             db, t, leave, require_auto_opt_in=require_auto_opt_in,
             busy_teacher_ids=busy_teacher_ids,
             leave_teacher_ids=leave_teacher_ids,
@@ -714,6 +736,19 @@ def list_eligible_candidates(
         )
         if ok:
             eligible.append(t)
+        else:
+            ineligible.append(IneligibleCandidateInfo(teacher_id=t.id, teacher_name=t.name, reason=reason or "Ineligible"))
+    return eligible, ineligible
+
+
+def list_eligible_candidates(
+    db: Session, leave: LeaveRequest, *, require_auto_opt_in: bool = False, tenant_department_id: int | None = None,
+) -> list[User]:
+    """Every teacher who structurally CAN cover this leave, full stop —
+    before any scoring or ranking."""
+    eligible, _ = list_candidates_with_ineligible(
+        db, leave, require_auto_opt_in=require_auto_opt_in, tenant_department_id=tenant_department_id
+    )
     return eligible
 
 
@@ -753,15 +788,16 @@ def score_candidate(
     in_memory_assignments: list[tuple[date, int, int]] | None = None,
 ) -> Candidate:
     """
-    Simulates post-assignment workload in memory and computes a comprehensive,
-    multi-dimensional workload and fairness compatibility score (0-100).
-    
-    Dimensions & Weights:
-      1. Projected Daily Workload       (weight: 35) — lower total day periods = higher score
-      2. Consecutive Period Block Safety (weight: 30) — avoids continuous teaching fatigue
-      3. Projected Weekly Workload      (weight: 20) — balanced rotation distribution
-      4. Substitution Fairness          (weight: 10) — balance recent substitution load
-      5. Subject / Dept Suitability     (weight: 5)  — tie-breaking bonus
+    Authoritative Soft Suitability Model (Normalized 0-100 score).
+    Evaluates 7 calibrated dimensions:
+      1. Daily Availability / Workload       (25 pts)
+      2. Period Conflict / Continuity Safety (20 pts)
+      3. Weekly Workload Balance            (15 pts)
+      4. Subject Compatibility              (15 pts)
+      5. Department Compatibility           (10 pts)
+      6. Fairness / Rotation                (10 pts)
+      7. Preference / Assignment Fit         (5 pts)
+    Total: 100 points maximum. Bounded strictly in [0, 100].
     """
     result = Candidate(teacher=candidate)
 
@@ -793,52 +829,37 @@ def score_candidate(
     )
     result.substitutions_today = subs_today
     result.substitutions_week = subs_week
-    
-    fairness = fairness_score(db, candidate.id)
-    result.fairness = fairness
+    result.fairness = fairness_score(db, candidate.id)
 
-    # --- Scoring Components ---
-    # A. Daily Workload Score (35 pts max)
-    # 1 period total (free before) -> 35 pts; 2 -> 28; 3 -> 21; 4 -> 14; 5 -> 7; >5 -> 0
-    daily_score = max(0.0, 35.0 * (1.0 - min(max(0, result.projected_today_workload - 1), 5) / 5.0))
-    result.score += daily_score
+    # --- Dimension 1: Daily Availability / Workload (25 pts max) ---
+    # 0 classes today = 25 pts; each existing class deducts 5 pts
+    daily_score = max(0.0, 25.0 - (result.today_workload * 5.0))
+    result.daily_availability_score = daily_score
 
-    # B. Consecutive Period Safety Score (35 pts max)
-    # Continuous block of 1 -> 35 pts; 2 -> 30 pts; 3 -> 22 pts; 4 -> 8 pts; >=5 -> 0 pts
+    # --- Dimension 2: Period Conflict / Continuity Safety (20 pts max) ---
+    # Evaluates projected continuous teaching block after assignment:
+    # block <= 1: 20 pts; block == 2: 16 pts; block == 3: 10 pts; block == 4: 4 pts; >= 5: -20 pts severe fatigue penalty
     proj_cont = result.projected_longest_continuous_periods
     if proj_cont <= 1:
-        cont_score = 35.0
+        cont_score = 20.0
     elif proj_cont == 2:
-        cont_score = 30.0
+        cont_score = 16.0
     elif proj_cont == 3:
-        cont_score = 22.0
+        cont_score = 10.0
     elif proj_cont == 4:
-        cont_score = 8.0
+        cont_score = 4.0
     else:
-        cont_score = 0.0
-    result.score += cont_score
+        cont_score = -20.0  # Severe fatigue penalty for 5+ back-to-back classes
+    result.continuity_score = cont_score
 
-    # C. Weekly Workload Score (20 pts max)
-    # 30 periods/week benchmark
-    weekly_score = max(0.0, 20.0 * (1.0 - min(max(0, result.projected_week_workload - 1), 30) / 30.0))
-    result.score += weekly_score
+    # --- Dimension 3: Weekly Workload Balance (15 pts max) ---
+    # Normalized relative to institutional 30-period benchmark
+    weekly_score = max(0.0, round(15.0 * (1.0 - min(1.0, max(0, result.projected_week_workload - 1) / 30.0)), 1))
+    result.weekly_workload_score = weekly_score
 
-    # D. Fairness Score (10 pts max)
-    # Check rolling 7-day limit
-    limit_info = check_7day_substitution_limit(db, candidate.id, leave.date)
-    if limit_info["limit_reached"]:
-        fair_comp = 0.0
-    elif subs_week == 0:
-        fair_comp = 10.0
-    elif subs_week == 1:
-        fair_comp = 8.0
-    elif subs_week == 2:
-        fair_comp = 5.0
-    else:
-        fair_comp = max(0.0, 10.0 - (subs_week * 2.5))
-    result.score += fair_comp
-
-    # E. Same Subject / Class Experience (5 pts max)
+    # --- Dimension 4: Subject Compatibility (15 pts max) ---
+    # Check if candidate teaches the subject
+    same_subj = False
     if subject and subject.id:
         has_subject = (
             db.query(TimetableSlot)
@@ -846,41 +867,149 @@ def score_candidate(
             .first()
         )
         if has_subject:
-            result.same_subject = True
-            result.score += 3.0
+            same_subj = True
+    result.same_subject = same_subj
 
-    # F. Leave Recovery / Workload Rebalancing (up to +7.0 pts bonus)
+    # Department relationship
+    leave_dept_id = leave.teacher.department_id if leave.teacher else None
+    if leave_dept_id is None and leave.teacher_id:
+        lt = db.query(User).filter(User.id == leave.teacher_id).first()
+        leave_dept_id = lt.department_id if lt else None
+
+    same_dept = (candidate.department_id is not None and candidate.department_id == leave_dept_id)
+    result.same_department = same_dept
+    result.cross_department = not same_dept
+
+    if subject and subject.id:
+        if same_subj and same_dept:
+            subj_score = 15.0
+        elif same_subj and not same_dept:
+            subj_score = 12.0
+        elif not same_subj and same_dept:
+            subj_score = 4.0
+        else:
+            subj_score = 0.0
+    else:
+        # Subject not specified: give department-based compatibility
+        subj_score = 15.0 if same_dept else 0.0
+    result.subject_compatibility_score = subj_score
+
+    # --- Dimension 5: Department Compatibility (10 pts max) ---
+    dept_score = 10.0 if same_dept else 3.0
+    result.department_compatibility_score = dept_score
+
+    # --- Dimension 6: Fairness / Rotation (10 pts max) ---
+    limit_info = check_7day_substitution_limit(db, candidate.id, leave.date)
+    if limit_info["limit_reached"]:
+        fair_score = 0.0
+    elif subs_week == 0:
+        fair_score = 10.0
+    elif subs_week == 1:
+        fair_score = 7.0
+    elif subs_week == 2:
+        fair_score = 4.0
+    else:
+        fair_score = max(0.0, 10.0 - (subs_week * 3.0))
+    
+    if subs_today >= 1:
+        fair_score = max(0.0, fair_score - 2.0)
+    result.fairness_score = fair_score
+
+    # --- Dimension 7: Preference / Assignment Fit (5 pts max) ---
+    pref = get_or_create_preferences(db, candidate.id)
+    # Baseline fit score is 5.0; slight deduction if contrary to explicit preference
+    pref_score = 5.0
+    if pref.prefer_morning_classes and leave.period_number > 3:
+        pref_score -= 2.0
+    if pref.prefer_same_department and not same_dept:
+        pref_score -= 2.0
+
     leave_bonus, leave_reason, _, _ = calculate_leave_recovery(db, candidate.id, leave.date)
     result.leave_recovery = leave_bonus
     result.leave_recovery_reason = leave_reason
-    if leave_bonus > 0:
-        result.score += leave_bonus
+    if leave_bonus > 0 and pref_score < 5.0:
+        pref_score = min(5.0, pref_score + min(2.0, leave_bonus))
 
-    # --- Distinct Contextual Badges ---
-    if result.same_department:
+    result.preference_score = max(0.0, min(5.0, pref_score))
+
+    # --- Structured Explainable Reasons ---
+    result.reasons.append(f"Free during P{leave.period_number}")
+    if same_dept:
         result.reasons.append("Same department")
     else:
         result.reasons.append("Cross-department")
 
-    if result.same_subject:
+    if same_subj:
         result.reasons.append("Teaches this subject")
+
+    if result.today_workload == 0:
+        result.reasons.append("0 classes scheduled today")
+    elif result.today_workload <= 2:
+        result.reasons.append(f"Low workload today ({result.today_workload} classes)")
+    else:
+        result.reasons.append(f"{result.today_workload} classes today")
+
+    if subs_week == 0:
+        result.reasons.append("0 substitutions this week")
+    else:
+        result.reasons.append(f"{subs_week} substitution(s) this week")
+
+    if proj_cont <= 2:
+        result.reasons.append("Safe projected continuity (no long continuous block)")
+    elif proj_cont >= 4:
+        result.reasons.append(f"⚠ {proj_cont} back-to-back classes without break")
 
     if result.leave_recovery > 0:
         result.reasons.append(f"Leave recovery (+{result.leave_recovery} pts)")
 
-    if limit_info["limit_reached"]:
-        result.reasons.append(f"⚠ 7-day limit reached ({limit_info['current_allocations']}/{limit_info['max_allocations']})")
-    elif subs_week == 0:
-        result.reasons.append("0 substitutions this week")
+    # --- Final Normalized Integer Score (0 - 100) ---
+    raw_total = (
+        daily_score
+        + cont_score
+        + weekly_score
+        + subj_score
+        + dept_score
+        + fair_score
+        + result.preference_score
+    )
+    clamped_score = max(0, min(100, int(round(raw_total))))
+    result.score = clamped_score
+
+    # --- Calibrated Suitability Tier ---
+    if clamped_score >= 90:
+        result.tier = "EXCELLENT"
+    elif clamped_score >= 75:
+        result.tier = "GOOD"
+    elif clamped_score >= 60:
+        result.tier = "FAIR"
     else:
-        result.reasons.append(f"{subs_week} sub(s) this week")
+        result.tier = "LOW"
 
-    if proj_cont >= 4:
-        result.reasons.append(f"⚠ {proj_cont} back-to-back classes without break")
-
-    result.score = round(min(result.score, 100.0), 1)
     return result
 
+
+def recommendation_sort_key(c: Candidate):
+    """
+    Deterministic tie-breaking sort key.
+    Higher rank = lower sort tuple (Python ascending sort).
+    Priority:
+      1. Score (descending: -score)
+      2. Projected continuity safety (ascending: lower continuous block is safer)
+      3. Subject compatibility (descending: same subject preferred)
+      4. Daily workload (ascending: lower today workload preferred)
+      5. Fairness (descending: fewer weekly substitutions preferred)
+      6. Weekly workload (ascending: lower weekly workload preferred)
+      7. Deterministic tie-breaker: Teacher ID
+    """
+    return (
+        -c.score,
+        c.projected_longest_continuous_periods,
+        -1 if c.same_subject else 0,
+        c.today_workload,
+        c.substitutions_week,
+        c.week_workload,
+        c.teacher.id,
+    )
 
 
 def cross_department_substitutions_enabled(db: Session, department_id: int | None) -> bool:
@@ -919,16 +1048,48 @@ def get_ranked_recommendations(
         eligible = [teacher for teacher in eligible if teacher.id in experienced_ids]
 
     scored = [score_candidate(db, c, leave, subject, dept_name, in_memory_assignments) for c in eligible]
-    # Prefer home department as a tie-breaking bonus
-    for candidate in scored:
-        if candidate.teacher.department_id == leave.teacher.department_id:
-            candidate.same_department = True
-            candidate.score = min(100.0, candidate.score + 5)
-            candidate.reasons.append("Same department")
-        else:
-            candidate.reasons.append("Cross-department cover")
-    scored.sort(key=lambda c: c.score, reverse=True)
+    scored.sort(key=recommendation_sort_key)
+    for idx, cand in enumerate(scored, start=1):
+        cand.rank = idx
     return scored[:limit]
+
+
+def get_candidates_with_ineligible(
+    db: Session,
+    leave_id: int,
+    limit: int = 100,
+    tenant_department_id: int | None = None,
+    include_cross_department: bool = False,
+    only_handles_class: bool = False,
+) -> tuple[list[Candidate], list[IneligibleCandidateInfo]]:
+    """Returns ranked eligible candidates with 1-based ranks alongside structured ineligible list."""
+    leave = _get_leave_or_404(db, leave_id, tenant_department_id)
+    if include_cross_department and not cross_department_substitutions_enabled(db, leave.teacher.department_id):
+        raise HTTPException(status_code=403, detail="Cross-department substitutions are disabled for this department")
+    subject, dept_name = _subject_and_department_for_leave(db, leave)
+    eligible, ineligible = list_candidates_with_ineligible(
+        db, leave, require_auto_opt_in=False,
+        tenant_department_id=None if include_cross_department else tenant_department_id,
+    )
+    if only_handles_class:
+        affected_slot = db.query(TimetableSlot).filter(
+            TimetableSlot.teacher_id == leave.teacher_id,
+            TimetableSlot.day_order == leave.day_order,
+            TimetableSlot.period_number == leave.period_number,
+        ).first()
+        if not affected_slot:
+            return [], ineligible
+        experienced_ids = {
+            row[0] for row in db.query(TimetableSlot.teacher_id)
+            .filter(TimetableSlot.class_id == affected_slot.class_id).all()
+        }
+        eligible = [teacher for teacher in eligible if teacher.id in experienced_ids]
+
+    scored = [score_candidate(db, c, leave, subject, dept_name) for c in eligible]
+    scored.sort(key=recommendation_sort_key)
+    for idx, cand in enumerate(scored, start=1):
+        cand.rank = idx
+    return scored[:limit], ineligible
 
 
 
@@ -1018,14 +1179,9 @@ def auto_process_approved_leave(db: Session, leave: LeaveRequest) -> AlterAssign
 
 
     scored = [score_candidate(db, c, leave, subject, dept_name) for c in eligible]
-    for candidate in scored:
-        if candidate.teacher.department_id == leave.teacher.department_id:
-            candidate.same_department = True
-            candidate.score = min(100.0, candidate.score + 5)
-            candidate.reasons.append("Same department")
-        else:
-            candidate.reasons.append("Cross-department cover")
-    scored.sort(key=lambda c: c.score, reverse=True)
+    scored.sort(key=recommendation_sort_key)
+    for idx, cand in enumerate(scored, start=1):
+        cand.rank = idx
 
     # Autonomous workload safety check:
     # Avoid auto-assigning if candidate would exceed 4 continuous periods or 5 daily periods,

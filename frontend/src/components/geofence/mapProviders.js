@@ -9,6 +9,9 @@
  */
 
 export const MAP_MODES = {
+  GOOGLE_MAPS: 'google_maps',
+  GOOGLE_SATELLITE: 'google_satellite',
+  GOOGLE_HYBRID: 'google_hybrid',
   MAP: 'map',
   SATELLITE: 'satellite',
   HYBRID: 'hybrid',
@@ -96,6 +99,57 @@ export const MAP_PROVIDERS = {
         options: {
           maxZoom: 19,
           attribution: 'Tiles &copy; Esri &mdash; Esri, DeLorme, NAVTEQ, TomTom, Intermap, iPC, USGS, METI, NRCAN, GeoBase, Kadaster NL, Ordnance Survey, and GIS User Community',
+        },
+      },
+    ],
+  },
+  [MAP_MODES.GOOGLE_MAPS]: {
+    id: MAP_MODES.GOOGLE_MAPS,
+    label: 'Google Maps (Roadmap)',
+    shortLabel: 'Google Maps',
+    icon: '🗺️',
+    description: 'Official Google Maps vector street and campus layout',
+    thumbnail: 'https://mt1.google.com/vt/lyrs=m&x=11696&y=7508&z=14',
+    layers: [
+      {
+        url: 'https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}',
+        options: {
+          maxZoom: 21,
+          attribution: '&copy; Google Maps',
+        },
+      },
+    ],
+  },
+  [MAP_MODES.GOOGLE_SATELLITE]: {
+    id: MAP_MODES.GOOGLE_SATELLITE,
+    label: 'Google Satellite',
+    shortLabel: 'Google Satellite',
+    icon: '🛰️',
+    description: 'High-resolution Google Earth / Maps aerial satellite photography',
+    thumbnail: 'https://mt1.google.com/vt/lyrs=s&x=11696&y=7508&z=14',
+    layers: [
+      {
+        url: 'https://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}',
+        options: {
+          maxZoom: 21,
+          attribution: '&copy; Google Maps Satellite',
+        },
+      },
+    ],
+  },
+  [MAP_MODES.GOOGLE_HYBRID]: {
+    id: MAP_MODES.GOOGLE_HYBRID,
+    label: 'Google Hybrid',
+    shortLabel: 'Google Hybrid',
+    icon: '🌍',
+    description: 'Google Maps aerial photography overlaid with streets and labels',
+    thumbnail: 'https://mt1.google.com/vt/lyrs=y&x=11696&y=7508&z=14',
+    layers: [
+      {
+        url: 'https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}',
+        options: {
+          maxZoom: 21,
+          attribution: '&copy; Google Maps Hybrid',
         },
       },
     ],

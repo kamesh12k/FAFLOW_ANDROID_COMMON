@@ -1,7 +1,7 @@
 package com.governence.faflow.attendance
 
 import com.governence.faflow.domain.model.StaffAttendanceRecord
-import com.governence.faflow.location.StaffLiveLocation
+import com.governence.faflow.attendance.geolocation.StaffLiveLocation
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.StateFlow
 

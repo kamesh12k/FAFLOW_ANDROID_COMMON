@@ -11,6 +11,7 @@ import com.governence.faflow.faflow.CreditRepository
 import com.governence.faflow.faflow.SubstitutionRepository
 import com.governence.faflow.faflow.TimetableRepository
 import com.governence.faflow.faflow.data.AcademicSummaryRepository
+import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -21,10 +22,15 @@ data class DashboardUiState(
     val isRefreshing: Boolean = false,
     val staff: StaffMember? = null,
     val todaySummary: TeacherTodaySummaryDto? = null,
+    val isSummaryLoading: Boolean = false,
     val todaySlots: List<TimetableSlot> = emptyList(),
+    val isTimetableLoading: Boolean = false,
     val creditBalance: Int = 0,
+    val isCreditsLoading: Boolean = false,
     val activeDutiesCount: Int = 0,
-    val errorMessage: String? = null
+    val isDutiesLoading: Boolean = false,
+    val errorMessage: String? = null,
+    val isOfflineOrUnreachable: Boolean = false
 )
 
 class DashboardViewModel(
@@ -39,6 +45,9 @@ class DashboardViewModel(
     val uiState: StateFlow<DashboardUiState> = _uiState.asStateFlow()
 
     init {
+        // Stage 1: Load cached local profile shell immediately
+        val cachedStaff = authRepository.getStoredStaffInfo()
+        _uiState.value = _uiState.value.copy(staff = cachedStaff)
         loadDashboardData(isRefresh = false)
     }
 
@@ -56,55 +65,103 @@ class DashboardViewModel(
             isLoading = !isRefresh,
             isRefreshing = isRefresh,
             staff = currentStaff,
-            errorMessage = null
+            errorMessage = null,
+            isOfflineOrUnreachable = false,
+            isSummaryLoading = true,
+            isCreditsLoading = true,
+            isDutiesLoading = true
         )
 
         viewModelScope.launch {
-            val staffId = currentStaff?.id ?: return@launch
+            val staffId = currentStaff?.id
+            if (staffId == null) {
+                _uiState.value = _uiState.value.copy(
+                    isLoading = false,
+                    isRefreshing = false,
+                    isSummaryLoading = false,
+                    isCreditsLoading = false,
+                    isDutiesLoading = false
+                )
+                return@launch
+            }
 
-            // 1. Fetch Today's Day Order & Summary from FAFLOW
-            when (val summaryRes = academicSummaryRepository.getMyTodaySummary()) {
+            // Stage 2: Staged concurrent requests for independent sections
+            val summaryDeferred = async { academicSummaryRepository.getMyTodaySummary() }
+            val creditDeferred = async { creditRepository.getCreditBalance(staffId) }
+            val dutyDeferred = async { substitutionRepository.getMyDuties() }
+
+            var hasConnectionError = false
+
+            // Process Summary & Timetable
+            val summaryRes = summaryDeferred.await()
+            when (summaryRes) {
                 is NetworkResult.Success -> {
                     val summary = summaryRes.data
-                    _uiState.value = _uiState.value.copy(todaySummary = summary)
+                    _uiState.value = _uiState.value.copy(
+                        todaySummary = summary,
+                        isSummaryLoading = false
+                    )
 
-                    // 2. Fetch Timetable for Today's Day Order
+                    // Asynchronously fetch timetable for today's Day Order
                     if (summary.dayOrder != null) {
+                        _uiState.value = _uiState.value.copy(isTimetableLoading = true)
                         when (val ttRes = timetableRepository.getTimetableByDayOrder(staffId, summary.dayOrder)) {
                             is NetworkResult.Success -> {
-                                _uiState.value = _uiState.value.copy(todaySlots = ttRes.data)
+                                _uiState.value = _uiState.value.copy(
+                                    todaySlots = ttRes.data,
+                                    isTimetableLoading = false
+                                )
                             }
-                            is NetworkResult.Error -> Unit
+                            is NetworkResult.Error -> {
+                                _uiState.value = _uiState.value.copy(isTimetableLoading = false)
+                            }
                             NetworkResult.Loading -> Unit
                         }
                     }
                 }
                 is NetworkResult.Error -> {
-                    val msg = if (summaryRes.code == -1) "Unable to connect to FAFLOW server. Check network." else summaryRes.message
-                    _uiState.value = _uiState.value.copy(errorMessage = msg)
+                    if (summaryRes.code == -1) hasConnectionError = true
+                    _uiState.value = _uiState.value.copy(isSummaryLoading = false)
                 }
                 NetworkResult.Loading -> Unit
             }
 
-            // 3. Fetch Credit Balance
-            when (val creditRes = creditRepository.getCreditBalance(staffId)) {
+            // Process Credits
+            when (val creditRes = creditDeferred.await()) {
                 is NetworkResult.Success -> {
-                    _uiState.value = _uiState.value.copy(creditBalance = creditRes.data)
+                    _uiState.value = _uiState.value.copy(
+                        creditBalance = creditRes.data,
+                        isCreditsLoading = false
+                    )
                 }
-                is NetworkResult.Error -> Unit
+                is NetworkResult.Error -> {
+                    if (creditRes.code == -1) hasConnectionError = true
+                    _uiState.value = _uiState.value.copy(isCreditsLoading = false)
+                }
                 NetworkResult.Loading -> Unit
             }
 
-            // 4. Fetch Substitution Duties Count
-            when (val dutyRes = substitutionRepository.getMyDuties()) {
+            // Process Substitution Duties
+            when (val dutyRes = dutyDeferred.await()) {
                 is NetworkResult.Success -> {
-                    _uiState.value = _uiState.value.copy(activeDutiesCount = dutyRes.data.size)
+                    _uiState.value = _uiState.value.copy(
+                        activeDutiesCount = dutyRes.data.size,
+                        isDutiesLoading = false
+                    )
                 }
-                is NetworkResult.Error -> Unit
+                is NetworkResult.Error -> {
+                    if (dutyRes.code == -1) hasConnectionError = true
+                    _uiState.value = _uiState.value.copy(isDutiesLoading = false)
+                }
                 NetworkResult.Loading -> Unit
             }
 
-            _uiState.value = _uiState.value.copy(isLoading = false, isRefreshing = false)
+            _uiState.value = _uiState.value.copy(
+                isLoading = false,
+                isRefreshing = false,
+                isOfflineOrUnreachable = hasConnectionError,
+                errorMessage = if (hasConnectionError) "Unable to connect to FAFLOW server. Please check your network connection." else null
+            )
         }
     }
 }
@@ -138,18 +195,22 @@ class TimetableViewModel(
         _uiState.value = _uiState.value.copy(isLoading = true, errorMessage = null)
 
         viewModelScope.launch {
-            when (val result = timetableRepository.getTimetableForTeacher(staffId)) {
+            when (val res = timetableRepository.getTimetableForTeacher(staffId)) {
                 is NetworkResult.Success -> {
-                    val slots = result.data
+                    val slots = res.data
+                    val filtered = slots.filter { it.dayOrder == _uiState.value.selectedDayOrder }
                     _uiState.value = _uiState.value.copy(
                         isLoading = false,
                         allSlots = slots,
-                        daySlots = filterByDay(slots, _uiState.value.selectedDayOrder)
+                        daySlots = filtered
                     )
                 }
                 is NetworkResult.Error -> {
-                    val msg = if (result.code == -1) "Unable to connect to server. Check network." else result.message
-                    _uiState.value = _uiState.value.copy(isLoading = false, errorMessage = msg)
+                    val msg = if (res.code == -1) "Unable to connect to server. Check connection." else res.message
+                    _uiState.value = _uiState.value.copy(
+                        isLoading = false,
+                        errorMessage = msg
+                    )
                 }
                 NetworkResult.Loading -> Unit
             }
@@ -157,13 +218,10 @@ class TimetableViewModel(
     }
 
     fun selectDayOrder(dayOrder: Int) {
+        val filtered = _uiState.value.allSlots.filter { it.dayOrder == dayOrder }
         _uiState.value = _uiState.value.copy(
             selectedDayOrder = dayOrder,
-            daySlots = filterByDay(_uiState.value.allSlots, dayOrder)
+            daySlots = filtered
         )
-    }
-
-    private fun filterByDay(slots: List<TimetableSlot>, dayOrder: Int): List<TimetableSlot> {
-        return slots.filter { it.dayOrder == dayOrder }.sortedBy { it.periodNumber }
     }
 }

@@ -145,15 +145,12 @@ fun AttendanceHistoryScreen(
 
 @Composable
 fun AttendanceRecordCard(record: AttendanceRecordOutDto) {
-    Card(
+    com.governence.faflow.ui.components.FaflowSurface(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+        shape = com.governence.faflow.ui.theme.FaflowShapes.card
     ) {
         Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp)
+            modifier = Modifier.fillMaxWidth()
         ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -178,19 +175,11 @@ fun AttendanceRecordCard(record: AttendanceRecordOutDto) {
                     )
                 }
 
-                Box(
-                    modifier = Modifier
-                        .clip(RoundedCornerShape(8.dp))
-                        .background(StatusSuccess.copy(alpha = 0.15f))
-                        .padding(horizontal = 10.dp, vertical = 4.dp)
-                ) {
-                    Text(
-                        text = record.status,
-                        style = MaterialTheme.typography.labelMedium,
-                        fontWeight = FontWeight.Bold,
-                        color = StatusSuccess
-                    )
-                }
+                val badgeColor = if (record.status.lowercase().contains("present")) StatusSuccess else StatusWarning
+                com.governence.faflow.ui.components.FaflowStatusBadge(
+                    text = record.status,
+                    statusColor = badgeColor
+                )
             }
 
             Spacer(modifier = Modifier.height(12.dp))

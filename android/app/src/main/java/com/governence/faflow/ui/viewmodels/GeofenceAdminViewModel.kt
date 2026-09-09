@@ -6,7 +6,7 @@ import com.governence.faflow.core.network.FaflowApiService
 import com.governence.faflow.core.network.GeofenceCreateDto
 import com.governence.faflow.core.network.GeofenceOutDto
 import com.governence.faflow.core.network.GeofenceUpdateDto
-import com.governence.faflow.location.GeoPoint
+import com.governence.faflow.attendance.geolocation.GeoPoint
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow

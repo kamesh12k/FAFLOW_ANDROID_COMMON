@@ -45,11 +45,22 @@ function BiometricIcon() {
   )
 }
 
+function AttendanceNavIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round" style={{width:'100%',height:'100%'}}>
+      <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+      <circle cx="9" cy="7" r="4" />
+      <polyline points="16 11 18 13 22 9" />
+    </svg>
+  )
+}
+
 export const ADMIN_NAV = [
   {
     section: null,
     items: [
       { to: '/admin/dashboard', label: 'Home', icon: <GridIcon />, end: true },
+      { to: '/admin/attendance', label: 'Live Attendance', icon: <AttendanceNavIcon /> },
     ],
   },
   {
@@ -135,6 +146,7 @@ export const SYSTEM_ADMIN_NAV = [
   {
     section: 'Performance & Audit',
     items: [
+      { to: '/admin/attendance', label: 'Live Attendance', icon: <AttendanceNavIcon /> },
       { to: '/admin/system-metrics', label: 'Real-time Traffic', icon: <ChartIcon /> },
       { to: '/admin/settings', label: 'Settings & History', icon: <DocIcon /> },
     ],
@@ -171,6 +183,7 @@ export const PRINCIPAL_NAV = [
     section: null,
     items: [
       { to: '/principal/dashboard', label: 'Home', icon: <GridIcon />, end: true },
+      { to: '/principal/attendance', label: 'Live Attendance', icon: <AttendanceNavIcon /> },
       { to: '/principal/class-timetable', label: 'Classwise Timetable', icon: <CalIcon /> },
     ],
   },
@@ -196,6 +209,7 @@ export const GOVERNANCE_NAV = [
     section: 'Governance',
     items: [
       { to: '/governance', label: 'Command Center', icon: <GridIcon />, end: true },
+      { to: '/governance/attendance', label: 'Live Attendance', icon: <AttendanceNavIcon /> },
     ],
   },
   {

@@ -20,22 +20,44 @@ sealed class NetworkResult<out T> {
 
 /**
  * Hardware Keystore-backed (AES-256-GCM) secure session token manager.
+ *
+ * IMPORTANT: EncryptedSharedPreferences and MasterKey are lazy-initialized to avoid
+ * blocking the Android main thread. Call initialize() from a background thread
+ * (e.g., FaflowApplication.onCreate()) to pre-warm the Keystore before first UI access.
  */
 class TokenManager(context: Context) {
-    private val masterKey = MasterKey.Builder(context)
-        .setKeyScheme(MasterKey.KeyScheme.AES256_GCM)
-        .build()
+    private val appContext = context.applicationContext
 
-    private val sharedPreferences = EncryptedSharedPreferences.create(
-        context,
-        "faflow_secure_prefs",
-        masterKey,
-        EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
-        EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM
-    )
+    // Lazy: MasterKey derivation and EncryptedSharedPreferences setup are deferred until
+    // first actual prefs access. FaflowApplication pre-warms this on a background thread.
+    private val masterKey: MasterKey by lazy {
+        MasterKey.Builder(appContext)
+            .setKeyScheme(MasterKey.KeyScheme.AES256_GCM)
+            .build()
+    }
 
-    private val _isLoggedIn = MutableStateFlow(hasValidToken())
+    private val sharedPreferences by lazy {
+        EncryptedSharedPreferences.create(
+            appContext,
+            "faflow_secure_prefs",
+            masterKey,
+            EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
+            EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM
+        )
+    }
+
+    // Default false; updated via initialize() on a background thread before UI access.
+    private val _isLoggedIn = MutableStateFlow(false)
     val isLoggedIn: StateFlow<Boolean> = _isLoggedIn.asStateFlow()
+
+    /**
+     * Pre-warms EncryptedSharedPreferences and updates the isLoggedIn state.
+     * MUST be called from a background thread (Dispatchers.IO) — never from main thread.
+     * Called by FaflowApplication on app start.
+     */
+    fun initialize() {
+        _isLoggedIn.value = hasValidToken()
+    }
 
     fun saveToken(token: String, userId: Int, userName: String, userEmail: String, role: String, departmentId: Int?) {
         sharedPreferences.edit()

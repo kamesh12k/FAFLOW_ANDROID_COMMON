@@ -424,7 +424,7 @@ def assign_substitute(
     override_substitution_limit: bool = False,
 ) -> AlterAssignment:
     from app.core.timezone import is_substitution_expired
-    leave = _get_leave_or_404(leave_id, db, tenant_department_id)
+    leave = _get_leave_or_404(leave_id, db, tenant_department_id, for_update=True)
 
     if leave.status != LeaveStatus.approved:
         raise HTTPException(status_code=400, detail="Leave must be approved before assigning substitute")

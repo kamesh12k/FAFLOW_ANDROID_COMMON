@@ -1,12 +1,12 @@
 package com.governence.faflow.faflow.data
 
-import com.governence.faflow.location.CampusGeofence
-import com.governence.faflow.location.GeoPoint
-import com.governence.faflow.location.GeofenceType
-import com.governence.faflow.location.GeofenceValidator
-import com.governence.faflow.location.LocationVerificationResult
-import com.governence.faflow.location.StaffLiveLocation
-import com.governence.faflow.location.StaffLocationProvider
+import com.governence.faflow.attendance.geolocation.CampusGeofence
+import com.governence.faflow.attendance.geolocation.GeoPoint
+import com.governence.faflow.attendance.geolocation.GeofenceType
+import com.governence.faflow.attendance.geolocation.GeofenceValidator
+import com.governence.faflow.attendance.geolocation.LocationVerificationResult
+import com.governence.faflow.attendance.geolocation.StaffLiveLocation
+import com.governence.faflow.attendance.geolocation.StaffLocationProvider
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -20,35 +20,56 @@ import kotlinx.coroutines.launch
  * Repository managing active campus geofences with memory caching and battery-efficient location monitoring.
  */
 class GeofenceRepository(
-    private val locationProvider: StaffLocationProvider,
+    private val locationProvider: com.governence.faflow.attendance.geolocation.LocationProvider,
     private val geofenceValidator: GeofenceValidator = GeofenceValidator(),
+    private val apiService: com.governence.faflow.core.network.FaflowApiService? = null,
     private val externalScope: CoroutineScope = CoroutineScope(Dispatchers.Default)
 ) {
-    // Default institutional campus boundaries
+    // Authoritative institutional campus boundaries with live synchronization fallback
     private val defaultGeofences = listOf(
         CampusGeofence(
-            id = "GEO-CAMPUS-MAIN",
-            name = "Main Academic Block",
+            id = "5",
+            name = "Main Campus Perimeter",
             type = GeofenceType.CIRCLE,
-            centerLatitude = 11.016844,
-            centerLongitude = 76.955833,
+            centerLatitude = 11.69061998,
+            centerLongitude = 78.39581827,
+            radiusMeters = 300.0,
+            toleranceMeters = 50.0,
+            isActive = true
+        ),
+        CampusGeofence(
+            id = "1",
+            name = "Main Campus Center",
+            type = GeofenceType.CIRCLE,
+            centerLatitude = 13.0827,
+            centerLongitude = 80.2707,
             radiusMeters = 200.0,
+            toleranceMeters = 25.0,
+            isActive = true
+        ),
+        CampusGeofence(
+            id = "2",
+            name = "Faculty Complex Quadrangle",
+            type = GeofenceType.POLYGON,
+            centerLatitude = 13.0825,
+            centerLongitude = 80.2700,
+            polygonVertices = listOf(
+                GeoPoint(13.08, 80.268),
+                GeoPoint(13.085, 80.268),
+                GeoPoint(13.085, 80.272),
+                GeoPoint(13.08, 80.272)
+            ),
             toleranceMeters = 20.0,
             isActive = true
         ),
         CampusGeofence(
-            id = "GEO-CAMPUS-TECH",
-            name = "Science & Engineering Complex",
-            type = GeofenceType.POLYGON,
-            centerLatitude = 11.018000,
-            centerLongitude = 76.957000,
-            polygonVertices = listOf(
-                GeoPoint(11.017500, 76.956500),
-                GeoPoint(11.018500, 76.956500),
-                GeoPoint(11.018500, 76.957500),
-                GeoPoint(11.017500, 76.957500)
-            ),
-            toleranceMeters = 15.0,
+            id = "GEO-CAMPUS-COIMBATORE",
+            name = "Coimbatore Academic Zone",
+            type = GeofenceType.CIRCLE,
+            centerLatitude = 11.016844,
+            centerLongitude = 76.955833,
+            radiusMeters = 300.0,
+            toleranceMeters = 30.0,
             isActive = true
         )
     )
@@ -65,13 +86,50 @@ class GeofenceRepository(
     private var monitoringJob: Job? = null
 
     init {
+        fetchActiveGeofences()
         startLocationMonitoring()
     }
 
     fun hasLocationPermission(): Boolean = locationProvider.isLocationPermissionGranted
     fun isLocationEnabled(): Boolean = locationProvider.isLocationServiceEnabled
 
+    fun fetchActiveGeofences() {
+        val api = apiService ?: return
+        externalScope.launch {
+            try {
+                val response = api.getActiveGeofences()
+                if (response.isSuccessful) {
+                    val dtoList = response.body() ?: emptyList()
+                    if (dtoList.isNotEmpty()) {
+                        val mapped = dtoList.map { dto ->
+                            CampusGeofence(
+                                id = dto.id.toString(),
+                                name = dto.name,
+                                type = if (dto.type.equals("polygon", ignoreCase = true)) GeofenceType.POLYGON else GeofenceType.CIRCLE,
+                                centerLatitude = dto.centerLatitude,
+                                centerLongitude = dto.centerLongitude,
+                                radiusMeters = dto.radiusMeters ?: 150.0,
+                                toleranceMeters = dto.toleranceMeters,
+                                polygonVertices = dto.polygonVertices?.mapNotNull { pt ->
+                                    if (pt.size >= 2) GeoPoint(pt[0], pt[1]) else null
+                                } ?: emptyList(),
+                                isActive = dto.isActive
+                            )
+                        }
+                        _geofences.value = mapped
+                        _liveLocation.value?.let { loc ->
+                            _verificationResult.value = geofenceValidator.validate(loc, mapped)
+                        }
+                    }
+                }
+            } catch (e: Exception) {
+                // Keep default boundaries on offline or network issue
+            }
+        }
+    }
+
     fun startLocationMonitoring() {
+        fetchActiveGeofences()
         if (!locationProvider.isLocationPermissionGranted) {
             _verificationResult.value = LocationVerificationResult.PermissionDenied
             return

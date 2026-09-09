@@ -799,6 +799,9 @@ def restore_backup(
                     else:
                         cleaned_row[k] = v
 
+                if table == "users":
+                    cleaned_row.setdefault("has_face_enrolled", False)
+
                 cols = ", ".join(f'"{k}"' for k in cleaned_row.keys())
                 placeholders = ", ".join(f":{k}" for k in cleaned_row.keys())
                 stmt = text(f'INSERT INTO "{table}" ({cols}) VALUES ({placeholders})')

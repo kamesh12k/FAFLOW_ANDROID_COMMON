@@ -115,8 +115,64 @@ data class LeaveRequest(
     val reason: String,
     val status: LeaveStatus = LeaveStatus.PENDING,
     val isEmergency: Boolean = false,
-    val substituteTeacherName: String? = null
+    val substituteTeacherName: String? = null,
+    val createdAt: String? = null,
+    val batchId: String? = null
 )
+
+/**
+ * Aggregated date-level leave representation for mobile-native presentation.
+ * Groups period-level leave records belonging to the same date request into a single entity.
+ */
+data class LeaveHistoryDay(
+    val id: String,
+    val date: String,
+    val dayOrder: Int,
+    val status: LeaveStatus,
+    val reason: String,
+    val periods: List<LeaveRequest>,
+    val isFullDay: Boolean,
+    val isEmergency: Boolean,
+    val createdAt: String? = null,
+    val batchId: String? = null
+) {
+    val leaveTypeDisplay: String
+        get() = when {
+            isFullDay -> "Full Day Leave"
+            periods.size > 1 -> "Partial Day Leave"
+            else -> "Period Leave"
+        }
+
+    val periodNumbersDisplay: String
+        get() = periods.sortedBy { it.periodNumber }.joinToString(", ") { "P${it.periodNumber}" }
+
+    val periodSummarySubtitle: String
+        get() = when {
+            isFullDay -> "${periods.size} periods covered"
+            periods.size > 1 -> "${periods.size} periods · $periodNumbersDisplay"
+            else -> {
+                val p = periods.firstOrNull()?.periodNumber ?: 1
+                val time = PERIOD_TIMES[p]
+                if (time != null) "P$p · $time" else "P$p"
+            }
+        }
+
+    val coveredPeriodsCount: Int
+        get() = periods.count { !it.substituteTeacherName.isNullOrBlank() }
+
+    val hasSubstitutes: Boolean
+        get() = coveredPeriodsCount > 0
+
+    companion object {
+        val PERIOD_TIMES = mapOf(
+            1 to "8:00–9:00",
+            2 to "9:00–10:00",
+            3 to "10:15–11:15",
+            4 to "11:15–12:15",
+            5 to "1:00–2:00"
+        )
+    }
+}
 
 enum class LeaveStatus {
     PENDING,

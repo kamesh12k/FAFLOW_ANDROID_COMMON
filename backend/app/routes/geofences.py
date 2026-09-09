@@ -78,18 +78,18 @@ def get_geofence_admin(
 
 
 # ─────────────────────────────────────────────────────────────────────────────
-# MUTATION ENDPOINTS — ADMINISTRATOR & SYSTEM ADMIN
+# MUTATION ENDPOINTS — SYSTEM ADMIN ONLY
 # ─────────────────────────────────────────────────────────────────────────────
 
 @router.post("/", response_model=GeofenceOut, status_code=status.HTTP_201_CREATED)
 def create_geofence_admin(
     data: GeofenceCreate,
-    current_user: User = Depends(require_admin),
+    current_user: User = Depends(require_system_admin),
     db: Session = Depends(get_db)
 ):
     """
     Creates a new circular or polygonal campus geofence.
-    ADMIN & SYSTEM_ADMIN.
+    SYSTEM_ADMIN only.
     """
     g = GeofenceService.create_geofence(db, data, current_user.id)
     out = GeofenceOut.from_orm(g)
@@ -101,12 +101,12 @@ def create_geofence_admin(
 def update_geofence_admin(
     geofence_id: int,
     data: GeofenceUpdate,
-    current_user: User = Depends(require_admin),
+    current_user: User = Depends(require_system_admin),
     db: Session = Depends(get_db)
 ):
     """
     Updates an existing campus geofence boundary, radius, or polygon vertices.
-    ADMIN & SYSTEM_ADMIN.
+    SYSTEM_ADMIN only.
     """
     g = GeofenceService.update_geofence(db, geofence_id, data, current_user.id)
     out = GeofenceOut.from_orm(g)
@@ -118,12 +118,12 @@ def update_geofence_admin(
 def toggle_geofence_admin(
     geofence_id: int,
     is_active: bool = Query(..., description="Target active state"),
-    current_user: User = Depends(require_admin),
+    current_user: User = Depends(require_system_admin),
     db: Session = Depends(get_db)
 ):
     """
     Activates or deactivates an institutional geofence.
-    ADMIN & SYSTEM_ADMIN.
+    SYSTEM_ADMIN only.
     """
     g = GeofenceService.toggle_geofence(db, geofence_id, is_active, current_user.id)
     out = GeofenceOut.from_orm(g)
@@ -134,12 +134,12 @@ def toggle_geofence_admin(
 @router.delete("/{geofence_id}")
 def delete_geofence_admin(
     geofence_id: int,
-    current_user: User = Depends(require_admin),
+    current_user: User = Depends(require_system_admin),
     db: Session = Depends(get_db)
 ):
     """
     Soft-deletes/deactivates a campus geofence.
-    ADMIN & SYSTEM_ADMIN.
+    SYSTEM_ADMIN only.
     """
     return GeofenceService.delete_geofence(db, geofence_id, current_user.id)
 

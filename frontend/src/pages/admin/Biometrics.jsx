@@ -213,6 +213,7 @@ export default function AdminBiometrics() {
       {/* Reset Confirmation Modal */}
       {resetModalOpen && selectedFaculty && (
         <Modal
+          open={resetModalOpen}
           title="Reset Faculty Biometric Face Profile"
           onClose={() => setResetModalOpen(false)}
         >

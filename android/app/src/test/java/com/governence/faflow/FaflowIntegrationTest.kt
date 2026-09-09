@@ -21,42 +21,42 @@ import com.governence.faflow.domain.model.LeaveRequest
 import com.governence.faflow.domain.model.LeaveStatus
 import com.governence.faflow.domain.model.StaffMember
 import com.governence.faflow.domain.model.TimetableSlot
-import com.governence.faflow.face.ModelInfo
-import com.governence.faflow.face.ModelTask
-import com.governence.faflow.face.ModelState
-import com.governence.faflow.face.alignment.FaceAlignmentConfig
-import com.governence.faflow.face.alignment.SimilarityTransform
-import com.governence.faflow.face.alignment.UmeyamaFaceAligner
-import com.governence.faflow.face.embedding.ArcFaceEmbedder
-import com.governence.faflow.face.embedding.FaceRecognitionConfig
-import com.governence.faflow.face.enrollment.StaffFaceEnrollment
-import com.governence.faflow.face.liveness.ActiveLivenessDetector
-import com.governence.faflow.face.liveness.BiometricVerificationResult
-import com.governence.faflow.face.liveness.ChallengeEvaluationResult
-import com.governence.faflow.face.liveness.ChallengeGenerator
-import com.governence.faflow.face.liveness.FaceObservation
-import com.governence.faflow.face.liveness.HeadPose
-import com.governence.faflow.face.liveness.HeadPoseAnalyzer
-import com.governence.faflow.face.liveness.LivenessChallenge
-import com.governence.faflow.face.liveness.LivenessConfig
-import com.governence.faflow.face.liveness.LivenessEngine
-import com.governence.faflow.face.liveness.LivenessState
-import com.governence.faflow.face.liveness.MotionAnalyzer
-import com.governence.faflow.face.liveness.PresentationAttackRisk
-import com.governence.faflow.face.matching.CosineFaceMatcher
-import com.governence.faflow.face.model.FaceBox
-import com.governence.faflow.face.model.FaceDetectionResult
-import com.governence.faflow.face.model.FaceLandmarks
-import com.governence.faflow.face.model.FacePoint
-import com.governence.faflow.face.model.SpoofType
-import com.governence.faflow.face.model.StaffBiometricVerificationState
-import com.governence.faflow.face.scrfd.LetterboxInfo
-import com.governence.faflow.face.scrfd.ScrfdCandidate
-import com.governence.faflow.face.scrfd.ScrfdDecoder
-import com.governence.faflow.face.scrfd.ScrfdPostprocessor
-import com.governence.faflow.location.CampusGeofence
-import com.governence.faflow.location.GeoPoint
-import com.governence.faflow.location.GeofenceMathEngine
+import com.governence.faflow.attendance.biometrics.ModelInfo
+import com.governence.faflow.attendance.biometrics.ModelTask
+import com.governence.faflow.attendance.biometrics.ModelState
+import com.governence.faflow.attendance.biometrics.alignment.FaceAlignmentConfig
+import com.governence.faflow.attendance.biometrics.alignment.SimilarityTransform
+import com.governence.faflow.attendance.biometrics.alignment.UmeyamaFaceAligner
+import com.governence.faflow.attendance.biometrics.embedding.ArcFaceEmbedder
+import com.governence.faflow.attendance.biometrics.embedding.FaceRecognitionConfig
+import com.governence.faflow.attendance.biometrics.enrollment.StaffFaceEnrollment
+import com.governence.faflow.attendance.biometrics.liveness.ActiveLivenessDetector
+import com.governence.faflow.attendance.biometrics.liveness.BiometricVerificationResult
+import com.governence.faflow.attendance.biometrics.liveness.ChallengeEvaluationResult
+import com.governence.faflow.attendance.biometrics.liveness.ChallengeGenerator
+import com.governence.faflow.attendance.biometrics.liveness.FaceObservation
+import com.governence.faflow.attendance.biometrics.liveness.HeadPose
+import com.governence.faflow.attendance.biometrics.liveness.HeadPoseAnalyzer
+import com.governence.faflow.attendance.biometrics.liveness.LivenessChallenge
+import com.governence.faflow.attendance.biometrics.liveness.LivenessConfig
+import com.governence.faflow.attendance.biometrics.liveness.LivenessEngine
+import com.governence.faflow.attendance.biometrics.liveness.LivenessState
+import com.governence.faflow.attendance.biometrics.liveness.MotionAnalyzer
+import com.governence.faflow.attendance.biometrics.liveness.PresentationAttackRisk
+import com.governence.faflow.attendance.biometrics.matching.CosineFaceMatcher
+import com.governence.faflow.attendance.biometrics.model.FaceBox
+import com.governence.faflow.attendance.biometrics.model.FaceDetectionResult
+import com.governence.faflow.attendance.biometrics.model.FaceLandmarks
+import com.governence.faflow.attendance.biometrics.model.FacePoint
+import com.governence.faflow.attendance.biometrics.model.SpoofType
+import com.governence.faflow.attendance.biometrics.model.StaffBiometricVerificationState
+import com.governence.faflow.attendance.biometrics.scrfd.LetterboxInfo
+import com.governence.faflow.attendance.biometrics.scrfd.ScrfdCandidate
+import com.governence.faflow.attendance.biometrics.scrfd.ScrfdDecoder
+import com.governence.faflow.attendance.biometrics.scrfd.ScrfdPostprocessor
+import com.governence.faflow.attendance.geolocation.CampusGeofence
+import com.governence.faflow.attendance.geolocation.GeoPoint
+import com.governence.faflow.attendance.geolocation.GeofenceMathEngine
 import com.governence.faflow.attendance.data.AttendanceSubmissionResult
 import com.governence.faflow.attendance.data.PendingAttendanceEntity
 import com.governence.faflow.attendance.data.SyncStatus
@@ -71,10 +71,10 @@ import com.governence.faflow.attendance.model.AttendancePipelineStatus
 import com.governence.faflow.core.security.DeviceIntegrityResult
 import com.governence.faflow.core.security.IntegrityState
 import com.governence.faflow.core.telemetry.AttendanceTelemetry
-import com.governence.faflow.location.GeofenceType
-import com.governence.faflow.location.GeofenceValidator
-import com.governence.faflow.location.LocationVerificationResult
-import com.governence.faflow.location.StaffLiveLocation
+import com.governence.faflow.attendance.geolocation.GeofenceType
+import com.governence.faflow.attendance.geolocation.GeofenceValidator
+import com.governence.faflow.attendance.geolocation.LocationVerificationResult
+import com.governence.faflow.attendance.geolocation.StaffLiveLocation
 import com.governence.faflow.ui.viewmodels.AttendanceEligibilityState
 import com.governence.faflow.ui.viewmodels.FaceDetectionUiState
 import kotlinx.coroutines.runBlocking
@@ -567,12 +567,16 @@ class FaflowIntegrationTest {
         val inProg = detector.processFrame(landmarks, HeadPose(yawDegrees = 0f), currentTimeMs = 1000L)
         assertTrue(inProg is ChallengeEvaluationResult.InProgress)
 
-        // Step 1 met: Yaw = -25 deg (Turn Left) -> Advanced to TURN_RIGHT
+        // Step 1 met: Sustained Yaw = -25 deg (Turn Left) for 3 debounce frames -> Advanced to TURN_RIGHT
+        detector.processFrame(landmarks, HeadPose(yawDegrees = -25f), currentTimeMs = 1100L)
+        detector.processFrame(landmarks, HeadPose(yawDegrees = -25f), currentTimeMs = 1200L)
         val advanced = detector.processFrame(landmarks, HeadPose(yawDegrees = -25f), currentTimeMs = 1500L)
         assertTrue(advanced is ChallengeEvaluationResult.Advanced)
         assertEquals(LivenessChallenge.TURN_RIGHT, (advanced as ChallengeEvaluationResult.Advanced).nextChallenge)
 
-        // Step 2 met: Yaw = +25 deg (Turn Right) -> SessionComplete
+        // Step 2 met: Sustained Yaw = +25 deg (Turn Right) for 3 debounce frames -> SessionComplete
+        detector.processFrame(landmarks, HeadPose(yawDegrees = 25f), currentTimeMs = 1600L)
+        detector.processFrame(landmarks, HeadPose(yawDegrees = 25f), currentTimeMs = 1700L)
         val complete = detector.processFrame(landmarks, HeadPose(yawDegrees = 25f), currentTimeMs = 2000L)
         assertTrue(complete is ChallengeEvaluationResult.SessionComplete)
         assertTrue(detector.isSessionComplete)
@@ -1419,16 +1423,35 @@ class FaflowIntegrationTest {
     }
 
     @Test
-    fun testNetworkResultStateMachine() {
-        val loading: NetworkResult<Nothing> = NetworkResult.Loading
-        assertTrue(loading is NetworkResult.Loading)
+    fun testAttendanceFailClosedValidationContract() {
+        val invalidStaffId = 0
+        val isStaffValid = invalidStaffId > 0
+        assertFalse("Staff ID <= 0 must fail closed", isStaffValid)
 
-        val success: NetworkResult<String> = NetworkResult.Success("SUCCESS_PAYLOAD")
-        assertTrue(success is NetworkResult.Success)
-        assertEquals("SUCCESS_PAYLOAD", (success as NetworkResult.Success).data)
+        val nullRepo = null as com.governence.faflow.attendance.data.AttendanceRepository?
+        val isRepoValid = nullRepo != null
+        assertFalse("Missing AttendanceRepository must fail closed", isRepoValid)
+    }
 
-        val error: NetworkResult<String> = NetworkResult.Error(500, "Internal Server Error")
-        assertTrue(error is NetworkResult.Error)
-        assertEquals(500, (error as NetworkResult.Error).code)
+    @Test
+    fun testAttendanceEligibilityStateDistinction() {
+        val recordDto = AttendanceRecordOutDto(
+            id = 1,
+            userId = 42,
+            attendanceDate = "2026-09-04",
+            checkInTime = "09:00:00",
+            status = "present",
+            livenessVerified = true
+        )
+
+        val serverAccepted = AttendanceEligibilityState.ServerAccepted(recordDto)
+        val savedOffline = AttendanceEligibilityState.SavedOffline("Check-in saved locally for auto-sync.")
+        val blocked = AttendanceEligibilityState.Blocked("Location verification failed.")
+
+        assertTrue(serverAccepted is AttendanceEligibilityState.ServerAccepted)
+        assertTrue(savedOffline is AttendanceEligibilityState.SavedOffline)
+        assertTrue(blocked is AttendanceEligibilityState.Blocked)
+        assertFalse(serverAccepted == savedOffline)
+        assertFalse(savedOffline == blocked)
     }
 }

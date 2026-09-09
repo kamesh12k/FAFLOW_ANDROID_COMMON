@@ -355,7 +355,7 @@ export function DatePicker({ label, ...props }) {
 
 // 16. Modal Dialog Wrapper
 export function Modal({ open, isOpen, onClose, title, children, size = 'md' }) {
-  const isModalOpen = open !== undefined ? open : isOpen
+  const isModalOpen = open !== undefined ? open : (isOpen !== undefined ? isOpen : true)
   if (!isModalOpen) return null
 
   const maxWidth = size === 'sm' ? 'max-w-sm' : size === 'lg' ? 'max-w-2xl' : 'max-w-md'

@@ -2,7 +2,9 @@ from app.main import health, public_settings
 
 
 def test_health_endpoint():
-    assert health() == {"status": "ok"}
+    res = health()
+    assert res["status"] == "ok"
+    assert res.get("service") == "FAFLOW API"
 
 
 def test_public_settings_returns_branding(client):

@@ -11,8 +11,8 @@ import kotlinx.coroutines.withContext
 import java.util.UUID
 
 sealed interface AttendanceSubmissionResult {
-    data class Success(val record: AttendanceRecordOutDto, val isOnline: Boolean) : AttendanceSubmissionResult
-    data class QueuedOffline(val pendingEntity: PendingAttendanceEntity, val message: String) : AttendanceSubmissionResult
+    data class Success(val record: AttendanceRecordOutDto, val isOnline: Boolean, val elapsedMs: Long = 0L) : AttendanceSubmissionResult
+    data class QueuedOffline(val pendingEntity: PendingAttendanceEntity, val message: String, val elapsedMs: Long = 0L) : AttendanceSubmissionResult
     data class Failed(val errorCode: Int, val message: String) : AttendanceSubmissionResult
 }
 
@@ -180,6 +180,19 @@ class AttendanceRepository(
             }
         } catch (e: Exception) {
             NetworkResult.Error(0, e.localizedMessage ?: "Network error fetching attendance history")
+        }
+    }
+
+    suspend fun getSupervisorLiveStatus(): NetworkResult<com.governence.faflow.core.network.SupervisorLiveStatusOutDto> = withContext(Dispatchers.IO) {
+        try {
+            val response = apiService.getSupervisorLiveStatus()
+            if (response.isSuccessful && response.body() != null) {
+                NetworkResult.Success(response.body()!!)
+            } else {
+                NetworkResult.Error(response.code(), response.errorBody()?.string() ?: "Failed to fetch supervisor live status")
+            }
+        } catch (e: Exception) {
+            NetworkResult.Error(0, e.localizedMessage ?: "Network error fetching supervisor live status")
         }
     }
 

@@ -1,0 +1,327 @@
+{
+  "total_backend_endpoints": 230,
+  "total_frontend_calls": 210,
+  "total_android_calls": 43,
+  "frontend_calls_sample": [
+    {
+      "file": "api\\services.js",
+      "method": "GET",
+      "raw_path": "/settings/public",
+      "normalized_path": "/settings/public"
+    },
+    {
+      "file": "api\\services.js",
+      "method": "POST",
+      "raw_path": "/auth/login",
+      "normalized_path": "/auth/login"
+    },
+    {
+      "file": "api\\services.js",
+      "method": "POST",
+      "raw_path": "/auth/register",
+      "normalized_path": "/auth/register"
+    },
+    {
+      "file": "api\\services.js",
+      "method": "POST",
+      "raw_path": "/admin/first-login/setup",
+      "normalized_path": "/admin/first-login/setup"
+    },
+    {
+      "file": "api\\services.js",
+      "method": "GET",
+      "raw_path": "/admin/secondary-admins",
+      "normalized_path": "/admin/secondary-admins"
+    },
+    {
+      "file": "api\\services.js",
+      "method": "POST",
+      "raw_path": "/admin/secondary-admins",
+      "normalized_path": "/admin/secondary-admins"
+    },
+    {
+      "file": "api\\services.js",
+      "method": "PATCH",
+      "raw_path": "/admin/secondary-admins/${id}/enable",
+      "normalized_path": "/admin/secondary-admins/{id}/enable"
+    },
+    {
+      "file": "api\\services.js",
+      "method": "PATCH",
+      "raw_path": "/admin/secondary-admins/${id}/disable",
+      "normalized_path": "/admin/secondary-admins/{id}/disable"
+    },
+    {
+      "file": "api\\services.js",
+      "method": "GET",
+      "raw_path": "/admin/audit-logs",
+      "normalized_path": "/admin/audit-logs"
+    },
+    {
+      "file": "api\\services.js",
+      "method": "POST",
+      "raw_path": "/admin/factory-reset",
+      "normalized_path": "/admin/factory-reset"
+    }
+  ],
+  "android_calls": [
+    {
+      "file": "com\\governence\\faflow\\core\\network\\FaflowApiService.kt",
+      "method": "POST",
+      "raw_path": "auth/login",
+      "normalized_path": "/auth/login"
+    },
+    {
+      "file": "com\\governence\\faflow\\core\\network\\FaflowApiService.kt",
+      "method": "GET",
+      "raw_path": "teachers/me",
+      "normalized_path": "/teachers/me"
+    },
+    {
+      "file": "com\\governence\\faflow\\core\\network\\FaflowApiService.kt",
+      "method": "GET",
+      "raw_path": "academic-calendar/my-today-summary",
+      "normalized_path": "/academic-calendar/my-today-summary"
+    },
+    {
+      "file": "com\\governence\\faflow\\core\\network\\FaflowApiService.kt",
+      "method": "GET",
+      "raw_path": "academic-calendar/resolve",
+      "normalized_path": "/academic-calendar/resolve"
+    },
+    {
+      "file": "com\\governence\\faflow\\core\\network\\FaflowApiService.kt",
+      "method": "GET",
+      "raw_path": "timetable/teacher/{teacher_id}",
+      "normalized_path": "/timetable/teacher/{id}"
+    },
+    {
+      "file": "com\\governence\\faflow\\core\\network\\FaflowApiService.kt",
+      "method": "GET",
+      "raw_path": "timetable/",
+      "normalized_path": "/timetable/"
+    },
+    {
+      "file": "com\\governence\\faflow\\core\\network\\FaflowApiService.kt",
+      "method": "GET",
+      "raw_path": "classes/",
+      "normalized_path": "/classes/"
+    },
+    {
+      "file": "com\\governence\\faflow\\core\\network\\FaflowApiService.kt",
+      "method": "GET",
+      "raw_path": "teachers/",
+      "normalized_path": "/teachers/"
+    },
+    {
+      "file": "com\\governence\\faflow\\core\\network\\FaflowApiService.kt",
+      "method": "GET",
+      "raw_path": "leaves/my",
+      "normalized_path": "/leaves/my"
+    },
+    {
+      "file": "com\\governence\\faflow\\core\\network\\FaflowApiService.kt",
+      "method": "GET",
+      "raw_path": "leaves/",
+      "normalized_path": "/leaves/"
+    },
+    {
+      "file": "com\\governence\\faflow\\core\\network\\FaflowApiService.kt",
+      "method": "POST",
+      "raw_path": "leaves/",
+      "normalized_path": "/leaves/"
+    },
+    {
+      "file": "com\\governence\\faflow\\core\\network\\FaflowApiService.kt",
+      "method": "POST",
+      "raw_path": "leaves/batch",
+      "normalized_path": "/leaves/batch"
+    },
+    {
+      "file": "com\\governence\\faflow\\core\\network\\FaflowApiService.kt",
+      "method": "DELETE",
+      "raw_path": "leaves/{leave_id}",
+      "normalized_path": "/leaves/{id}"
+    },
+    {
+      "file": "com\\governence\\faflow\\core\\network\\FaflowApiService.kt",
+      "method": "PATCH",
+      "raw_path": "leaves/{leave_id}/approve",
+      "normalized_path": "/leaves/{id}/approve"
+    },
+    {
+      "file": "com\\governence\\faflow\\core\\network\\FaflowApiService.kt",
+      "method": "PATCH",
+      "raw_path": "leaves/{leave_id}/reject",
+      "normalized_path": "/leaves/{id}/reject"
+    },
+    {
+      "file": "com\\governence\\faflow\\core\\network\\FaflowApiService.kt",
+      "method": "PATCH",
+      "raw_path": "leaves/{leave_id}/status",
+      "normalized_path": "/leaves/{id}/status"
+    },
+    {
+      "file": "com\\governence\\faflow\\core\\network\\FaflowApiService.kt",
+      "method": "POST",
+      "raw_path": "leaves/{leave_id}/assign",
+      "normalized_path": "/leaves/{id}/assign"
+    },
+    {
+      "file": "com\\governence\\faflow\\core\\network\\FaflowApiService.kt",
+      "method": "GET",
+      "raw_path": "substitutions/today",
+      "normalized_path": "/substitutions/today"
+    },
+    {
+      "file": "com\\governence\\faflow\\core\\network\\FaflowApiService.kt",
+      "method": "GET",
+      "raw_path": "system/institutions/{institution_id}/policy",
+      "normalized_path": "/system/institutions/{id}/policy"
+    },
+    {
+      "file": "com\\governence\\faflow\\core\\network\\FaflowApiService.kt",
+      "method": "GET",
+      "raw_path": "teachers/{teacher_id}/credits",
+      "normalized_path": "/teachers/{id}/credits"
+    },
+    {
+      "file": "com\\governence\\faflow\\core\\network\\FaflowApiService.kt",
+      "method": "GET",
+      "raw_path": "credits/my/transactions",
+      "normalized_path": "/credits/my/transactions"
+    },
+    {
+      "file": "com\\governence\\faflow\\core\\network\\FaflowApiService.kt",
+      "method": "GET",
+      "raw_path": "teacher/substitution/my-leaves",
+      "normalized_path": "/teacher/substitution/my-leaves"
+    },
+    {
+      "file": "com\\governence\\faflow\\core\\network\\FaflowApiService.kt",
+      "method": "GET",
+      "raw_path": "teacher/substitution/leave/{leave_id}/candidates",
+      "normalized_path": "/teacher/substitution/leave/{id}/candidates"
+    },
+    {
+      "file": "com\\governence\\faflow\\core\\network\\FaflowApiService.kt",
+      "method": "GET",
+      "raw_path": "leaves/{leave_id}/candidates",
+      "normalized_path": "/leaves/{id}/candidates"
+    },
+    {
+      "file": "com\\governence\\faflow\\core\\network\\FaflowApiService.kt",
+      "method": "POST",
+      "raw_path": "teacher/substitution/leave/{leave_id}/assign/{substitute_id}",
+      "normalized_path": "/teacher/substitution/leave/{id}/assign/{id}"
+    },
+    {
+      "file": "com\\governence\\faflow\\core\\network\\FaflowApiService.kt",
+      "method": "POST",
+      "raw_path": "teacher/substitution/leave/{leave_id}/undo-assignment",
+      "normalized_path": "/teacher/substitution/leave/{id}/undo-assignment"
+    },
+    {
+      "file": "com\\governence\\faflow\\core\\network\\FaflowApiService.kt",
+      "method": "GET",
+      "raw_path": "campus-operations/preferences/me",
+      "normalized_path": "/campus-operations/preferences/me"
+    },
+    {
+      "file": "com\\governence\\faflow\\core\\network\\FaflowApiService.kt",
+      "method": "PUT",
+      "raw_path": "campus-operations/preferences/me",
+      "normalized_path": "/campus-operations/preferences/me"
+    },
+    {
+      "file": "com\\governence\\faflow\\core\\network\\FaflowApiService.kt",
+      "method": "GET",
+      "raw_path": "notifications/",
+      "normalized_path": "/notifications/"
+    },
+    {
+      "file": "com\\governence\\faflow\\core\\network\\FaflowApiService.kt",
+      "method": "GET",
+      "raw_path": "notifications/unread-count",
+      "normalized_path": "/notifications/unread-count"
+    },
+    {
+      "file": "com\\governence\\faflow\\core\\network\\FaflowApiService.kt",
+      "method": "PATCH",
+      "raw_path": "notifications/{notification_id}/read",
+      "normalized_path": "/notifications/{id}/read"
+    },
+    {
+      "file": "com\\governence\\faflow\\core\\network\\FaflowApiService.kt",
+      "method": "PATCH",
+      "raw_path": "notifications/read-all",
+      "normalized_path": "/notifications/read-all"
+    },
+    {
+      "file": "com\\governence\\faflow\\core\\network\\FaflowApiService.kt",
+      "method": "POST",
+      "raw_path": "attendance/check-in",
+      "normalized_path": "/attendance/check-in"
+    },
+    {
+      "file": "com\\governence\\faflow\\core\\network\\FaflowApiService.kt",
+      "method": "POST",
+      "raw_path": "attendance/check-out",
+      "normalized_path": "/attendance/check-out"
+    },
+    {
+      "file": "com\\governence\\faflow\\core\\network\\FaflowApiService.kt",
+      "method": "GET",
+      "raw_path": "attendance/today",
+      "normalized_path": "/attendance/today"
+    },
+    {
+      "file": "com\\governence\\faflow\\core\\network\\FaflowApiService.kt",
+      "method": "GET",
+      "raw_path": "attendance/my",
+      "normalized_path": "/attendance/my"
+    },
+    {
+      "file": "com\\governence\\faflow\\core\\network\\FaflowApiService.kt",
+      "method": "GET",
+      "raw_path": "attendance/admin/live-status",
+      "normalized_path": "/attendance/admin/live-status"
+    },
+    {
+      "file": "com\\governence\\faflow\\core\\network\\FaflowApiService.kt",
+      "method": "GET",
+      "raw_path": "geofences/active",
+      "normalized_path": "/geofences/active"
+    },
+    {
+      "file": "com\\governence\\faflow\\core\\network\\FaflowApiService.kt",
+      "method": "GET",
+      "raw_path": "geofences/",
+      "normalized_path": "/geofences/"
+    },
+    {
+      "file": "com\\governence\\faflow\\core\\network\\FaflowApiService.kt",
+      "method": "POST",
+      "raw_path": "geofences/",
+      "normalized_path": "/geofences/"
+    },
+    {
+      "file": "com\\governence\\faflow\\core\\network\\FaflowApiService.kt",
+      "method": "PUT",
+      "raw_path": "geofences/{geofence_id}",
+      "normalized_path": "/geofences/{id}"
+    },
+    {
+      "file": "com\\governence\\faflow\\core\\network\\FaflowApiService.kt",
+      "method": "DELETE",
+      "raw_path": "geofences/{geofence_id}",
+      "normalized_path": "/geofences/{id}"
+    },
+    {
+      "file": "com\\governence\\faflow\\core\\network\\FaflowApiService.kt",
+      "method": "POST",
+      "raw_path": "teachers/me/biometrics/enroll",
+      "normalized_path": "/teachers/me/biometrics/enroll"
+    }
+  ]
+}

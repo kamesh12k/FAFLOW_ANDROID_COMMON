@@ -177,6 +177,27 @@ def get_by_class(class_id: int, db: Session, tenant_department_id: int | None = 
     return db.query(TimetableSlot).filter(TimetableSlot.class_id == class_id).order_by(TimetableSlot.day_order, TimetableSlot.period_number).all()
 
 
+def list_slots(
+    db: Session,
+    class_id: int | None = None,
+    teacher_id: int | None = None,
+    department_id: int | None = None,
+    day_order: int | None = None,
+    tenant_department_id: int | None = None,
+) -> list[TimetableSlot]:
+    dept = tenant_department_id or department_id
+    q = db.query(TimetableSlot)
+    if class_id is not None:
+        q = q.filter(TimetableSlot.class_id == class_id)
+    if teacher_id is not None:
+        q = q.filter(TimetableSlot.teacher_id == teacher_id)
+    if day_order is not None:
+        q = q.filter(TimetableSlot.day_order == day_order)
+    if dept is not None:
+        q = q.join(User, TimetableSlot.teacher_id == User.id).filter(User.department_id == dept)
+    return q.order_by(TimetableSlot.day_order, TimetableSlot.period_number).all()
+
+
 def delete_slot(slot_id: int, db: Session, tenant_department_id: int | None = None) -> None:
     slot = db.query(TimetableSlot).filter(TimetableSlot.id == slot_id).first()
     if slot:

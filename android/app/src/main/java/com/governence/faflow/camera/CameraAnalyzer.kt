@@ -25,6 +25,7 @@ class CameraAnalyzer(
     private val frameIntervalMs = (1000.0 / maxFps).toLong()
     private var lastProcessedTimestamp = 0L
 
+    val isCaptureLocked = AtomicBoolean(false)
     private val isProcessing = AtomicBoolean(false)
     private val processedFramesCount = AtomicLong(0L)
     private val droppedFramesCount = AtomicLong(0L)
@@ -33,6 +34,12 @@ class CameraAnalyzer(
     val analyzerState: StateFlow<CameraState> = _analyzerState.asStateFlow()
 
     override fun analyze(imageProxy: ImageProxy) {
+        // Instant bypass if frame has already been captured
+        if (isCaptureLocked.get()) {
+            imageProxy.close()
+            return
+        }
+
         val currentTimestamp = System.currentTimeMillis()
 
         // 1. Frame Rate Throttling
@@ -56,7 +63,7 @@ class CameraAnalyzer(
             CameraFrame.fromImageProxy(
                 imageProxy = imageProxy,
                 lensFacing = lensFacing,
-                extractBitmap = false
+                extractBitmap = true
             )
         } catch (e: Exception) {
             isProcessing.set(false)

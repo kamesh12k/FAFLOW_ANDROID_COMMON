@@ -1,0 +1,46 @@
+[
+  {
+    "path": "/api/v1/health",
+    "methods": [
+      "GET"
+    ],
+    "name": "health",
+    "tags": [
+      "Health"
+    ],
+    "summary": null,
+    "dependencies": [],
+    "response_model": null,
+    "module": "app.main"
+  },
+  {
+    "path": "/health",
+    "methods": [
+      "GET"
+    ],
+    "name": "health",
+    "tags": [
+      "Health"
+    ],
+    "summary": null,
+    "dependencies": [],
+    "response_model": null,
+    "module": "app.main"
+  },
+  {
+    "path": "/settings/public",
+    "methods": [
+      "GET"
+    ],
+    "name": "public_settings",
+    "tags": [
+      "Settings"
+    ],
+    "summary": null,
+    "dependencies": [
+      "get_db"
+    ],
+    "response_model": null,
+    "module": "app.main"
+  }
+]

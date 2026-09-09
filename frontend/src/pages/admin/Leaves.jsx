@@ -51,10 +51,20 @@ function RecommendationRow({ rec, onAssign, disabled, isSwap = false }) {
                 </span>
               )}
             </div>
-            <div className="flex items-center gap-2 mt-1">
+            <div className="flex items-center gap-2 mt-1 flex-wrap">
               <ScoreBar score={rec.score} />
-              <span className="text-[11px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full">
-                {rec.score}% match
+              {rec.tier && (
+                <span className={`text-[10px] font-extrabold px-2 py-0.5 rounded-md uppercase tracking-wider ${
+                  rec.tier === 'EXCELLENT' ? 'bg-emerald-100 text-emerald-800 border border-emerald-300' :
+                  rec.tier === 'GOOD' ? 'bg-blue-100 text-blue-800 border border-blue-300' :
+                  rec.tier === 'FAIR' ? 'bg-amber-100 text-amber-800 border border-amber-300' :
+                  'bg-slate-100 text-slate-700 border border-slate-300'
+                }`}>
+                  {rec.tier}
+                </span>
+              )}
+              <span className="text-[11px] font-bold text-slate-700 bg-slate-50 border border-slate-200 px-2 py-0.5 rounded-full">
+                Suitability: {Math.max(0, Math.min(100, Math.round(Number(rec.score) || 0)))}/100
               </span>
             </div>
           </div>

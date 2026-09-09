@@ -107,6 +107,7 @@ data class LeaveOutDto(
     @Json(name = "is_emergency") val isEmergency: Boolean = false,
     @Json(name = "teacher_name") val teacherName: String? = null,
     @Json(name = "created_at") val createdAt: String? = null,
+    @Json(name = "batch_id") val batchId: String? = null,
     @Json(name = "alter_assignment") val alterAssignment: AlterAssignmentOutDto? = null
 )
 
@@ -144,24 +145,75 @@ data class CreditTransactionOutDto(
 // ---------- Substitution DTOs ----------
 
 @JsonClass(generateAdapter = true)
-data class RecommendationOutDto(
-    @Json(name = "teacher_id") val teacherId: Int,
-    @Json(name = "teacher_name") val teacherName: String,
-    @Json(name = "department") val department: String?,
-    @Json(name = "compatibility_score") val compatibilityScore: Float,
-    @Json(name = "reason") val reason: String? = null
+data class RecommendationTeacherDto(
+    @Json(name = "id") val id: Int? = null,
+    @Json(name = "name") val name: String? = null,
+    @Json(name = "email") val email: String? = null,
+    @Json(name = "department") val department: String? = null,
+    @Json(name = "department_id") val departmentId: Int? = null
 )
 
 @JsonClass(generateAdapter = true)
+data class RecommendationOutDto(
+    @Json(name = "teacher") val teacher: RecommendationTeacherDto? = null,
+    @Json(name = "score") val score: Float? = null,
+    @Json(name = "reasons") val reasons: List<String> = emptyList(),
+    @Json(name = "today_workload") val todayWorkload: Int? = null,
+    @Json(name = "week_workload") val weekWorkload: Int? = null,
+    @Json(name = "longest_continuous_periods") val longestContinuousPeriods: Int? = null,
+    // Fallback flat fields for backwards compatibility
+    @Json(name = "teacher_id") val flatTeacherId: Int? = null,
+    @Json(name = "teacher_name") val flatTeacherName: String? = null,
+    @Json(name = "department") val flatDepartment: String? = null,
+    @Json(name = "compatibility_score") val flatCompatibilityScore: Float? = null,
+    @Json(name = "reason") val flatReason: String? = null
+) {
+    constructor(
+        teacherId: Int,
+        teacherName: String,
+        department: String?,
+        compatibilityScore: Float,
+        reason: String? = null
+    ) : this(
+        teacher = RecommendationTeacherDto(id = teacherId, name = teacherName, department = department),
+        score = compatibilityScore,
+        reasons = if (reason != null) listOf(reason) else emptyList(),
+        flatTeacherId = teacherId,
+        flatTeacherName = teacherName,
+        flatDepartment = department,
+        flatCompatibilityScore = compatibilityScore,
+        flatReason = reason
+    )
+
+    val teacherId: Int get() = teacher?.id ?: flatTeacherId ?: 0
+    val teacherName: String get() = teacher?.name ?: flatTeacherName ?: "Faculty #${teacherId}"
+    val department: String? get() = teacher?.department ?: flatDepartment
+    val compatibilityScore: Float get() = score ?: flatCompatibilityScore ?: 0f
+    val reason: String? get() = reasons.firstOrNull() ?: flatReason
+}
+
+@JsonClass(generateAdapter = true)
 data class SubstitutionPreferenceOutDto(
-    @Json(name = "teacher_id") val teacherId: Int,
-    @Json(name = "max_substitutions_per_day") val maxSubstitutionsPerDay: Int = 2,
-    @Json(name = "max_substitutions_per_week") val maxSubstitutionsPerWeek: Int = 6,
-    @Json(name = "willing_for_cross_department") val willingForCrossDepartment: Boolean = false
+    @Json(name = "teacher_id") val teacherId: Int? = null,
+    @Json(name = "accept_auto_assignments") val acceptAutoAssignments: Boolean = true,
+    @Json(name = "allow_emergency_assignments") val allowEmergencyAssignments: Boolean = false,
+    @Json(name = "max_weekly_substitutions") val maxWeeklySubstitutions: Int? = null,
+    @Json(name = "prefer_morning_classes") val preferMorningClasses: Boolean = false,
+    @Json(name = "prefer_same_department") val preferSameDepartment: Boolean = true,
+    @Json(name = "only_my_classes") val onlyMyClasses: Boolean = false,
+    @Json(name = "max_substitutions_per_day") val maxSubstitutionsPerDay: Int? = null,
+    @Json(name = "max_substitutions_per_week") val maxSubstitutionsPerWeek: Int? = null,
+    @Json(name = "willing_for_cross_department") val willingForCrossDepartment: Boolean? = null
 )
 
 @JsonClass(generateAdapter = true)
 data class SubstitutionPreferenceUpdateDto(
+    @Json(name = "accept_auto_assignments") val acceptAutoAssignments: Boolean? = null,
+    @Json(name = "allow_emergency_assignments") val allowEmergencyAssignments: Boolean? = null,
+    @Json(name = "max_weekly_substitutions") val maxWeeklySubstitutions: Int? = null,
+    @Json(name = "prefer_morning_classes") val preferMorningClasses: Boolean? = null,
+    @Json(name = "prefer_same_department") val preferSameDepartment: Boolean? = null,
+    @Json(name = "only_my_classes") val onlyMyClasses: Boolean? = null,
     @Json(name = "max_substitutions_per_day") val maxSubstitutionsPerDay: Int? = null,
     @Json(name = "max_substitutions_per_week") val maxSubstitutionsPerWeek: Int? = null,
     @Json(name = "willing_for_cross_department") val willingForCrossDepartment: Boolean? = null
@@ -258,7 +310,7 @@ data class GeofenceOutDto(
     @Json(name = "type") val type: String = "circle",
     @Json(name = "center_latitude") val centerLatitude: Double,
     @Json(name = "center_longitude") val centerLongitude: Double,
-    @Json(name = "radius_meters") val radiusMeters: Double = 150.0,
+    @Json(name = "radius_meters") val radiusMeters: Double? = 150.0,
     @Json(name = "polygon_vertices") val polygonVertices: List<List<Double>>? = null,
     @Json(name = "tolerance_meters") val toleranceMeters: Double = 15.0,
     @Json(name = "area_sq_meters") val areaSqMeters: Double? = null,
@@ -296,14 +348,20 @@ data class GeofenceUpdateDto(
 
 @JsonClass(generateAdapter = true)
 data class SupervisorLiveStatusOutDto(
-    @Json(name = "date") val date: String,
-    @Json(name = "total_staff") val totalStaff: Int,
-    @Json(name = "present_count") val presentCount: Int,
-    @Json(name = "absent_count") val absentCount: Int,
-    @Json(name = "currently_active_count") val currentlyActiveCount: Int,
-    @Json(name = "checked_out_count") val checkedOutCount: Int,
-    @Json(name = "records") val records: List<AttendanceRecordOutDto> = emptyList()
-)
+    @Json(name = "date") val date: String? = null,
+    @Json(name = "total_staff") val totalStaff: Int = 0,
+    @Json(name = "present_count") val presentCount: Int = 0,
+    @Json(name = "absent_count") val absentCount: Int = 0,
+    @Json(name = "currently_active_count") val currentlyActiveCount: Int = 0,
+    @Json(name = "checked_out_count") val checkedOutCount: Int = 0,
+    @Json(name = "records") val records: List<AttendanceRecordOutDto> = emptyList(),
+    @Json(name = "checked_in_count") val checkedInCount: Int? = null,
+    @Json(name = "active_shifts") val activeShifts: List<AttendanceRecordOutDto>? = null,
+    @Json(name = "anomalies_count") val anomaliesCount: Int = 0
+) {
+    val displayActiveCount: Int get() = checkedInCount ?: currentlyActiveCount
+    val displayRecords: List<AttendanceRecordOutDto> get() = activeShifts?.takeIf { it.isNotEmpty() } ?: records
+}
 
 // ---------- Class & Teacher DTOs ----------
 

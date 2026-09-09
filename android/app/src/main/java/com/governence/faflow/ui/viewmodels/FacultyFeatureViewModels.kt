@@ -5,9 +5,12 @@ import androidx.lifecycle.viewModelScope
 import com.governence.faflow.auth.data.AuthRepository
 import com.governence.faflow.core.network.NetworkResult
 import com.governence.faflow.core.network.NotificationOutDto
+import com.governence.faflow.core.network.SubstitutionPreferenceOutDto
 import com.governence.faflow.core.network.SubstitutionPreferenceUpdateDto
 import com.governence.faflow.domain.model.CreditTransaction
+import com.governence.faflow.domain.model.LeaveHistoryDay
 import com.governence.faflow.domain.model.LeaveRequest
+import com.governence.faflow.domain.model.LeaveStatus
 import com.governence.faflow.faflow.CreditRepository
 import com.governence.faflow.faflow.data.AcademicSummaryRepository
 import com.governence.faflow.faflow.data.LeaveRepositoryImpl
@@ -24,8 +27,11 @@ import kotlinx.coroutines.launch
 data class LeaveUiState(
     val isLoading: Boolean = false,
     val myLeaves: List<LeaveRequest> = emptyList(),
+    val groupedLeaves: List<LeaveHistoryDay> = emptyList(),
     val isSubmittedSuccessfully: Boolean = false,
     val resolvedDayOrder: Int? = null,
+    val isBlockedDate: Boolean = false,
+    val dayType: String? = null,
     val errorMessage: String? = null
 )
 
@@ -46,7 +52,12 @@ class LeaveViewModel(
         viewModelScope.launch {
             when (val res = leaveRepository.getMyLeaves()) {
                 is NetworkResult.Success -> {
-                    _uiState.value = _uiState.value.copy(isLoading = false, myLeaves = res.data)
+                    val grouped = leaveRepository.groupLeavesByDay(res.data)
+                    _uiState.value = _uiState.value.copy(
+                        isLoading = false,
+                        myLeaves = res.data,
+                        groupedLeaves = grouped
+                    )
                 }
                 is NetworkResult.Error -> {
                     _uiState.value = _uiState.value.copy(isLoading = false, errorMessage = res.message)
@@ -60,7 +71,12 @@ class LeaveViewModel(
         viewModelScope.launch {
             when (val res = academicSummaryRepository.resolveDate(date)) {
                 is NetworkResult.Success -> {
-                    _uiState.value = _uiState.value.copy(resolvedDayOrder = res.data.dayOrder)
+                    val isBlocked = res.data.blocksOperations || res.data.dayType.contains("HOLIDAY", ignoreCase = true)
+                    _uiState.value = _uiState.value.copy(
+                        resolvedDayOrder = res.data.dayOrder,
+                        isBlockedDate = isBlocked,
+                        dayType = res.data.dayType
+                    )
                 }
                 is NetworkResult.Error -> Unit
                 NetworkResult.Loading -> Unit
@@ -85,6 +101,23 @@ class LeaveViewModel(
         }
     }
 
+    fun submitLeaveBatch(date: String, periodNumbers: List<Int>, reason: String, onComplete: () -> Unit) {
+        _uiState.value = _uiState.value.copy(isLoading = true, errorMessage = null)
+        viewModelScope.launch {
+            when (val res = leaveRepository.applyLeaveBatch(date, periodNumbers, reason)) {
+                is NetworkResult.Success -> {
+                    _uiState.value = _uiState.value.copy(isLoading = false, isSubmittedSuccessfully = true)
+                    loadMyLeaves()
+                    onComplete()
+                }
+                is NetworkResult.Error -> {
+                    _uiState.value = _uiState.value.copy(isLoading = false, errorMessage = res.message)
+                }
+                NetworkResult.Loading -> Unit
+            }
+        }
+    }
+
     fun cancelLeave(leaveId: Int) {
         viewModelScope.launch {
             when (leaveRepository.cancelLeave(leaveId)) {
@@ -94,14 +127,38 @@ class LeaveViewModel(
             }
         }
     }
+
+    fun cancelLeaveGroup(dayGroup: LeaveHistoryDay, onComplete: () -> Unit = {}) {
+        _uiState.value = _uiState.value.copy(isLoading = true, errorMessage = null)
+        viewModelScope.launch {
+            val cancellableIds = dayGroup.periods
+                .filter { it.status == LeaveStatus.PENDING || it.status == LeaveStatus.APPROVED }
+                .map { it.id }
+            if (cancellableIds.isNotEmpty()) {
+                leaveRepository.cancelLeaves(cancellableIds)
+            }
+            loadMyLeaves()
+            onComplete()
+        }
+    }
 }
 
 // ---------- Credits ViewModel ----------
+
+data class CreditTransactionWithRunning(
+    val transaction: CreditTransaction,
+    val runningBalance: Int
+)
 
 data class CreditsUiState(
     val isLoading: Boolean = false,
     val balance: Int = 0,
     val transactions: List<CreditTransaction> = emptyList(),
+    val enhancedTransactions: List<CreditTransactionWithRunning> = emptyList(),
+    val activeFilterTab: String = "ALL", // "ALL", "EARNED", "DEDUCTED", "ADJUSTMENTS"
+    val searchQuery: String = "",
+    val totalEarned: Int = 0,
+    val totalDeducted: Int = 0,
     val errorMessage: String? = null
 )
 
@@ -112,6 +169,8 @@ class CreditsViewModel(
 
     private val _uiState = MutableStateFlow(CreditsUiState())
     val uiState: StateFlow<CreditsUiState> = _uiState.asStateFlow()
+
+    private var rawTransactions: List<CreditTransaction> = emptyList()
 
     init {
         loadCredits()
@@ -131,7 +190,8 @@ class CreditsViewModel(
             // Load transactions
             when (val tRes = creditRepository.getCreditTransactions()) {
                 is NetworkResult.Success -> {
-                    _uiState.value = _uiState.value.copy(isLoading = false, transactions = tRes.data)
+                    rawTransactions = tRes.data
+                    applyFiltersAndCompute()
                 }
                 is NetworkResult.Error -> {
                     _uiState.value = _uiState.value.copy(isLoading = false, errorMessage = tRes.message)
@@ -140,13 +200,78 @@ class CreditsViewModel(
             }
         }
     }
+
+    fun setFilterTab(tab: String) {
+        _uiState.value = _uiState.value.copy(activeFilterTab = tab)
+        applyFiltersAndCompute()
+    }
+
+    fun setSearchQuery(query: String) {
+        _uiState.value = _uiState.value.copy(searchQuery = query)
+        applyFiltersAndCompute()
+    }
+
+    private fun applyFiltersAndCompute() {
+        var earned = 0
+        var deducted = 0
+
+        rawTransactions.forEach { tx ->
+            if (tx.change > 0) earned += tx.change
+            else if (tx.change < 0) deducted += Math.abs(tx.change)
+        }
+
+        // Chronological running balance calculation
+        var running = 0
+        val withRunning = rawTransactions.sortedBy { it.createdAt }.map { tx ->
+            running += tx.change
+            CreditTransactionWithRunning(transaction = tx, runningBalance = running)
+        }.reversed()
+
+        // Filter based on active tab & query
+        val tab = _uiState.value.activeFilterTab
+        val q = _uiState.value.searchQuery.trim().lowercase()
+
+        val filtered = withRunning.filter { item ->
+            val matchesTab = when (tab) {
+                "EARNED" -> item.transaction.change > 0
+                "DEDUCTED" -> item.transaction.change < 0
+                "ADJUSTMENTS" -> item.transaction.change == 0 || item.transaction.category.contains("adjustment", ignoreCase = true)
+                else -> true
+            }
+            val matchesQuery = q.isEmpty() ||
+                    item.transaction.reason.lowercase().contains(q) ||
+                    item.transaction.category.lowercase().contains(q)
+
+            matchesTab && matchesQuery
+        }
+
+        _uiState.value = _uiState.value.copy(
+            isLoading = false,
+            transactions = rawTransactions,
+            enhancedTransactions = filtered,
+            totalEarned = earned,
+            totalDeducted = deducted
+        )
+    }
 }
 
 // ---------- Substitution ViewModel ----------
 
 data class SubstitutionUiState(
     val isLoading: Boolean = false,
-    val duties: List<LeaveRequest> = emptyList(),
+    // Tab 1: My leaves that need a substitute assigned (pending or unassigned)
+    val activeTab: String = "NEEDS_COVER", // "NEEDS_COVER" vs "COVERED"
+    // All my leaves from teacher/substitution/my-leaves
+    val allMySubstitutionLeaves: List<LeaveRequest> = emptyList(),
+    // Leaves without an assigned substitute (Needs Cover tab)
+    val leavesNeedingCoverage: List<LeaveRequest> = emptyList(),
+    // Leaves already covered (Assigned/Covered tab)
+    val coveredLeaves: List<LeaveRequest> = emptyList(),
+    val selectedLeaveForCandidates: LeaveRequest? = null,
+    val candidates: List<com.governence.faflow.core.network.RecommendationOutDto> = emptyList(),
+    val isLoadingCandidates: Boolean = false,
+    val isAssignmentInProgress: Boolean = false,
+    val actionMessage: String? = null,
     val errorMessage: String? = null
 )
 
@@ -158,15 +283,29 @@ class SubstitutionViewModel(
     val uiState: StateFlow<SubstitutionUiState> = _uiState.asStateFlow()
 
     init {
-        loadDuties()
+        loadData()
     }
 
-    fun loadDuties() {
-        _uiState.value = _uiState.value.copy(isLoading = true, errorMessage = null)
+    fun setActiveTab(tab: String) {
+        _uiState.value = _uiState.value.copy(activeTab = tab)
+    }
+
+    fun loadData() {
+        _uiState.value = _uiState.value.copy(isLoading = true, errorMessage = null, actionMessage = null)
         viewModelScope.launch {
-            when (val res = substitutionRepository.getMyDuties()) {
+            when (val res = substitutionRepository.getMyLeavesNeedingCoverage()) {
                 is NetworkResult.Success -> {
-                    _uiState.value = _uiState.value.copy(isLoading = false, duties = res.data)
+                    val all = res.data
+                    // Needs Cover: leaves without a substitute assigned
+                    val needsCover = all.filter { it.substituteTeacherName == null }
+                    // Covered: leaves that already have a substitute assigned
+                    val covered = all.filter { it.substituteTeacherName != null }
+                    _uiState.value = _uiState.value.copy(
+                        isLoading = false,
+                        allMySubstitutionLeaves = all,
+                        leavesNeedingCoverage = needsCover,
+                        coveredLeaves = covered
+                    )
                 }
                 is NetworkResult.Error -> {
                     _uiState.value = _uiState.value.copy(isLoading = false, errorMessage = res.message)
@@ -175,12 +314,104 @@ class SubstitutionViewModel(
             }
         }
     }
+
+    fun selectLeaveForCandidates(leave: LeaveRequest, includeCrossDept: Boolean = false) {
+        _uiState.value = _uiState.value.copy(
+            selectedLeaveForCandidates = leave,
+            isLoadingCandidates = true,
+            candidates = emptyList()
+        )
+        viewModelScope.launch {
+            when (val res = substitutionRepository.getCandidates(leave.id, includeCrossDept)) {
+                is NetworkResult.Success -> {
+                    _uiState.value = _uiState.value.copy(
+                        isLoadingCandidates = false,
+                        candidates = res.data
+                    )
+                }
+                is NetworkResult.Error -> {
+                    _uiState.value = _uiState.value.copy(
+                        isLoadingCandidates = false,
+                        errorMessage = res.message
+                    )
+                }
+                NetworkResult.Loading -> Unit
+            }
+        }
+    }
+
+    fun dismissCandidateModal() {
+        _uiState.value = _uiState.value.copy(
+            selectedLeaveForCandidates = null,
+            candidates = emptyList(),
+            isLoadingCandidates = false
+        )
+    }
+
+    fun assignCandidate(leaveId: Int, substituteTeacherId: Int) {
+        _uiState.value = _uiState.value.copy(isAssignmentInProgress = true)
+        viewModelScope.launch {
+            when (val res = substitutionRepository.assignSubstitute(leaveId, substituteTeacherId)) {
+                is NetworkResult.Success -> {
+                    _uiState.value = _uiState.value.copy(
+                        isAssignmentInProgress = false,
+                        selectedLeaveForCandidates = null,
+                        actionMessage = "Substitute assigned successfully!"
+                    )
+                    loadData()
+                }
+                is NetworkResult.Error -> {
+                    _uiState.value = _uiState.value.copy(
+                        isAssignmentInProgress = false,
+                        errorMessage = res.message
+                    )
+                }
+                NetworkResult.Loading -> Unit
+            }
+        }
+    }
+
+    fun undoAssignment(leaveId: Int) {
+        _uiState.value = _uiState.value.copy(isAssignmentInProgress = true)
+        viewModelScope.launch {
+            when (val res = substitutionRepository.undoAssignment(leaveId)) {
+                is NetworkResult.Success -> {
+                    _uiState.value = _uiState.value.copy(
+                        isAssignmentInProgress = false,
+                        actionMessage = "Substitution assignment undone"
+                    )
+                    loadData()
+                }
+                is NetworkResult.Error -> {
+                    _uiState.value = _uiState.value.copy(
+                        isAssignmentInProgress = false,
+                        errorMessage = res.message
+                    )
+                }
+                NetworkResult.Loading -> Unit
+            }
+        }
+    }
+
+    fun loadDuties() {
+        loadData()
+    }
+
+    fun clearActionMessage() {
+        _uiState.value = _uiState.value.copy(actionMessage = null)
+    }
 }
 
 // ---------- Preferences ViewModel ----------
 
 data class PreferencesUiState(
     val isLoading: Boolean = false,
+    val acceptAutoAssignments: Boolean = true,
+    val allowEmergencyAssignments: Boolean = false,
+    val maxWeeklySubstitutions: Int? = null,
+    val preferMorningClasses: Boolean = false,
+    val preferSameDepartment: Boolean = true,
+    val onlyMyClasses: Boolean = false,
     val maxPerDay: Int = 2,
     val maxPerWeek: Int = 6,
     val crossDept: Boolean = false,
@@ -207,9 +438,15 @@ class PreferencesViewModel(
                     val p = res.data
                     _uiState.value = _uiState.value.copy(
                         isLoading = false,
+                        acceptAutoAssignments = p.acceptAutoAssignments,
+                        allowEmergencyAssignments = p.allowEmergencyAssignments,
+                        maxWeeklySubstitutions = p.maxWeeklySubstitutions,
+                        preferMorningClasses = p.preferMorningClasses,
+                        preferSameDepartment = p.preferSameDepartment,
+                        onlyMyClasses = p.onlyMyClasses,
                         maxPerDay = p.maxSubstitutionsPerDay ?: 2,
-                        maxPerWeek = p.maxSubstitutionsPerWeek ?: 6,
-                        crossDept = p.willingForCrossDepartment ?: false
+                        maxPerWeek = p.maxWeeklySubstitutions ?: (p.maxSubstitutionsPerWeek ?: 6),
+                        crossDept = p.preferSameDepartment.not()
                     )
                 }
                 is NetworkResult.Error -> {
@@ -220,12 +457,41 @@ class PreferencesViewModel(
         }
     }
 
-    fun savePreferences(day: Int, week: Int, cross: Boolean, onComplete: () -> Unit) {
-        _uiState.value = _uiState.value.copy(isLoading = true)
+    fun saveAll(
+        acceptAuto: Boolean,
+        allowEmergency: Boolean,
+        maxWeekly: Int?,
+        preferMorning: Boolean,
+        preferSameDept: Boolean,
+        onlyMyClasses: Boolean,
+        onComplete: () -> Unit = {}
+    ) {
+        _uiState.value = _uiState.value.copy(isLoading = true, errorMessage = null, isSaved = false)
         viewModelScope.launch {
-            when (val res = preferencesRepository.updatePreferences(day, week, cross)) {
+            val updateDto = SubstitutionPreferenceUpdateDto(
+                acceptAutoAssignments = acceptAuto,
+                allowEmergencyAssignments = allowEmergency,
+                maxWeeklySubstitutions = maxWeekly,
+                preferMorningClasses = preferMorning,
+                preferSameDepartment = preferSameDept,
+                onlyMyClasses = onlyMyClasses,
+                maxSubstitutionsPerWeek = maxWeekly,
+                willingForCrossDepartment = !preferSameDept
+            )
+            when (val res = preferencesRepository.updatePreferences(updateDto)) {
                 is NetworkResult.Success -> {
-                    _uiState.value = _uiState.value.copy(isLoading = false, isSaved = true)
+                    _uiState.value = _uiState.value.copy(
+                        isLoading = false,
+                        isSaved = true,
+                        acceptAutoAssignments = acceptAuto,
+                        allowEmergencyAssignments = allowEmergency,
+                        maxWeeklySubstitutions = maxWeekly,
+                        preferMorningClasses = preferMorning,
+                        preferSameDepartment = preferSameDept,
+                        onlyMyClasses = onlyMyClasses,
+                        maxPerWeek = maxWeekly ?: 6,
+                        crossDept = !preferSameDept
+                    )
                     onComplete()
                 }
                 is NetworkResult.Error -> {
@@ -234,6 +500,18 @@ class PreferencesViewModel(
                 NetworkResult.Loading -> Unit
             }
         }
+    }
+
+    fun savePreferences(day: Int, week: Int, cross: Boolean, onComplete: () -> Unit) {
+        saveAll(
+            acceptAuto = _uiState.value.acceptAutoAssignments,
+            allowEmergency = _uiState.value.allowEmergencyAssignments,
+            maxWeekly = week,
+            preferMorning = _uiState.value.preferMorningClasses,
+            preferSameDept = !cross,
+            onlyMyClasses = _uiState.value.onlyMyClasses,
+            onComplete = onComplete
+        )
     }
 }
 
@@ -283,6 +561,13 @@ class NotificationsViewModel(
     fun markRead(id: Int) {
         viewModelScope.launch {
             notificationRepository.markAsRead(id)
+            loadNotifications()
+        }
+    }
+
+    fun markAllRead() {
+        viewModelScope.launch {
+            notificationRepository.markAllAsRead()
             loadNotifications()
         }
     }

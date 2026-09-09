@@ -13,6 +13,7 @@ from app.models.timetable import TimetableSlot
 from app.models.department import Department
 from app.models.day_order_calendar import CalendarDay
 from app.schemas.operational_staff import OperationalStaffOut
+from app.schemas.user import UserOut
 from app.services import operational_staff_service as staff_service
 from app.services import day_order_service
 
@@ -241,5 +242,22 @@ def get_my_ledger(
 ):
     staff = _get_staff_for_user_or_404(db, current_user)
     return staff_leave_service.get_staff_leave_ledger(db, staff.id)
+
+
+@router.post("/me/biometrics/enroll", response_model=UserOut)
+def enroll_staff_biometrics(
+    current_user: User = Depends(require_credentials_set),
+    db: Session = Depends(get_db),
+):
+    """
+    Registers that the authenticated staff member has captured and verified
+    their facial biometric template on their device.
+    """
+    from datetime import datetime, timezone
+    current_user.has_face_enrolled = True
+    current_user.face_enrolled_at = datetime.now(timezone.utc)
+    db.commit()
+    db.refresh(current_user)
+    return current_user
 
 

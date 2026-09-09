@@ -305,8 +305,17 @@ export const biometricsApi = {
   updateFaculty: (id, data) => api.put(`/teachers/${id}`, data),
   resetBiometrics: (id) => api.post(`/teachers/${id}/biometrics/reset`),
   enrollMyBiometrics: () => api.post('/teachers/me/biometrics/enroll'),
-  getAttendanceToday: () => api.get('/attendance/summary/today'),
+  getAttendanceToday: () => api.get('/attendance/today'),
 }
+
+export const attendanceApi = {
+  checkIn: (data) => api.post('/attendance/check-in', data),
+  checkOut: (data) => api.post('/attendance/check-out', data),
+  getToday: () => api.get('/attendance/today'),
+  getMyHistory: (params) => api.get('/attendance/my', { params }),
+  getSupervisorLiveStatus: () => api.get('/attendance/admin/live-status'),
+}
+
 
 
 

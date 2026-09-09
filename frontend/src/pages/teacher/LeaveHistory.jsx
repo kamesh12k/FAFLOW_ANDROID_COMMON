@@ -51,12 +51,14 @@ export default function LeaveHistory() {
 
   const handleCancel = async () => {
     if (!cancelTarget) return
-    setActionLoading(cancelTarget.id)
+    const targets = cancelTarget.leaves && cancelTarget.leaves.length > 0 ? cancelTarget.leaves : [cancelTarget]
+    const ids = targets.map(l => l.id)
+    setActionLoading('cancelling')
     setError('')
     try {
-      await leavesApi.cancel(cancelTarget.id)
+      await Promise.all(targets.map(t => leavesApi.cancel(t.id)))
       setCancelTarget(null)
-      if (viewDetailTarget?.id === cancelTarget.id) setViewDetailTarget(null)
+      if (viewDetailTarget && ids.includes(viewDetailTarget.id)) setViewDetailTarget(null)
       load()
     } catch (err) {
       setError(err.response?.data?.detail || 'Failed to cancel leave.')
@@ -423,7 +425,7 @@ export default function LeaveHistory() {
                               cancellableLeaves.length > 0 ? (
                                 <button
                                   type="button"
-                                  onClick={() => setCancelTarget(cancellableLeaves[0])}
+                                  onClick={() => setCancelTarget({ ...dayGroup, leaves: cancellableLeaves })}
                                   disabled={actionLoading !== null}
                                   className="px-2.5 py-1 text-xs font-semibold text-rose-700 bg-rose-50 hover:bg-rose-100 border border-rose-200/80 rounded-lg transition disabled:opacity-40"
                                 >
@@ -526,7 +528,7 @@ export default function LeaveHistory() {
                         cancellableLeaves.length > 0 ? (
                           <button
                             type="button"
-                            onClick={() => setCancelTarget(cancellableLeaves[0])}
+                            onClick={() => setCancelTarget({ ...dayGroup, leaves: cancellableLeaves })}
                             disabled={actionLoading !== null}
                             className="px-3 py-1 text-xs font-semibold text-rose-700 bg-rose-50 hover:bg-rose-100 border border-rose-200/80 rounded-lg transition disabled:opacity-40"
                           >
@@ -735,39 +737,50 @@ export default function LeaveHistory() {
 
       {/* ── Cancel Confirmation Modal ── */}
       <Modal open={!!cancelTarget} onClose={() => setCancelTarget(null)} title="Cancel Leave Request">
-        {cancelTarget && (
-          <div className="space-y-4 text-xs sm:text-sm text-slate-700">
-            <div className="bg-rose-50 border border-rose-200 rounded-xl p-3.5 space-y-1">
-              <p className="font-bold text-rose-900">Are you sure you want to cancel this leave?</p>
-              <p className="text-rose-700 text-xs font-semibold">
-                {formatDate(cancelTarget.date)} &middot; Day Order {cancelTarget.day_order} &middot; Period {cancelTarget.period_number}
-              </p>
-              <p className="text-rose-600 text-xs italic">"{cancelTarget.reason}"</p>
-            </div>
-            {cancelTarget.alter_assignment && (
-              <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 text-xs text-amber-900 space-y-0.5">
-                <p className="font-bold">A substitute is currently assigned:</p>
-                <p className="font-extrabold text-amber-950">{cancelTarget.alter_assignment.substitute?.name || 'Unknown'}</p>
-                <p className="text-amber-700 text-[11px]">This substitute assignment will be released and credit adjustments will be reverted.</p>
+        {cancelTarget && (() => {
+          const targets = cancelTarget.leaves && cancelTarget.leaves.length > 0 ? cancelTarget.leaves : [cancelTarget]
+          const covered = targets.filter(t => t.alter_assignment?.substitute)
+          return (
+            <div className="space-y-4 text-xs sm:text-sm text-slate-700">
+              <div className="bg-rose-50 border border-rose-200 rounded-xl p-3.5 space-y-1">
+                <p className="font-bold text-rose-900">Are you sure you want to cancel this leave?</p>
+                <p className="text-rose-700 text-xs font-semibold">
+                  {formatDate(cancelTarget.date)} &middot; Day Order {cancelTarget.day_order} &middot;{' '}
+                  {targets.length > 1
+                    ? `${targets.length} Periods (P${targets.map(l => l.period_number).join(', P')})`
+                    : `Period ${targets[0].period_number}`}
+                </p>
+                <p className="text-rose-600 text-xs italic">"{cancelTarget.reason || targets[0]?.reason}"</p>
               </div>
-            )}
-            <div className="flex justify-end gap-2 pt-2">
-              <button
-                onClick={() => setCancelTarget(null)}
-                className="text-xs px-4 py-2 border border-slate-300 text-slate-700 rounded-lg hover:bg-slate-50 font-semibold"
-              >
-                Keep Leave
-              </button>
-              <button
-                onClick={handleCancel}
-                disabled={actionLoading !== null}
-                className="text-xs px-4 py-2 bg-rose-600 text-white rounded-lg hover:bg-rose-700 disabled:opacity-50 font-bold"
-              >
-                {actionLoading ? 'Cancelling…' : 'Confirm Cancel'}
-              </button>
+              {covered.length > 0 && (
+                <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 text-xs text-amber-900 space-y-1">
+                  <p className="font-bold">Assigned substitute coverage will be released:</p>
+                  {covered.map(t => (
+                    <p key={t.id} className="text-amber-950 font-medium">
+                      Period {t.period_number}: <strong>{t.alter_assignment.substitute.name}</strong>
+                    </p>
+                  ))}
+                  <p className="text-amber-700 text-[11px] pt-0.5">Assigned substitute duties will be released and credit adjustments will be automatically reverted.</p>
+                </div>
+              )}
+              <div className="flex justify-end gap-2 pt-2">
+                <button
+                  onClick={() => setCancelTarget(null)}
+                  className="text-xs px-4 py-2 border border-slate-300 text-slate-700 rounded-lg hover:bg-slate-50 font-semibold"
+                >
+                  Keep Leave
+                </button>
+                <button
+                  onClick={handleCancel}
+                  disabled={actionLoading !== null}
+                  className="text-xs px-4 py-2 bg-rose-600 text-white rounded-lg hover:bg-rose-700 disabled:opacity-50 font-bold"
+                >
+                  {actionLoading ? 'Cancelling…' : `Confirm Cancel (${targets.length} ${targets.length === 1 ? 'Period' : 'Periods'})`}
+                </button>
+              </div>
             </div>
-          </div>
-        )}
+          )
+        })()}
       </Modal>
     </div>
   )

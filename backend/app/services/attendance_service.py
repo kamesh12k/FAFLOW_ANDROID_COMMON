@@ -1,11 +1,12 @@
-from datetime import date, datetime, timezone
+import os
 import math
+from datetime import date, datetime, timezone
 from typing import Optional, List, Tuple
 from sqlalchemy.orm import Session
 from sqlalchemy import func, desc
 
 from app.core.exceptions import DomainException
-from app.models.user import User
+from app.models.user import User, Role
 from app.models.campus_geofence import CampusGeofence
 from app.models.staff_attendance import StaffAttendanceRecord
 from app.models.audit_log import AuditLog
@@ -49,6 +50,11 @@ class AttendanceService:
 
     @staticmethod
     def _validate_server_geofence(db: Session, lat: float, lon: float, accuracy: float) -> Tuple[bool, Optional[CampusGeofence]]:
+        import os
+        if os.getenv("BYPASS_GEOLOCATION_FOR_TESTING", "false").lower() in ("true", "1", "yes"):
+            active_geofences = GeofenceService.list_geofences(db, is_active_only=True)
+            return True, active_geofences[0] if active_geofences else None
+
         if accuracy > 50.0:
             raise DomainException(f"GPS accuracy ({accuracy:.1f}m) exceeds allowable threshold (50.0m)", status_code=400)
 
@@ -62,8 +68,7 @@ class AttendanceService:
             if dist <= (g.radius_meters + g.tolerance_meters):
                 return True, g
 
-        # Testing bypass: Allow location validation to pass during development/testing
-        return True, active_geofences[0] if active_geofences else None
+        return False, None
 
     @staticmethod
     def check_in(db: Session, user: User, data: AttendanceCheckInRequest) -> AttendanceRecordOut:
@@ -82,7 +87,8 @@ class AttendanceService:
         if data.face_similarity_score < 0.60:
             AttendanceService._log_audit(db, user.id, "FACE_VERIFICATION_FAILURE", {"similarity": data.face_similarity_score})
             raise DomainException(f"Biometric face similarity score ({data.face_similarity_score:.2f}) below threshold 0.60", status_code=400)
-        if not data.liveness_verified:
+        bypass_liveness = os.getenv("BYPASS_LIVENESS_FOR_TESTING", "false").lower() in ("true", "1", "yes")
+        if not bypass_liveness and not data.liveness_verified:
             AttendanceService._log_audit(db, user.id, "LIVENESS_FAILURE", {"liveness_verified": False})
             raise DomainException("Liveness / presentation attack verification failed", status_code=400)
 
@@ -104,9 +110,15 @@ class AttendanceService:
             StaffAttendanceRecord.attendance_date == today
         ).first()
 
+        allow_unlimited_testing = os.getenv("ALLOW_UNLIMITED_ATTENDANCE_TESTING", "false").lower() in ("true", "1", "yes")
+
         if existing_today and existing_today.check_in_time is not None:
-            AttendanceService._log_audit(db, user.id, "DUPLICATE_ATTENDANCE", {"date": str(today)})
-            raise DomainException(f"Staff member is already checked in for today ({today})", status_code=400)
+            if not allow_unlimited_testing:
+                AttendanceService._log_audit(db, user.id, "DUPLICATE_ATTENDANCE", {"date": str(today)})
+                raise DomainException(f"Staff member is already checked in for today ({today})", status_code=400)
+            else:
+                existing_today.check_out_time = None
+                existing_today.working_hours = None
 
         # 5. Record Authoritative Shift Check-In
         now_utc = datetime.now(timezone.utc)
@@ -147,13 +159,27 @@ class AttendanceService:
         if existing_idempotent and existing_idempotent.check_out_time is not None:
             return AttendanceService._to_dto(existing_idempotent)
 
-        # 2. Server-side Geofence Validation
+        # 2. Biometric Verification Gate (Check-Out requires face re-verification)
+        # SECURITY: The same biometric standard applied at check-in MUST apply at check-out.
+        # An authenticated session alone is insufficient — the physical person must re-verify.
+        if data.face_similarity_score < 0.60:
+            AttendanceService._log_audit(db, user.id, "FACE_VERIFICATION_FAILURE_CHECKOUT", {"similarity": data.face_similarity_score})
+            raise DomainException(
+                f"Biometric face similarity score ({data.face_similarity_score:.2f}) below threshold 0.60",
+                status_code=400
+            )
+        bypass_liveness = os.getenv("BYPASS_LIVENESS_FOR_TESTING", "false").lower() in ("true", "1", "yes")
+        if not bypass_liveness and not data.liveness_verified:
+            AttendanceService._log_audit(db, user.id, "LIVENESS_FAILURE_CHECKOUT", {"liveness_verified": False})
+            raise DomainException("Liveness / presentation attack verification failed", status_code=400)
+
+        # 3. Server-side Geofence Validation
         is_inside, geofence = AttendanceService._validate_server_geofence(db, data.latitude, data.longitude, data.accuracy_meters)
         if not is_inside:
             AttendanceService._log_audit(db, user.id, "GEOFENCE_FAILURE", {"latitude": data.latitude, "longitude": data.longitude})
             raise DomainException("Location verification failed: Staff member is outside institutional campus geofence perimeters", status_code=400)
 
-        # 3. Find Today's Check-In Record
+        # 4. Find Today's Check-In Record
         today = date.today()
         record = db.query(StaffAttendanceRecord).filter(
             StaffAttendanceRecord.user_id == user.id,
@@ -165,8 +191,10 @@ class AttendanceService:
             raise DomainException("Cannot check out: No prior check-in recorded for today", status_code=400)
 
         if record.check_out_time is not None:
-            AttendanceService._log_audit(db, user.id, "DUPLICATE_ATTENDANCE", {"reason": "Already checked out"})
-            raise DomainException(f"Staff member is already checked out for today ({today})", status_code=400)
+            allow_unlimited_testing = os.getenv("ALLOW_UNLIMITED_ATTENDANCE_TESTING", "false").lower() in ("true", "1", "yes")
+            if not allow_unlimited_testing:
+                AttendanceService._log_audit(db, user.id, "DUPLICATE_ATTENDANCE", {"reason": "Already checked out"})
+                raise DomainException(f"Staff member is already checked out for today ({today})", status_code=400)
 
         now_utc = datetime.now(timezone.utc)
         record.check_out_time = now_utc
@@ -174,6 +202,8 @@ class AttendanceService:
         record.check_out_longitude = data.longitude
         record.check_out_accuracy = data.accuracy_meters
         record.check_out_geofence_id = geofence.id if geofence else None
+        # Store checkout biometric score for audit trail
+        record.face_similarity_score = data.face_similarity_score
 
         # Calculate Working Hours
         if record.check_in_time:
@@ -232,8 +262,9 @@ class AttendanceService:
 
     @staticmethod
     def get_supervisor_live_status(db: Session, current_user: User) -> AttendanceSupervisorLiveStatusOut:
-        allowed_roles = ["admin", "super_admin", "principal", "hod", "manager"]
-        if getattr(current_user, "role", "").lower() not in allowed_roles:
+        user_role = current_user.role.value if hasattr(current_user.role, "value") else str(current_user.role).lower()
+        allowed_roles = [Role.admin.value, Role.system_admin.value, Role.principal.value, Role.manager.value, Role.governance.value]
+        if user_role not in allowed_roles:
             raise DomainException("Access forbidden: Supervisor or Administrator privilege required", status_code=403)
 
         today = date.today()

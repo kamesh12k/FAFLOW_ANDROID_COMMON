@@ -1,30 +1,100 @@
+<?xml version="1.0" encoding="utf-8"?>
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:aapt="http://schemas.android.com/aapt"
     android:width="108dp"
     android:height="108dp"
     android:viewportWidth="108"
     android:viewportHeight="108">
-    <path android:pathData="M31,63.928c0,0 6.4,-11 12.1,-13.1c7.2,-2.6 26,-1.4 26,-1.4l38.1,38.1L107,108.928l-32,-1L31,63.928z">
-        <aapt:attr name="android:fillColor">
-            <gradient
-                android:endX="85.84757"
-                android:endY="92.4963"
-                android:startX="42.9492"
-                android:startY="49.59793"
-                android:type="linear">
-                <item
-                    android:color="#44000000"
-                    android:offset="0.0" />
-                <item
-                    android:color="#00000000"
-                    android:offset="1.0" />
-            </gradient>
-        </aapt:attr>
-    </path>
-    <path
-        android:fillColor="#FFFFFF"
-        android:fillType="nonZero"
-        android:pathData="M65.3,45.828l3.8,-6.6c0.2,-0.4 0.1,-0.9 -0.3,-1.1c-0.4,-0.2 -0.9,-0.1 -1.1,0.3l-3.9,6.7c-6.3,-2.8 -13.4,-2.8 -19.7,0l-3.9,-6.7c-0.2,-0.4 -0.7,-0.5 -1.1,-0.3C38.8,38.328 38.7,38.828 38.9,39.228l3.8,6.6C36.2,49.428 31.7,56.028 31,63.928h46C76.3,56.028 71.8,49.428 65.3,45.828zM43.4,57.328c-0.8,0 -1.5,-0.5 -1.8,-1.2c-0.3,-0.7 -0.1,-1.5 0.4,-2.1c0.5,-0.5 1.4,-0.7 2.1,-0.4c0.7,0.3 1.2,1 1.2,1.8C45.3,56.528 44.5,57.328 43.4,57.328L43.4,57.328zM64.6,57.328c-0.8,0 -1.5,-0.5 -1.8,-1.2s-0.1,-1.5 0.4,-2.1c0.5,-0.5 1.4,-0.7 2.1,-0.4c0.7,0.3 1.2,1 1.2,1.8C66.5,56.528 65.6,57.328 64.6,57.328L64.6,57.328z"
-        android:strokeWidth="1"
-        android:strokeColor="#00000000" />
+    <group
+        android:scaleX="0.35"
+        android:scaleY="0.35"
+        android:translateX="19"
+        android:translateY="19">
+        
+        <!-- Main Upward Swooping Arrow -->
+        <path android:pathData="M 64,165 C 45,135 48,82 82,48 L 74,42 L 102,36 L 96,66 L 89,59 C 62,88 58,132 75,152 Z">
+            <aapt:attr name="android:fillColor">
+                <gradient
+                    android:type="linear"
+                    android:startX="20"
+                    android:startY="20"
+                    android:endX="100"
+                    android:endY="180">
+                    <item android:color="#0088E8" android:offset="0.0" />
+                    <item android:color="#0D3B66" android:offset="1.0" />
+                </gradient>
+            </aapt:attr>
+        </path>
+
+        <!-- Inner Leaf / Stream Curve -->
+        <path
+            android:fillColor="#0284C7"
+            android:pathData="M 68,152 C 58,128 66,84 87,72 C 77,96 74,126 84,140 Z" />
+
+        <!-- Open Book Symbol -->
+        <path
+            android:fillColor="#14B8A6"
+            android:pathData="M 76,68 C 84,66 91,69 91,69 L 91,91 C 91,91 84,88 76,90 Z" />
+        <path
+            android:fillColor="#14B8A6"
+            android:pathData="M 94,69 C 94,69 101,66 109,68 L 109,90 C 101,88 94,91 94,91 Z" />
+
+        <!-- Faculty Figures - Heads -->
+        <path
+            android:fillColor="#38BDF8"
+            android:pathData="M 122.5,62 a 7.5,7.5 0 1,0 15,0 a 7.5,7.5 0 1,0 -15,0" />
+        <path
+            android:fillColor="#60A5FA"
+            android:pathData="M 139,50 a 8,8 0 1,0 16,0 a 8,8 0 1,0 -16,0" />
+        <path
+            android:fillColor="#93C5FD"
+            android:pathData="M 156,38 a 9,9 0 1,0 18,0 a 9,9 0 1,0 -18,0" />
+
+        <!-- Ascending People Bodies / Unified Flow Waves -->
+        <path android:pathData="M 65,178 C 65,178 78,140 102,118 C 114,107 122,88 126,73 C 132,84 139,74 144,63 C 150,74 158,64 167,52 C 176,44 179,46 181,48 C 173,60 162,68 155,76 C 138,95 106,122 75,186 Z">
+            <aapt:attr name="android:fillColor">
+                <gradient
+                    android:type="linear"
+                    android:startX="20"
+                    android:startY="20"
+                    android:endX="100"
+                    android:endY="180">
+                    <item android:color="#0088E8" android:offset="0.0" />
+                    <item android:color="#0D3B66" android:offset="1.0" />
+                </gradient>
+            </aapt:attr>
+        </path>
+
+        <!-- Mid Flow Ribbon (Cyan-Teal) -->
+        <path android:pathData="M 65,186 C 85,160 120,126 142,108 C 160,93 170,76 174,65 C 167,80 148,100 128,116 C 102,137 76,170 65,186 Z">
+            <aapt:attr name="android:fillColor">
+                <gradient
+                    android:type="linear"
+                    android:startX="40"
+                    android:startY="60"
+                    android:endX="160"
+                    android:endY="120">
+                    <item android:color="#0284C7" android:offset="0.0" />
+                    <item android:color="#0EA5E9" android:offset="0.5" />
+                    <item android:color="#10B981" android:offset="1.0" />
+                </gradient>
+            </aapt:attr>
+        </path>
+
+        <!-- Lower Dynamic Wave (Emerald Green) -->
+        <path android:pathData="M 67,195 C 72,178 88,150 110,135 C 134,118 160,98 169,77 C 166,94 140,118 118,135 C 92,155 73,186 67,195 Z">
+            <aapt:attr name="android:fillColor">
+                <gradient
+                    android:type="linear"
+                    android:startX="50"
+                    android:startY="120"
+                    android:endX="170"
+                    android:endY="60">
+                    <item android:color="#059669" android:offset="0.0" />
+                    <item android:color="#10B981" android:offset="0.5" />
+                    <item android:color="#34D399" android:offset="1.0" />
+                </gradient>
+            </aapt:attr>
+        </path>
+    </group>
 </vector>

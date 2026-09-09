@@ -219,7 +219,7 @@ fun CampusMapVisualizerCard(geofences: List<GeofenceOutDto>) {
                     val offsetY = centerOffset.y + (if (idx % 2 == 0) -20f else 20f)
 
                     if (g.type == "circle") {
-                        val visualRadius = (g.radiusMeters.toFloat() / 5f).coerceIn(20f, 70f)
+                        val visualRadius = ((g.radiusMeters ?: 150.0).toFloat() / 5f).coerceIn(20f, 70f)
                         drawCircle(
                             color = color.copy(alpha = 0.2f),
                             radius = visualRadius,
@@ -329,7 +329,7 @@ fun GeofenceItemCard(
                     Spacer(modifier = Modifier.height(2.dp))
 
                     Text(
-                        text = if (geofence.type == "circle") "Radius: ${geofence.radiusMeters.toInt()}m • ±${geofence.toleranceMeters.toInt()}m"
+                        text = if (geofence.type == "circle") "Radius: ${geofence.radiusMeters?.toInt() ?: 150}m • ±${geofence.toleranceMeters.toInt()}m"
                         else "Area: ${(geofence.areaSqMeters ?: 0.0).toInt()} m² • ±${geofence.toleranceMeters.toInt()}m",
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant

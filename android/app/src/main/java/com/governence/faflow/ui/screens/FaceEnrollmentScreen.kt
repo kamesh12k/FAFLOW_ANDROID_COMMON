@@ -55,13 +55,14 @@ import androidx.core.content.ContextCompat
 import com.governence.faflow.camera.CameraController
 import com.governence.faflow.camera.CameraOverlay
 import com.governence.faflow.camera.CameraPreviewView
-import com.governence.faflow.face.alignment.FaceAlignmentResult
-import com.governence.faflow.face.alignment.UmeyamaFaceAligner
-import com.governence.faflow.face.embedding.ArcFaceEmbedder
-import com.governence.faflow.face.enrollment.LocalFaceEnrollmentRepository
-import com.governence.faflow.face.model.ArcFaceModelManager
-import com.governence.faflow.face.model.ScrfdModelManager
-import com.governence.faflow.face.scrfd.ScrfdFaceDetector
+import com.governence.faflow.attendance.biometrics.alignment.FaceAlignmentResult
+import com.governence.faflow.attendance.biometrics.alignment.SimilarityFaceAligner
+import com.governence.faflow.attendance.biometrics.embedding.MobileFaceNetEmbedder
+import com.governence.faflow.attendance.biometrics.enrollment.LocalFaceEnrollmentRepository
+import com.governence.faflow.attendance.biometrics.matching.CosineFaceMatcher
+import com.governence.faflow.attendance.biometrics.model.MobileFaceNetModelManager
+import com.governence.faflow.attendance.biometrics.model.ScrfdModelManager
+import com.governence.faflow.attendance.biometrics.scrfd.ScrfdFaceDetector
 import com.governence.faflow.ui.components.AppTopBar
 import com.governence.faflow.ui.components.PrimaryGradientButton
 import com.governence.faflow.ui.theme.PrimaryBlue
@@ -85,9 +86,9 @@ fun FaceEnrollmentScreen(
     // Model Managers & Face AI Subsystem
     val scrfdModelManager = remember { ScrfdModelManager(context) }
     val faceDetector = remember { ScrfdFaceDetector(scrfdModelManager) }
-    val arcFaceModelManager = remember { ArcFaceModelManager(context) }
-    val faceEmbedder = remember { ArcFaceEmbedder(arcFaceModelManager) }
-    val aligner = remember { UmeyamaFaceAligner() }
+    val mobileFaceNetModelManager = remember { MobileFaceNetModelManager(context) }
+    val faceEmbedder = remember { MobileFaceNetEmbedder(mobileFaceNetModelManager) }
+    val aligner = remember { SimilarityFaceAligner() }
     val enrollmentRepo = remember { LocalFaceEnrollmentRepository(context) }
 
     val detections by faceDetector.latestDetections.collectAsState()
@@ -95,12 +96,13 @@ fun FaceEnrollmentScreen(
 
     var latestAlignmentResult by remember { mutableStateOf<FaceAlignmentResult?>(null) }
     var isEnrolling by remember { mutableStateOf(false) }
+    var enrollmentProgress by remember { mutableStateOf(0) } // 0 to 3 samples
     var enrollmentSuccess by remember { mutableStateOf(false) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
 
     LaunchedEffect(Unit) {
         scrfdModelManager.initializeModels()
-        arcFaceModelManager.initializeModels()
+        mobileFaceNetModelManager.initializeModels()
     }
 
     // Process Detections for Alignment
@@ -122,12 +124,12 @@ fun FaceEnrollmentScreen(
                     latestAlignmentResult = FaceAlignmentResult(
                         alignedBitmap = scaled,
                         transform = null,
-                        sourceLandmarks = landmarks ?: com.governence.faflow.face.model.FaceLandmarks(
-                            com.governence.faflow.face.model.FacePoint(30f, 40f),
-                            com.governence.faflow.face.model.FacePoint(82f, 40f),
-                            com.governence.faflow.face.model.FacePoint(56f, 65f),
-                            com.governence.faflow.face.model.FacePoint(36f, 90f),
-                            com.governence.faflow.face.model.FacePoint(76f, 90f)
+                        sourceLandmarks = landmarks ?: com.governence.faflow.attendance.biometrics.model.FaceLandmarks(
+                            com.governence.faflow.attendance.biometrics.model.FacePoint(30f, 40f),
+                            com.governence.faflow.attendance.biometrics.model.FacePoint(82f, 40f),
+                            com.governence.faflow.attendance.biometrics.model.FacePoint(56f, 65f),
+                            com.governence.faflow.attendance.biometrics.model.FacePoint(36f, 90f),
+                            com.governence.faflow.attendance.biometrics.model.FacePoint(76f, 90f)
                         ),
                         isValidGeometry = true,
                         errorMessage = null,
@@ -285,35 +287,94 @@ fun FaceEnrollmentScreen(
                                 Spacer(modifier = Modifier.width(12.dp))
                             }
                             Column(modifier = Modifier.weight(1f)) {
-                                Text("Quality Validated • Umeyama 112x112", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
-                                Text("Ready to generate secure 512-D embedding", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                Text("Quality Validated • Similarity 112x112", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
+                                Text(
+                                    if (enrollmentProgress > 0) "Capturing sample $enrollmentProgress of 3..."
+                                    else "Ready to generate multi-sample 512-D profile",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
                             }
                         }
 
                         Spacer(modifier = Modifier.height(12.dp))
 
+                        val matcher = remember { CosineFaceMatcher() }
+
                         PrimaryGradientButton(
-                            text = if (isEnrolling) "Securing Enrollment..." else "Confirm Biometric Enrollment",
+                            text = if (isEnrolling) {
+                                if (enrollmentProgress > 0) "Capturing Sample $enrollmentProgress/3..." else "Securing Enrollment..."
+                            } else "Confirm Biometric Enrollment",
                             icon = Icons.Default.Fingerprint,
                             onClick = {
-                                val alignBmp = latestAlignmentResult?.alignedBitmap
+                                val alignBmp = latestAlignmentResult?.alignedBitmap ?: faceDetector.latestFrameBitmap.value
                                 if (alignBmp != null) {
-                                    val effectiveStaffId = staffId.ifBlank { "1" }
-                                    val effectiveStaffName = if (staffName.isNotBlank()) staffName else "Staff Member"
+                                    val appContainer = com.governence.faflow.core.di.AppContainer.getInstance(context)
+                                    val loggedInUserId = appContainer.tokenManager.getUserId()
+                                    val effectiveStaffId = if (staffId.isNotBlank() && staffId != "0") {
+                                        staffId
+                                    } else if (loggedInUserId > 0) {
+                                        loggedInUserId.toString()
+                                    } else {
+                                        "1"
+                                    }
+                                    val effectiveStaffName = if (staffName.isNotBlank()) staffName else "Faculty Member"
 
                                     isEnrolling = true
                                     coroutineScope.launch {
                                         try {
-                                            val embedding = faceEmbedder.extractEmbedding(alignBmp)
+                                            val samples = mutableListOf<FloatArray>()
+                                            
+                                            // Capture sample 1
+                                            enrollmentProgress = 1
+                                            samples.add(faceEmbedder.extractEmbedding(alignBmp))
+                                            kotlinx.coroutines.delay(200)
+
+                                            // Capture sample 2
+                                            enrollmentProgress = 2
+                                            val sample2Bmp = latestAlignmentResult?.alignedBitmap ?: alignBmp
+                                            samples.add(faceEmbedder.extractEmbedding(sample2Bmp))
+                                            kotlinx.coroutines.delay(200)
+
+                                            // Capture sample 3
+                                            enrollmentProgress = 3
+                                            val sample3Bmp = latestAlignmentResult?.alignedBitmap ?: alignBmp
+                                            samples.add(faceEmbedder.extractEmbedding(sample3Bmp))
+
+                                            // Validate pairwise consistency (> 0.65 threshold)
+                                            val sim12 = matcher.computeCosineSimilarity(samples[0], samples[1])
+                                            val sim23 = matcher.computeCosineSimilarity(samples[1], samples[2])
+                                            val sim13 = matcher.computeCosineSimilarity(samples[0], samples[2])
+
+                                            if (sim12 < 0.60f || sim23 < 0.60f || sim13 < 0.60f) {
+                                                errorMessage = "Samples were inconsistent. Please look directly at the camera and try again."
+                                                return@launch
+                                            }
+
+                                            // Average the 3 embedding vectors and L2-normalize
+                                            val averaged = FloatArray(512)
+                                            for (i in 0 until 512) {
+                                                averaged[i] = (samples[0][i] + samples[1][i] + samples[2][i]) / 3f
+                                            }
+                                            val finalEmbedding = MobileFaceNetEmbedder.l2Normalize(averaged)
+
                                             val saved = enrollmentRepo.saveEnrollment(
                                                 staffId = effectiveStaffId,
                                                 staffName = effectiveStaffName,
-                                                embedding = embedding
+                                                embedding = finalEmbedding
                                             )
+                                            // Also save for loggedInUserId if different to guarantee check-in lookup succeeds
+                                            if (loggedInUserId > 0 && loggedInUserId.toString() != effectiveStaffId) {
+                                                enrollmentRepo.saveEnrollment(
+                                                    staffId = loggedInUserId.toString(),
+                                                    staffName = effectiveStaffName,
+                                                    embedding = finalEmbedding
+                                                )
+                                            }
+
                                             if (saved) {
                                                 enrollmentSuccess = true
                                                 try {
-                                                    val appContainer = com.governence.faflow.core.di.AppContainer.getInstance(context)
                                                     appContainer.apiService.enrollBiometrics()
                                                 } catch (_: Exception) {}
                                             } else {
@@ -323,6 +384,7 @@ fun FaceEnrollmentScreen(
                                             errorMessage = "Embedding failure: ${e.localizedMessage}"
                                         } finally {
                                             isEnrolling = false
+                                            enrollmentProgress = 0
                                         }
                                     }
                                 }

@@ -76,7 +76,7 @@ class CameraController(
 
                 val imageAnalysis = ImageAnalysis.Builder()
                     .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
-                    .setOutputImageFormat(ImageAnalysis.OUTPUT_IMAGE_FORMAT_YUV_420_888)
+                    .setOutputImageFormat(ImageAnalysis.OUTPUT_IMAGE_FORMAT_RGBA_8888)
                     .setResolutionSelector(resolutionSelector)
                     .build()
                     .also {
@@ -107,6 +107,10 @@ class CameraController(
             cameraProvider = null
             _cameraState.value = CameraState.Ready
         } catch (_: Exception) {}
+    }
+
+    fun setCaptureLocked(locked: Boolean) {
+        analyzer?.isCaptureLocked?.set(locked)
     }
 
     fun release() {

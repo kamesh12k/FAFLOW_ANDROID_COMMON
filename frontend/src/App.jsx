@@ -41,6 +41,7 @@ const BackupRestore = lazy(() => import('./pages/admin/Backup'))
 const DataRetention = lazy(() => import('./pages/admin/DataRetention'))
 const AdminGeofences = lazy(() => import('./pages/admin/Geofences'))
 const AdminBiometrics = lazy(() => import('./pages/admin/Biometrics'))
+const AdminAttendance = lazy(() => import('./pages/admin/Attendance'))
 
 // Principal pages (lazy loaded)
 const PrincipalDashboard = lazy(() => import('./pages/admin/PrincipalDashboard'))
@@ -100,6 +101,7 @@ export default function App() {
             <Route element={<RequireCredentialsSet />}>
               <Route element={<AppShell />}>
                 <Route path="/admin/dashboard" element={<AdminDashboard />} />
+                <Route path="/admin/attendance" element={<AdminAttendance />} />
                 <Route path="/admin/setup" element={<SetupGuide />} />
                 <Route path="/admin/academic-calendar" element={<AcademicCalendar />} />
                 <Route path="/admin/academic-calendar/reports" element={<AcademicCalendarReports />} />
@@ -137,6 +139,7 @@ export default function App() {
             <Route element={<RequireCredentialsSet />}>
               <Route element={<AppShell />}>
                 <Route path="/governance" element={<GovernanceDashboard />} />
+                <Route path="/governance/attendance" element={<AdminAttendance />} />
                 <Route path="/governance/timetable" element={<HodTimetable />} />
               </Route>
             </Route>
@@ -147,6 +150,7 @@ export default function App() {
             <Route element={<RequireCredentialsSet />}>
               <Route element={<AppShell />}>
                 <Route path="/principal/dashboard" element={<PrincipalDashboard />} />
+                <Route path="/principal/attendance" element={<AdminAttendance />} />
                 <Route path="/principal/class-timetable" element={<ClasswiseTimetable />} />
               </Route>
             </Route>

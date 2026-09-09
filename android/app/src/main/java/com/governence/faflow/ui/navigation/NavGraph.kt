@@ -12,18 +12,20 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
-import androidx.navigation.compose.currentBackStackEntryAsState
+import com.governence.faflow.auth.ui.AuthUiState
 import com.governence.faflow.auth.ui.AuthViewModel
 import com.governence.faflow.core.di.AppContainer
 import com.governence.faflow.ui.components.MainBottomNavigation
 import com.governence.faflow.ui.screens.ApplyLeaveScreen
 import com.governence.faflow.ui.screens.AttendanceCheckInOutScreen
 import com.governence.faflow.ui.screens.AttendanceHistoryScreen
-import com.governence.faflow.ui.screens.AttendancePlaceholderScreen
+import com.governence.faflow.ui.viewmodels.AttendanceViewModel
 import com.governence.faflow.ui.screens.ClasswiseTimetableScreen
 import com.governence.faflow.ui.screens.CreditsScreen
 import com.governence.faflow.ui.screens.DashboardScreen
 import com.governence.faflow.ui.screens.FaceEnrollmentScreen
+import com.governence.faflow.ui.screens.GeofenceAdminScreen
+import com.governence.faflow.ui.viewmodels.GeofenceAdminViewModel
 import com.governence.faflow.ui.screens.HodAttendanceScreen
 import com.governence.faflow.ui.screens.HodDashboardScreen
 import com.governence.faflow.ui.screens.HodFacultyDirectoryScreen
@@ -36,11 +38,11 @@ import com.governence.faflow.ui.screens.PreferencesScreen
 import com.governence.faflow.ui.screens.ProfileScreen
 import com.governence.faflow.ui.screens.SettingsScreen
 import com.governence.faflow.ui.screens.SplashScreen
+import com.governence.faflow.ui.screens.StaffAttendanceScreen
 import com.governence.faflow.ui.screens.SubstitutionScreen
 import com.governence.faflow.ui.screens.SyncStatusScreen
 import com.governence.faflow.ui.screens.TimetableScreen
 import com.governence.faflow.ui.screens.TodayCoverageScreen
-import com.governence.faflow.ui.viewmodels.AttendanceViewModel
 import com.governence.faflow.ui.viewmodels.CreditsViewModel
 import com.governence.faflow.ui.viewmodels.DashboardViewModel
 import com.governence.faflow.ui.viewmodels.HodViewModel
@@ -58,65 +60,41 @@ fun NavGraph(
     val context = LocalContext.current
     val appContainer = remember { AppContainer.getInstance(context) }
 
+    // Root-level ViewModel for session lifecycle and authentication
     val authViewModel = remember { AuthViewModel(appContainer.authRepository) }
-    val dashboardViewModel = remember {
-        DashboardViewModel(
-            authRepository = appContainer.authRepository,
-            academicSummaryRepository = appContainer.academicSummaryRepository,
-            timetableRepository = appContainer.timetableRepository,
-            creditRepository = appContainer.creditRepository,
-            substitutionRepository = appContainer.substitutionRepository
-        )
-    }
-    val timetableViewModel = remember {
-        TimetableViewModel(
-            authRepository = appContainer.authRepository,
-            timetableRepository = appContainer.timetableRepository
-        )
-    }
-    val leaveViewModel = remember {
-        LeaveViewModel(
-            leaveRepository = appContainer.leaveRepository,
-            academicSummaryRepository = appContainer.academicSummaryRepository
-        )
-    }
-    val creditsViewModel = remember {
-        CreditsViewModel(
-            authRepository = appContainer.authRepository,
-            creditRepository = appContainer.creditRepository
-        )
-    }
-    val substitutionViewModel = remember {
-        SubstitutionViewModel(
-            substitutionRepository = appContainer.substitutionRepository
-        )
-    }
-    val preferencesViewModel = remember {
-        PreferencesViewModel(
-            preferencesRepository = appContainer.preferencesRepository
-        )
-    }
-    val notificationsViewModel = remember {
-        NotificationsViewModel(
-            notificationRepository = appContainer.notificationRepository
-        )
-    }
-    val attendanceViewModel = remember {
-        AttendanceViewModel(
-            geofenceRepository = appContainer.geofenceRepository
-        )
-    }
-    val hodViewModel = remember {
-        HodViewModel(
-            hodRepository = appContainer.hodRepository,
-            authRepository = appContainer.authRepository,
-            academicSummaryRepository = appContainer.academicSummaryRepository
-        )
+
+    // P0 FIX: Do NOT call authRepository.getStoredStaffInfo() directly in the composable
+    // body — that triggers EncryptedSharedPreferences initialization on the main thread.
+    // Instead, derive role from the AuthViewModel's StateFlow which is already populated
+    // asynchronously (or pre-warmed by FaflowApplication on a background thread).
+    val authState by authViewModel.uiState.collectAsState()
+    val userRole = (authState as? AuthUiState.Authenticated)?.staff?.role ?: "teacher"
+    val isHod = userRole.lowercase() == "admin" || userRole.lowercase() == "hod"
+
+    // Lazy HodViewModel provider: only instantiated on-demand when an HOD screen or timetable/coverage is visited.
+    // This prevents firing 5 parallel HTTP requests during splash/teacher startup.
+    val getHodViewModel = remember {
+        var vm: HodViewModel? = null
+        {
+            vm ?: HodViewModel(
+                hodRepository = appContainer.hodRepository,
+                authRepository = appContainer.authRepository,
+                academicSummaryRepository = appContainer.academicSummaryRepository
+            ).also { vm = it }
+        }
     }
 
-    val storedUser = appContainer.authRepository.getStoredStaffInfo()
-    val userRole = storedUser?.role ?: "teacher"
-    val isHod = userRole.lowercase() == "admin" || userRole.lowercase() == "hod"
+    // P1 FIX: Create ONE shared AttendanceViewModel at NavGraph level.
+    // Previously, 3 attendance destinations each created their own instance.
+    val attendanceViewModel = remember {
+        AttendanceViewModel(
+            geofenceRepository = appContainer.geofenceRepository,
+            attendanceRepository = appContainer.attendanceRepository,
+            recognitionEngine = appContainer.faceRecognitionEngine,
+            integrityVerifier = appContainer.deviceIntegrityVerifier,
+            appContext = context.applicationContext
+        )
+    }
 
     Scaffold(
         modifier = modifier.fillMaxSize(),
@@ -130,15 +108,23 @@ fun NavGraph(
             modifier = Modifier.padding(innerPadding)
         ) {
             // Auth & Splash
+            // P0 FIX: Do NOT call getStoredStaffInfo() inside the composable body.
+            // Use tokenManager.isLoggedIn StateFlow which was pre-warmed on the background thread
+            // by FaflowApplication before this composable ever renders.
             composable(Screen.Splash.route) {
+                val isLoggedIn by appContainer.tokenManager.isLoggedIn.collectAsState()
                 SplashScreen(
+                    isLoggedIn = isLoggedIn,
                     onNavigateToLogin = {
                         navController.navigate(Screen.Login.route) {
                             popUpTo(Screen.Splash.route) { inclusive = true }
                         }
                     },
                     onNavigateToDashboard = {
-                        val destination = if (isHod) Screen.HodDashboard.route else Screen.Home.route
+                        // Derive role from settled authState to ensure HOD users go to HodDashboard.
+                        val settledRole = (authViewModel.uiState.value as? AuthUiState.Authenticated)?.staff?.role ?: "teacher"
+                        val settledIsHod = settledRole.lowercase() == "admin" || settledRole.lowercase() == "hod"
+                        val destination = if (settledIsHod) Screen.HodDashboard.route else Screen.Home.route
                         navController.navigate(destination) {
                             popUpTo(Screen.Splash.route) { inclusive = true }
                         }
@@ -152,18 +138,6 @@ fun NavGraph(
                     onLoginSuccess = {
                         val loggedInRole = appContainer.authRepository.getStoredStaffInfo()?.role ?: "teacher"
                         val loggedInIsHod = loggedInRole.lowercase() == "admin" || loggedInRole.lowercase() == "hod"
-                        
-                        dashboardViewModel.loadDashboardData()
-                        timetableViewModel.loadTimetable()
-                        leaveViewModel.loadMyLeaves()
-                        creditsViewModel.loadCredits()
-                        substitutionViewModel.loadDuties()
-                        preferencesViewModel.loadPreferences()
-                        notificationsViewModel.loadNotifications()
-                        if (loggedInIsHod) {
-                            hodViewModel.loadDashboardData()
-                        }
-
                         val targetDest = if (loggedInIsHod) Screen.HodDashboard.route else Screen.Home.route
                         navController.navigate(targetDest) {
                             popUpTo(Screen.Login.route) { inclusive = true }
@@ -173,7 +147,16 @@ fun NavGraph(
             }
 
             // Primary Bottom Nav Tab 1: Home (Teacher Dashboard)
-            composable(Screen.Home.route) {
+            composable(Screen.Home.route) { backStackEntry ->
+                val dashboardViewModel = remember(backStackEntry) {
+                    DashboardViewModel(
+                        authRepository = appContainer.authRepository,
+                        academicSummaryRepository = appContainer.academicSummaryRepository,
+                        timetableRepository = appContainer.timetableRepository,
+                        creditRepository = appContainer.creditRepository,
+                        substitutionRepository = appContainer.substitutionRepository
+                    )
+                }
                 DashboardScreen(
                     viewModel = dashboardViewModel,
                     onNavigateToCheckIn = { navController.navigate(Screen.AttendanceCheckInOut.route) },
@@ -191,7 +174,13 @@ fun NavGraph(
             }
 
             // Primary Bottom Nav Tab 2: Timetable (Teacher Timetable)
-            composable(Screen.Timetable.route) {
+            composable(Screen.Timetable.route) { backStackEntry ->
+                val timetableViewModel = remember(backStackEntry) {
+                    TimetableViewModel(
+                        authRepository = appContainer.authRepository,
+                        timetableRepository = appContainer.timetableRepository
+                    )
+                }
                 TimetableScreen(
                     viewModel = timetableViewModel,
                     onNavigateBack = { navController.popBackStack() }
@@ -199,8 +188,9 @@ fun NavGraph(
             }
 
             // Primary Bottom Nav Tab 3: Attendance (Staff Attendance)
+            // Uses the shared attendanceViewModel created at NavGraph level.
             composable(Screen.Attendance.route) {
-                AttendancePlaceholderScreen(
+                StaffAttendanceScreen(
                     viewModel = attendanceViewModel,
                     onNavigateToCheckIn = { navController.navigate(Screen.AttendanceCheckInOut.route) },
                     onNavigateToHistory = { navController.navigate(Screen.AttendanceHistory.route) }
@@ -210,6 +200,7 @@ fun NavGraph(
             // Primary Bottom Nav Tab 4: More (Faculty Hub)
             composable(Screen.More.route) {
                 MoreScreen(
+                    userRole = userRole,
                     onNavigateToApplyLeave = { navController.navigate(Screen.ApplyLeave.route) },
                     onNavigateToLeaveHistory = { navController.navigate(Screen.LeaveHistory.route) },
                     onNavigateToCredits = { navController.navigate(Screen.Credits.route) },
@@ -220,14 +211,17 @@ fun NavGraph(
                     onNavigateToPreferences = { navController.navigate(Screen.Preferences.route) },
                     onNavigateToNotifications = { navController.navigate(Screen.Notifications.route) },
                     onNavigateToProfile = { navController.navigate(Screen.Profile.route) },
-                    onNavigateToSettings = { navController.navigate(Screen.Settings.route) }
+                    onNavigateToGeofences = { navController.navigate(Screen.GeofenceAdmin.route) },
+                    onNavigateToLeaveApprovals = { navController.navigate(Screen.HodLeaveApprovals.route) },
+                    onNavigateToLiveAttendance = { navController.navigate(Screen.HodAttendance.route) },
+                    onNavigateToFacultyDirectory = { navController.navigate(Screen.HodFacultyDirectory.route) }
                 )
             }
 
-            // HOD Dedicated Screens
+            // HOD Dedicated Screens — all use the single shared hodViewModel on-demand.
             composable(Screen.HodDashboard.route) {
                 HodDashboardScreen(
-                    hodViewModel = hodViewModel,
+                    hodViewModel = getHodViewModel(),
                     onNavigateToLeaveApprovals = { navController.navigate(Screen.HodLeaveApprovals.route) },
                     onNavigateToCoverage = { navController.navigate(Screen.HodCoverage.route) },
                     onNavigateToDepartmentTimetable = { navController.navigate(Screen.ClasswiseTimetable.route) },
@@ -239,28 +233,28 @@ fun NavGraph(
 
             composable(Screen.HodLeaveApprovals.route) {
                 HodLeaveApprovalScreen(
-                    hodViewModel = hodViewModel,
+                    hodViewModel = getHodViewModel(),
                     onNavigateBack = { navController.popBackStack() }
                 )
             }
 
             composable(Screen.HodCoverage.route) {
                 TodayCoverageScreen(
-                    hodViewModel = hodViewModel,
+                    hodViewModel = getHodViewModel(),
                     onNavigateBack = { navController.popBackStack() }
                 )
             }
 
             composable(Screen.HodFacultyDirectory.route) {
                 HodFacultyDirectoryScreen(
-                    hodViewModel = hodViewModel,
+                    hodViewModel = getHodViewModel(),
                     onNavigateBack = { navController.popBackStack() }
                 )
             }
 
             composable(Screen.HodAttendance.route) {
                 HodAttendanceScreen(
-                    hodViewModel = hodViewModel,
+                    hodViewModel = getHodViewModel(),
                     onNavigateBack = { navController.popBackStack() }
                 )
             }
@@ -268,19 +262,25 @@ fun NavGraph(
             // Shared / Parity Feature Sub-Screens
             composable(Screen.ClasswiseTimetable.route) {
                 ClasswiseTimetableScreen(
-                    hodViewModel = hodViewModel,
+                    hodViewModel = getHodViewModel(),
                     onNavigateBack = { navController.popBackStack() }
                 )
             }
 
             composable(Screen.TodayCoverage.route) {
                 TodayCoverageScreen(
-                    hodViewModel = hodViewModel,
+                    hodViewModel = getHodViewModel(),
                     onNavigateBack = { navController.popBackStack() }
                 )
             }
 
-            composable(Screen.ApplyLeave.route) {
+            composable(Screen.ApplyLeave.route) { backStackEntry ->
+                val leaveViewModel = remember(backStackEntry) {
+                    LeaveViewModel(
+                        leaveRepository = appContainer.leaveRepository,
+                        academicSummaryRepository = appContainer.academicSummaryRepository
+                    )
+                }
                 ApplyLeaveScreen(
                     viewModel = leaveViewModel,
                     onNavigateBack = { navController.popBackStack() },
@@ -292,35 +292,62 @@ fun NavGraph(
                 )
             }
 
-            composable(Screen.LeaveHistory.route) {
+            composable(Screen.LeaveHistory.route) { backStackEntry ->
+                val leaveViewModel = remember(backStackEntry) {
+                    LeaveViewModel(
+                        leaveRepository = appContainer.leaveRepository,
+                        academicSummaryRepository = appContainer.academicSummaryRepository
+                    )
+                }
                 LeaveHistoryScreen(
                     viewModel = leaveViewModel,
                     onNavigateBack = { navController.popBackStack() }
                 )
             }
 
-            composable(Screen.Credits.route) {
+            composable(Screen.Credits.route) { backStackEntry ->
+                val creditsViewModel = remember(backStackEntry) {
+                    CreditsViewModel(
+                        authRepository = appContainer.authRepository,
+                        creditRepository = appContainer.creditRepository
+                    )
+                }
                 CreditsScreen(
                     viewModel = creditsViewModel,
                     onNavigateBack = { navController.popBackStack() }
                 )
             }
 
-            composable(Screen.Substitution.route) {
+            composable(Screen.Substitution.route) { backStackEntry ->
+                val substitutionViewModel = remember(backStackEntry) {
+                    SubstitutionViewModel(
+                        substitutionRepository = appContainer.substitutionRepository
+                    )
+                }
                 SubstitutionScreen(
                     viewModel = substitutionViewModel,
                     onNavigateBack = { navController.popBackStack() }
                 )
             }
 
-            composable(Screen.Preferences.route) {
+            composable(Screen.Preferences.route) { backStackEntry ->
+                val preferencesViewModel = remember(backStackEntry) {
+                    PreferencesViewModel(
+                        preferencesRepository = appContainer.preferencesRepository
+                    )
+                }
                 PreferencesScreen(
                     viewModel = preferencesViewModel,
                     onNavigateBack = { navController.popBackStack() }
                 )
             }
 
-            composable(Screen.Notifications.route) {
+            composable(Screen.Notifications.route) { backStackEntry ->
+                val notificationsViewModel = remember(backStackEntry) {
+                    NotificationsViewModel(
+                        notificationRepository = appContainer.notificationRepository
+                    )
+                }
                 NotificationsScreen(
                     viewModel = notificationsViewModel,
                     onNavigateBack = { navController.popBackStack() }
@@ -340,6 +367,7 @@ fun NavGraph(
                 )
             }
 
+            // Attendance History — uses shared attendanceViewModel
             composable(Screen.AttendanceHistory.route) {
                 AttendanceHistoryScreen(
                     viewModel = attendanceViewModel,
@@ -347,21 +375,34 @@ fun NavGraph(
                 )
             }
 
+            // Attendance Check In/Out — uses shared attendanceViewModel.
+            // Staff identity is derived inside the ViewModel from the authenticated session token.
             composable(Screen.AttendanceCheckInOut.route) {
                 AttendanceCheckInOutScreen(
                     viewModel = attendanceViewModel,
                     onNavigateBack = { navController.popBackStack() },
                     onAttendanceSuccess = {
-                        val homeDest = if (isHod) Screen.HodDashboard.route else Screen.Home.route
-                        navController.navigate(homeDest) {
-                            popUpTo(homeDest) { inclusive = true }
+                        attendanceViewModel.loadTodaySummary()
+                        val popped = navController.popBackStack(Screen.Attendance.route, inclusive = false)
+                        if (!popped) {
+                            navController.navigate(Screen.Attendance.route) {
+                                val homeDest = if (isHod) Screen.HodDashboard.route else Screen.Home.route
+                                popUpTo(homeDest) { inclusive = false }
+                            }
                         }
-                    }
+                    },
+                    onNavigateToFaceEnrollment = {
+                        navController.navigate(Screen.FaceEnrollment.route)
+                    },
+                    userRole = userRole
                 )
             }
 
             composable(Screen.FaceEnrollment.route) {
+                val currentStaff = (authState as? AuthUiState.Authenticated)?.staff
                 FaceEnrollmentScreen(
+                    staffId = currentStaff?.id?.toString() ?: "",
+                    staffName = currentStaff?.name ?: "Faculty Member",
                     onNavigateBack = { navController.popBackStack() },
                     onEnrollmentComplete = {
                         val homeDest = if (isHod) Screen.HodDashboard.route else Screen.Home.route
@@ -380,6 +421,18 @@ fun NavGraph(
 
             composable(Screen.SyncStatus.route) {
                 SyncStatusScreen(
+                    onNavigateBack = { navController.popBackStack() }
+                )
+            }
+
+            composable(Screen.GeofenceAdmin.route) { backStackEntry ->
+                val geofenceViewModel = remember(backStackEntry) {
+                    GeofenceAdminViewModel(
+                        apiService = appContainer.apiService
+                    )
+                }
+                GeofenceAdminScreen(
+                    viewModel = geofenceViewModel,
                     onNavigateBack = { navController.popBackStack() }
                 )
             }

@@ -40,7 +40,7 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import com.governence.faflow.face.liveness.LivenessState
+import com.governence.faflow.attendance.biometrics.liveness.LivenessState
 import com.governence.faflow.ui.theme.PrimaryBlue
 import com.governence.faflow.ui.theme.SecondaryTeal
 import com.governence.faflow.ui.theme.StatusError
@@ -58,6 +58,7 @@ fun CameraOverlay(
     livenessState: LivenessState = LivenessState.WaitingForFace,
     showDebugOverlay: Boolean = false,
     inferenceLatencyMs: Long = 0L,
+    livenessDebugInfo: com.governence.faflow.attendance.biometrics.liveness.LivenessDebugInfo? = null,
     modifier: Modifier = Modifier
 ) {
     Box(
@@ -162,6 +163,30 @@ fun CameraOverlay(
                         val lx = (640f - pt.x) * scaleX
                         val ly = pt.y * scaleY
                         drawCircle(color = Color.Yellow, radius = 4.dp.toPx(), center = Offset(lx, ly))
+                    }
+                }
+            }
+
+            // Developer Telemetry HUD
+            livenessDebugInfo?.let { debug ->
+                Box(
+                    modifier = Modifier
+                        .align(Alignment.TopStart)
+                        .padding(start = 16.dp, top = 56.dp)
+                        .clip(RoundedCornerShape(8.dp))
+                        .background(Color(0xDD000000))
+                        .border(1.dp, Color.White.copy(alpha = 0.2f), RoundedCornerShape(8.dp))
+                        .padding(8.dp)
+                ) {
+                    Column {
+                        Text("DEV TELEMETRY", style = MaterialTheme.typography.labelSmall, color = Color.Cyan, fontWeight = FontWeight.Bold)
+                        Text("Face: ${debug.faceStatus}", style = MaterialTheme.typography.labelSmall, color = if (debug.faceStatus == "VALID") Color.Green else Color.Red)
+                        Text("State: ${debug.livenessState}", style = MaterialTheme.typography.labelSmall, color = Color.White)
+                        Text("Eye: ${debug.eyeState} (EAR: %.3f)".format(debug.ear), style = MaterialTheme.typography.labelSmall, color = if (debug.eyeState == "CLOSED") Color.Yellow else Color.White)
+                        Text("L: %.3f | R: %.3f".format(debug.leftEar, debug.rightEar), style = MaterialTheme.typography.labelSmall, color = Color.Gray)
+                        Text("Blinks: ${debug.blinkCount}/2", style = MaterialTheme.typography.labelSmall, color = if (debug.blinkCount >= 2) Color.Green else Color.Yellow, fontWeight = FontWeight.Bold)
+                        Text("Frames: ${debug.totalFrames} (drop: ${debug.droppedFrames})", style = MaterialTheme.typography.labelSmall, color = Color.LightGray)
+                        Text("Latency: ${debug.processingTimeMs}ms", style = MaterialTheme.typography.labelSmall, color = Color.LightGray)
                     }
                 }
             }

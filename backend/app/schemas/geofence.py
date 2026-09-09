@@ -116,6 +116,15 @@ class LocationTestRequest(BaseModel):
     longitude: float = Field(..., ge=-180.0, le=180.0)
     accuracy_meters: Optional[float] = Field(5.0, ge=0.0, le=1000.0)
 
+    @validator("accuracy_meters", pre=True, always=True)
+    def validate_accuracy(cls, v):
+        if v is None:
+            return 5.0
+        try:
+            return float(v)
+        except (ValueError, TypeError):
+            return 5.0
+
 
 class LocationTestResponse(BaseModel):
     is_inside: bool

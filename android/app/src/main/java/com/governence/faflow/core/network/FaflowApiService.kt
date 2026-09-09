@@ -140,16 +140,22 @@ interface FaflowApiService {
         @Query("include_cross_department") includeCrossDept: Boolean = false
     ): Response<List<RecommendationOutDto>>
 
+    @GET("leaves/{leave_id}/candidates")
+    suspend fun getFallbackSubstitutionCandidates(
+        @Path("leave_id") leaveId: Int,
+        @Query("include_cross_department") includeCrossDept: Boolean = false
+    ): Response<List<RecommendationOutDto>>
+
     @POST("teacher/substitution/leave/{leave_id}/assign/{substitute_id}")
     suspend fun assignSubstitute(
         @Path("leave_id") leaveId: Int,
         @Path("substitute_id") substituteId: Int
-    ): Response<AlterAssignmentOutDto>
+    ): Response<okhttp3.ResponseBody>
 
     @POST("teacher/substitution/leave/{leave_id}/undo-assignment")
     suspend fun undoSubstitutionAssignment(
         @Path("leave_id") leaveId: Int
-    ): Response<LeaveOutDto>
+    ): Response<okhttp3.ResponseBody>
 
     // ---------- Preferences ----------
     @GET("campus-operations/preferences/me")
@@ -228,4 +234,8 @@ interface FaflowApiService {
     suspend fun deleteGeofence(
         @Path("geofence_id") geofenceId: Int
     ): Response<StatusOkDto>
+
+    // ---------- Biometrics ----------
+    @POST("teachers/me/biometrics/enroll")
+    suspend fun enrollBiometrics(): Response<UserOutDto>
 }

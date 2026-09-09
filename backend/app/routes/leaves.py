@@ -171,6 +171,7 @@ def assign_substitute(
 
 
 @router.get("/{leave_id}/recommendations", response_model=list[RecommendationOut])
+@router.get("/{leave_id}/candidates", response_model=list[RecommendationOut])
 def get_recommendations(
     leave_id: int,
     limit: int = 100,
@@ -300,7 +301,8 @@ def free_teachers(
     return candidates
 
 
-@router.post("/{leave_id}/cancel", response_model=LeaveOut)
+@router.post("/{leave_id:int}/cancel", response_model=LeaveOut)
+@router.delete("/{leave_id:int}", response_model=LeaveOut)
 def cancel_leave(
     leave_id: int,
     current_user: User = Depends(require_teacher),

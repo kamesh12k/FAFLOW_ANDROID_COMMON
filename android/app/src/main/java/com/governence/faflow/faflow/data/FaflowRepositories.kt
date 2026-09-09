@@ -4,8 +4,11 @@ import com.governence.faflow.core.network.FaflowApiService
 import com.governence.faflow.core.network.LeaveBatchCreateDto
 import com.governence.faflow.core.network.LeaveCreateDto
 import com.governence.faflow.core.network.NetworkResult
+import com.governence.faflow.core.network.RecommendationOutDto
+import com.governence.faflow.core.network.SubstitutionPreferenceOutDto
 import com.governence.faflow.core.network.SubstitutionPreferenceUpdateDto
 import com.governence.faflow.domain.model.CreditTransaction
+import com.governence.faflow.domain.model.LeaveHistoryDay
 import com.governence.faflow.domain.model.LeaveRequest
 import com.governence.faflow.domain.model.LeaveStatus
 import com.governence.faflow.domain.model.TimetableSlot
@@ -86,7 +89,9 @@ class LeaveRepositoryImpl(
                         reason = dto.reason,
                         status = status,
                         isEmergency = dto.isEmergency,
-                        substituteTeacherName = dto.alterAssignment?.substituteName
+                        substituteTeacherName = dto.alterAssignment?.substituteName,
+                        createdAt = dto.createdAt,
+                        batchId = dto.batchId
                     )
                 }
                 NetworkResult.Success(leaves)
@@ -95,6 +100,52 @@ class LeaveRepositoryImpl(
             }
         } catch (e: Exception) {
             NetworkResult.Error(-1, e.localizedMessage ?: "Network error fetching leaves", e)
+        }
+    }
+
+    fun groupLeavesByDay(leaves: List<LeaveRequest>): List<LeaveHistoryDay> {
+        val map = linkedMapOf<String, MutableList<LeaveRequest>>()
+        for (leave in leaves) {
+            val key = if (!leave.batchId.isNullOrBlank()) {
+                "${leave.date}__batch_${leave.batchId}"
+            } else {
+                val createdDay = leave.createdAt?.substringBefore('T') ?: ""
+                val normReason = leave.reason.trim().lowercase()
+                "${leave.date}__${createdDay}__${leave.status}__$normReason"
+            }
+            map.getOrPut(key) { mutableListOf() }.add(leave)
+        }
+
+        return map.map { (key, groupList) ->
+            groupList.sortBy { it.periodNumber }
+            val first = groupList.first()
+            val periodsCovered = groupList.map { it.periodNumber }.toSet()
+            val isFullDay = groupList.size >= 5 || periodsCovered.containsAll(listOf(1, 2, 3, 4, 5))
+            val isEmergency = groupList.any { it.isEmergency }
+
+            LeaveHistoryDay(
+                id = key,
+                date = first.date,
+                dayOrder = first.dayOrder,
+                status = first.status,
+                reason = first.reason,
+                periods = groupList.toList(),
+                isFullDay = isFullDay,
+                isEmergency = isEmergency,
+                createdAt = first.createdAt,
+                batchId = first.batchId
+            )
+        }.sortedWith(
+            compareByDescending<LeaveHistoryDay> { it.date }
+                .thenByDescending { it.createdAt ?: "" }
+        )
+    }
+
+    override suspend fun getGroupedLeaves(): NetworkResult<List<LeaveHistoryDay>> {
+        return when (val res = getMyLeaves()) {
+            is NetworkResult.Success -> NetworkResult.Success(groupLeavesByDay(res.data))
+            is NetworkResult.Error -> NetworkResult.Error(res.code, res.message, res.throwable)
+            NetworkResult.Loading -> NetworkResult.Loading
         }
     }
 
@@ -113,7 +164,9 @@ class LeaveRepositoryImpl(
                     periodNumber = dto.periodNumber,
                     reason = dto.reason,
                     status = LeaveStatus.PENDING,
-                    isEmergency = dto.isEmergency
+                    isEmergency = dto.isEmergency,
+                    createdAt = dto.createdAt,
+                    batchId = dto.batchId
                 )
                 NetworkResult.Success(req)
             } else {
@@ -139,7 +192,9 @@ class LeaveRepositoryImpl(
                         periodNumber = dto.periodNumber,
                         reason = dto.reason,
                         status = LeaveStatus.PENDING,
-                        isEmergency = dto.isEmergency
+                        isEmergency = dto.isEmergency,
+                        createdAt = dto.createdAt,
+                        batchId = dto.batchId
                     )
                 }
                 NetworkResult.Success(list)
@@ -162,6 +217,17 @@ class LeaveRepositoryImpl(
         } catch (e: Exception) {
             NetworkResult.Error(-1, e.localizedMessage ?: "Failed to cancel leave", e)
         }
+    }
+
+    override suspend fun cancelLeaves(leaveIds: List<Int>): NetworkResult<Boolean> {
+        var lastError: NetworkResult.Error? = null
+        for (id in leaveIds) {
+            when (val res = cancelLeave(id)) {
+                is NetworkResult.Error -> lastError = res
+                else -> Unit
+            }
+        }
+        return if (lastError != null) lastError else NetworkResult.Success(true)
     }
 }
 
@@ -217,6 +283,10 @@ class SubstitutionRepositoryImpl(
 ) : SubstitutionRepository {
 
     override suspend fun getMyDuties(): NetworkResult<List<LeaveRequest>> {
+        return getMyLeavesNeedingCoverage()
+    }
+
+    override suspend fun getMyLeavesNeedingCoverage(): NetworkResult<List<LeaveRequest>> {
         return try {
             val response = apiService.getTeacherSubstitutionDuties()
             if (response.isSuccessful && response.body() != null) {
@@ -242,6 +312,35 @@ class SubstitutionRepositoryImpl(
         }
     }
 
+    override suspend fun getCandidates(leaveId: Int, includeCrossDept: Boolean): NetworkResult<List<RecommendationOutDto>> {
+        return try {
+            val response = apiService.getSubstitutionCandidates(leaveId, includeCrossDept)
+            if (response.isSuccessful && !response.body().isNullOrEmpty()) {
+                NetworkResult.Success(response.body()!!)
+            } else {
+                val fallback = apiService.getFallbackSubstitutionCandidates(leaveId, includeCrossDept)
+                if (fallback.isSuccessful && fallback.body() != null) {
+                    NetworkResult.Success(fallback.body()!!)
+                } else if (response.isSuccessful && response.body() != null) {
+                    NetworkResult.Success(response.body()!!)
+                } else {
+                    NetworkResult.Error(response.code(), "Failed to load candidate recommendations (${response.code()})")
+                }
+            }
+        } catch (e: Exception) {
+            try {
+                val fallback = apiService.getFallbackSubstitutionCandidates(leaveId, includeCrossDept)
+                if (fallback.isSuccessful && fallback.body() != null) {
+                    NetworkResult.Success(fallback.body()!!)
+                } else {
+                    NetworkResult.Error(-1, e.localizedMessage ?: "Error loading candidate recommendations", e)
+                }
+            } catch (fe: Exception) {
+                NetworkResult.Error(-1, e.localizedMessage ?: "Error loading candidate recommendations", e)
+            }
+        }
+    }
+
     override suspend fun assignSubstitute(leaveId: Int, substituteTeacherId: Int): NetworkResult<Boolean> {
         return try {
             val response = apiService.assignSubstitute(leaveId, substituteTeacherId)
@@ -255,7 +354,7 @@ class SubstitutionRepositoryImpl(
         }
     }
 
-    suspend fun undoAssignment(leaveId: Int): NetworkResult<Boolean> {
+    override suspend fun undoAssignment(leaveId: Int): NetworkResult<Boolean> {
         return try {
             val response = apiService.undoSubstitutionAssignment(leaveId)
             if (response.isSuccessful) {
@@ -275,18 +374,11 @@ class SubstitutionRepositoryImpl(
 class PreferencesRepositoryImpl(
     private val apiService: FaflowApiService
 ) {
-    suspend fun getPreferences(): NetworkResult<SubstitutionPreferenceUpdateDto> {
+    suspend fun getPreferences(): NetworkResult<SubstitutionPreferenceOutDto> {
         return try {
             val response = apiService.getMyPreferences()
             if (response.isSuccessful && response.body() != null) {
-                val b = response.body()!!
-                NetworkResult.Success(
-                    SubstitutionPreferenceUpdateDto(
-                        maxSubstitutionsPerDay = b.maxSubstitutionsPerDay,
-                        maxSubstitutionsPerWeek = b.maxSubstitutionsPerWeek,
-                        willingForCrossDepartment = b.willingForCrossDepartment
-                    )
-                )
+                NetworkResult.Success(response.body()!!)
             } else {
                 NetworkResult.Error(response.code(), "Failed to fetch preferences")
             }
@@ -295,15 +387,9 @@ class PreferencesRepositoryImpl(
         }
     }
 
-    suspend fun updatePreferences(dayLimit: Int, weekLimit: Int, crossDept: Boolean): NetworkResult<Boolean> {
+    suspend fun updatePreferences(updateDto: SubstitutionPreferenceUpdateDto): NetworkResult<Boolean> {
         return try {
-            val response = apiService.updateMyPreferences(
-                SubstitutionPreferenceUpdateDto(
-                    maxSubstitutionsPerDay = dayLimit,
-                    maxSubstitutionsPerWeek = weekLimit,
-                    willingForCrossDepartment = crossDept
-                )
-            )
+            val response = apiService.updateMyPreferences(updateDto)
             if (response.isSuccessful) {
                 NetworkResult.Success(true)
             } else {
@@ -312,6 +398,16 @@ class PreferencesRepositoryImpl(
         } catch (e: Exception) {
             NetworkResult.Error(-1, e.localizedMessage ?: "Preferences update error", e)
         }
+    }
+
+    suspend fun updatePreferences(dayLimit: Int, weekLimit: Int, crossDept: Boolean): NetworkResult<Boolean> {
+        return updatePreferences(
+            SubstitutionPreferenceUpdateDto(
+                maxSubstitutionsPerDay = dayLimit,
+                maxSubstitutionsPerWeek = weekLimit,
+                willingForCrossDepartment = crossDept
+            )
+        )
     }
 }
 
@@ -348,6 +444,13 @@ class NotificationRepositoryImpl(
         if (res.isSuccessful) NetworkResult.Success(true) else NetworkResult.Error(res.code(), "Mark read failed")
     } catch (e: Exception) {
         NetworkResult.Error(-1, e.localizedMessage ?: "Error marking notification as read", e)
+    }
+
+    suspend fun markAllAsRead() = try {
+        val res = apiService.markAllNotificationsRead()
+        if (res.isSuccessful) NetworkResult.Success(true) else NetworkResult.Error(res.code(), "Mark all read failed")
+    } catch (e: Exception) {
+        NetworkResult.Error(-1, e.localizedMessage ?: "Error marking all notifications as read", e)
     }
 }
 

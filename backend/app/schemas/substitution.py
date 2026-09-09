@@ -3,12 +3,41 @@ from app.schemas.user import UserOut
 from app.models.system_setting import CAMPUS_OPERATIONS_MODES as VALID_MODES
 
 
+class CandidateMetrics(BaseModel):
+    daily_periods: int = 0
+    projected_daily_periods: int = 0
+    weekly_periods: int = 0
+    projected_weekly_periods: int = 0
+    substitutions_last_7_days: int = 0
+    longest_continuous_before: int = 0
+    longest_continuous_after: int = 0
+
+
+class CandidateSignals(BaseModel):
+    same_department: bool = False
+    same_subject: bool = False
+    cross_department: bool = False
+
+
+class IneligibleCandidate(BaseModel):
+    teacher_id: int
+    teacher_name: str
+    reason: str
+
+
 class RecommendationOut(BaseModel):
-    """One ranked candidate from get_ranked_recommendations — the score
-    breakdown is shown to the admin so the number isn't a black box."""
+    """Authoritative ranked candidate recommendation with calibrated suitability score (0-100),
+    tier (EXCELLENT, GOOD, FAIR, LOW), structured metrics, and explainability reasons."""
+    rank: int = 1
     teacher: UserOut
-    score: float
-    reasons: list[str]
+    score: int
+    tier: str = "GOOD"
+    eligible: bool = True
+    metrics: CandidateMetrics = CandidateMetrics()
+    signals: CandidateSignals = CandidateSignals()
+    reasons: list[str] = []
+
+    # Legacy flat accessors for backward compatibility
     today_workload: int = 0
     projected_today_workload: int = 0
     today_periods: list[int] = []
@@ -22,8 +51,20 @@ class RecommendationOut(BaseModel):
     fairness: float = 0.0
     leave_recovery: float = 0.0
     leave_recovery_reason: str | None = None
+    compatibility_score: float | None = None
 
     model_config = {"from_attributes": True}
+
+
+class SubstitutionCandidatesResponse(BaseModel):
+    leave_id: int
+    affected_date: str
+    day_order: int
+    period_number: int
+    subject_id: int | None = None
+    subject_name: str | None = None
+    recommendations: list[RecommendationOut] = []
+    ineligible_candidates: list[IneligibleCandidate] = []
 
 
 

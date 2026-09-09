@@ -32,7 +32,19 @@ function RecommendationRow({ rec, onAssign, disabled }) {
               {rec.teacher.department}
             </span>
           )}
-          <span className="text-xs font-semibold text-gray-500 shrink-0">{rec.score}% match</span>
+          {rec.tier && (
+            <span className={`text-[10px] font-extrabold px-1.5 py-0.5 rounded-md uppercase tracking-wider ${
+              rec.tier === 'EXCELLENT' ? 'bg-emerald-100 text-emerald-800' :
+              rec.tier === 'GOOD' ? 'bg-blue-100 text-blue-800' :
+              rec.tier === 'FAIR' ? 'bg-amber-100 text-amber-800' :
+              'bg-slate-100 text-slate-700'
+            }`}>
+              {rec.tier}
+            </span>
+          )}
+          <span className="text-xs font-semibold text-slate-700 shrink-0">
+            Suitability: {Math.max(0, Math.min(100, Math.round(Number(rec.score) || 0)))}/100
+          </span>
         </div>
         <div className="flex items-center gap-2 mt-1">
           <div className="w-20 h-1.5 rounded-full bg-gray-100 overflow-hidden shrink-0">

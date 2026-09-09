@@ -54,6 +54,7 @@ data class CameraFrame(
     companion object {
         /**
          * Safely extracts a CameraFrame from an ImageProxy without leaking the proxy reference.
+         * Handles both RGBA_8888 and YUV_420_888 output formats with full rotation and front-camera mirroring.
          */
         fun fromImageProxy(
             imageProxy: ImageProxy,
@@ -67,16 +68,72 @@ data class CameraFrame(
 
             var bitmap: Bitmap? = null
             if (extractBitmap) {
+                var rawBitmap: Bitmap? = null
+
+                // 1. Attempt native CameraX toBitmap() (works on YUV_420_888 and JPEG)
                 try {
-                    val rawBitmap = imageProxy.toBitmap()
-                    if (rotation != 0) {
-                        val matrix = Matrix().apply { postRotate(rotation.toFloat()) }
-                        bitmap = Bitmap.createBitmap(rawBitmap, 0, 0, rawBitmap.width, rawBitmap.height, matrix, true)
-                    } else {
-                        bitmap = rawBitmap
+                    rawBitmap = imageProxy.toBitmap()
+                } catch (_: Throwable) {
+                    // toBitmap() unsupported or failed on this format (e.g. RGBA_8888)
+                }
+
+                // 2. Fallback: If format is RGBA_8888 (single plane), extract direct from buffer
+                if (rawBitmap == null && imageProxy.planes.isNotEmpty()) {
+                    try {
+                        val plane = imageProxy.planes[0]
+                        val buffer = plane.buffer
+                        buffer.rewind()
+                        val pixelStride = plane.pixelStride
+                        val rowStride = plane.rowStride
+                        if (pixelStride > 0 && rowStride > 0) {
+                            val rowPadding = rowStride - pixelStride * width
+                            val strideWidth = width + (if (pixelStride > 0) rowPadding / pixelStride else 0)
+                            val bmp = Bitmap.createBitmap(strideWidth, height, Bitmap.Config.ARGB_8888)
+                            bmp.copyPixelsFromBuffer(buffer)
+                            rawBitmap = if (strideWidth != width) {
+                                Bitmap.createBitmap(bmp, 0, 0, width, height)
+                            } else {
+                                bmp
+                            }
+                        }
+                    } catch (_: Throwable) {}
+                }
+
+                // 3. Fallback: Decode via NV21 if 3 YUV planes exist
+                if (rawBitmap == null) {
+                    val nv21 = yuv420ToNv21(imageProxy)
+                    if (nv21 != null) {
+                        try {
+                            val yuvImage = android.graphics.YuvImage(
+                                nv21,
+                                android.graphics.ImageFormat.NV21,
+                                width,
+                                height,
+                                null
+                            )
+                            val out = java.io.ByteArrayOutputStream()
+                            yuvImage.compressToJpeg(android.graphics.Rect(0, 0, width, height), 95, out)
+                            val jpegBytes = out.toByteArray()
+                            rawBitmap = android.graphics.BitmapFactory.decodeByteArray(jpegBytes, 0, jpegBytes.size)
+                        } catch (_: Throwable) {}
                     }
-                } catch (_: Exception) {
-                    // Fallback to byte buffers
+                }
+
+                // 4. Apply rotation & front camera horizontal mirroring
+                if (rawBitmap != null) {
+                    val matrix = Matrix()
+                    if (rotation != 0) {
+                        matrix.postRotate(rotation.toFloat())
+                    }
+                    if (lensFacing == CameraLens.FRONT) {
+                        // Mirror horizontally so the camera orientation matches the mirror preview
+                        matrix.postScale(-1f, 1f)
+                    }
+                    bitmap = if (!matrix.isIdentity) {
+                        Bitmap.createBitmap(rawBitmap, 0, 0, rawBitmap.width, rawBitmap.height, matrix, true)
+                    } else {
+                        rawBitmap
+                    }
                 }
             }
 

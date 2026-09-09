@@ -35,22 +35,22 @@ private val DarkColorScheme = darkColorScheme(
 )
 
 private val LightColorScheme = lightColorScheme(
-    primary = PrimaryBlue,
-    onPrimary = LightSurface,
-    primaryContainer = CardHighlight,
-    onPrimaryContainer = PrimaryBlue,
-    secondary = SecondaryTeal,
-    onSecondary = LightSurface,
-    tertiary = TertiaryEmerald,
-    background = LightBackground,
-    onBackground = TextPrimaryLight,
-    surface = LightSurface,
-    onSurface = TextPrimaryLight,
-    surfaceVariant = LightSurfaceVariant,
-    onSurfaceVariant = TextSecondaryLight,
-    outline = LightBorder,
-    error = StatusError,
-    onError = LightSurface
+    primary = FaflowNavy,
+    onPrimary = FaflowSurface,
+    primaryContainer = FaflowNavyTint,
+    onPrimaryContainer = FaflowNavy,
+    secondary = FaflowTeal,
+    onSecondary = FaflowSurface,
+    tertiary = FaflowViolet,
+    background = FaflowBg,
+    onBackground = FaflowText1,
+    surface = FaflowSurface,
+    onSurface = FaflowText1,
+    surfaceVariant = FaflowNavyTint,
+    onSurfaceVariant = FaflowText2,
+    outline = FaflowBorder,
+    error = FaflowDanger,
+    onError = FaflowSurface
 )
 
 @Composable

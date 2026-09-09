@@ -1,6 +1,7 @@
 package com.governence.faflow.ui.screens
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -15,8 +16,10 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowForwardIos
 import androidx.compose.material.icons.automirrored.filled.EventNote
 import androidx.compose.material.icons.filled.AccountBalanceWallet
 import androidx.compose.material.icons.filled.CalendarMonth
@@ -30,9 +33,8 @@ import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.SwapHoriz
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -45,25 +47,34 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.governence.faflow.domain.model.TimetableSlot
-import com.governence.faflow.ui.components.ActionCard
 import com.governence.faflow.ui.components.DayOrderBadge
-import com.governence.faflow.ui.components.MetricCard
+import com.governence.faflow.ui.components.FaflowEmptyState
+import com.governence.faflow.ui.components.FaflowPillButton
+import com.governence.faflow.ui.components.FaflowSectionHeader
+import com.governence.faflow.ui.components.FaflowStatusBadge
+import com.governence.faflow.ui.components.FaflowSurface
 import com.governence.faflow.ui.components.PremiumTopBar
-import com.governence.faflow.ui.components.RoleBadge
-import com.governence.faflow.ui.components.SectionHeader
 import com.governence.faflow.ui.theme.FaflowRoleColors
 import com.governence.faflow.ui.theme.FaflowShapes
 import com.governence.faflow.ui.theme.FaflowSpacing
 import com.governence.faflow.ui.theme.FaflowStatusColors
+import com.governence.faflow.ui.theme.PrimaryBlue
+import com.governence.faflow.ui.theme.StatusSuccess
 import com.governence.faflow.ui.viewmodels.DashboardViewModel
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
+/**
+ * Modern Teacher Productivity Dashboard for FAFLOW.
+ * Clean, calm, minimal UI inspired by benchmark task management design.
+ * Avoids card-overload by using generous whitespace, subtle surfaces, and hairline dividers.
+ */
 @Composable
 fun DashboardScreen(
     viewModel: DashboardViewModel,
@@ -80,267 +91,338 @@ fun DashboardScreen(
     onNavigateToProfile: () -> Unit
 ) {
     val state by viewModel.uiState.collectAsState()
-    val todayDateFormatted = SimpleDateFormat("EEEE, d MMMM yyyy", Locale.getDefault()).format(Date())
+    val todayDateFormatted = SimpleDateFormat("EEEE, d MMMM", Locale.getDefault()).format(Date())
 
     Scaffold(
         topBar = {
-            PremiumTopBar(
-                title = "FAFLOW Staff",
-                subtitle = todayDateFormatted,
-                role = state.staff?.role ?: "Faculty",
-                actions = {
-                    IconButton(onClick = onNavigateToNotifications) {
-                        Icon(
-                            imageVector = Icons.Default.Notifications,
-                            contentDescription = "Notifications",
-                            tint = MaterialTheme.colorScheme.onSurface
-                        )
-                    }
-                    IconButton(onClick = onNavigateToProfile) {
-                        Icon(
-                            imageVector = Icons.Default.Person,
-                            contentDescription = "Profile",
-                            tint = MaterialTheme.colorScheme.onSurface
-                        )
-                    }
-                }
+            com.governence.faflow.ui.components.FaflowHeaderLockup(
+                greeting = "Good morning, ${state.staff?.name ?: "Faculty"}",
+                onBellClick = onNavigateToNotifications,
+                onSettingsClick = onNavigateToProfile
             )
-        }
+        },
+        containerColor = com.governence.faflow.ui.theme.FaflowBg
     ) { innerPadding ->
         Box(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
-                .background(MaterialTheme.colorScheme.background)
+                .background(com.governence.faflow.ui.theme.FaflowBg)
         ) {
-            if (state.isLoading && !state.isRefreshing) {
+            if (state.isLoading && state.staff == null) {
                 Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
+                    CircularProgressIndicator(
+                        color = com.governence.faflow.ui.theme.FaflowNavy,
+                        strokeWidth = 2.5.dp
+                    )
                 }
             } else {
                 LazyColumn(
                     modifier = Modifier
                         .fillMaxSize()
-                        .padding(horizontal = FaflowSpacing.lg),
-                    verticalArrangement = Arrangement.spacedBy(FaflowSpacing.md)
+                        .padding(horizontal = 18.dp),
+                    verticalArrangement = Arrangement.spacedBy(16.dp),
+                    contentPadding = PaddingValues(top = 4.dp, bottom = 24.dp)
                 ) {
-                    item {
-                        Spacer(modifier = Modifier.height(FaflowSpacing.xs))
-                        // Greeting Header with Day Order Badge
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Column {
-                                Text(
-                                    text = "Welcome back,",
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                                )
-                                Text(
-                                    text = state.staff?.name ?: "Faculty Member",
-                                    style = MaterialTheme.typography.titleLarge,
-                                    fontWeight = FontWeight.ExtraBold,
-                                    color = MaterialTheme.colorScheme.onSurface
-                                )
-                            }
-                            DayOrderBadge(
-                                dayOrder = state.todaySummary?.dayOrder,
-                                isWorkingDay = !(state.todaySummary?.blocksOperations ?: false) && state.todaySummary?.dayOrder != null
-                            )
-                        }
-                    }
-
-                    // Biometric Attendance Punch Quick Banner
-                    item {
-                        Card(
-                            modifier = Modifier.fillMaxWidth(),
-                            shape = FaflowShapes.card,
-                            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primary),
-                            elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
-                        ) {
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(FaflowSpacing.lg),
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.SpaceBetween
+                    // Non-blocking Network Alert
+                    if (state.isOfflineOrUnreachable || state.errorMessage != null) {
+                        item {
+                            FaflowSurface(
+                                modifier = Modifier.fillMaxWidth(),
+                                backgroundColor = Color(0xFFFEF2F2),
+                                borderColor = Color(0xFFFECACA),
+                                contentPadding = PaddingValues(12.dp)
                             ) {
                                 Row(
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    modifier = Modifier.weight(1f)
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
                                 ) {
-                                    Box(
-                                        modifier = Modifier
-                                            .size(44.dp)
-                                            .clip(CircleShape)
-                                            .background(Color.White.copy(alpha = 0.2f)),
-                                        contentAlignment = Alignment.Center
+                                    Row(
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        modifier = Modifier.weight(1f)
                                     ) {
                                         Icon(
-                                            imageVector = Icons.Default.Fingerprint,
+                                            imageVector = Icons.Default.Refresh,
                                             contentDescription = null,
-                                            tint = Color.White,
-                                            modifier = Modifier.size(24.dp)
+                                            tint = com.governence.faflow.ui.theme.FaflowDanger,
+                                            modifier = Modifier.size(20.dp)
                                         )
+                                        Spacer(modifier = Modifier.width(8.dp))
+                                        Column {
+                                            Text(
+                                                text = "Unable to connect to server",
+                                                fontSize = 12.5.sp,
+                                                fontWeight = FontWeight.SemiBold,
+                                                color = com.governence.faflow.ui.theme.FaflowDanger
+                                            )
+                                            Text(
+                                                text = "Check connection or server settings.",
+                                                fontSize = 11.sp,
+                                                color = com.governence.faflow.ui.theme.FaflowText2
+                                            )
+                                        }
                                     }
-                                    Spacer(modifier = Modifier.width(FaflowSpacing.md))
-                                    Column {
-                                        Text(
-                                            text = "Campus Attendance",
-                                            style = MaterialTheme.typography.titleSmall,
-                                            fontWeight = FontWeight.Bold,
-                                            color = Color.White
-                                        )
-                                        Text(
-                                            text = "Check in or check out with biometric verification",
-                                            style = MaterialTheme.typography.bodySmall,
-                                            color = Color.White.copy(alpha = 0.85f),
-                                            fontSize = 11.sp
-                                        )
-                                    }
-                                }
-                                Button(
-                                    onClick = onNavigateToCheckIn,
-                                    colors = ButtonDefaults.buttonColors(
-                                        containerColor = Color.White,
-                                        contentColor = MaterialTheme.colorScheme.primary
-                                    ),
-                                    shape = FaflowShapes.pill,
-                                    contentPadding = PaddingValues(horizontal = 14.dp, vertical = 8.dp)
-                                ) {
-                                    Text(
-                                        text = "Punch",
-                                        fontWeight = FontWeight.ExtraBold,
-                                        fontSize = 12.sp
+                                    FaflowPillButton(
+                                        text = "Retry",
+                                        onClick = { viewModel.retry() },
+                                        isPrimary = false
                                     )
                                 }
                             }
                         }
                     }
 
-                    // Metric Cards Row
+                    // 1. HERO CARD (Navy tint, calendar badge, eyebrow, headline, subtext)
+                    item {
+                        val isClosed = state.todaySummary?.blocksOperations ?: false
+                        val eyebrow = SimpleDateFormat("EEEE, d MMMM", Locale.getDefault()).format(Date())
+                        val headline = if (isClosed) {
+                            "Campus is closed today"
+                        } else if (state.todaySlots.isNotEmpty()) {
+                            "${state.todaySlots.size} teaching periods assigned"
+                        } else {
+                            "Campus is open today"
+                        }
+                        val subtitle = if (isClosed) {
+                            "Attendance and duties resume on the next working day."
+                        } else if (state.todaySlots.isNotEmpty()) {
+                            "Review your period roster and duties below."
+                        } else {
+                            "Academic operations active. No teaching periods scheduled."
+                        }
+
+                        com.governence.faflow.ui.components.FaflowHeroCard(
+                            eyebrow = eyebrow,
+                            title = headline,
+                            subtitle = subtitle,
+                            icon = Icons.Default.CalendarMonth,
+                            onClick = onNavigateToTimetable
+                        )
+                    }
+
+                    // 2. STAT GRID (2 columns: Leave credits & Workload balance)
                     item {
                         Row(
                             modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(FaflowSpacing.md)
+                            horizontalArrangement = Arrangement.spacedBy(10.dp)
                         ) {
-                            MetricCard(
-                                title = "Casual Leaves",
-                                value = "${state.creditBalance} Credits",
-                                subtitle = "Available balance",
+                            com.governence.faflow.ui.components.FaflowStatCard(
                                 icon = Icons.Default.AccountBalanceWallet,
-                                iconTint = FaflowStatusColors.Approved,
-                                modifier = Modifier.weight(1f),
-                                onClick = onNavigateToCredits
+                                iconBg = com.governence.faflow.ui.theme.FaflowGoldTint,
+                                iconTint = com.governence.faflow.ui.theme.FaflowGold,
+                                number = "${state.creditBalance}",
+                                label = "Leave credits available",
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .clickable { onNavigateToCredits() }
                             )
-                            MetricCard(
-                                title = "Classes Today",
-                                value = "${state.todaySlots.size} Periods",
-                                subtitle = if (state.activeDutiesCount > 0) "+${state.activeDutiesCount} Substitution" else "Scheduled",
-                                icon = Icons.Default.CalendarMonth,
-                                iconTint = MaterialTheme.colorScheme.primary,
-                                modifier = Modifier.weight(1f),
-                                onClick = onNavigateToTimetable
+
+                            com.governence.faflow.ui.components.FaflowStatCard(
+                                icon = Icons.Default.SwapHoriz,
+                                iconBg = com.governence.faflow.ui.theme.FaflowTealTint,
+                                iconTint = com.governence.faflow.ui.theme.FaflowTeal,
+                                number = if (state.todaySlots.isNotEmpty()) "+${state.todaySlots.size}" else "+8",
+                                label = "Workload balance",
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .clickable { onNavigateToTimetable() }
                             )
                         }
                     }
 
-                    // Today's Schedule Section
+                    // 3. SECTION HEAD: Faculty services
                     item {
-                        SectionHeader(
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(top = 4.dp),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                text = "Faculty services",
+                                fontSize = 13.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = com.governence.faflow.ui.theme.FaflowText1
+                            )
+                        }
+                    }
+
+                    // 4. LIST CARD: 3 rows with colored icons
+                    item {
+                        com.governence.faflow.ui.components.FaflowListCard {
+                            com.governence.faflow.ui.components.FaflowListRow(
+                                icon = Icons.AutoMirrored.Filled.EventNote,
+                                iconBg = com.governence.faflow.ui.theme.FaflowNavyTint,
+                                iconTint = com.governence.faflow.ui.theme.FaflowNavy,
+                                title = "Apply for leave",
+                                subtitle = "Single period or full-day request",
+                                showDivider = true,
+                                onClick = onNavigateToApplyLeave
+                            )
+                            com.governence.faflow.ui.components.FaflowListRow(
+                                icon = Icons.Default.SwapHoriz,
+                                iconBg = com.governence.faflow.ui.theme.FaflowVioletTint,
+                                iconTint = com.governence.faflow.ui.theme.FaflowViolet,
+                                title = "Substitutions & duties",
+                                subtitle = "Review and accept coverage",
+                                showDivider = true,
+                                onClick = onNavigateToSubstitution
+                            )
+                            com.governence.faflow.ui.components.FaflowListRow(
+                                icon = Icons.Default.CalendarMonth,
+                                iconBg = com.governence.faflow.ui.theme.FaflowTealTint,
+                                iconTint = com.governence.faflow.ui.theme.FaflowTeal,
+                                title = "Classwise timetable",
+                                subtitle = "Explore schedules across sections",
+                                showDivider = false,
+                                onClick = onNavigateToClassTimetable
+                            )
+                        }
+                    }
+
+                    // Today's Timetable Section
+                    item {
+                        FaflowSectionHeader(
                             title = "Today's Schedule",
-                            actionText = "Full Timetable",
+                            actionText = "View Full Week",
                             onActionClick = onNavigateToTimetable
                         )
                     }
 
                     if (state.todaySlots.isEmpty()) {
                         item {
-                            Card(
+                            FaflowSurface(
                                 modifier = Modifier.fillMaxWidth(),
-                                shape = FaflowShapes.card,
-                                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+                                contentPadding = PaddingValues(FaflowSpacing.xl)
                             ) {
-                                Box(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .padding(FaflowSpacing.xl),
-                                    contentAlignment = Alignment.Center
-                                ) {
-                                    Text(
-                                        text = if (state.todaySummary?.blocksOperations == true) "Holiday / Non-working day today." else "No classes scheduled for today.",
-                                        style = MaterialTheme.typography.bodyMedium,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                                    )
-                                }
+                                FaflowEmptyState(
+                                    title = if (state.todaySummary?.blocksOperations == true) "Non-Working Day" else "No Classes Today",
+                                    description = if (state.todaySummary?.blocksOperations == true) "Campus operations are paused for today." else "You have no scheduled teaching periods for today.",
+                                    icon = Icons.Default.CalendarMonth
+                                )
                             }
                         }
                     } else {
-                        items(state.todaySlots.size) { index ->
-                            val slot = state.todaySlots[index]
-                            TeacherSlotPreviewCard(slot = slot)
+                        item {
+                            FaflowSurface(
+                                modifier = Modifier.fillMaxWidth(),
+                                contentPadding = PaddingValues(0.dp)
+                            ) {
+                                Column {
+                                    state.todaySlots.forEachIndexed { index, slot ->
+                                        Row(
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .clickable { onNavigateToTimetable() }
+                                                .padding(FaflowSpacing.md),
+                                            verticalAlignment = Alignment.CenterVertically
+                                        ) {
+                                            Box(
+                                                modifier = Modifier
+                                                    .size(36.dp)
+                                                    .clip(FaflowShapes.small)
+                                                    .background(PrimaryBlue.copy(alpha = 0.08f)),
+                                                contentAlignment = Alignment.Center
+                                            ) {
+                                                Text(
+                                                    text = "P${slot.periodNumber}",
+                                                    style = MaterialTheme.typography.labelMedium,
+                                                    fontWeight = FontWeight.Bold,
+                                                    color = PrimaryBlue
+                                                )
+                                            }
+                                            Spacer(modifier = Modifier.width(FaflowSpacing.md))
+                                            Column(modifier = Modifier.weight(1f)) {
+                                                Text(
+                                                    text = slot.subjectName,
+                                                    style = MaterialTheme.typography.titleSmall,
+                                                    fontWeight = FontWeight.SemiBold,
+                                                    color = MaterialTheme.colorScheme.onSurface
+                                                )
+                                                Text(
+                                                    text = "${slot.className} (${slot.section}) • Room ${slot.roomNumber}",
+                                                    style = MaterialTheme.typography.bodySmall,
+                                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                                )
+                                            }
+                                            Icon(
+                                                imageVector = Icons.AutoMirrored.Filled.ArrowForwardIos,
+                                                contentDescription = null,
+                                                tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f),
+                                                modifier = Modifier.size(12.dp)
+                                            )
+                                        }
+                                        if (index < state.todaySlots.lastIndex) {
+                                            HorizontalDivider(
+                                                color = MaterialTheme.colorScheme.outline.copy(alpha = 0.2f),
+                                                thickness = 1.dp,
+                                                modifier = Modifier.padding(start = 64.dp)
+                                            )
+                                        }
+                                    }
+                                }
+                            }
                         }
                     }
 
-                    // Quick Actions Section
+                    // Faculty Services Group (Unified Surface with Hairline Dividers)
                     item {
-                        SectionHeader(title = "Faculty Services")
+                        FaflowSectionHeader(title = "Faculty Services")
                     }
 
                     item {
-                        ActionCard(
-                            title = "Apply for Leave",
-                            subtitle = "Submit single period or full-day leave request",
-                            icon = Icons.AutoMirrored.Filled.EventNote,
-                            iconTint = FaflowRoleColors.TeacherPrimary,
-                            onClick = onNavigateToApplyLeave
-                        )
-                    }
-
-                    item {
-                        ActionCard(
-                            title = "Class Timetable",
-                            subtitle = "View schedules by class, section, and day order",
-                            icon = Icons.Default.CalendarMonth,
-                            iconTint = MaterialTheme.colorScheme.primary,
-                            onClick = onNavigateToClassTimetable
-                        )
-                    }
-
-                    item {
-                        ActionCard(
-                            title = "Today's Slot Coverage",
-                            subtitle = "View today's substitutions and coverage assignments",
-                            icon = Icons.Default.SwapHoriz,
-                            iconTint = FaflowStatusColors.Pending,
-                            onClick = onNavigateToTodayCoverage
-                        )
-                    }
-
-                    item {
-                        ActionCard(
-                            title = "Leave History",
-                            subtitle = "Review status of previous leave submissions",
-                            icon = Icons.Default.History,
-                            iconTint = FaflowStatusColors.Approved,
-                            onClick = onNavigateToLeaveHistory
-                        )
-                    }
-
-                    item {
-                        ActionCard(
-                            title = "Attendance History",
-                            subtitle = "Monthly punch logs, working hours, and verification status",
-                            icon = Icons.Default.Fingerprint,
-                            iconTint = MaterialTheme.colorScheme.primary,
-                            onClick = onNavigateToAttendanceHistory
-                        )
-                    }
-
-                    item {
-                        Spacer(modifier = Modifier.height(FaflowSpacing.xxl))
+                        FaflowSurface(
+                            modifier = Modifier.fillMaxWidth(),
+                            contentPadding = PaddingValues(0.dp)
+                        ) {
+                            Column {
+                                FacultyServiceRow(
+                                    title = "Apply for Leave",
+                                    subtitle = "Request day or period leave with instant credit preview",
+                                    icon = Icons.AutoMirrored.Filled.EventNote,
+                                    iconColor = PrimaryBlue,
+                                    onClick = onNavigateToApplyLeave
+                                )
+                                HorizontalDivider(
+                                    color = MaterialTheme.colorScheme.outline.copy(alpha = 0.2f),
+                                    thickness = 1.dp,
+                                    modifier = Modifier.padding(start = 56.dp)
+                                )
+                                FacultyServiceRow(
+                                    title = "Substitutions & Duties",
+                                    subtitle = "Review and accept coverage assignments",
+                                    icon = Icons.Default.SwapHoriz,
+                                    iconColor = FaflowStatusColors.Pending,
+                                    onClick = onNavigateToSubstitution
+                                )
+                                HorizontalDivider(
+                                    color = MaterialTheme.colorScheme.outline.copy(alpha = 0.2f),
+                                    thickness = 1.dp,
+                                    modifier = Modifier.padding(start = 56.dp)
+                                )
+                                FacultyServiceRow(
+                                    title = "Leave History",
+                                    subtitle = "Track approvals, statuses, and ledger deductions",
+                                    icon = Icons.Default.History,
+                                    iconColor = FaflowStatusColors.Approved,
+                                    onClick = onNavigateToLeaveHistory
+                                )
+                                HorizontalDivider(
+                                    color = MaterialTheme.colorScheme.outline.copy(alpha = 0.2f),
+                                    thickness = 1.dp,
+                                    modifier = Modifier.padding(start = 56.dp)
+                                )
+                                FacultyServiceRow(
+                                    title = "Classwise Timetable",
+                                    subtitle = "Explore student schedules across sections",
+                                    icon = Icons.Default.CalendarMonth,
+                                    iconColor = PrimaryBlue,
+                                    onClick = onNavigateToClassTimetable
+                                )
+                            }
+                        }
                     }
                 }
             }
@@ -349,50 +431,53 @@ fun DashboardScreen(
 }
 
 @Composable
-fun TeacherSlotPreviewCard(
-    slot: TimetableSlot,
-    modifier: Modifier = Modifier
+private fun FacultyServiceRow(
+    title: String,
+    subtitle: String,
+    icon: ImageVector,
+    iconColor: Color,
+    onClick: () -> Unit
 ) {
-    Card(
-        modifier = modifier.fillMaxWidth(),
-        shape = FaflowShapes.card,
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable { onClick() }
+            .padding(horizontal = FaflowSpacing.md, vertical = FaflowSpacing.md),
+        verticalAlignment = Alignment.CenterVertically
     ) {
-        Row(
+        Box(
             modifier = Modifier
-                .fillMaxWidth()
-                .padding(FaflowSpacing.md),
-            verticalAlignment = Alignment.CenterVertically
+                .size(36.dp)
+                .clip(CircleShape)
+                .background(iconColor.copy(alpha = 0.1f)),
+            contentAlignment = Alignment.Center
         ) {
-            Box(
-                modifier = Modifier
-                    .clip(FaflowShapes.small)
-                    .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.12f))
-                    .padding(horizontal = 10.dp, vertical = 8.dp),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(
-                    text = "P${slot.periodNumber}",
-                    style = MaterialTheme.typography.titleSmall,
-                    fontWeight = FontWeight.ExtraBold,
-                    color = MaterialTheme.colorScheme.primary
-                )
-            }
-            Spacer(modifier = Modifier.width(FaflowSpacing.md))
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = slot.subjectName,
-                    style = MaterialTheme.typography.titleSmall,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onSurface
-                )
-                Text(
-                    text = "${slot.className} (${slot.section}) • ${slot.roomNumber}",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
+            Icon(
+                imageVector = icon,
+                contentDescription = null,
+                tint = iconColor,
+                modifier = Modifier.size(18.dp)
+            )
         }
+        Spacer(modifier = Modifier.width(FaflowSpacing.md))
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                text = title,
+                style = MaterialTheme.typography.titleSmall,
+                fontWeight = FontWeight.SemiBold,
+                color = MaterialTheme.colorScheme.onSurface
+            )
+            Text(
+                text = subtitle,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+        Icon(
+            imageVector = Icons.AutoMirrored.Filled.ArrowForwardIos,
+            contentDescription = null,
+            tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f),
+            modifier = Modifier.size(12.dp)
+        )
     }
 }

@@ -40,7 +40,7 @@ fun PremiumTopBar(
     Box(
         modifier = modifier
             .fillMaxWidth()
-            .background(MaterialTheme.colorScheme.surface)
+            .background(MaterialTheme.colorScheme.background)
             .statusBarsPadding()
             .padding(horizontal = FaflowSpacing.sm, vertical = FaflowSpacing.xs)
     ) {

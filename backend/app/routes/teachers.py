@@ -186,12 +186,12 @@ def enroll_my_biometrics(
 @router.post("/{teacher_id}/biometrics/reset", response_model=UserOut)
 def reset_teacher_biometrics(
     teacher_id: int,
-    system_admin: User = Depends(require_system_admin),
+    admin_user: User = Depends(require_admin),
     db: Session = Depends(get_db),
 ):
     """
     Resets the stored facial biometric registration for a faculty member.
-    SYSTEM ADMIN ONLY. All other roles receive HTTP 403 Forbidden.
+    Authorized for institutional and system administrators.
     """
     teacher = db.query(User).filter(User.id == teacher_id).first()
     if not teacher:
@@ -201,7 +201,7 @@ def reset_teacher_biometrics(
     teacher.face_enrolled_at = None
 
     log_audit_event(
-        db, system_admin.id, "biometrics.reset", "user", teacher.id,
+        db, admin_user.id, "biometrics.reset", "user", teacher.id,
         {"name": teacher.name, "email": teacher.email}
     )
     db.commit()

@@ -12,6 +12,7 @@ import com.governence.faflow.core.network.TimetableSlotOutDto
 import com.governence.faflow.core.network.TodaySubstitutionCoverageDto
 import com.governence.faflow.faflow.data.AcademicSummaryRepository
 import com.governence.faflow.faflow.data.HodRepositoryImpl
+import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -99,56 +100,45 @@ class HodViewModel(
     fun loadDashboardData() {
         viewModelScope.launch {
             _dashboardState.value = _dashboardState.value.copy(isLoading = true, errorMessage = null)
-            
-            // 1. Academic calendar
+
+            // P1 FIX: All 5 API calls fired concurrently rather than sequentially.
+            // Previously this took ~5×RTT. Now it takes ~1×RTT.
+            val calendarDeferred = async { academicSummaryRepository.getMyTodaySummary() }
+            val leavesDeferred   = async { hodRepository.getDepartmentLeaves() }
+            val facultyDeferred  = async { hodRepository.getDepartmentTeachers() }
+            val coverageDeferred = async { hodRepository.getTodayCoverage() }
+            val liveDeferred     = async { hodRepository.getSupervisorLiveStatus() }
+
+            // Await all results
+            val calendarRes = calendarDeferred.await()
+            val leavesRes   = leavesDeferred.await()
+            val facultyRes  = facultyDeferred.await()
+            val coverageRes = coverageDeferred.await()
+            val liveRes     = liveDeferred.await()
+
+            // Extract values from results
             var dayOrder: Int? = null
             var isWorking = true
-            when (val res = academicSummaryRepository.getMyTodaySummary()) {
-                is NetworkResult.Success -> {
-                    dayOrder = res.data.dayOrder
-                    isWorking = !res.data.blocksOperations && dayOrder != null
-                }
-                else -> {}
+            if (calendarRes is NetworkResult.Success) {
+                dayOrder = calendarRes.data.dayOrder
+                isWorking = !calendarRes.data.blocksOperations && dayOrder != null
             }
 
-            // 2. Department Leaves
-            var pendingCount = 0
-            when (val res = hodRepository.getDepartmentLeaves()) {
-                is NetworkResult.Success -> {
-                    pendingCount = res.data.count { it.status.lowercase() == "pending" }
-                }
-                else -> {}
+            val pendingCount = if (leavesRes is NetworkResult.Success)
+                leavesRes.data.count { it.status.lowercase() == "pending" } else 0
+
+            val facultyCount = if (facultyRes is NetworkResult.Success) facultyRes.data.size else 0
+
+            var covered = 0; var uncovered = 0
+            if (coverageRes is NetworkResult.Success) {
+                covered = coverageRes.data.coveredSlots
+                uncovered = coverageRes.data.uncoveredSlots
             }
 
-            // 3. Department Faculty
-            var facultyCount = 0
-            when (val res = hodRepository.getDepartmentTeachers()) {
-                is NetworkResult.Success -> {
-                    facultyCount = res.data.size
-                }
-                else -> {}
-            }
-
-            // 4. Coverage
-            var covered = 0
-            var uncovered = 0
-            when (val res = hodRepository.getTodayCoverage()) {
-                is NetworkResult.Success -> {
-                    covered = res.data.coveredSlots
-                    uncovered = res.data.uncoveredSlots
-                }
-                else -> {}
-            }
-
-            // 5. Live Attendance
-            var present = 0
-            var absent = 0
-            when (val res = hodRepository.getSupervisorLiveStatus()) {
-                is NetworkResult.Success -> {
-                    present = res.data.presentCount
-                    absent = res.data.absentCount
-                }
-                else -> {}
+            var present = 0; var absent = 0
+            if (liveRes is NetworkResult.Success) {
+                present = liveRes.data.presentCount
+                absent = liveRes.data.absentCount
             }
 
             _dashboardState.value = HodDashboardUiState(
@@ -184,39 +174,47 @@ class HodViewModel(
     }
 
     fun approveLeave(leaveId: Int) {
+        approveLeaves(listOf(leaveId))
+    }
+
+    fun approveLeaves(leaveIds: List<Int>) {
+        if (leaveIds.isEmpty()) return
         viewModelScope.launch {
             _leavesState.value = _leavesState.value.copy(isLoading = true)
-            when (val res = hodRepository.approveLeave(leaveId)) {
-                is NetworkResult.Success -> {
-                    loadDepartmentLeaves()
-                    loadDashboardData()
+            var lastError: String? = null
+            for (id in leaveIds) {
+                val res = hodRepository.approveLeave(id)
+                if (res is NetworkResult.Error) {
+                    lastError = res.message
                 }
-                is NetworkResult.Error -> {
-                    _leavesState.value = _leavesState.value.copy(
-                        isLoading = false,
-                        errorMessage = res.message
-                    )
-                }
-                NetworkResult.Loading -> {}
+            }
+            loadDepartmentLeaves()
+            loadDashboardData()
+            if (lastError != null) {
+                _leavesState.value = _leavesState.value.copy(errorMessage = lastError)
             }
         }
     }
 
     fun rejectLeave(leaveId: Int) {
+        rejectLeaves(listOf(leaveId))
+    }
+
+    fun rejectLeaves(leaveIds: List<Int>) {
+        if (leaveIds.isEmpty()) return
         viewModelScope.launch {
             _leavesState.value = _leavesState.value.copy(isLoading = true)
-            when (val res = hodRepository.rejectLeave(leaveId)) {
-                is NetworkResult.Success -> {
-                    loadDepartmentLeaves()
-                    loadDashboardData()
+            var lastError: String? = null
+            for (id in leaveIds) {
+                val res = hodRepository.rejectLeave(id)
+                if (res is NetworkResult.Error) {
+                    lastError = res.message
                 }
-                is NetworkResult.Error -> {
-                    _leavesState.value = _leavesState.value.copy(
-                        isLoading = false,
-                        errorMessage = res.message
-                    )
-                }
-                NetworkResult.Loading -> {}
+            }
+            loadDepartmentLeaves()
+            loadDashboardData()
+            if (lastError != null) {
+                _leavesState.value = _leavesState.value.copy(errorMessage = lastError)
             }
         }
     }
