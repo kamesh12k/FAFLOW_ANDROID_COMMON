@@ -38,12 +38,12 @@ const ROLE_STEPS = {
     {
       title: "Leave Management & Substitution",
       description: "Apply for leaves with automated period-clash detection and transparent substitution tracking.",
-      targetSelector: 'a[href*="/leaves"], a[href*="/teacher/leave"]',
+      targetSelector: 'a[href="/teacher/leave/apply"], a[href="/teacher/leaves"], a[href*="/leaves"]',
     },
     {
       title: "Faculty Credits & Recognition",
       description: "Earn institutional credit points for proxy periods and substitution assistance. Track your balance and rewards anytime.",
-      targetSelector: 'a[href*="/credits"], a[href*="/teacher/credits"]',
+      targetSelector: 'a[href="/teacher/credits"], a[href*="/credits"]',
     },
   ],
   admin: [
@@ -55,22 +55,22 @@ const ROLE_STEPS = {
     {
       title: "Department Overview & Faculty Roster",
       description: "Monitor faculty availability, today's working day order, and overall department schedule execution in real time.",
-      targetSelector: 'a[href*="/admin/dashboard"]',
+      targetSelector: 'a[href="/admin/dashboard"], a[href*="/admin/dashboard"]',
     },
     {
       title: "Leave Approvals & Conflict Detection",
       description: "Review pending faculty leave requests, check impact on daily class periods, and approve or reject with a single click.",
-      targetSelector: 'a[href*="/admin/leaves"]',
+      targetSelector: 'a[href="/admin/leaves"], a[href*="/admin/leaves"]',
     },
     {
       title: "Campus Operations & Substitutions",
       description: "Manage unattended periods with assisted/automated substitute faculty suggestions based on real-time availability and credit balance.",
-      targetSelector: 'a[href*="/admin/today-substitutions"], a[href*="/admin/substitutions"]',
+      targetSelector: 'a[href="/admin/today-substitutions"], a[href*="/admin/today-substitutions"], a[href*="/admin/substitutions"]',
     },
     {
       title: "Department Timetable & Classes",
       description: "Configure class sections, allocate subjects to faculty, and ensure complete weekly curriculum coverage.",
-      targetSelector: 'a[href*="/admin/timetable"], a[href*="/admin/classes"]',
+      targetSelector: 'a[href="/admin/timetable"], a[href*="/admin/timetable"]',
     },
   ],
   principal: [
@@ -82,12 +82,12 @@ const ROLE_STEPS = {
     {
       title: "Institution-Wide Attendance & Coverage",
       description: "Track real-time student and faculty attendance across all department wings with period-by-period granularity.",
-      targetSelector: 'a[href*="/principal/dashboard"]',
+      targetSelector: 'a[href="/principal/dashboard"], a[href*="/principal/dashboard"]',
     },
     {
       title: "Campus Operations & Governance Modes",
       description: "Supervise institutional policies, holiday declarations, day-order overrides, and cross-department substitution rules.",
-      targetSelector: 'a[href*="/principal/substitutions"], a[href*="/principal/departments"]',
+      targetSelector: 'a[href="/admin/today-substitutions"], a[href*="/principal/departments"]',
     },
   ],
   system_admin: [
@@ -104,7 +104,7 @@ const ROLE_STEPS = {
     {
       title: "Audit Trails & Automated Backups",
       description: "Review cryptographically logged administrative actions and schedule automated, verifiable database backups.",
-      targetSelector: 'a[href*="/admin/audit-logs"], a[href*="/admin/backups"]',
+      targetSelector: 'a[href="/admin/audit-logs"], a[href*="/admin/backups"]',
     },
   ],
 }
@@ -138,25 +138,37 @@ export default function GuidedTour({ isOpen, user, onComplete }) {
     const updateRect = () => {
       const el = document.querySelector(currentStep.targetSelector)
       if (el) {
+        // First scroll the target into view if inside a scrollable sidebar
+        el.scrollIntoView({ behavior: 'auto', block: 'nearest', inline: 'nearest' })
         const rect = el.getBoundingClientRect()
-        setTargetRect({
-          top: rect.top - 6,
-          left: rect.left - 6,
-          width: rect.width + 12,
-          height: rect.height + 12,
-        })
-        el.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
-      } else {
-        setTargetRect(null)
+        if (rect.width > 0 && rect.height > 0) {
+          setTargetRect({
+            top: rect.top - 6,
+            left: rect.left - 6,
+            width: rect.width + 12,
+            height: rect.height + 12,
+          })
+          return
+        }
       }
+      setTargetRect(null)
     }
 
     updateRect()
+    const raf = requestAnimationFrame(updateRect)
+    const t1 = setTimeout(updateRect, 50)
+    const t2 = setTimeout(updateRect, 150)
+    const t3 = setTimeout(updateRect, 350)
+
     window.addEventListener('resize', updateRect)
-    window.addEventListener('scroll', updateRect)
+    document.addEventListener('scroll', updateRect, true)
     return () => {
+      cancelAnimationFrame(raf)
+      clearTimeout(t1)
+      clearTimeout(t2)
+      clearTimeout(t3)
       window.removeEventListener('resize', updateRect)
-      window.removeEventListener('scroll', updateRect)
+      document.removeEventListener('scroll', updateRect, true)
     }
   }, [isOpen, currentStepIndex, currentStep])
 
