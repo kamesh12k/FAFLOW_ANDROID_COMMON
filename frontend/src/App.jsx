@@ -111,6 +111,8 @@ export default function App() {
                 <Route path="/admin/attendance" element={<AdminAttendance />} />
                 <Route path="/admin/student-attendance" element={<HodStudentAttendance />} />
                 <Route path="/admin/setup" element={<SetupGuide />} />
+                <Route path="/admin/setup-guide" element={<SetupGuide />} />
+                <Route path="/admin/guide" element={<SetupGuide />} />
                 <Route path="/admin/academic-calendar" element={<AcademicCalendar />} />
                 <Route path="/admin/academic-calendar/reports" element={<AcademicCalendarReports />} />
                 <Route path="/admin/teachers" element={<Teachers />} />

@@ -35,6 +35,10 @@ export const adminApi = {
   masterExport: () => api.get('/admin/master-export', { responseType: 'blob' }),
 }
 
+export const setupGuideApi = {
+  getReadiness: () => api.get('/admin/setup-readiness'),
+}
+
 export const backupApi = {
   create: () => api.post('/admin/backups'),
   importBackup: (file) => {

@@ -2,6 +2,7 @@ import { useEffect, useState, useCallback, useReducer, useRef } from 'react'
 import { useAuth } from '../../context/AuthContext'
 import { teachersApi, timetableApi, subjectsApi, classesApi, roomsApi, departmentsApi } from '../../api/services'
 import { Spinner, Modal } from '../../components/ui'
+import DependencyAlert from '../../components/common/DependencyAlert'
 
 
 // ── Constants ─────────────────────────────────────────────────────────────────
@@ -823,6 +824,23 @@ export default function AdminTimetable() {
           </div>
         </div>
       </header>
+
+      {/* Prerequisite Check Banner */}
+      {masterReady && (classes.length === 0 || subjects.length === 0 || teachers.length === 0) && (
+        <div style={{ margin: '0 0 16px 0' }}>
+          <DependencyAlert
+            title="Timetable Setup Incomplete"
+            message="Timetable slots require at least one class, course subject, and faculty member to be configured first."
+            prerequisites={[
+              { title: 'Classes & Sections', is_satisfied: classes.length > 0, actionLink: '/admin/classes' },
+              { title: 'Course Subjects', is_satisfied: subjects.length > 0, actionLink: '/admin/subjects' },
+              { title: 'Faculty & Teachers', is_satisfied: teachers.length > 0, actionLink: '/admin/teachers' },
+            ]}
+            actionText="Open Setup Guide"
+            actionLink="/admin/setup"
+          />
+        </div>
+      )}
 
       {/* ── Three-panel body ── */}
       <div className="tt-body">

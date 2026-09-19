@@ -14,9 +14,21 @@ from app.schemas.admin import (
     FirstLoginSetupRequest, SecondaryAdminCreate, FactoryResetRequest,
     FactoryResetResponse, AuditLogOut,
 )
-from app.services import admin_service, factory_reset_service
+from app.schemas.setup_guide import SetupReadinessResponse
+from app.services import admin_service, factory_reset_service, setup_guide_service
 
 router = APIRouter(prefix="/admin", tags=["Admin"])
+
+
+@router.get("/setup-readiness", response_model=SetupReadinessResponse)
+def get_setup_readiness(
+    _admin: User = Depends(require_admin),
+    db: Session = Depends(get_db),
+    tenant_department_id: int | None = Depends(get_tenant_department_id),
+):
+    """Calculate institutional setup progress, module readiness, and dependency graph."""
+    return setup_guide_service.get_setup_readiness(db, tenant_department_id=tenant_department_id)
+
 
 
 @router.get("/master-export")
