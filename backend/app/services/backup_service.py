@@ -37,59 +37,88 @@ _BACKEND_ROOT = Path(__file__).resolve().parent.parent.parent
 _INDEX_FILENAME = "backup_index.json"
 
 # All application tables in the correct deletion/insertion order (children before
-# parents for deletion, parents before children for insertion). Derived from the
-# authoritative list in factory_reset_service.py and the model __init__.py.
+# parents for deletion, parents before children for insertion).
 BACKUP_TABLES = [
-    "users",
-    "departments",
     "academic_years",
+    "departments",
+    "plan_definitions",
     "semesters",
-    "calendar_days",
-    "subjects",
     "rooms",
+    "subjects",
+    "system_settings",
+    "users",
     "classes",
-    "timetable_slots",
-    "timetable_submissions",
+    "audit_logs",
+    "calendar_days",
+    "campus_geofences",
+    "institutions",
     "leave_requests",
-    "alter_assignments",
+    "operational_staff",
+    "push_subscriptions",
     "substitution_preferences",
     "teacher_credits",
+    "class_roll_rules",
+    "students",
+    "timetable_slots",
+    "timetable_submissions",
+    "staff_attendance_records",
+    "biometric_policies",
+    "feature_entitlements",
+    "system_audit_logs",
+    "alter_assignments",
     "credit_transactions",
-    "operational_staff",
     "notifications",
-    "push_subscriptions",
-    "audit_logs",
-    "system_settings",
-    "staff_leave_requests",
     "staff_credits",
+    "staff_leave_requests",
+    "class_roll_exceptions",
+    "student_enrollments",
+    "attendance_sessions",
     "staff_credit_transactions",
+    "academic_intelligence_events",
+    "attendance_correction_audits",
+    "student_attendance",
 ]
 
 # Deletion order: children first to satisfy FK constraints.
 _RESTORE_DELETE_ORDER = [
+    "student_attendance",
+    "attendance_correction_audits",
+    "academic_intelligence_events",
     "staff_credit_transactions",
-    "staff_credits",
+    "attendance_sessions",
+    "student_enrollments",
+    "class_roll_exceptions",
     "staff_leave_requests",
-    "push_subscriptions",
+    "staff_credits",
     "notifications",
     "credit_transactions",
-    "teacher_credits",
-    "substitution_preferences",
     "alter_assignments",
-    "leave_requests",
+    "system_audit_logs",
+    "feature_entitlements",
+    "biometric_policies",
+    "staff_attendance_records",
     "timetable_submissions",
     "timetable_slots",
-    "calendar_days",
-    "semesters",
-    "academic_years",
+    "students",
+    "class_roll_rules",
+    "teacher_credits",
+    "substitution_preferences",
+    "push_subscriptions",
     "operational_staff",
-    "classes",
-    "rooms",
-    "subjects",
+    "leave_requests",
+    "institutions",
+    "campus_geofences",
+    "calendar_days",
     "audit_logs",
-    "system_settings",
+    "classes",
     "users",
+    "system_settings",
+    "subjects",
+    "rooms",
+    "semesters",
+    "plan_definitions",
     "departments",
+    "academic_years",
 ]
 
 # ── Helpers ────────────────────────────────────────────────────────────────────
@@ -461,8 +490,133 @@ def create_backup(
         snapshot["staff_credit_transactions"] = [dict(r) for r in staff_tx_rows]
         tables_dumped.append("staff_credit_transactions")
 
-        # 15. Shared references
-        for shared_table in ["academic_years", "semesters", "calendar_days", "system_settings"]:
+        # 15. Campus geofences and staff attendance records
+        try:
+            geo_rows = db.execute(text("SELECT * FROM campus_geofences WHERE department_id = :dept_id"), {"dept_id": dept_id}).mappings().all()
+            snapshot["campus_geofences"] = [dict(r) for r in geo_rows]
+            tables_dumped.append("campus_geofences")
+        except Exception as e:
+            logger.warning("backup_service: skipping campus_geofences: %s", e)
+            snapshot["campus_geofences"] = []
+
+        try:
+            sar_rows = db.execute(text("""
+                SELECT * FROM staff_attendance_records
+                WHERE staff_id IN (SELECT id FROM operational_staff WHERE department_id = :dept_id)
+            """), {"dept_id": dept_id}).mappings().all()
+            snapshot["staff_attendance_records"] = [dict(r) for r in sar_rows]
+            tables_dumped.append("staff_attendance_records")
+        except Exception as e:
+            logger.warning("backup_service: skipping staff_attendance_records: %s", e)
+            snapshot["staff_attendance_records"] = []
+
+        # 16. Students and enrollments in department
+        try:
+            stu_rows = db.execute(text("""
+                SELECT * FROM students
+                WHERE department_id = :dept_id
+                   OR class_id IN (SELECT id FROM classes WHERE department_id = :dept_id)
+            """), {"dept_id": dept_id}).mappings().all()
+            snapshot["students"] = [dict(r) for r in stu_rows]
+            tables_dumped.append("students")
+        except Exception as e:
+            logger.warning("backup_service: skipping students: %s", e)
+            snapshot["students"] = []
+
+        try:
+            enr_rows = db.execute(text("""
+                SELECT * FROM student_enrollments
+                WHERE student_id IN (
+                    SELECT id FROM students
+                    WHERE department_id = :dept_id
+                       OR class_id IN (SELECT id FROM classes WHERE department_id = :dept_id)
+                )
+            """), {"dept_id": dept_id}).mappings().all()
+            snapshot["student_enrollments"] = [dict(r) for r in enr_rows]
+            tables_dumped.append("student_enrollments")
+        except Exception as e:
+            logger.warning("backup_service: skipping student_enrollments: %s", e)
+            snapshot["student_enrollments"] = []
+
+        # 17. Class roll rules and exceptions
+        try:
+            crr_rows = db.execute(text("""
+                SELECT * FROM class_roll_rules
+                WHERE department_id = :dept_id
+                   OR class_id IN (SELECT id FROM classes WHERE department_id = :dept_id)
+            """), {"dept_id": dept_id}).mappings().all()
+            snapshot["class_roll_rules"] = [dict(r) for r in crr_rows]
+            tables_dumped.append("class_roll_rules")
+        except Exception as e:
+            logger.warning("backup_service: skipping class_roll_rules: %s", e)
+            snapshot["class_roll_rules"] = []
+
+        try:
+            cre_rows = db.execute(text("""
+                SELECT * FROM class_roll_exceptions
+                WHERE rule_id IN (
+                    SELECT id FROM class_roll_rules
+                    WHERE department_id = :dept_id
+                       OR class_id IN (SELECT id FROM classes WHERE department_id = :dept_id)
+                )
+            """), {"dept_id": dept_id}).mappings().all()
+            snapshot["class_roll_exceptions"] = [dict(r) for r in cre_rows]
+            tables_dumped.append("class_roll_exceptions")
+        except Exception as e:
+            logger.warning("backup_service: skipping class_roll_exceptions: %s", e)
+            snapshot["class_roll_exceptions"] = []
+
+        # 18. Student attendance sessions, attendance, and correction audits
+        try:
+            sess_rows = db.execute(text("""
+                SELECT * FROM attendance_sessions
+                WHERE class_id IN (SELECT id FROM classes WHERE department_id = :dept_id)
+                   OR scheduled_teacher_id IN (SELECT id FROM users WHERE department_id = :dept_id)
+                   OR actual_teacher_id IN (SELECT id FROM users WHERE department_id = :dept_id)
+            """), {"dept_id": dept_id}).mappings().all()
+            snapshot["attendance_sessions"] = [dict(r) for r in sess_rows]
+            tables_dumped.append("attendance_sessions")
+        except Exception as e:
+            logger.warning("backup_service: skipping attendance_sessions: %s", e)
+            snapshot["attendance_sessions"] = []
+
+        try:
+            att_rows = db.execute(text("""
+                SELECT sa.* FROM student_attendance sa
+                WHERE sa.session_id IN (
+                    SELECT id FROM attendance_sessions
+                    WHERE class_id IN (SELECT id FROM classes WHERE department_id = :dept_id)
+                       OR scheduled_teacher_id IN (SELECT id FROM users WHERE department_id = :dept_id)
+                       OR actual_teacher_id IN (SELECT id FROM users WHERE department_id = :dept_id)
+                )
+            """), {"dept_id": dept_id}).mappings().all()
+            snapshot["student_attendance"] = [dict(r) for r in att_rows]
+            tables_dumped.append("student_attendance")
+        except Exception as e:
+            logger.warning("backup_service: skipping student_attendance: %s", e)
+            snapshot["student_attendance"] = []
+
+        try:
+            aca_rows = db.execute(text("""
+                SELECT aca.* FROM attendance_correction_audits aca
+                WHERE aca.student_attendance_id IN (
+                    SELECT sa.id FROM student_attendance sa
+                    WHERE sa.session_id IN (
+                        SELECT id FROM attendance_sessions
+                        WHERE class_id IN (SELECT id FROM classes WHERE department_id = :dept_id)
+                           OR scheduled_teacher_id IN (SELECT id FROM users WHERE department_id = :dept_id)
+                           OR actual_teacher_id IN (SELECT id FROM users WHERE department_id = :dept_id)
+                    )
+                )
+            """), {"dept_id": dept_id}).mappings().all()
+            snapshot["attendance_correction_audits"] = [dict(r) for r in aca_rows]
+            tables_dumped.append("attendance_correction_audits")
+        except Exception as e:
+            logger.warning("backup_service: skipping attendance_correction_audits: %s", e)
+            snapshot["attendance_correction_audits"] = []
+
+        # 19. Shared references
+        for shared_table in ["academic_years", "semesters", "calendar_days", "system_settings", "plan_definitions", "institutions", "biometric_policies"]:
             try:
                 rows = db.execute(text(f"SELECT * FROM {shared_table}")).mappings().all()
                 snapshot[shared_table] = [dict(r) for r in rows]
@@ -738,13 +892,22 @@ def restore_backup(
             # Scoped department wipe in reverse FK order
             dept_id = tenant_department_id
             dept_delete_stmts = [
+                ("attendance_correction_audits", "DELETE FROM attendance_correction_audits WHERE student_attendance_id IN (SELECT sa.id FROM student_attendance sa JOIN attendance_sessions s ON sa.session_id = s.id WHERE s.class_id IN (SELECT id FROM classes WHERE department_id = :dept_id) OR s.scheduled_teacher_id IN (SELECT id FROM users WHERE department_id = :dept_id) OR s.actual_teacher_id IN (SELECT id FROM users WHERE department_id = :dept_id))"),
+                ("student_attendance", "DELETE FROM student_attendance WHERE session_id IN (SELECT id FROM attendance_sessions WHERE class_id IN (SELECT id FROM classes WHERE department_id = :dept_id) OR scheduled_teacher_id IN (SELECT id FROM users WHERE department_id = :dept_id) OR actual_teacher_id IN (SELECT id FROM users WHERE department_id = :dept_id))"),
+                ("attendance_sessions", "DELETE FROM attendance_sessions WHERE class_id IN (SELECT id FROM classes WHERE department_id = :dept_id) OR scheduled_teacher_id IN (SELECT id FROM users WHERE department_id = :dept_id) OR actual_teacher_id IN (SELECT id FROM users WHERE department_id = :dept_id)"),
+                ("class_roll_exceptions", "DELETE FROM class_roll_exceptions WHERE rule_id IN (SELECT id FROM class_roll_rules WHERE department_id = :dept_id OR class_id IN (SELECT id FROM classes WHERE department_id = :dept_id))"),
+                ("student_enrollments", "DELETE FROM student_enrollments WHERE student_id IN (SELECT id FROM students WHERE department_id = :dept_id OR class_id IN (SELECT id FROM classes WHERE department_id = :dept_id))"),
+                ("class_roll_rules", "DELETE FROM class_roll_rules WHERE department_id = :dept_id OR class_id IN (SELECT id FROM classes WHERE department_id = :dept_id)"),
+                ("students", "DELETE FROM students WHERE department_id = :dept_id OR class_id IN (SELECT id FROM classes WHERE department_id = :dept_id)"),
+                ("staff_attendance_records", "DELETE FROM staff_attendance_records WHERE staff_id IN (SELECT id FROM operational_staff WHERE department_id = :dept_id)"),
+                ("campus_geofences", "DELETE FROM campus_geofences WHERE department_id = :dept_id"),
                 ("staff_credit_transactions", "DELETE FROM staff_credit_transactions WHERE staff_id IN (SELECT id FROM operational_staff WHERE department_id = :dept_id)"),
                 ("staff_credits", "DELETE FROM staff_credits WHERE staff_id IN (SELECT id FROM operational_staff WHERE department_id = :dept_id)"),
                 ("staff_leave_requests", "DELETE FROM staff_leave_requests WHERE staff_id IN (SELECT id FROM operational_staff WHERE department_id = :dept_id)"),
                 ("credit_transactions", "DELETE FROM credit_transactions WHERE teacher_id IN (SELECT id FROM users WHERE department_id = :dept_id)"),
                 ("teacher_credits", "DELETE FROM teacher_credits WHERE teacher_id IN (SELECT id FROM users WHERE department_id = :dept_id)"),
                 ("substitution_preferences", "DELETE FROM substitution_preferences WHERE teacher_id IN (SELECT id FROM users WHERE department_id = :dept_id)"),
-                ("alter_assignments", "DELETE FROM alter_assignments WHERE leave_request_id IN (SELECT id FROM leave_requests WHERE teacher_id IN (SELECT id FROM users WHERE department_id = :dept_id))"),
+                ("alter_assignments", "DELETE FROM alter_assignments WHERE leave_request_id IN (SELECT id FROM leave_requests WHERE teacher_id IN (SELECT id FROM users WHERE department_id = :dept_id)) OR substitute_teacher_id IN (SELECT id FROM users WHERE department_id = :dept_id)"),
                 ("leave_requests", "DELETE FROM leave_requests WHERE teacher_id IN (SELECT id FROM users WHERE department_id = :dept_id)"),
                 ("timetable_slots", "DELETE FROM timetable_slots WHERE class_id IN (SELECT id FROM classes WHERE department_id = :dept_id) OR teacher_id IN (SELECT id FROM users WHERE department_id = :dept_id)"),
                 ("timetable_submissions", "DELETE FROM timetable_submissions WHERE teacher_id IN (SELECT id FROM users WHERE department_id = :dept_id) OR class_id IN (SELECT id FROM classes WHERE department_id = :dept_id)"),
@@ -765,31 +928,51 @@ def restore_backup(
             rows = data.get(table, [])
             if not rows:
                 continue
+
+            # Sort rows by 'id' if present to ensure creator/parent entities precede child entities
+            try:
+                if any("id" in r for r in rows if isinstance(r, dict)):
+                    rows = sorted(
+                        rows,
+                        key=lambda r: r.get("id", 0) if isinstance(r, dict) and isinstance(r.get("id"), (int, float)) else 0
+                    )
+            except Exception:
+                pass
+
             for row in rows:
-                if not row:
+                if not row or not isinstance(row, dict):
                     continue
 
                 if tenant_department_id is not None:
-                    if table in ["academic_years", "semesters", "calendar_days", "system_settings"]:
+                    if table in ["academic_years", "semesters", "calendar_days", "system_settings", "plan_definitions", "institutions", "biometric_policies"]:
                         row_id = row.get("id")
                         if row_id is not None:
-                            existing = db.execute(text(f'SELECT id FROM "{table}" WHERE id = :id'), {"id": row_id}).first()
-                            if existing:
-                                continue
+                            try:
+                                existing = db.execute(text(f'SELECT id FROM "{table}" WHERE id = :id'), {"id": row_id}).first()
+                                if existing:
+                                    continue
+                            except Exception:
+                                pass
                     elif table == "departments":
                         row_id = row.get("id")
                         if row_id is not None:
-                            existing = db.execute(text('SELECT id FROM "departments" WHERE id = :id'), {"id": row_id}).first()
-                            if existing:
-                                continue
+                            try:
+                                existing = db.execute(text('SELECT id FROM "departments" WHERE id = :id'), {"id": row_id}).first()
+                                if existing:
+                                    continue
+                            except Exception:
+                                pass
                     elif table == "users" and row.get("id") == actor_user_id:
                         continue
                     elif table == "rooms":
                         row_id = row.get("id")
                         if row_id is not None:
-                            existing = db.execute(text('SELECT id FROM "rooms" WHERE id = :id'), {"id": row_id}).first()
-                            if existing:
-                                continue
+                            try:
+                                existing = db.execute(text('SELECT id FROM "rooms" WHERE id = :id'), {"id": row_id}).first()
+                                if existing:
+                                    continue
+                            except Exception:
+                                pass
 
                 # Adapt complex types (dict, list) to JSON strings for PostgreSQL / psycopg2
                 cleaned_row = {}
@@ -947,20 +1130,54 @@ def _sync_postgres_sequences(db: Session) -> None:
     """
     On PostgreSQL, synchronizes sequence counters for all table ID columns
     so subsequent inserts don't collide with restored explicit IDs.
+    Uses dynamic sequence discovery across the public schema with fallback to BACKUP_TABLES.
     """
     try:
         bind = db.get_bind()
         if bind.dialect.name == "postgresql":
+            # 1. Dynamic discovery from information_schema
+            query = text("""
+                SELECT c.table_name, c.column_name, pg_get_serial_sequence('"' || c.table_schema || '"."' || c.table_name || '"', c.column_name) AS seq
+                FROM information_schema.columns c
+                WHERE c.table_schema = 'public'
+                  AND pg_get_serial_sequence('"' || c.table_schema || '"."' || c.table_name || '"', c.column_name) IS NOT NULL;
+            """)
+            try:
+                rows = db.execute(query).fetchall()
+            except Exception as e:
+                logger.debug("Dynamic sequence discovery query failed, using static list: %s", e)
+                rows = []
+
+            synced_tables = set()
+            for table_name, col_name, seq_name in rows:
+                if not seq_name:
+                    continue
+                try:
+                    max_val = db.execute(text(f'SELECT MAX("{col_name}") FROM "{table_name}"')).scalar()
+                    if max_val is not None:
+                        db.execute(text(f"SELECT setval('{seq_name}', :val, true)"), {"val": max_val})
+                    else:
+                        db.execute(text(f"SELECT setval('{seq_name}', 1, false)"))
+                    synced_tables.add(table_name)
+                except Exception as ex:
+                    logger.debug("Sequence sync skipped for %s.%s (%s): %s", table_name, col_name, seq_name, ex)
+
+            # 2. Fallback for any BACKUP_TABLES not covered above
             for table in BACKUP_TABLES:
+                if table in synced_tables:
+                    continue
                 try:
                     seq_query = text(f"SELECT pg_get_serial_sequence('{table}', 'id');")
                     seq_name = db.execute(seq_query).scalar()
                     if seq_name:
-                        db.execute(text(f"""
-                            SELECT setval('{seq_name}', COALESCE((SELECT MAX(id) FROM "{table}"), 1), true);
-                        """))
+                        max_val = db.execute(text(f'SELECT MAX(id) FROM "{table}"')).scalar()
+                        if max_val is not None:
+                            db.execute(text(f"SELECT setval('{seq_name}', :val, true)"), {"val": max_val})
+                        else:
+                            db.execute(text(f"SELECT setval('{seq_name}', 1, false)"))
                 except Exception as ex:
-                    logger.debug("Sequence sync skipped for %s: %s", table, ex)
+                    logger.debug("Sequence sync skipped for fallback %s: %s", table, ex)
+
             db.commit()
     except Exception as e:
         logger.warning("Failed to sync postgres sequences: %s", e)

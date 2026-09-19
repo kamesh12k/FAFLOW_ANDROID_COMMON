@@ -23,21 +23,35 @@ LOG_DIR = _BACKEND_ROOT / "logs"
 # backup is for recovery/inspection, not replay — restoring it is a manual
 # DBA operation, not an automated "undo" button).
 BACKUP_TABLES = [
-    "users", "departments", "subjects", "classes", "rooms",
-    "academic_years", "semesters", "calendar_days",
-    "timetable_slots", "timetable_submissions", "leave_requests",
-    "alter_assignments", "substitution_preferences",
-    "teacher_credits", "credit_transactions", "operational_staff",
-    "notifications", "push_subscriptions", "audit_logs", "system_settings",
+    "academic_years", "departments", "plan_definitions", "semesters", "rooms",
+    "subjects", "system_settings", "users", "classes", "audit_logs",
+    "calendar_days", "campus_geofences", "institutions", "leave_requests",
+    "operational_staff", "push_subscriptions", "substitution_preferences",
+    "teacher_credits", "class_roll_rules", "students", "timetable_slots",
+    "timetable_submissions", "staff_attendance_records", "biometric_policies",
+    "feature_entitlements", "system_audit_logs", "alter_assignments",
+    "credit_transactions", "notifications", "staff_credits",
+    "staff_leave_requests", "class_roll_exceptions", "student_enrollments",
+    "attendance_sessions", "staff_credit_transactions",
+    "academic_intelligence_events", "attendance_correction_audits",
+    "student_attendance",
 ]
 
 # Deletion order matters: children before parents, to satisfy FK
 # constraints regardless of each table's ON DELETE behavior.
 _DELETE_ORDER = [
-    "push_subscriptions", "notifications", "credit_transactions",
-    "teacher_credits", "substitution_preferences", "alter_assignments", "leave_requests",
-    "timetable_slots", "timetable_submissions", "calendar_days", "semesters", "academic_years",
-    "operational_staff", "classes", "rooms", "subjects", "audit_logs", "users", "departments",
+    "student_attendance", "attendance_correction_audits",
+    "academic_intelligence_events", "staff_credit_transactions",
+    "attendance_sessions", "student_enrollments", "class_roll_exceptions",
+    "staff_leave_requests", "staff_credits", "notifications",
+    "credit_transactions", "alter_assignments", "system_audit_logs",
+    "feature_entitlements", "biometric_policies", "staff_attendance_records",
+    "timetable_submissions", "timetable_slots", "students",
+    "class_roll_rules", "teacher_credits", "substitution_preferences",
+    "push_subscriptions", "operational_staff", "leave_requests",
+    "institutions", "campus_geofences", "calendar_days", "audit_logs",
+    "classes", "users", "system_settings", "subjects", "rooms",
+    "semesters", "plan_definitions", "departments", "academic_years",
 ]
 
 
