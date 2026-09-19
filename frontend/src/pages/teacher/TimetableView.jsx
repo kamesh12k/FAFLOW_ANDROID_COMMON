@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 import { timetableApi } from '../../api/services'
 
-const PERIOD_TIMES = { 1:'8:45 - 9:40', 2:'9:40 - 10:35', 3:'10:50 - 11:45', 4:'11:45 - 12:40', 5:'1:30 - 2:25' }
+const PERIOD_TIMES = { 1:'9:20 – 10:20', 2:'10:20 – 11:15', 3:'11:40 – 12:35', 4:'13:35 – 14:30', 5:'14:55 – 15:50' }
 const ALL_PERIODS = [1, 2, 3, 4, 5]
 
 function SkeletonPeriod() {
