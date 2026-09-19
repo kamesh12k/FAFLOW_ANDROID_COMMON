@@ -3,8 +3,8 @@ import { Link } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 import { BRAND_CONFIG } from '../../config/branding'
 import { leavesApi, timetableApi, academicCalendarApi, subjectsApi, classesApi, roomsApi, creditsApi, teachersApi } from '../../api/services'
-import { StatusBadge, Spinner, DayTypeBadge, CreditChip, Card, StatCard, Timeline, Badge } from '../../components/ui'
-import { PlusIcon, CalIcon, DocIcon } from '../../components/icons'
+import { StatusBadge, Spinner, DayTypeBadge, CreditChip, Card, StatCard, Timeline, Badge, EmptyState } from '../../components/ui'
+import { PlusIcon, CalIcon, DocIcon, AttendanceNavIcon, UsersIcon } from '../../components/icons'
 
 export default function TeacherDashboard() {
   const { user } = useAuth()
@@ -147,9 +147,14 @@ export default function TeacherDashboard() {
                       </p>
                     </div>
                   </div>
-                  <Link to="/teacher/timetable" className="px-5 py-2.5 bg-white hover:bg-slate-50 text-blue-700 font-bold text-xs rounded-xl border border-slate-200/80 transition-all shadow-sm active:scale-95 flex-shrink-0">
-                    Full Timetable
-                  </Link>
+                  <div className="flex items-center gap-2 flex-shrink-0">
+                    <Link to="/teacher/student-attendance" className="px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs rounded-xl shadow-md shadow-indigo-600/20 transition-all active:scale-95">
+                      Take Attendance
+                    </Link>
+                    <Link to="/teacher/timetable" className="px-4 py-2.5 bg-white hover:bg-slate-50 text-blue-700 font-bold text-xs rounded-xl border border-slate-200/80 transition-all shadow-sm active:scale-95">
+                      Full Timetable
+                    </Link>
+                  </div>
                 </div>
               </div>
             )}
@@ -157,49 +162,68 @@ export default function TeacherDashboard() {
         )}
 
         {/* Quick Actions Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
+          <Link
+            to="/teacher/student-attendance"
+            className="group rounded-2xl border border-indigo-100 bg-gradient-to-br from-indigo-50/80 to-white p-5 hover:-translate-y-0.5 hover:shadow-md transition-all duration-200"
+          >
+            <div className="flex flex-col items-start gap-3">
+              <div className="w-10 h-10 rounded-xl bg-indigo-600 flex items-center justify-center shadow-sm">
+                <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+                  <circle cx="9" cy="7" r="4" strokeWidth={1.8} />
+                  <polyline points="16 11 18 13 22 9" strokeWidth={1.8} />
+                </svg>
+              </div>
+              <div>
+                <h4 className="text-xs font-bold text-indigo-900 uppercase tracking-wider">Take Attendance</h4>
+                <p className="text-[10px] text-indigo-600/70 mt-0.5 font-bold">Mark today's classes</p>
+              </div>
+            </div>
+          </Link>
+
           <Link
             to="/teacher/leave/apply"
-            className="group rounded-2xl border border-slate-100 bg-white p-6 hover:-translate-y-0.5 hover:shadow-md transition-all duration-200"
+            className="group rounded-2xl border border-slate-100 bg-white p-5 hover:-translate-y-0.5 hover:shadow-md transition-all duration-200"
           >
-            <div className="flex flex-col items-start gap-4">
-              <div className="w-11 h-11 rounded-xl bg-teal-50 flex items-center justify-center border border-teal-100">
+            <div className="flex flex-col items-start gap-3">
+              <div className="w-10 h-10 rounded-xl bg-teal-50 flex items-center justify-center border border-teal-100">
                 <PlusIcon className="w-5 h-5 text-teal-700" />
               </div>
               <div>
-                <h4 className="text-xs font-bold text-slate-800 uppercase tracking-wider">Apply for Leave</h4>
-                <p className="text-[10px] text-slate-400 mt-1 font-bold">Takes less than a minute</p>
+                <h4 className="text-xs font-bold text-slate-800 uppercase tracking-wider">Apply Leave</h4>
+                <p className="text-[10px] text-slate-400 mt-0.5 font-bold">Takes less than a minute</p>
               </div>
             </div>
           </Link>
 
           <Link
             to="/teacher/timetable"
-            className="group rounded-2xl border border-slate-100 bg-white p-6 hover:-translate-y-0.5 hover:shadow-md transition-all duration-200"
+            className="group rounded-2xl border border-slate-100 bg-white p-5 hover:-translate-y-0.5 hover:shadow-md transition-all duration-200"
           >
-            <div className="flex flex-col items-start gap-4">
-              <div className="w-11 h-11 rounded-xl bg-blue-50 flex items-center justify-center border border-blue-100">
+            <div className="flex flex-col items-start gap-3">
+              <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center border border-blue-100">
                 <CalIcon className="w-5 h-5 text-blue-700" />
               </div>
               <div>
                 <h4 className="text-xs font-bold text-slate-800 uppercase tracking-wider">My Timetable</h4>
-                <p className="text-[10px] text-slate-400 mt-1 font-bold">View full day schedules</p>
+                <p className="text-[10px] text-slate-400 mt-0.5 font-bold">View full schedule</p>
               </div>
             </div>
           </Link>
 
           <Link
             to="/teacher/leaves"
-            className="group rounded-2xl border border-slate-100 bg-white p-6 hover:-translate-y-0.5 hover:shadow-md transition-all duration-200"
+            className="group rounded-2xl border border-slate-100 bg-white p-5 hover:-translate-y-0.5 hover:shadow-md transition-all duration-200"
           >
-            <div className="flex flex-col items-start gap-4">
-              <div className="w-11 h-11 rounded-xl bg-amber-50 flex items-center justify-center border border-amber-100">
+            <div className="flex flex-col items-start gap-3">
+              <div className="w-10 h-10 rounded-xl bg-amber-50 flex items-center justify-center border border-amber-100">
                 <DocIcon className="w-5 h-5 text-amber-700" />
               </div>
               <div>
                 <h4 className="text-xs font-bold text-slate-800 uppercase tracking-wider">Leave History</h4>
-                <p className="text-[10px] text-slate-400 mt-1 font-bold">
-                  {pendingDays > 0 ? `${pendingDays} pending request${pendingDays > 1 ? 's' : ''}` : 'View all requests'}
+                <p className="text-[10px] text-slate-400 mt-0.5 font-bold">
+                  {pendingDays > 0 ? `${pendingDays} pending` : 'View all requests'}
                 </p>
               </div>
             </div>
@@ -211,10 +235,18 @@ export default function TeacherDashboard() {
           
           {/* Today's Schedule timeline */}
           <div className="lg:col-span-2 space-y-8">
-            <Card title="Today's Schedule Timeline">
+            <Card
+              title="Today's Schedule"
+              headerAction={
+                <Link to="/teacher/timetable" className="text-[11px] font-bold text-primary-600 hover:text-primary-700 transition-colors">Full timetable →</Link>
+              }
+            >
               {scheduleTimelineItems.length === 0 ? (
-                <div className="py-8 text-center text-xs font-semibold text-slate-450">
-                  No classes scheduled for today.
+                <div className="py-10 text-center">
+                  <p className="text-sm font-bold text-slate-600">No classes scheduled for today</p>
+                  <p className="text-xs text-slate-400 font-medium mt-1">
+                    {summary?.blocks_operations ? 'This is a non-working day.' : 'Your timetable has no periods for this Day Order.'}
+                  </p>
                 </div>
               ) : (
                 <Timeline items={scheduleTimelineItems} />
@@ -222,33 +254,47 @@ export default function TeacherDashboard() {
             </Card>
 
             {/* Leave balance panel */}
-            <Card title="Leave & substitution breakdown">
-              <div className="grid grid-cols-2 gap-4 pb-4 border-b border-slate-100">
-                <div className="p-4 rounded-xl bg-slate-50 border border-slate-100">
-                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Approved Leave Days</p>
-                  <p className="text-xl font-extrabold text-slate-800 mt-1">{approvedDays} {approvedDays === 1 ? 'Day' : 'Days'}</p>
+            <Card
+              title="Leave & Substitution Summary"
+              headerAction={
+                <Link to="/teacher/leaves" className="text-[11px] font-bold text-primary-600 hover:text-primary-700 transition-colors">View all →</Link>
+              }
+            >
+              <div className="grid grid-cols-2 gap-3 pb-4 border-b border-slate-100">
+                <div className="p-3.5 rounded-xl bg-emerald-50/60 border border-emerald-100">
+                  <p className="text-[10px] font-bold text-emerald-600 uppercase tracking-wider">Approved</p>
+                  <p className="text-2xl font-extrabold text-emerald-800 mt-1">{approvedDays}</p>
+                  <p className="text-[10px] text-emerald-600/70 font-medium">{approvedDays === 1 ? 'day off' : 'days off'}</p>
                 </div>
-                <div className="p-4 rounded-xl bg-slate-50 border border-slate-100">
-                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Pending Leave Days</p>
-                  <p className="text-xl font-extrabold text-slate-800 mt-1">{pendingDays} {pendingDays === 1 ? 'Day' : 'Days'}</p>
+                <div className="p-3.5 rounded-xl bg-amber-50/60 border border-amber-100">
+                  <p className="text-[10px] font-bold text-amber-600 uppercase tracking-wider">Pending</p>
+                  <p className="text-2xl font-extrabold text-amber-800 mt-1">{pendingDays}</p>
+                  <p className="text-[10px] text-amber-600/70 font-medium">{pendingDays === 1 ? 'request' : 'requests'}</p>
                 </div>
               </div>
-              
+
               {/* Credit details info */}
-              <div className="pt-4 flex items-center justify-between text-xs font-semibold text-slate-500">
+              <div className="pt-3.5 flex items-center justify-between text-xs font-semibold text-slate-500">
                 <span>Earned {transactions.filter(t => (Number(t.change) || 0) > 0).length} coverage credits</span>
-                <span>Taken {transactions.filter(t => (Number(t.change) || 0) < 0).length} leave deductions</span>
+                <span>Used {transactions.filter(t => (Number(t.change) || 0) < 0).length} leave deductions</span>
               </div>
             </Card>
           </div>
 
           {/* Credits Summary Card */}
           <div className="space-y-6">
-            <Card title="Credits Balance">
+            <Card
+              title="Credits Balance"
+              headerAction={
+                <Link to="/teacher/credits" className="text-[11px] font-bold text-primary-600 hover:text-primary-700 transition-colors">Details →</Link>
+              }
+            >
               <div className="flex items-center justify-between pb-5 border-b border-slate-100">
                 <div>
-                  <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-1">Running Credit Balance</p>
-                  <p className="text-4xl font-extrabold text-slate-900 tracking-tight">{balance}</p>
+                  <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-1">Running Balance</p>
+                  <p className={`text-4xl font-extrabold tracking-tight ${balance > 0 ? 'text-emerald-700' : balance < 0 ? 'text-rose-700' : 'text-slate-900'}`}>
+                    {balance > 0 ? `+${balance}` : balance}
+                  </p>
                 </div>
                 <CreditChip value={balance} />
               </div>

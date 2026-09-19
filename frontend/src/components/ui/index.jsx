@@ -104,16 +104,19 @@ export function CreditChip({ value }) {
 }
 
 // 6. Empty State
-export function EmptyState({ title = 'No data found', message = 'There are no items to display.', className = '' }) {
+export function EmptyState({ title = 'Nothing here yet', message, icon, action, className = '' }) {
   return (
-    <div className={`flex flex-col items-center justify-center py-12 px-4 text-center rounded-2xl border border-dashed border-slate-200 bg-white ${className}`}>
-      <div className="w-12 h-12 rounded-xl bg-slate-50 flex items-center justify-center mb-3">
-        <svg className="w-6 h-6 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 13h6m-3-3v6m-9 1V4a2 2 0 012-2h6l2 2h6a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
-        </svg>
+    <div className={`flex flex-col items-center justify-center py-14 px-6 text-center ${className}`}>
+      <div className="w-12 h-12 rounded-2xl bg-slate-50 border border-slate-100 flex items-center justify-center mb-4">
+        {icon || (
+          <svg className="w-6 h-6 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 13h6m-3-3v6m-9 1V4a2 2 0 012-2h6l2 2h6a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
+          </svg>
+        )}
       </div>
-      <h3 className="text-sm font-bold text-slate-800">{title}</h3>
-      <p className="text-xs text-slate-550 mt-1 max-w-sm font-medium">{message}</p>
+      <h3 className="text-sm font-bold text-slate-700 mb-1">{title}</h3>
+      {message && <p className="text-xs text-slate-400 font-medium max-w-[28ch] leading-relaxed">{message}</p>}
+      {action && <div className="mt-4">{action}</div>}
     </div>
   )
 }
@@ -130,12 +133,19 @@ export function ErrorAlert({ message }) {
       displayMessage = displayMessage.map(x => (typeof x === 'object' && x?.msg) ? x.msg : JSON.stringify(x)).join(', ')
     }
   }
+  // Humanize common API errors
+  const humanized = String(displayMessage)
+    .replace(/500 internal server error/i, 'Something went wrong on the server. Please try again.')
+    .replace(/404 not found/i, 'The requested resource was not found.')
+    .replace(/401 unauthorized/i, 'Your session has expired. Please log in again.')
+    .replace(/403 forbidden/i, "You don't have permission to perform this action.")
+    .replace(/network error/i, 'Network error. Please check your connection.')
   return (
-    <div className="rounded-xl bg-rose-50 border border-rose-200/60 p-4 text-sm text-rose-700 flex items-start gap-3">
+    <div className="rounded-xl bg-rose-50 border border-rose-200/60 p-4 text-sm text-rose-700 flex items-start gap-3" role="alert">
       <AlertTriangleIcon className="w-5 h-5 shrink-0 mt-0.5" />
       <div>
-        <h4 className="font-bold text-rose-800">Error Encountered</h4>
-        <p className="mt-1 text-xs font-semibold leading-relaxed">{String(displayMessage)}</p>
+        <h4 className="font-bold text-rose-800">Something went wrong</h4>
+        <p className="mt-1 text-xs font-medium leading-relaxed">{humanized}</p>
       </div>
     </div>
   )
@@ -676,7 +686,7 @@ export function Skeleton({ className = '' }) {
   )
 }
 
-export function SkeletonTable() {
+export function SkeletonRow() {
   return (
     <div className="space-y-4 w-full">
       <Skeleton className="h-10 w-full" />
@@ -802,3 +812,63 @@ export function PageHeader({ title, description, actions }) {
     </div>
   )
 }
+
+// 25. AlertBanner — contextual page-level alerts
+export function AlertBanner({ type = 'info', title, children, className = '', onDismiss }) {
+  const styles = {
+    info:    { wrap: 'bg-blue-50 border-blue-200/60 text-blue-800',  dot: 'bg-blue-500' },
+    success: { wrap: 'bg-emerald-50 border-emerald-200/60 text-emerald-800', dot: 'bg-emerald-500' },
+    warning: { wrap: 'bg-amber-50 border-amber-200/60 text-amber-800', dot: 'bg-amber-500' },
+    error:   { wrap: 'bg-rose-50 border-rose-200/60 text-rose-800',  dot: 'bg-rose-500' },
+  }
+  const s = styles[type] || styles.info
+  return (
+    <div className={`relative flex items-start gap-3 rounded-xl border px-4 py-3.5 text-sm font-medium ${s.wrap} ${className}`} role="alert">
+      <span className={`mt-1.5 w-2 h-2 rounded-full shrink-0 ${s.dot}`} />
+      <div className="flex-1 min-w-0">
+        {title && <p className="font-bold mb-0.5">{title}</p>}
+        <div className="text-xs leading-relaxed opacity-90">{children}</div>
+      </div>
+      {onDismiss && (
+        <button onClick={onDismiss} className="shrink-0 opacity-60 hover:opacity-100 transition-opacity" aria-label="Dismiss">
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      )}
+    </div>
+  )
+}
+
+// 26. SkeletonCard
+export function SkeletonCard({ lines = 3, className = '' }) {
+  return (
+    <div className={`rounded-2xl border border-slate-100 bg-white p-5 space-y-3 ${className}`}>
+      <div className="h-3 skeleton-shimmer rounded-lg w-2/3" />
+      {Array.from({ length: lines }).map((_, i) => (
+        <div key={i} className="h-2.5 skeleton-shimmer rounded-md" style={{ width: `${85 - i * 15}%` }} />
+      ))}
+    </div>
+  )
+}
+
+// 27. SkeletonTable
+export function SkeletonTable({ rows = 5, cols = 4, className = '' }) {
+  return (
+    <div className={`rounded-2xl border border-slate-100 bg-white overflow-hidden ${className}`}>
+      <div className="px-4 py-3 bg-slate-50 border-b border-slate-100 flex gap-4">
+        {Array.from({ length: cols }).map((_, i) => (
+          <div key={i} className="h-2.5 skeleton-shimmer rounded-md flex-1" />
+        ))}
+      </div>
+      {Array.from({ length: rows }).map((_, r) => (
+        <div key={r} className="px-4 py-3.5 border-b border-slate-50 flex gap-4 items-center">
+          {Array.from({ length: cols }).map((_, c) => (
+            <div key={c} className="h-2.5 skeleton-shimmer rounded-md flex-1" style={{ opacity: 1 - r * 0.12 }} />
+          ))}
+        </div>
+      ))}
+    </div>
+  )
+}
+

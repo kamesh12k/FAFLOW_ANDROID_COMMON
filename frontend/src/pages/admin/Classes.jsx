@@ -2,6 +2,9 @@ import { useEffect, useState, useMemo } from 'react'
 import { classesApi, departmentsApi, roomsApi } from '../../api/services'
 import { Spinner, ErrorAlert, Modal, EmptyState } from '../../components/ui'
 import { useAuth } from '../../context/AuthContext'
+import RollConfigurationModal from './RollConfigurationModal'
+import BulkStudentImportModal from './BulkStudentImportModal'
+import AcademicRolloverModal from './AcademicRolloverModal'
 
 export default function AdminClasses() {
   const { user, isSystemAdmin } = useAuth()
@@ -10,6 +13,12 @@ export default function AdminClasses() {
   const [departments, setDepartments] = useState([])
   const [rooms, setRooms] = useState([])
   const [loading, setLoading] = useState(true)
+
+  // Roll Configuration & Import & Rollover State
+  const [rollModalOpen, setRollModalOpen] = useState(false)
+  const [importModalOpen, setImportModalOpen] = useState(false)
+  const [rolloverModalOpen, setRolloverModalOpen] = useState(false)
+  const [selectedClassForRolls, setSelectedClassForRolls] = useState(null)
 
   // Single Add Class State
   const [modalOpen, setModalOpen] = useState(false)
@@ -315,6 +324,14 @@ export default function AdminClasses() {
           <p className="text-xs text-gray-500 mt-0.5">Manage academic class sections and base room allocations</p>
         </div>
         <div className="flex items-center gap-2 flex-wrap self-start sm:self-auto">
+          {(isSystemAdmin || user?.role === 'hod') && (
+            <button
+              onClick={() => setRolloverModalOpen(true)}
+              className="btn-secondary text-sm flex items-center gap-1.5 border-purple-200 text-purple-700 hover:bg-purple-50 font-bold"
+            >
+              <span>🔄</span> Academic Rollover
+            </button>
+          )}
           <button onClick={() => setBulkModalOpen(true)} className="btn-secondary text-sm flex items-center gap-1.5 border-indigo-200 text-indigo-700 hover:bg-indigo-50">
             <span>⚡</span> Bulk Add (Range)
           </button>
@@ -441,7 +458,21 @@ export default function AdminClasses() {
                     </td>
                     <td className="px-5 py-3 text-right">
                       {manageable ? (
-                        <div className="flex justify-end gap-3">
+                        <div className="flex justify-end gap-3 items-center">
+                          <button
+                            onClick={() => { setSelectedClassForRolls(c); setRollModalOpen(true); }}
+                            className="text-xs text-indigo-600 hover:text-indigo-800 font-bold hover:underline"
+                            title="Configure primary roll range, additional students and exclusions"
+                          >
+                            🎓 Rolls
+                          </button>
+                          <button
+                            onClick={() => { setSelectedClassForRolls(c); setImportModalOpen(true); }}
+                            className="text-xs text-emerald-600 hover:text-emerald-800 font-bold hover:underline"
+                            title="Bulk upload student names and roll numbers from CSV"
+                          >
+                            📥 Import
+                          </button>
                           <button onClick={() => handleOpenEditModal(c)} className="text-xs text-primary-600 hover:text-primary-800 font-semibold hover:underline">Edit</button>
                           <button onClick={() => handleOpenDelete(c)} className="text-xs text-red-500 hover:text-red-700 font-semibold hover:underline">Remove</button>
                         </div>
@@ -746,6 +777,34 @@ export default function AdminClasses() {
           </div>
         </div>
       </Modal>
+
+      {/* Roll Configuration Modal */}
+      {selectedClassForRolls && (
+        <RollConfigurationModal
+          isOpen={rollModalOpen}
+          onClose={() => { setRollModalOpen(false); setSelectedClassForRolls(null); }}
+          selectedClass={selectedClassForRolls}
+          onSaved={load}
+        />
+      )}
+
+      {/* Bulk Student Import Modal */}
+      {selectedClassForRolls && (
+        <BulkStudentImportModal
+          isOpen={importModalOpen}
+          onClose={() => { setImportModalOpen(false); setSelectedClassForRolls(null); }}
+          selectedClass={selectedClassForRolls}
+          onImported={load}
+        />
+      )}
+
+      {/* Academic Year Rollover Modal */}
+      <AcademicRolloverModal
+        isOpen={rolloverModalOpen}
+        onClose={() => setRolloverModalOpen(false)}
+        departmentId={!isSystemAdmin ? user?.department_id : null}
+        onCompleted={load}
+      />
     </div>
   )
 }

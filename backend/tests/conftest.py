@@ -48,6 +48,11 @@ from app.models.academic_calendar import AcademicYear, Semester
 from app.models.audit_log import AuditLog
 from app.models.system_setting import SystemSetting
 from app.models.substitution_preference import SubstitutionPreference
+from app.models.student import Student
+from app.models.student_attendance import (
+    AttendanceSession, StudentAttendance, AttendanceCorrectionAudit,
+    AttendanceType, SessionStatus, StudentAttendanceStatus
+)
 
 # ── In-memory SQLite engine ──
 SQLALCHEMY_TEST_URL = "sqlite://"
@@ -209,6 +214,22 @@ def test_system_admin(db_session) -> User:
 @pytest.fixture()
 def auth_headers_system_admin(test_system_admin) -> dict[str, str]:
     return make_auth_headers(test_system_admin)
+
+
+@pytest.fixture()
+def test_principal(db_session) -> User:
+    return _make_user(
+        db_session,
+        name="Principal Dr. Ramanathan",
+        email="principal@college.edu",
+        username="principal",
+        role=Role.principal,
+    )
+
+
+@pytest.fixture()
+def auth_headers_principal(test_principal) -> dict[str, str]:
+    return make_auth_headers(test_principal)
 
 
 

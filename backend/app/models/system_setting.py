@@ -58,4 +58,11 @@ DEFAULT_SYSTEM_SETTINGS = {
     "retention_leaves_days": "365",
     "retention_credits_days": "365",
     "retention_timetable_submissions_days": "180",
+    "intelligence_high_absenteeism_threshold": "25",
+    "intelligence_critical_absenteeism_threshold": "40",
+    "intelligence_attendance_drop_threshold": "15",
+    "intelligence_min_sample_sessions": "3",
+    "intelligence_student_shortage_threshold": "75",
+    "intelligence_late_submission_minutes": "15",
 }
+

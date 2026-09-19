@@ -17,8 +17,20 @@ from app.models.operational_staff import OperationalStaff, StaffCategory, Employ
 from app.models.staff_leave import StaffLeaveRequest, StaffCredit, StaffCreditTransaction, StaffLeaveType, StaffLeaveStatus
 from app.models.campus_geofence import CampusGeofence
 from app.models.staff_attendance import StaffAttendanceRecord
+from app.models.student import Student
+from app.models.student_enrollment import StudentEnrollment
+from app.models.class_roll_rule import ClassRollRule, ClassRollException, RollExceptionType
+from app.models.student_attendance import (
+    AttendanceSession, StudentAttendance, AttendanceCorrectionAudit,
+    AttendanceType, SessionStatus, StudentAttendanceStatus
+)
 # Governance Control Plane models (Milestone 16)
 from app.models.governance_control import (
     Institution, PlanDefinition, FeatureEntitlement, BiometricPolicy, SystemAuditLog,
     PlanTier, FeatureKey, FeatureStatus, InstitutionStatus, SystemAuditAction,
 )
+from app.models.academic_intelligence import (
+    AcademicIntelligenceEvent, IntelligenceEventType, IntelligenceEventState, IntelligenceSeverity
+)
+
+

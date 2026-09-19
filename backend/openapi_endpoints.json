@@ -1,11 +1,12 @@
 [
   {
-    "method": "POST",
     "path": "/auth/register",
+    "method": "POST",
     "summary": "Register",
     "tags": [
       "Auth"
     ],
+    "operationId": "register_auth_register_post",
     "parameters": [],
     "has_request_body": true,
     "responses": [
@@ -14,12 +15,13 @@
     ]
   },
   {
-    "method": "POST",
     "path": "/auth/login",
+    "method": "POST",
     "summary": "Login",
     "tags": [
       "Auth"
     ],
+    "operationId": "login_auth_login_post",
     "parameters": [],
     "has_request_body": true,
     "responses": [
@@ -28,12 +30,43 @@
     ]
   },
   {
-    "method": "GET",
+    "path": "/api/auth/register",
+    "method": "POST",
+    "summary": "Register",
+    "tags": [
+      "Auth"
+    ],
+    "operationId": "register_api_auth_register_post",
+    "parameters": [],
+    "has_request_body": true,
+    "responses": [
+      "201",
+      "422"
+    ]
+  },
+  {
+    "path": "/api/auth/login",
+    "method": "POST",
+    "summary": "Login",
+    "tags": [
+      "Auth"
+    ],
+    "operationId": "login_api_auth_login_post",
+    "parameters": [],
+    "has_request_body": true,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
     "path": "/admin/master-export",
+    "method": "GET",
     "summary": "Master Export",
     "tags": [
       "Admin"
     ],
+    "operationId": "master_export_admin_master_export_get",
     "parameters": [],
     "has_request_body": false,
     "responses": [
@@ -41,12 +74,13 @@
     ]
   },
   {
-    "method": "POST",
     "path": "/admin/first-login/setup",
+    "method": "POST",
     "summary": "First Login Setup",
     "tags": [
       "Admin"
     ],
+    "operationId": "first_login_setup_admin_first_login_setup_post",
     "parameters": [],
     "has_request_body": true,
     "responses": [
@@ -55,12 +89,13 @@
     ]
   },
   {
-    "method": "GET",
     "path": "/admin/secondary-admins",
+    "method": "GET",
     "summary": "List Secondary Admins",
     "tags": [
       "Admin"
     ],
+    "operationId": "list_secondary_admins_admin_secondary_admins_get",
     "parameters": [
       "X-Department-ID"
     ],
@@ -71,12 +106,13 @@
     ]
   },
   {
-    "method": "POST",
     "path": "/admin/secondary-admins",
+    "method": "POST",
     "summary": "Create Secondary Admin",
     "tags": [
       "Admin"
     ],
+    "operationId": "create_secondary_admin_admin_secondary_admins_post",
     "parameters": [
       "X-Department-ID"
     ],
@@ -87,12 +123,13 @@
     ]
   },
   {
-    "method": "PATCH",
     "path": "/admin/secondary-admins/{admin_id}/enable",
+    "method": "PATCH",
     "summary": "Enable Secondary Admin",
     "tags": [
       "Admin"
     ],
+    "operationId": "enable_secondary_admin_admin_secondary_admins__admin_id__enable_patch",
     "parameters": [
       "admin_id",
       "X-Department-ID"
@@ -104,12 +141,13 @@
     ]
   },
   {
-    "method": "PATCH",
     "path": "/admin/secondary-admins/{admin_id}/disable",
+    "method": "PATCH",
     "summary": "Disable Secondary Admin",
     "tags": [
       "Admin"
     ],
+    "operationId": "disable_secondary_admin_admin_secondary_admins__admin_id__disable_patch",
     "parameters": [
       "admin_id",
       "X-Department-ID"
@@ -121,12 +159,13 @@
     ]
   },
   {
-    "method": "GET",
     "path": "/admin/audit-logs",
+    "method": "GET",
     "summary": "Get Audit Logs",
     "tags": [
       "Admin"
     ],
+    "operationId": "get_audit_logs_admin_audit_logs_get",
     "parameters": [
       "X-Department-ID"
     ],
@@ -137,12 +176,13 @@
     ]
   },
   {
-    "method": "POST",
     "path": "/admin/factory-reset",
+    "method": "POST",
     "summary": "Factory Reset",
     "tags": [
       "Admin"
     ],
+    "operationId": "factory_reset_admin_factory_reset_post",
     "parameters": [],
     "has_request_body": true,
     "responses": [
@@ -151,12 +191,13 @@
     ]
   },
   {
-    "method": "POST",
     "path": "/admin/clear-credits-history",
+    "method": "POST",
     "summary": "Clear Credits History",
     "tags": [
       "Admin"
     ],
+    "operationId": "clear_credits_history_admin_clear_credits_history_post",
     "parameters": [
       "X-Department-ID"
     ],
@@ -167,12 +208,13 @@
     ]
   },
   {
-    "method": "POST",
     "path": "/admin/clear-leaves-history",
+    "method": "POST",
     "summary": "Clear Leaves History",
     "tags": [
       "Admin"
     ],
+    "operationId": "clear_leaves_history_admin_clear_leaves_history_post",
     "parameters": [
       "X-Department-ID"
     ],
@@ -183,12 +225,13 @@
     ]
   },
   {
-    "method": "POST",
     "path": "/admin/principal",
+    "method": "POST",
     "summary": "Create Principal",
     "tags": [
       "Admin"
     ],
+    "operationId": "create_principal_admin_principal_post",
     "parameters": [],
     "has_request_body": true,
     "responses": [
@@ -197,12 +240,13 @@
     ]
   },
   {
-    "method": "GET",
     "path": "/admin/global-users",
+    "method": "GET",
     "summary": "List Global Users",
     "tags": [
       "Admin"
     ],
+    "operationId": "list_global_users_admin_global_users_get",
     "parameters": [],
     "has_request_body": false,
     "responses": [
@@ -210,12 +254,13 @@
     ]
   },
   {
-    "method": "DELETE",
     "path": "/admin/global-users/{user_id}",
+    "method": "DELETE",
     "summary": "Delete Global User",
     "tags": [
       "Admin"
     ],
+    "operationId": "delete_global_user_admin_global_users__user_id__delete",
     "parameters": [
       "user_id"
     ],
@@ -226,12 +271,13 @@
     ]
   },
   {
-    "method": "GET",
     "path": "/admin/system-metrics",
+    "method": "GET",
     "summary": "Get System Metrics",
     "tags": [
       "Admin"
     ],
+    "operationId": "get_system_metrics_admin_system_metrics_get",
     "parameters": [],
     "has_request_body": false,
     "responses": [
@@ -239,12 +285,13 @@
     ]
   },
   {
-    "method": "POST",
     "path": "/admin/system-metrics/clear-traffic",
+    "method": "POST",
     "summary": "Clear Traffic Logs",
     "tags": [
       "Admin"
     ],
+    "operationId": "clear_traffic_logs_admin_system_metrics_clear_traffic_post",
     "parameters": [],
     "has_request_body": false,
     "responses": [
@@ -252,12 +299,13 @@
     ]
   },
   {
-    "method": "GET",
     "path": "/admin/managers",
+    "method": "GET",
     "summary": "List Managers",
     "tags": [
       "Admin"
     ],
+    "operationId": "list_managers_admin_managers_get",
     "parameters": [],
     "has_request_body": false,
     "responses": [
@@ -265,12 +313,13 @@
     ]
   },
   {
-    "method": "POST",
     "path": "/admin/managers",
+    "method": "POST",
     "summary": "Create Manager",
     "tags": [
       "Admin"
     ],
+    "operationId": "create_manager_admin_managers_post",
     "parameters": [],
     "has_request_body": true,
     "responses": [
@@ -279,12 +328,13 @@
     ]
   },
   {
-    "method": "GET",
     "path": "/admin/managers/{manager_id}",
+    "method": "GET",
     "summary": "Get Manager",
     "tags": [
       "Admin"
     ],
+    "operationId": "get_manager_admin_managers__manager_id__get",
     "parameters": [
       "manager_id"
     ],
@@ -295,12 +345,13 @@
     ]
   },
   {
-    "method": "PUT",
     "path": "/admin/managers/{manager_id}",
+    "method": "PUT",
     "summary": "Update Manager",
     "tags": [
       "Admin"
     ],
+    "operationId": "update_manager_admin_managers__manager_id__put",
     "parameters": [
       "manager_id"
     ],
@@ -311,12 +362,13 @@
     ]
   },
   {
-    "method": "DELETE",
     "path": "/admin/managers/{manager_id}",
+    "method": "DELETE",
     "summary": "Delete Manager",
     "tags": [
       "Admin"
     ],
+    "operationId": "delete_manager_admin_managers__manager_id__delete",
     "parameters": [
       "manager_id"
     ],
@@ -327,12 +379,332 @@
     ]
   },
   {
+    "path": "/api/admin/master-export",
     "method": "GET",
+    "summary": "Master Export",
+    "tags": [
+      "Admin"
+    ],
+    "operationId": "master_export_api_admin_master_export_get",
+    "parameters": [],
+    "has_request_body": false,
+    "responses": [
+      "200"
+    ]
+  },
+  {
+    "path": "/api/admin/first-login/setup",
+    "method": "POST",
+    "summary": "First Login Setup",
+    "tags": [
+      "Admin"
+    ],
+    "operationId": "first_login_setup_api_admin_first_login_setup_post",
+    "parameters": [],
+    "has_request_body": true,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "path": "/api/admin/secondary-admins",
+    "method": "GET",
+    "summary": "List Secondary Admins",
+    "tags": [
+      "Admin"
+    ],
+    "operationId": "list_secondary_admins_api_admin_secondary_admins_get",
+    "parameters": [
+      "X-Department-ID"
+    ],
+    "has_request_body": false,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "path": "/api/admin/secondary-admins",
+    "method": "POST",
+    "summary": "Create Secondary Admin",
+    "tags": [
+      "Admin"
+    ],
+    "operationId": "create_secondary_admin_api_admin_secondary_admins_post",
+    "parameters": [
+      "X-Department-ID"
+    ],
+    "has_request_body": true,
+    "responses": [
+      "201",
+      "422"
+    ]
+  },
+  {
+    "path": "/api/admin/secondary-admins/{admin_id}/enable",
+    "method": "PATCH",
+    "summary": "Enable Secondary Admin",
+    "tags": [
+      "Admin"
+    ],
+    "operationId": "enable_secondary_admin_api_admin_secondary_admins__admin_id__enable_patch",
+    "parameters": [
+      "admin_id",
+      "X-Department-ID"
+    ],
+    "has_request_body": false,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "path": "/api/admin/secondary-admins/{admin_id}/disable",
+    "method": "PATCH",
+    "summary": "Disable Secondary Admin",
+    "tags": [
+      "Admin"
+    ],
+    "operationId": "disable_secondary_admin_api_admin_secondary_admins__admin_id__disable_patch",
+    "parameters": [
+      "admin_id",
+      "X-Department-ID"
+    ],
+    "has_request_body": false,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "path": "/api/admin/audit-logs",
+    "method": "GET",
+    "summary": "Get Audit Logs",
+    "tags": [
+      "Admin"
+    ],
+    "operationId": "get_audit_logs_api_admin_audit_logs_get",
+    "parameters": [
+      "X-Department-ID"
+    ],
+    "has_request_body": false,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "path": "/api/admin/factory-reset",
+    "method": "POST",
+    "summary": "Factory Reset",
+    "tags": [
+      "Admin"
+    ],
+    "operationId": "factory_reset_api_admin_factory_reset_post",
+    "parameters": [],
+    "has_request_body": true,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "path": "/api/admin/clear-credits-history",
+    "method": "POST",
+    "summary": "Clear Credits History",
+    "tags": [
+      "Admin"
+    ],
+    "operationId": "clear_credits_history_api_admin_clear_credits_history_post",
+    "parameters": [
+      "X-Department-ID"
+    ],
+    "has_request_body": false,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "path": "/api/admin/clear-leaves-history",
+    "method": "POST",
+    "summary": "Clear Leaves History",
+    "tags": [
+      "Admin"
+    ],
+    "operationId": "clear_leaves_history_api_admin_clear_leaves_history_post",
+    "parameters": [
+      "X-Department-ID"
+    ],
+    "has_request_body": false,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "path": "/api/admin/principal",
+    "method": "POST",
+    "summary": "Create Principal",
+    "tags": [
+      "Admin"
+    ],
+    "operationId": "create_principal_api_admin_principal_post",
+    "parameters": [],
+    "has_request_body": true,
+    "responses": [
+      "201",
+      "422"
+    ]
+  },
+  {
+    "path": "/api/admin/global-users",
+    "method": "GET",
+    "summary": "List Global Users",
+    "tags": [
+      "Admin"
+    ],
+    "operationId": "list_global_users_api_admin_global_users_get",
+    "parameters": [],
+    "has_request_body": false,
+    "responses": [
+      "200"
+    ]
+  },
+  {
+    "path": "/api/admin/global-users/{user_id}",
+    "method": "DELETE",
+    "summary": "Delete Global User",
+    "tags": [
+      "Admin"
+    ],
+    "operationId": "delete_global_user_api_admin_global_users__user_id__delete",
+    "parameters": [
+      "user_id"
+    ],
+    "has_request_body": false,
+    "responses": [
+      "204",
+      "422"
+    ]
+  },
+  {
+    "path": "/api/admin/system-metrics",
+    "method": "GET",
+    "summary": "Get System Metrics",
+    "tags": [
+      "Admin"
+    ],
+    "operationId": "get_system_metrics_api_admin_system_metrics_get",
+    "parameters": [],
+    "has_request_body": false,
+    "responses": [
+      "200"
+    ]
+  },
+  {
+    "path": "/api/admin/system-metrics/clear-traffic",
+    "method": "POST",
+    "summary": "Clear Traffic Logs",
+    "tags": [
+      "Admin"
+    ],
+    "operationId": "clear_traffic_logs_api_admin_system_metrics_clear_traffic_post",
+    "parameters": [],
+    "has_request_body": false,
+    "responses": [
+      "200"
+    ]
+  },
+  {
+    "path": "/api/admin/managers",
+    "method": "GET",
+    "summary": "List Managers",
+    "tags": [
+      "Admin"
+    ],
+    "operationId": "list_managers_api_admin_managers_get",
+    "parameters": [],
+    "has_request_body": false,
+    "responses": [
+      "200"
+    ]
+  },
+  {
+    "path": "/api/admin/managers",
+    "method": "POST",
+    "summary": "Create Manager",
+    "tags": [
+      "Admin"
+    ],
+    "operationId": "create_manager_api_admin_managers_post",
+    "parameters": [],
+    "has_request_body": true,
+    "responses": [
+      "201",
+      "422"
+    ]
+  },
+  {
+    "path": "/api/admin/managers/{manager_id}",
+    "method": "GET",
+    "summary": "Get Manager",
+    "tags": [
+      "Admin"
+    ],
+    "operationId": "get_manager_api_admin_managers__manager_id__get",
+    "parameters": [
+      "manager_id"
+    ],
+    "has_request_body": false,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "path": "/api/admin/managers/{manager_id}",
+    "method": "PUT",
+    "summary": "Update Manager",
+    "tags": [
+      "Admin"
+    ],
+    "operationId": "update_manager_api_admin_managers__manager_id__put",
+    "parameters": [
+      "manager_id"
+    ],
+    "has_request_body": true,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "path": "/api/admin/managers/{manager_id}",
+    "method": "DELETE",
+    "summary": "Delete Manager",
+    "tags": [
+      "Admin"
+    ],
+    "operationId": "delete_manager_api_admin_managers__manager_id__delete",
+    "parameters": [
+      "manager_id"
+    ],
+    "has_request_body": false,
+    "responses": [
+      "204",
+      "422"
+    ]
+  },
+  {
     "path": "/teachers/",
+    "method": "GET",
     "summary": "List Teachers",
     "tags": [
       "Teachers"
     ],
+    "operationId": "list_teachers_teachers__get",
     "parameters": [
       "include_cross_department",
       "X-Department-ID"
@@ -344,12 +716,13 @@
     ]
   },
   {
-    "method": "POST",
     "path": "/teachers/",
+    "method": "POST",
     "summary": "Create Teacher",
     "tags": [
       "Teachers"
     ],
+    "operationId": "create_teacher_teachers__post",
     "parameters": [
       "X-Department-ID"
     ],
@@ -360,12 +733,13 @@
     ]
   },
   {
-    "method": "POST",
     "path": "/teachers/bulk",
+    "method": "POST",
     "summary": "Bulk Create Teachers",
     "tags": [
       "Teachers"
     ],
+    "operationId": "bulk_create_teachers_teachers_bulk_post",
     "parameters": [
       "X-Department-ID"
     ],
@@ -376,12 +750,13 @@
     ]
   },
   {
-    "method": "GET",
     "path": "/teachers/me",
+    "method": "GET",
     "summary": "Get Me",
     "tags": [
       "Teachers"
     ],
+    "operationId": "get_me_teachers_me_get",
     "parameters": [],
     "has_request_body": false,
     "responses": [
@@ -389,12 +764,13 @@
     ]
   },
   {
-    "method": "GET",
     "path": "/teachers/{teacher_id}/credits",
+    "method": "GET",
     "summary": "Get Teacher Credits",
     "tags": [
       "Teachers"
     ],
+    "operationId": "get_teacher_credits_teachers__teacher_id__credits_get",
     "parameters": [
       "teacher_id",
       "X-Department-ID"
@@ -406,12 +782,13 @@
     ]
   },
   {
-    "method": "PUT",
     "path": "/teachers/{teacher_id}",
+    "method": "PUT",
     "summary": "Update Teacher",
     "tags": [
       "Teachers"
     ],
+    "operationId": "update_teacher_teachers__teacher_id__put",
     "parameters": [
       "teacher_id",
       "X-Department-ID"
@@ -423,12 +800,13 @@
     ]
   },
   {
-    "method": "DELETE",
     "path": "/teachers/{teacher_id}",
+    "method": "DELETE",
     "summary": "Delete Teacher",
     "tags": [
       "Teachers"
     ],
+    "operationId": "delete_teacher_teachers__teacher_id__delete",
     "parameters": [
       "teacher_id",
       "X-Department-ID"
@@ -440,12 +818,13 @@
     ]
   },
   {
-    "method": "POST",
     "path": "/teachers/me/biometrics/enroll",
+    "method": "POST",
     "summary": "Enroll My Biometrics",
     "tags": [
       "Teachers"
     ],
+    "operationId": "enroll_my_biometrics_teachers_me_biometrics_enroll_post",
     "parameters": [],
     "has_request_body": false,
     "responses": [
@@ -453,12 +832,13 @@
     ]
   },
   {
-    "method": "POST",
     "path": "/teachers/{teacher_id}/biometrics/reset",
+    "method": "POST",
     "summary": "Reset Teacher Biometrics",
     "tags": [
       "Teachers"
     ],
+    "operationId": "reset_teacher_biometrics_teachers__teacher_id__biometrics_reset_post",
     "parameters": [
       "teacher_id"
     ],
@@ -469,12 +849,164 @@
     ]
   },
   {
+    "path": "/api/teachers/",
+    "method": "GET",
+    "summary": "List Teachers",
+    "tags": [
+      "Teachers"
+    ],
+    "operationId": "list_teachers_api_teachers__get",
+    "parameters": [
+      "include_cross_department",
+      "X-Department-ID"
+    ],
+    "has_request_body": false,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "path": "/api/teachers/",
     "method": "POST",
+    "summary": "Create Teacher",
+    "tags": [
+      "Teachers"
+    ],
+    "operationId": "create_teacher_api_teachers__post",
+    "parameters": [
+      "X-Department-ID"
+    ],
+    "has_request_body": true,
+    "responses": [
+      "201",
+      "422"
+    ]
+  },
+  {
+    "path": "/api/teachers/bulk",
+    "method": "POST",
+    "summary": "Bulk Create Teachers",
+    "tags": [
+      "Teachers"
+    ],
+    "operationId": "bulk_create_teachers_api_teachers_bulk_post",
+    "parameters": [
+      "X-Department-ID"
+    ],
+    "has_request_body": true,
+    "responses": [
+      "201",
+      "422"
+    ]
+  },
+  {
+    "path": "/api/teachers/me",
+    "method": "GET",
+    "summary": "Get Me",
+    "tags": [
+      "Teachers"
+    ],
+    "operationId": "get_me_api_teachers_me_get",
+    "parameters": [],
+    "has_request_body": false,
+    "responses": [
+      "200"
+    ]
+  },
+  {
+    "path": "/api/teachers/{teacher_id}/credits",
+    "method": "GET",
+    "summary": "Get Teacher Credits",
+    "tags": [
+      "Teachers"
+    ],
+    "operationId": "get_teacher_credits_api_teachers__teacher_id__credits_get",
+    "parameters": [
+      "teacher_id",
+      "X-Department-ID"
+    ],
+    "has_request_body": false,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "path": "/api/teachers/{teacher_id}",
+    "method": "PUT",
+    "summary": "Update Teacher",
+    "tags": [
+      "Teachers"
+    ],
+    "operationId": "update_teacher_api_teachers__teacher_id__put",
+    "parameters": [
+      "teacher_id",
+      "X-Department-ID"
+    ],
+    "has_request_body": true,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "path": "/api/teachers/{teacher_id}",
+    "method": "DELETE",
+    "summary": "Delete Teacher",
+    "tags": [
+      "Teachers"
+    ],
+    "operationId": "delete_teacher_api_teachers__teacher_id__delete",
+    "parameters": [
+      "teacher_id",
+      "X-Department-ID"
+    ],
+    "has_request_body": false,
+    "responses": [
+      "204",
+      "422"
+    ]
+  },
+  {
+    "path": "/api/teachers/me/biometrics/enroll",
+    "method": "POST",
+    "summary": "Enroll My Biometrics",
+    "tags": [
+      "Teachers"
+    ],
+    "operationId": "enroll_my_biometrics_api_teachers_me_biometrics_enroll_post",
+    "parameters": [],
+    "has_request_body": false,
+    "responses": [
+      "200"
+    ]
+  },
+  {
+    "path": "/api/teachers/{teacher_id}/biometrics/reset",
+    "method": "POST",
+    "summary": "Reset Teacher Biometrics",
+    "tags": [
+      "Teachers"
+    ],
+    "operationId": "reset_teacher_biometrics_api_teachers__teacher_id__biometrics_reset_post",
+    "parameters": [
+      "teacher_id"
+    ],
+    "has_request_body": false,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
     "path": "/timetable/submissions",
+    "method": "POST",
     "summary": "Submit My Timetable Entry",
     "tags": [
       "Timetable"
     ],
+    "operationId": "submit_my_timetable_entry_timetable_submissions_post",
     "parameters": [],
     "has_request_body": true,
     "responses": [
@@ -483,12 +1015,13 @@
     ]
   },
   {
-    "method": "GET",
     "path": "/timetable/submissions/my",
+    "method": "GET",
     "summary": "My Timetable Submissions",
     "tags": [
       "Timetable"
     ],
+    "operationId": "my_timetable_submissions_timetable_submissions_my_get",
     "parameters": [],
     "has_request_body": false,
     "responses": [
@@ -496,12 +1029,13 @@
     ]
   },
   {
-    "method": "GET",
     "path": "/timetable/submissions/pending",
+    "method": "GET",
     "summary": "Pending Timetable Submissions",
     "tags": [
       "Timetable"
     ],
+    "operationId": "pending_timetable_submissions_timetable_submissions_pending_get",
     "parameters": [
       "X-Department-ID"
     ],
@@ -512,12 +1046,13 @@
     ]
   },
   {
-    "method": "POST",
     "path": "/timetable/submissions/{submission_id}/review",
+    "method": "POST",
     "summary": "Review Timetable Submission",
     "tags": [
       "Timetable"
     ],
+    "operationId": "review_timetable_submission_timetable_submissions__submission_id__review_post",
     "parameters": [
       "submission_id"
     ],
@@ -528,12 +1063,13 @@
     ]
   },
   {
-    "method": "POST",
     "path": "/timetable/submissions/bulk-review",
+    "method": "POST",
     "summary": "Bulk Review Timetable Submissions",
     "tags": [
       "Timetable"
     ],
+    "operationId": "bulk_review_timetable_submissions_timetable_submissions_bulk_review_post",
     "parameters": [],
     "has_request_body": true,
     "responses": [
@@ -542,12 +1078,13 @@
     ]
   },
   {
-    "method": "DELETE",
     "path": "/timetable/submissions/{submission_id}",
+    "method": "DELETE",
     "summary": "Cancel Timetable Submission",
     "tags": [
       "Timetable"
     ],
+    "operationId": "cancel_timetable_submission_timetable_submissions__submission_id__delete",
     "parameters": [
       "submission_id"
     ],
@@ -558,12 +1095,13 @@
     ]
   },
   {
-    "method": "POST",
     "path": "/timetable/slot",
+    "method": "POST",
     "summary": "Create Slot",
     "tags": [
       "Timetable"
     ],
+    "operationId": "create_slot_timetable_slot_post",
     "parameters": [
       "X-Department-ID"
     ],
@@ -574,12 +1112,13 @@
     ]
   },
   {
-    "method": "POST",
     "path": "/timetable/",
+    "method": "POST",
     "summary": "Upload Timetable",
     "tags": [
       "Timetable"
     ],
+    "operationId": "upload_timetable_timetable__post",
     "parameters": [
       "X-Department-ID"
     ],
@@ -590,12 +1129,13 @@
     ]
   },
   {
-    "method": "GET",
     "path": "/timetable/",
+    "method": "GET",
     "summary": "Get Timetable",
     "tags": [
       "Timetable"
     ],
+    "operationId": "get_timetable_timetable__get",
     "parameters": [
       "class_id",
       "teacher_id",
@@ -610,12 +1150,13 @@
     ]
   },
   {
-    "method": "GET",
     "path": "/timetable/teacher/{teacher_id}",
+    "method": "GET",
     "summary": "Get Timetable By Teacher",
     "tags": [
       "Timetable"
     ],
+    "operationId": "get_timetable_by_teacher_timetable_teacher__teacher_id__get",
     "parameters": [
       "teacher_id",
       "X-Department-ID"
@@ -627,12 +1168,13 @@
     ]
   },
   {
-    "method": "DELETE",
     "path": "/timetable/teacher/{teacher_id}",
+    "method": "DELETE",
     "summary": "Delete Teacher Timetable",
     "tags": [
       "Timetable"
     ],
+    "operationId": "delete_teacher_timetable_timetable_teacher__teacher_id__delete",
     "parameters": [
       "teacher_id",
       "X-Department-ID"
@@ -644,12 +1186,13 @@
     ]
   },
   {
-    "method": "GET",
     "path": "/timetable/class/{class_id}",
+    "method": "GET",
     "summary": "Get Timetable By Class",
     "tags": [
       "Timetable"
     ],
+    "operationId": "get_timetable_by_class_timetable_class__class_id__get",
     "parameters": [
       "class_id",
       "X-Department-ID"
@@ -661,12 +1204,13 @@
     ]
   },
   {
-    "method": "DELETE",
     "path": "/timetable/{slot_id}",
+    "method": "DELETE",
     "summary": "Delete Slot",
     "tags": [
       "Timetable"
     ],
+    "operationId": "delete_slot_timetable__slot_id__delete",
     "parameters": [
       "slot_id",
       "X-Department-ID"
@@ -678,12 +1222,13 @@
     ]
   },
   {
-    "method": "POST",
     "path": "/timetable/reset",
+    "method": "POST",
     "summary": "Reset Timetable",
     "tags": [
       "Timetable"
     ],
+    "operationId": "reset_timetable_timetable_reset_post",
     "parameters": [
       "X-Department-ID"
     ],
@@ -694,12 +1239,252 @@
     ]
   },
   {
+    "path": "/api/timetable/submissions",
     "method": "POST",
+    "summary": "Submit My Timetable Entry",
+    "tags": [
+      "Timetable"
+    ],
+    "operationId": "submit_my_timetable_entry_api_timetable_submissions_post",
+    "parameters": [],
+    "has_request_body": true,
+    "responses": [
+      "201",
+      "422"
+    ]
+  },
+  {
+    "path": "/api/timetable/submissions/my",
+    "method": "GET",
+    "summary": "My Timetable Submissions",
+    "tags": [
+      "Timetable"
+    ],
+    "operationId": "my_timetable_submissions_api_timetable_submissions_my_get",
+    "parameters": [],
+    "has_request_body": false,
+    "responses": [
+      "200"
+    ]
+  },
+  {
+    "path": "/api/timetable/submissions/pending",
+    "method": "GET",
+    "summary": "Pending Timetable Submissions",
+    "tags": [
+      "Timetable"
+    ],
+    "operationId": "pending_timetable_submissions_api_timetable_submissions_pending_get",
+    "parameters": [
+      "X-Department-ID"
+    ],
+    "has_request_body": false,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "path": "/api/timetable/submissions/{submission_id}/review",
+    "method": "POST",
+    "summary": "Review Timetable Submission",
+    "tags": [
+      "Timetable"
+    ],
+    "operationId": "review_timetable_submission_api_timetable_submissions__submission_id__review_post",
+    "parameters": [
+      "submission_id"
+    ],
+    "has_request_body": true,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "path": "/api/timetable/submissions/bulk-review",
+    "method": "POST",
+    "summary": "Bulk Review Timetable Submissions",
+    "tags": [
+      "Timetable"
+    ],
+    "operationId": "bulk_review_timetable_submissions_api_timetable_submissions_bulk_review_post",
+    "parameters": [],
+    "has_request_body": true,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "path": "/api/timetable/submissions/{submission_id}",
+    "method": "DELETE",
+    "summary": "Cancel Timetable Submission",
+    "tags": [
+      "Timetable"
+    ],
+    "operationId": "cancel_timetable_submission_api_timetable_submissions__submission_id__delete",
+    "parameters": [
+      "submission_id"
+    ],
+    "has_request_body": false,
+    "responses": [
+      "204",
+      "422"
+    ]
+  },
+  {
+    "path": "/api/timetable/slot",
+    "method": "POST",
+    "summary": "Create Slot",
+    "tags": [
+      "Timetable"
+    ],
+    "operationId": "create_slot_api_timetable_slot_post",
+    "parameters": [
+      "X-Department-ID"
+    ],
+    "has_request_body": true,
+    "responses": [
+      "201",
+      "422"
+    ]
+  },
+  {
+    "path": "/api/timetable/",
+    "method": "POST",
+    "summary": "Upload Timetable",
+    "tags": [
+      "Timetable"
+    ],
+    "operationId": "upload_timetable_api_timetable__post",
+    "parameters": [
+      "X-Department-ID"
+    ],
+    "has_request_body": true,
+    "responses": [
+      "201",
+      "422"
+    ]
+  },
+  {
+    "path": "/api/timetable/",
+    "method": "GET",
+    "summary": "Get Timetable",
+    "tags": [
+      "Timetable"
+    ],
+    "operationId": "get_timetable_api_timetable__get",
+    "parameters": [
+      "class_id",
+      "teacher_id",
+      "department_id",
+      "day_order",
+      "X-Department-ID"
+    ],
+    "has_request_body": false,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "path": "/api/timetable/teacher/{teacher_id}",
+    "method": "GET",
+    "summary": "Get Timetable By Teacher",
+    "tags": [
+      "Timetable"
+    ],
+    "operationId": "get_timetable_by_teacher_api_timetable_teacher__teacher_id__get",
+    "parameters": [
+      "teacher_id",
+      "X-Department-ID"
+    ],
+    "has_request_body": false,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "path": "/api/timetable/teacher/{teacher_id}",
+    "method": "DELETE",
+    "summary": "Delete Teacher Timetable",
+    "tags": [
+      "Timetable"
+    ],
+    "operationId": "delete_teacher_timetable_api_timetable_teacher__teacher_id__delete",
+    "parameters": [
+      "teacher_id",
+      "X-Department-ID"
+    ],
+    "has_request_body": false,
+    "responses": [
+      "204",
+      "422"
+    ]
+  },
+  {
+    "path": "/api/timetable/class/{class_id}",
+    "method": "GET",
+    "summary": "Get Timetable By Class",
+    "tags": [
+      "Timetable"
+    ],
+    "operationId": "get_timetable_by_class_api_timetable_class__class_id__get",
+    "parameters": [
+      "class_id",
+      "X-Department-ID"
+    ],
+    "has_request_body": false,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "path": "/api/timetable/{slot_id}",
+    "method": "DELETE",
+    "summary": "Delete Slot",
+    "tags": [
+      "Timetable"
+    ],
+    "operationId": "delete_slot_api_timetable__slot_id__delete",
+    "parameters": [
+      "slot_id",
+      "X-Department-ID"
+    ],
+    "has_request_body": false,
+    "responses": [
+      "204",
+      "422"
+    ]
+  },
+  {
+    "path": "/api/timetable/reset",
+    "method": "POST",
+    "summary": "Reset Timetable",
+    "tags": [
+      "Timetable"
+    ],
+    "operationId": "reset_timetable_api_timetable_reset_post",
+    "parameters": [
+      "X-Department-ID"
+    ],
+    "has_request_body": true,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
     "path": "/leaves/",
+    "method": "POST",
     "summary": "Apply Leave",
     "tags": [
       "Leaves"
     ],
+    "operationId": "apply_leave_leaves__post",
     "parameters": [],
     "has_request_body": true,
     "responses": [
@@ -708,12 +1493,13 @@
     ]
   },
   {
-    "method": "GET",
     "path": "/leaves/",
+    "method": "GET",
     "summary": "List All Leaves",
     "tags": [
       "Leaves"
     ],
+    "operationId": "list_all_leaves_leaves__get",
     "parameters": [
       "X-Department-ID"
     ],
@@ -724,12 +1510,13 @@
     ]
   },
   {
-    "method": "POST",
     "path": "/leaves/batch",
+    "method": "POST",
     "summary": "Apply Leave Batch",
     "tags": [
       "Leaves"
     ],
+    "operationId": "apply_leave_batch_leaves_batch_post",
     "parameters": [],
     "has_request_body": true,
     "responses": [
@@ -738,12 +1525,13 @@
     ]
   },
   {
-    "method": "GET",
     "path": "/leaves/my",
+    "method": "GET",
     "summary": "My Leaves",
     "tags": [
       "Leaves"
     ],
+    "operationId": "my_leaves_leaves_my_get",
     "parameters": [],
     "has_request_body": false,
     "responses": [
@@ -751,12 +1539,13 @@
     ]
   },
   {
-    "method": "PATCH",
     "path": "/leaves/{leave_id}/approve",
+    "method": "PATCH",
     "summary": "Approve Leave",
     "tags": [
       "Leaves"
     ],
+    "operationId": "approve_leave_leaves__leave_id__approve_patch",
     "parameters": [
       "leave_id",
       "X-Department-ID"
@@ -768,12 +1557,13 @@
     ]
   },
   {
-    "method": "PATCH",
     "path": "/leaves/{leave_id}/reject",
+    "method": "PATCH",
     "summary": "Reject Leave",
     "tags": [
       "Leaves"
     ],
+    "operationId": "reject_leave_leaves__leave_id__reject_patch",
     "parameters": [
       "leave_id",
       "X-Department-ID"
@@ -785,12 +1575,13 @@
     ]
   },
   {
-    "method": "PATCH",
     "path": "/leaves/{leave_id}/status",
+    "method": "PATCH",
     "summary": "Update Leave Status",
     "tags": [
       "Leaves"
     ],
+    "operationId": "update_leave_status_leaves__leave_id__status_patch",
     "parameters": [
       "leave_id",
       "X-Department-ID"
@@ -802,12 +1593,13 @@
     ]
   },
   {
-    "method": "POST",
     "path": "/leaves/bulk-approve",
+    "method": "POST",
     "summary": "Bulk Approve",
     "tags": [
       "Leaves"
     ],
+    "operationId": "bulk_approve_leaves_bulk_approve_post",
     "parameters": [
       "X-Department-ID"
     ],
@@ -818,12 +1610,13 @@
     ]
   },
   {
-    "method": "POST",
     "path": "/leaves/bulk-reject",
+    "method": "POST",
     "summary": "Bulk Reject",
     "tags": [
       "Leaves"
     ],
+    "operationId": "bulk_reject_leaves_bulk_reject_post",
     "parameters": [
       "X-Department-ID"
     ],
@@ -834,12 +1627,13 @@
     ]
   },
   {
-    "method": "POST",
     "path": "/leaves/{leave_id}/assign",
+    "method": "POST",
     "summary": "Assign Substitute",
     "tags": [
       "Leaves"
     ],
+    "operationId": "assign_substitute_leaves__leave_id__assign_post",
     "parameters": [
       "leave_id",
       "include_cross_department",
@@ -852,32 +1646,13 @@
     ]
   },
   {
-    "method": "GET",
     "path": "/leaves/{leave_id}/candidates",
-    "summary": "Get Recommendations",
-    "tags": [
-      "Leaves"
-    ],
-    "parameters": [
-      "leave_id",
-      "limit",
-      "include_cross_department",
-      "only_handles_class",
-      "X-Department-ID"
-    ],
-    "has_request_body": false,
-    "responses": [
-      "200",
-      "422"
-    ]
-  },
-  {
     "method": "GET",
-    "path": "/leaves/{leave_id}/recommendations",
     "summary": "Get Recommendations",
     "tags": [
       "Leaves"
     ],
+    "operationId": "get_recommendations_leaves__leave_id__candidates_get",
     "parameters": [
       "leave_id",
       "limit",
@@ -892,12 +1667,34 @@
     ]
   },
   {
-    "method": "POST",
+    "path": "/leaves/{leave_id}/recommendations",
+    "method": "GET",
+    "summary": "Get Recommendations",
+    "tags": [
+      "Leaves"
+    ],
+    "operationId": "get_recommendations_leaves__leave_id__recommendations_get",
+    "parameters": [
+      "leave_id",
+      "limit",
+      "include_cross_department",
+      "only_handles_class",
+      "X-Department-ID"
+    ],
+    "has_request_body": false,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
     "path": "/leaves/{leave_id}/assign-recommended",
+    "method": "POST",
     "summary": "Assign Recommended Substitute",
     "tags": [
       "Leaves"
     ],
+    "operationId": "assign_recommended_substitute_leaves__leave_id__assign_recommended_post",
     "parameters": [
       "leave_id",
       "include_cross_department",
@@ -910,12 +1707,13 @@
     ]
   },
   {
-    "method": "POST",
     "path": "/leaves/{leave_id}/override",
+    "method": "POST",
     "summary": "Override Substitute",
     "tags": [
       "Leaves"
     ],
+    "operationId": "override_substitute_leaves__leave_id__override_post",
     "parameters": [
       "leave_id",
       "include_cross_department",
@@ -928,12 +1726,13 @@
     ]
   },
   {
-    "method": "POST",
     "path": "/leaves/{leave_id}/undo-assignment",
+    "method": "POST",
     "summary": "Undo Assignment",
     "tags": [
       "Leaves"
     ],
+    "operationId": "undo_assignment_leaves__leave_id__undo_assignment_post",
     "parameters": [
       "leave_id",
       "X-Department-ID"
@@ -945,12 +1744,13 @@
     ]
   },
   {
-    "method": "POST",
     "path": "/leaves/{leave_id}/lock",
+    "method": "POST",
     "summary": "Set Assignment Lock",
     "tags": [
       "Leaves"
     ],
+    "operationId": "set_assignment_lock_leaves__leave_id__lock_post",
     "parameters": [
       "leave_id",
       "X-Department-ID"
@@ -962,12 +1762,13 @@
     ]
   },
   {
-    "method": "GET",
     "path": "/leaves/{leave_id}/free-teachers",
+    "method": "GET",
     "summary": "Free Teachers",
     "tags": [
       "Leaves"
     ],
+    "operationId": "free_teachers_leaves__leave_id__free_teachers_get",
     "parameters": [
       "leave_id",
       "include_cross_department",
@@ -981,12 +1782,13 @@
     ]
   },
   {
-    "method": "DELETE",
     "path": "/leaves/{leave_id}",
+    "method": "DELETE",
     "summary": "Cancel Leave",
     "tags": [
       "Leaves"
     ],
+    "operationId": "cancel_leave_leaves__leave_id__delete",
     "parameters": [
       "leave_id"
     ],
@@ -997,12 +1799,13 @@
     ]
   },
   {
-    "method": "POST",
     "path": "/leaves/{leave_id}/cancel",
+    "method": "POST",
     "summary": "Cancel Leave",
     "tags": [
       "Leaves"
     ],
+    "operationId": "cancel_leave_leaves__leave_id__cancel_post",
     "parameters": [
       "leave_id"
     ],
@@ -1013,12 +1816,13 @@
     ]
   },
   {
-    "method": "POST",
     "path": "/leaves/{leave_id}/admin-cancel",
+    "method": "POST",
     "summary": "Admin Cancel Leave",
     "tags": [
       "Leaves"
     ],
+    "operationId": "admin_cancel_leave_leaves__leave_id__admin_cancel_post",
     "parameters": [
       "leave_id",
       "X-Department-ID"
@@ -1030,12 +1834,13 @@
     ]
   },
   {
-    "method": "GET",
     "path": "/leaves/{leave_id}/cancel-impact",
+    "method": "GET",
     "summary": "Cancel Impact",
     "tags": [
       "Leaves"
     ],
+    "operationId": "cancel_impact_leaves__leave_id__cancel_impact_get",
     "parameters": [
       "leave_id",
       "X-Department-ID"
@@ -1047,12 +1852,13 @@
     ]
   },
   {
-    "method": "POST",
     "path": "/leaves/admin-create",
+    "method": "POST",
     "summary": "Admin Create Leave",
     "tags": [
       "Leaves"
     ],
+    "operationId": "admin_create_leave_leaves_admin_create_post",
     "parameters": [
       "X-Department-ID"
     ],
@@ -1063,28 +1869,60 @@
     ]
   },
   {
+    "path": "/api/leaves/",
     "method": "POST",
-    "path": "/credits/adjust",
-    "summary": "Adjust Credits",
+    "summary": "Apply Leave",
     "tags": [
-      "Credits"
+      "Leaves"
     ],
+    "operationId": "apply_leave_api_leaves__post",
+    "parameters": [],
+    "has_request_body": true,
+    "responses": [
+      "201",
+      "422"
+    ]
+  },
+  {
+    "path": "/api/leaves/",
+    "method": "GET",
+    "summary": "List All Leaves",
+    "tags": [
+      "Leaves"
+    ],
+    "operationId": "list_all_leaves_api_leaves__get",
     "parameters": [
       "X-Department-ID"
     ],
-    "has_request_body": true,
+    "has_request_body": false,
     "responses": [
       "200",
       "422"
     ]
   },
   {
-    "method": "GET",
-    "path": "/credits/my/transactions",
-    "summary": "My Transactions",
+    "path": "/api/leaves/batch",
+    "method": "POST",
+    "summary": "Apply Leave Batch",
     "tags": [
-      "Credits"
+      "Leaves"
     ],
+    "operationId": "apply_leave_batch_api_leaves_batch_post",
+    "parameters": [],
+    "has_request_body": true,
+    "responses": [
+      "201",
+      "422"
+    ]
+  },
+  {
+    "path": "/api/leaves/my",
+    "method": "GET",
+    "summary": "My Leaves",
+    "tags": [
+      "Leaves"
+    ],
+    "operationId": "my_leaves_api_leaves_my_get",
     "parameters": [],
     "has_request_body": false,
     "responses": [
@@ -1092,12 +1930,374 @@
     ]
   },
   {
+    "path": "/api/leaves/{leave_id}/approve",
+    "method": "PATCH",
+    "summary": "Approve Leave",
+    "tags": [
+      "Leaves"
+    ],
+    "operationId": "approve_leave_api_leaves__leave_id__approve_patch",
+    "parameters": [
+      "leave_id",
+      "X-Department-ID"
+    ],
+    "has_request_body": false,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "path": "/api/leaves/{leave_id}/reject",
+    "method": "PATCH",
+    "summary": "Reject Leave",
+    "tags": [
+      "Leaves"
+    ],
+    "operationId": "reject_leave_api_leaves__leave_id__reject_patch",
+    "parameters": [
+      "leave_id",
+      "X-Department-ID"
+    ],
+    "has_request_body": false,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "path": "/api/leaves/{leave_id}/status",
+    "method": "PATCH",
+    "summary": "Update Leave Status",
+    "tags": [
+      "Leaves"
+    ],
+    "operationId": "update_leave_status_api_leaves__leave_id__status_patch",
+    "parameters": [
+      "leave_id",
+      "X-Department-ID"
+    ],
+    "has_request_body": true,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "path": "/api/leaves/bulk-approve",
+    "method": "POST",
+    "summary": "Bulk Approve",
+    "tags": [
+      "Leaves"
+    ],
+    "operationId": "bulk_approve_api_leaves_bulk_approve_post",
+    "parameters": [
+      "X-Department-ID"
+    ],
+    "has_request_body": true,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "path": "/api/leaves/bulk-reject",
+    "method": "POST",
+    "summary": "Bulk Reject",
+    "tags": [
+      "Leaves"
+    ],
+    "operationId": "bulk_reject_api_leaves_bulk_reject_post",
+    "parameters": [
+      "X-Department-ID"
+    ],
+    "has_request_body": true,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "path": "/api/leaves/{leave_id}/assign",
+    "method": "POST",
+    "summary": "Assign Substitute",
+    "tags": [
+      "Leaves"
+    ],
+    "operationId": "assign_substitute_api_leaves__leave_id__assign_post",
+    "parameters": [
+      "leave_id",
+      "include_cross_department",
+      "X-Department-ID"
+    ],
+    "has_request_body": true,
+    "responses": [
+      "201",
+      "422"
+    ]
+  },
+  {
+    "path": "/api/leaves/{leave_id}/candidates",
     "method": "GET",
+    "summary": "Get Recommendations",
+    "tags": [
+      "Leaves"
+    ],
+    "operationId": "get_recommendations_api_leaves__leave_id__candidates_get",
+    "parameters": [
+      "leave_id",
+      "limit",
+      "include_cross_department",
+      "only_handles_class",
+      "X-Department-ID"
+    ],
+    "has_request_body": false,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "path": "/api/leaves/{leave_id}/recommendations",
+    "method": "GET",
+    "summary": "Get Recommendations",
+    "tags": [
+      "Leaves"
+    ],
+    "operationId": "get_recommendations_api_leaves__leave_id__recommendations_get",
+    "parameters": [
+      "leave_id",
+      "limit",
+      "include_cross_department",
+      "only_handles_class",
+      "X-Department-ID"
+    ],
+    "has_request_body": false,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "path": "/api/leaves/{leave_id}/assign-recommended",
+    "method": "POST",
+    "summary": "Assign Recommended Substitute",
+    "tags": [
+      "Leaves"
+    ],
+    "operationId": "assign_recommended_substitute_api_leaves__leave_id__assign_recommended_post",
+    "parameters": [
+      "leave_id",
+      "include_cross_department",
+      "X-Department-ID"
+    ],
+    "has_request_body": true,
+    "responses": [
+      "201",
+      "422"
+    ]
+  },
+  {
+    "path": "/api/leaves/{leave_id}/override",
+    "method": "POST",
+    "summary": "Override Substitute",
+    "tags": [
+      "Leaves"
+    ],
+    "operationId": "override_substitute_api_leaves__leave_id__override_post",
+    "parameters": [
+      "leave_id",
+      "include_cross_department",
+      "X-Department-ID"
+    ],
+    "has_request_body": true,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "path": "/api/leaves/{leave_id}/undo-assignment",
+    "method": "POST",
+    "summary": "Undo Assignment",
+    "tags": [
+      "Leaves"
+    ],
+    "operationId": "undo_assignment_api_leaves__leave_id__undo_assignment_post",
+    "parameters": [
+      "leave_id",
+      "X-Department-ID"
+    ],
+    "has_request_body": false,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "path": "/api/leaves/{leave_id}/lock",
+    "method": "POST",
+    "summary": "Set Assignment Lock",
+    "tags": [
+      "Leaves"
+    ],
+    "operationId": "set_assignment_lock_api_leaves__leave_id__lock_post",
+    "parameters": [
+      "leave_id",
+      "X-Department-ID"
+    ],
+    "has_request_body": true,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "path": "/api/leaves/{leave_id}/free-teachers",
+    "method": "GET",
+    "summary": "Free Teachers",
+    "tags": [
+      "Leaves"
+    ],
+    "operationId": "free_teachers_api_leaves__leave_id__free_teachers_get",
+    "parameters": [
+      "leave_id",
+      "include_cross_department",
+      "only_handles_class",
+      "X-Department-ID"
+    ],
+    "has_request_body": false,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "path": "/api/leaves/{leave_id}",
+    "method": "DELETE",
+    "summary": "Cancel Leave",
+    "tags": [
+      "Leaves"
+    ],
+    "operationId": "cancel_leave_api_leaves__leave_id__delete",
+    "parameters": [
+      "leave_id"
+    ],
+    "has_request_body": false,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "path": "/api/leaves/{leave_id}/cancel",
+    "method": "POST",
+    "summary": "Cancel Leave",
+    "tags": [
+      "Leaves"
+    ],
+    "operationId": "cancel_leave_api_leaves__leave_id__cancel_post",
+    "parameters": [
+      "leave_id"
+    ],
+    "has_request_body": false,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "path": "/api/leaves/{leave_id}/admin-cancel",
+    "method": "POST",
+    "summary": "Admin Cancel Leave",
+    "tags": [
+      "Leaves"
+    ],
+    "operationId": "admin_cancel_leave_api_leaves__leave_id__admin_cancel_post",
+    "parameters": [
+      "leave_id",
+      "X-Department-ID"
+    ],
+    "has_request_body": true,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "path": "/api/leaves/{leave_id}/cancel-impact",
+    "method": "GET",
+    "summary": "Cancel Impact",
+    "tags": [
+      "Leaves"
+    ],
+    "operationId": "cancel_impact_api_leaves__leave_id__cancel_impact_get",
+    "parameters": [
+      "leave_id",
+      "X-Department-ID"
+    ],
+    "has_request_body": false,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "path": "/api/leaves/admin-create",
+    "method": "POST",
+    "summary": "Admin Create Leave",
+    "tags": [
+      "Leaves"
+    ],
+    "operationId": "admin_create_leave_api_leaves_admin_create_post",
+    "parameters": [
+      "X-Department-ID"
+    ],
+    "has_request_body": true,
+    "responses": [
+      "201",
+      "422"
+    ]
+  },
+  {
+    "path": "/credits/adjust",
+    "method": "POST",
+    "summary": "Adjust Credits",
+    "tags": [
+      "Credits"
+    ],
+    "operationId": "adjust_credits_credits_adjust_post",
+    "parameters": [
+      "X-Department-ID"
+    ],
+    "has_request_body": true,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "path": "/credits/my/transactions",
+    "method": "GET",
+    "summary": "My Transactions",
+    "tags": [
+      "Credits"
+    ],
+    "operationId": "my_transactions_credits_my_transactions_get",
+    "parameters": [],
+    "has_request_body": false,
+    "responses": [
+      "200"
+    ]
+  },
+  {
     "path": "/credits/transactions",
+    "method": "GET",
     "summary": "All Transactions",
     "tags": [
       "Credits"
     ],
+    "operationId": "all_transactions_credits_transactions_get",
     "parameters": [
       "X-Department-ID"
     ],
@@ -1108,12 +2308,13 @@
     ]
   },
   {
-    "method": "GET",
     "path": "/credits/report",
+    "method": "GET",
     "summary": "Credit Report",
     "tags": [
       "Credits"
     ],
+    "operationId": "credit_report_credits_report_get",
     "parameters": [
       "X-Department-ID"
     ],
@@ -1124,12 +2325,78 @@
     ]
   },
   {
+    "path": "/api/credits/adjust",
+    "method": "POST",
+    "summary": "Adjust Credits",
+    "tags": [
+      "Credits"
+    ],
+    "operationId": "adjust_credits_api_credits_adjust_post",
+    "parameters": [
+      "X-Department-ID"
+    ],
+    "has_request_body": true,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "path": "/api/credits/my/transactions",
     "method": "GET",
+    "summary": "My Transactions",
+    "tags": [
+      "Credits"
+    ],
+    "operationId": "my_transactions_api_credits_my_transactions_get",
+    "parameters": [],
+    "has_request_body": false,
+    "responses": [
+      "200"
+    ]
+  },
+  {
+    "path": "/api/credits/transactions",
+    "method": "GET",
+    "summary": "All Transactions",
+    "tags": [
+      "Credits"
+    ],
+    "operationId": "all_transactions_api_credits_transactions_get",
+    "parameters": [
+      "X-Department-ID"
+    ],
+    "has_request_body": false,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "path": "/api/credits/report",
+    "method": "GET",
+    "summary": "Credit Report",
+    "tags": [
+      "Credits"
+    ],
+    "operationId": "credit_report_api_credits_report_get",
+    "parameters": [
+      "X-Department-ID"
+    ],
+    "has_request_body": false,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
     "path": "/notifications/",
+    "method": "GET",
     "summary": "List Notifications",
     "tags": [
       "Notifications"
     ],
+    "operationId": "list_notifications_notifications__get",
     "parameters": [
       "unread_only"
     ],
@@ -1140,12 +2407,13 @@
     ]
   },
   {
-    "method": "GET",
     "path": "/notifications/unread-count",
+    "method": "GET",
     "summary": "Get Unread Count",
     "tags": [
       "Notifications"
     ],
+    "operationId": "get_unread_count_notifications_unread_count_get",
     "parameters": [],
     "has_request_body": false,
     "responses": [
@@ -1153,12 +2421,13 @@
     ]
   },
   {
-    "method": "PATCH",
     "path": "/notifications/{notification_id}/read",
+    "method": "PATCH",
     "summary": "Mark Read",
     "tags": [
       "Notifications"
     ],
+    "operationId": "mark_read_notifications__notification_id__read_patch",
     "parameters": [
       "notification_id"
     ],
@@ -1169,12 +2438,13 @@
     ]
   },
   {
-    "method": "PATCH",
     "path": "/notifications/read-all",
+    "method": "PATCH",
     "summary": "Mark All Read",
     "tags": [
       "Notifications"
     ],
+    "operationId": "mark_all_read_notifications_read_all_patch",
     "parameters": [],
     "has_request_body": false,
     "responses": [
@@ -1182,12 +2452,13 @@
     ]
   },
   {
-    "method": "GET",
     "path": "/notifications/vapid-public-key",
+    "method": "GET",
     "summary": "Vapid Public Key",
     "tags": [
       "Notifications"
     ],
+    "operationId": "vapid_public_key_notifications_vapid_public_key_get",
     "parameters": [],
     "has_request_body": false,
     "responses": [
@@ -1195,12 +2466,13 @@
     ]
   },
   {
-    "method": "POST",
     "path": "/notifications/subscribe",
+    "method": "POST",
     "summary": "Subscribe",
     "tags": [
       "Notifications"
     ],
+    "operationId": "subscribe_notifications_subscribe_post",
     "parameters": [],
     "has_request_body": true,
     "responses": [
@@ -1209,12 +2481,13 @@
     ]
   },
   {
-    "method": "POST",
     "path": "/notifications/unsubscribe",
+    "method": "POST",
     "summary": "Unsubscribe",
     "tags": [
       "Notifications"
     ],
+    "operationId": "unsubscribe_notifications_unsubscribe_post",
     "parameters": [],
     "has_request_body": true,
     "responses": [
@@ -1223,12 +2496,13 @@
     ]
   },
   {
-    "method": "POST",
     "path": "/notifications/test-push",
+    "method": "POST",
     "summary": "Test Push Notification",
     "tags": [
       "Notifications"
     ],
+    "operationId": "test_push_notification_notifications_test_push_post",
     "parameters": [],
     "has_request_body": false,
     "responses": [
@@ -1236,12 +2510,133 @@
     ]
   },
   {
+    "path": "/api/notifications/",
     "method": "GET",
+    "summary": "List Notifications",
+    "tags": [
+      "Notifications"
+    ],
+    "operationId": "list_notifications_api_notifications__get",
+    "parameters": [
+      "unread_only"
+    ],
+    "has_request_body": false,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "path": "/api/notifications/unread-count",
+    "method": "GET",
+    "summary": "Get Unread Count",
+    "tags": [
+      "Notifications"
+    ],
+    "operationId": "get_unread_count_api_notifications_unread_count_get",
+    "parameters": [],
+    "has_request_body": false,
+    "responses": [
+      "200"
+    ]
+  },
+  {
+    "path": "/api/notifications/{notification_id}/read",
+    "method": "PATCH",
+    "summary": "Mark Read",
+    "tags": [
+      "Notifications"
+    ],
+    "operationId": "mark_read_api_notifications__notification_id__read_patch",
+    "parameters": [
+      "notification_id"
+    ],
+    "has_request_body": false,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "path": "/api/notifications/read-all",
+    "method": "PATCH",
+    "summary": "Mark All Read",
+    "tags": [
+      "Notifications"
+    ],
+    "operationId": "mark_all_read_api_notifications_read_all_patch",
+    "parameters": [],
+    "has_request_body": false,
+    "responses": [
+      "200"
+    ]
+  },
+  {
+    "path": "/api/notifications/vapid-public-key",
+    "method": "GET",
+    "summary": "Vapid Public Key",
+    "tags": [
+      "Notifications"
+    ],
+    "operationId": "vapid_public_key_api_notifications_vapid_public_key_get",
+    "parameters": [],
+    "has_request_body": false,
+    "responses": [
+      "200"
+    ]
+  },
+  {
+    "path": "/api/notifications/subscribe",
+    "method": "POST",
+    "summary": "Subscribe",
+    "tags": [
+      "Notifications"
+    ],
+    "operationId": "subscribe_api_notifications_subscribe_post",
+    "parameters": [],
+    "has_request_body": true,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "path": "/api/notifications/unsubscribe",
+    "method": "POST",
+    "summary": "Unsubscribe",
+    "tags": [
+      "Notifications"
+    ],
+    "operationId": "unsubscribe_api_notifications_unsubscribe_post",
+    "parameters": [],
+    "has_request_body": true,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "path": "/api/notifications/test-push",
+    "method": "POST",
+    "summary": "Test Push Notification",
+    "tags": [
+      "Notifications"
+    ],
+    "operationId": "test_push_notification_api_notifications_test_push_post",
+    "parameters": [],
+    "has_request_body": false,
+    "responses": [
+      "200"
+    ]
+  },
+  {
     "path": "/departments/",
+    "method": "GET",
     "summary": "List Departments",
     "tags": [
       "Departments"
     ],
+    "operationId": "list_departments_departments__get",
     "parameters": [
       "include_global",
       "X-Department-ID"
@@ -1253,12 +2648,13 @@
     ]
   },
   {
-    "method": "POST",
     "path": "/departments/",
+    "method": "POST",
     "summary": "Create Department",
     "tags": [
       "Departments"
     ],
+    "operationId": "create_department_departments__post",
     "parameters": [],
     "has_request_body": true,
     "responses": [
@@ -1267,12 +2663,13 @@
     ]
   },
   {
-    "method": "PATCH",
     "path": "/departments/{dept_id}",
+    "method": "PATCH",
     "summary": "Update Department",
     "tags": [
       "Departments"
     ],
+    "operationId": "update_department_departments__dept_id__patch",
     "parameters": [
       "dept_id",
       "X-Department-ID"
@@ -1284,12 +2681,13 @@
     ]
   },
   {
-    "method": "DELETE",
     "path": "/departments/{dept_id}",
+    "method": "DELETE",
     "summary": "Delete Department",
     "tags": [
       "Departments"
     ],
+    "operationId": "delete_department_departments__dept_id__delete",
     "parameters": [
       "dept_id"
     ],
@@ -1300,12 +2698,13 @@
     ]
   },
   {
-    "method": "POST",
     "path": "/departments/{dept_id}/admin",
+    "method": "POST",
     "summary": "Create Department Admin",
     "tags": [
       "Departments"
     ],
+    "operationId": "create_department_admin_departments__dept_id__admin_post",
     "parameters": [
       "dept_id"
     ],
@@ -1316,12 +2715,98 @@
     ]
   },
   {
+    "path": "/api/departments/",
     "method": "GET",
+    "summary": "List Departments",
+    "tags": [
+      "Departments"
+    ],
+    "operationId": "list_departments_api_departments__get",
+    "parameters": [
+      "include_global",
+      "X-Department-ID"
+    ],
+    "has_request_body": false,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "path": "/api/departments/",
+    "method": "POST",
+    "summary": "Create Department",
+    "tags": [
+      "Departments"
+    ],
+    "operationId": "create_department_api_departments__post",
+    "parameters": [],
+    "has_request_body": true,
+    "responses": [
+      "201",
+      "422"
+    ]
+  },
+  {
+    "path": "/api/departments/{dept_id}",
+    "method": "PATCH",
+    "summary": "Update Department",
+    "tags": [
+      "Departments"
+    ],
+    "operationId": "update_department_api_departments__dept_id__patch",
+    "parameters": [
+      "dept_id",
+      "X-Department-ID"
+    ],
+    "has_request_body": true,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "path": "/api/departments/{dept_id}",
+    "method": "DELETE",
+    "summary": "Delete Department",
+    "tags": [
+      "Departments"
+    ],
+    "operationId": "delete_department_api_departments__dept_id__delete",
+    "parameters": [
+      "dept_id"
+    ],
+    "has_request_body": false,
+    "responses": [
+      "204",
+      "422"
+    ]
+  },
+  {
+    "path": "/api/departments/{dept_id}/admin",
+    "method": "POST",
+    "summary": "Create Department Admin",
+    "tags": [
+      "Departments"
+    ],
+    "operationId": "create_department_admin_api_departments__dept_id__admin_post",
+    "parameters": [
+      "dept_id"
+    ],
+    "has_request_body": true,
+    "responses": [
+      "201",
+      "422"
+    ]
+  },
+  {
     "path": "/subjects/",
+    "method": "GET",
     "summary": "List Subjects",
     "tags": [
       "Subjects"
     ],
+    "operationId": "list_subjects_subjects__get",
     "parameters": [
       "include_archived",
       "include_cross_department",
@@ -1334,12 +2819,13 @@
     ]
   },
   {
-    "method": "POST",
     "path": "/subjects/",
+    "method": "POST",
     "summary": "Create Subject",
     "tags": [
       "Subjects"
     ],
+    "operationId": "create_subject_subjects__post",
     "parameters": [
       "X-Department-ID"
     ],
@@ -1350,12 +2836,13 @@
     ]
   },
   {
-    "method": "PATCH",
     "path": "/subjects/{subject_id}",
+    "method": "PATCH",
     "summary": "Update Subject",
     "tags": [
       "Subjects"
     ],
+    "operationId": "update_subject_subjects__subject_id__patch",
     "parameters": [
       "subject_id",
       "X-Department-ID"
@@ -1367,12 +2854,13 @@
     ]
   },
   {
-    "method": "DELETE",
     "path": "/subjects/{subject_id}",
+    "method": "DELETE",
     "summary": "Delete Subject",
     "tags": [
       "Subjects"
     ],
+    "operationId": "delete_subject_subjects__subject_id__delete",
     "parameters": [
       "subject_id",
       "X-Department-ID"
@@ -1384,12 +2872,13 @@
     ]
   },
   {
-    "method": "PATCH",
     "path": "/subjects/{subject_id}/archive",
+    "method": "PATCH",
     "summary": "Archive Subject",
     "tags": [
       "Subjects"
     ],
+    "operationId": "archive_subject_subjects__subject_id__archive_patch",
     "parameters": [
       "subject_id",
       "X-Department-ID"
@@ -1401,12 +2890,13 @@
     ]
   },
   {
-    "method": "PATCH",
     "path": "/subjects/{subject_id}/unarchive",
+    "method": "PATCH",
     "summary": "Unarchive Subject",
     "tags": [
       "Subjects"
     ],
+    "operationId": "unarchive_subject_subjects__subject_id__unarchive_patch",
     "parameters": [
       "subject_id",
       "X-Department-ID"
@@ -1418,12 +2908,121 @@
     ]
   },
   {
+    "path": "/api/subjects/",
     "method": "GET",
+    "summary": "List Subjects",
+    "tags": [
+      "Subjects"
+    ],
+    "operationId": "list_subjects_api_subjects__get",
+    "parameters": [
+      "include_archived",
+      "include_cross_department",
+      "X-Department-ID"
+    ],
+    "has_request_body": false,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "path": "/api/subjects/",
+    "method": "POST",
+    "summary": "Create Subject",
+    "tags": [
+      "Subjects"
+    ],
+    "operationId": "create_subject_api_subjects__post",
+    "parameters": [
+      "X-Department-ID"
+    ],
+    "has_request_body": true,
+    "responses": [
+      "201",
+      "422"
+    ]
+  },
+  {
+    "path": "/api/subjects/{subject_id}",
+    "method": "PATCH",
+    "summary": "Update Subject",
+    "tags": [
+      "Subjects"
+    ],
+    "operationId": "update_subject_api_subjects__subject_id__patch",
+    "parameters": [
+      "subject_id",
+      "X-Department-ID"
+    ],
+    "has_request_body": true,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "path": "/api/subjects/{subject_id}",
+    "method": "DELETE",
+    "summary": "Delete Subject",
+    "tags": [
+      "Subjects"
+    ],
+    "operationId": "delete_subject_api_subjects__subject_id__delete",
+    "parameters": [
+      "subject_id",
+      "X-Department-ID"
+    ],
+    "has_request_body": false,
+    "responses": [
+      "204",
+      "422"
+    ]
+  },
+  {
+    "path": "/api/subjects/{subject_id}/archive",
+    "method": "PATCH",
+    "summary": "Archive Subject",
+    "tags": [
+      "Subjects"
+    ],
+    "operationId": "archive_subject_api_subjects__subject_id__archive_patch",
+    "parameters": [
+      "subject_id",
+      "X-Department-ID"
+    ],
+    "has_request_body": false,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "path": "/api/subjects/{subject_id}/unarchive",
+    "method": "PATCH",
+    "summary": "Unarchive Subject",
+    "tags": [
+      "Subjects"
+    ],
+    "operationId": "unarchive_subject_api_subjects__subject_id__unarchive_patch",
+    "parameters": [
+      "subject_id",
+      "X-Department-ID"
+    ],
+    "has_request_body": false,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
     "path": "/classes/directory",
+    "method": "GET",
     "summary": "Class Directory",
     "tags": [
       "Classes"
     ],
+    "operationId": "class_directory_classes_directory_get",
     "parameters": [],
     "has_request_body": false,
     "responses": [
@@ -1431,12 +3030,13 @@
     ]
   },
   {
-    "method": "GET",
     "path": "/classes/{class_id}/faculty",
+    "method": "GET",
     "summary": "Class Faculty",
     "tags": [
       "Classes"
     ],
+    "operationId": "class_faculty_classes__class_id__faculty_get",
     "parameters": [
       "class_id"
     ],
@@ -1447,12 +3047,13 @@
     ]
   },
   {
-    "method": "GET",
     "path": "/classes/",
+    "method": "GET",
     "summary": "List Classes",
     "tags": [
       "Classes"
     ],
+    "operationId": "list_classes_classes__get",
     "parameters": [
       "X-Department-ID"
     ],
@@ -1463,12 +3064,13 @@
     ]
   },
   {
-    "method": "POST",
     "path": "/classes/",
+    "method": "POST",
     "summary": "Create Class",
     "tags": [
       "Classes"
     ],
+    "operationId": "create_class_classes__post",
     "parameters": [
       "X-Department-ID"
     ],
@@ -1479,12 +3081,13 @@
     ]
   },
   {
-    "method": "POST",
     "path": "/classes/bulk",
+    "method": "POST",
     "summary": "Bulk Create Classes",
     "tags": [
       "Classes"
     ],
+    "operationId": "bulk_create_classes_classes_bulk_post",
     "parameters": [
       "X-Department-ID"
     ],
@@ -1495,12 +3098,13 @@
     ]
   },
   {
-    "method": "PATCH",
     "path": "/classes/{class_id}",
+    "method": "PATCH",
     "summary": "Update Class",
     "tags": [
       "Classes"
     ],
+    "operationId": "update_class_classes__class_id__patch",
     "parameters": [
       "class_id",
       "X-Department-ID"
@@ -1512,12 +3116,13 @@
     ]
   },
   {
-    "method": "DELETE",
     "path": "/classes/{class_id}",
+    "method": "DELETE",
     "summary": "Delete Class",
     "tags": [
       "Classes"
     ],
+    "operationId": "delete_class_classes__class_id__delete",
     "parameters": [
       "class_id",
       "X-Department-ID"
@@ -1529,12 +3134,131 @@
     ]
   },
   {
+    "path": "/api/classes/directory",
     "method": "GET",
+    "summary": "Class Directory",
+    "tags": [
+      "Classes"
+    ],
+    "operationId": "class_directory_api_classes_directory_get",
+    "parameters": [],
+    "has_request_body": false,
+    "responses": [
+      "200"
+    ]
+  },
+  {
+    "path": "/api/classes/{class_id}/faculty",
+    "method": "GET",
+    "summary": "Class Faculty",
+    "tags": [
+      "Classes"
+    ],
+    "operationId": "class_faculty_api_classes__class_id__faculty_get",
+    "parameters": [
+      "class_id"
+    ],
+    "has_request_body": false,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "path": "/api/classes/",
+    "method": "GET",
+    "summary": "List Classes",
+    "tags": [
+      "Classes"
+    ],
+    "operationId": "list_classes_api_classes__get",
+    "parameters": [
+      "X-Department-ID"
+    ],
+    "has_request_body": false,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "path": "/api/classes/",
+    "method": "POST",
+    "summary": "Create Class",
+    "tags": [
+      "Classes"
+    ],
+    "operationId": "create_class_api_classes__post",
+    "parameters": [
+      "X-Department-ID"
+    ],
+    "has_request_body": true,
+    "responses": [
+      "201",
+      "422"
+    ]
+  },
+  {
+    "path": "/api/classes/bulk",
+    "method": "POST",
+    "summary": "Bulk Create Classes",
+    "tags": [
+      "Classes"
+    ],
+    "operationId": "bulk_create_classes_api_classes_bulk_post",
+    "parameters": [
+      "X-Department-ID"
+    ],
+    "has_request_body": true,
+    "responses": [
+      "201",
+      "422"
+    ]
+  },
+  {
+    "path": "/api/classes/{class_id}",
+    "method": "PATCH",
+    "summary": "Update Class",
+    "tags": [
+      "Classes"
+    ],
+    "operationId": "update_class_api_classes__class_id__patch",
+    "parameters": [
+      "class_id",
+      "X-Department-ID"
+    ],
+    "has_request_body": true,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "path": "/api/classes/{class_id}",
+    "method": "DELETE",
+    "summary": "Delete Class",
+    "tags": [
+      "Classes"
+    ],
+    "operationId": "delete_class_api_classes__class_id__delete",
+    "parameters": [
+      "class_id",
+      "X-Department-ID"
+    ],
+    "has_request_body": false,
+    "responses": [
+      "204",
+      "422"
+    ]
+  },
+  {
     "path": "/rooms/",
+    "method": "GET",
     "summary": "List Rooms",
     "tags": [
       "Rooms"
     ],
+    "operationId": "list_rooms_rooms__get",
     "parameters": [
       "room_type"
     ],
@@ -1545,12 +3269,13 @@
     ]
   },
   {
-    "method": "POST",
     "path": "/rooms/",
+    "method": "POST",
     "summary": "Create Room",
     "tags": [
       "Rooms"
     ],
+    "operationId": "create_room_rooms__post",
     "parameters": [],
     "has_request_body": true,
     "responses": [
@@ -1559,12 +3284,13 @@
     ]
   },
   {
-    "method": "POST",
     "path": "/rooms/bulk",
+    "method": "POST",
     "summary": "Bulk Create Rooms",
     "tags": [
       "Rooms"
     ],
+    "operationId": "bulk_create_rooms_rooms_bulk_post",
     "parameters": [],
     "has_request_body": true,
     "responses": [
@@ -1573,12 +3299,13 @@
     ]
   },
   {
-    "method": "PATCH",
     "path": "/rooms/{room_id}",
+    "method": "PATCH",
     "summary": "Update Room",
     "tags": [
       "Rooms"
     ],
+    "operationId": "update_room_rooms__room_id__patch",
     "parameters": [
       "room_id"
     ],
@@ -1589,12 +3316,13 @@
     ]
   },
   {
-    "method": "DELETE",
     "path": "/rooms/{room_id}",
+    "method": "DELETE",
     "summary": "Delete Room",
     "tags": [
       "Rooms"
     ],
+    "operationId": "delete_room_rooms__room_id__delete",
     "parameters": [
       "room_id"
     ],
@@ -1605,12 +3333,13 @@
     ]
   },
   {
-    "method": "GET",
     "path": "/rooms/availability/dashboard",
+    "method": "GET",
     "summary": "Availability Dashboard",
     "tags": [
       "Rooms"
     ],
+    "operationId": "availability_dashboard_rooms_availability_dashboard_get",
     "parameters": [
       "day_order",
       "period_number"
@@ -1622,12 +3351,13 @@
     ]
   },
   {
-    "method": "GET",
     "path": "/rooms/{room_id}/check-availability",
+    "method": "GET",
     "summary": "Check Availability",
     "tags": [
       "Rooms"
     ],
+    "operationId": "check_availability_rooms__room_id__check_availability_get",
     "parameters": [
       "room_id",
       "day_order",
@@ -1640,12 +3370,13 @@
     ]
   },
   {
-    "method": "GET",
     "path": "/rooms/occupancy",
+    "method": "GET",
     "summary": "Get Classroom Occupancy",
     "tags": [
       "Rooms"
     ],
+    "operationId": "get_classroom_occupancy_rooms_occupancy_get",
     "parameters": [
       "day_order",
       "period_number",
@@ -1659,12 +3390,13 @@
     ]
   },
   {
-    "method": "GET",
     "path": "/rooms/occupancy/matrix",
+    "method": "GET",
     "summary": "Get Classroom Occupancy",
     "tags": [
       "Rooms"
     ],
+    "operationId": "get_classroom_occupancy_rooms_occupancy_matrix_get",
     "parameters": [
       "day_order",
       "period_number",
@@ -1678,12 +3410,171 @@
     ]
   },
   {
+    "path": "/api/rooms/",
     "method": "GET",
+    "summary": "List Rooms",
+    "tags": [
+      "Rooms"
+    ],
+    "operationId": "list_rooms_api_rooms__get",
+    "parameters": [
+      "room_type"
+    ],
+    "has_request_body": false,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "path": "/api/rooms/",
+    "method": "POST",
+    "summary": "Create Room",
+    "tags": [
+      "Rooms"
+    ],
+    "operationId": "create_room_api_rooms__post",
+    "parameters": [],
+    "has_request_body": true,
+    "responses": [
+      "201",
+      "422"
+    ]
+  },
+  {
+    "path": "/api/rooms/bulk",
+    "method": "POST",
+    "summary": "Bulk Create Rooms",
+    "tags": [
+      "Rooms"
+    ],
+    "operationId": "bulk_create_rooms_api_rooms_bulk_post",
+    "parameters": [],
+    "has_request_body": true,
+    "responses": [
+      "201",
+      "422"
+    ]
+  },
+  {
+    "path": "/api/rooms/{room_id}",
+    "method": "PATCH",
+    "summary": "Update Room",
+    "tags": [
+      "Rooms"
+    ],
+    "operationId": "update_room_api_rooms__room_id__patch",
+    "parameters": [
+      "room_id"
+    ],
+    "has_request_body": true,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "path": "/api/rooms/{room_id}",
+    "method": "DELETE",
+    "summary": "Delete Room",
+    "tags": [
+      "Rooms"
+    ],
+    "operationId": "delete_room_api_rooms__room_id__delete",
+    "parameters": [
+      "room_id"
+    ],
+    "has_request_body": false,
+    "responses": [
+      "204",
+      "422"
+    ]
+  },
+  {
+    "path": "/api/rooms/availability/dashboard",
+    "method": "GET",
+    "summary": "Availability Dashboard",
+    "tags": [
+      "Rooms"
+    ],
+    "operationId": "availability_dashboard_api_rooms_availability_dashboard_get",
+    "parameters": [
+      "day_order",
+      "period_number"
+    ],
+    "has_request_body": false,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "path": "/api/rooms/{room_id}/check-availability",
+    "method": "GET",
+    "summary": "Check Availability",
+    "tags": [
+      "Rooms"
+    ],
+    "operationId": "check_availability_api_rooms__room_id__check_availability_get",
+    "parameters": [
+      "room_id",
+      "day_order",
+      "period_number"
+    ],
+    "has_request_body": false,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "path": "/api/rooms/occupancy",
+    "method": "GET",
+    "summary": "Get Classroom Occupancy",
+    "tags": [
+      "Rooms"
+    ],
+    "operationId": "get_classroom_occupancy_api_rooms_occupancy_get",
+    "parameters": [
+      "day_order",
+      "period_number",
+      "department_id",
+      "room_type"
+    ],
+    "has_request_body": false,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "path": "/api/rooms/occupancy/matrix",
+    "method": "GET",
+    "summary": "Get Classroom Occupancy",
+    "tags": [
+      "Rooms"
+    ],
+    "operationId": "get_classroom_occupancy_api_rooms_occupancy_matrix_get",
+    "parameters": [
+      "day_order",
+      "period_number",
+      "department_id",
+      "room_type"
+    ],
+    "has_request_body": false,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
     "path": "/day-order-calendar/",
+    "method": "GET",
     "summary": "Get Range",
     "tags": [
       "Day Order Calendar"
     ],
+    "operationId": "get_range_day_order_calendar__get",
     "parameters": [
       "start",
       "end"
@@ -1695,12 +3586,13 @@
     ]
   },
   {
-    "method": "POST",
     "path": "/day-order-calendar/bulk-set",
+    "method": "POST",
     "summary": "Bulk Set",
     "tags": [
       "Day Order Calendar"
     ],
+    "operationId": "bulk_set_day_order_calendar_bulk_set_post",
     "parameters": [],
     "has_request_body": true,
     "responses": [
@@ -1709,12 +3601,13 @@
     ]
   },
   {
-    "method": "GET",
     "path": "/day-order-calendar/resolve",
+    "method": "GET",
     "summary": "Resolve",
     "tags": [
       "Day Order Calendar"
     ],
+    "operationId": "resolve_day_order_calendar_resolve_get",
     "parameters": [
       "date"
     ],
@@ -1725,12 +3618,63 @@
     ]
   },
   {
+    "path": "/api/day-order-calendar/",
     "method": "GET",
+    "summary": "Get Range",
+    "tags": [
+      "Day Order Calendar"
+    ],
+    "operationId": "get_range_api_day_order_calendar__get",
+    "parameters": [
+      "start",
+      "end"
+    ],
+    "has_request_body": false,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "path": "/api/day-order-calendar/bulk-set",
+    "method": "POST",
+    "summary": "Bulk Set",
+    "tags": [
+      "Day Order Calendar"
+    ],
+    "operationId": "bulk_set_api_day_order_calendar_bulk_set_post",
+    "parameters": [],
+    "has_request_body": true,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "path": "/api/day-order-calendar/resolve",
+    "method": "GET",
+    "summary": "Resolve",
+    "tags": [
+      "Day Order Calendar"
+    ],
+    "operationId": "resolve_api_day_order_calendar_resolve_get",
+    "parameters": [
+      "date"
+    ],
+    "has_request_body": false,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
     "path": "/academic-calendar/academic-years",
+    "method": "GET",
     "summary": "List Academic Years",
     "tags": [
       "Academic Calendar"
     ],
+    "operationId": "list_academic_years_academic_calendar_academic_years_get",
     "parameters": [],
     "has_request_body": false,
     "responses": [
@@ -1738,12 +3682,13 @@
     ]
   },
   {
-    "method": "POST",
     "path": "/academic-calendar/academic-years",
+    "method": "POST",
     "summary": "Create Academic Year",
     "tags": [
       "Academic Calendar"
     ],
+    "operationId": "create_academic_year_academic_calendar_academic_years_post",
     "parameters": [],
     "has_request_body": true,
     "responses": [
@@ -1752,12 +3697,13 @@
     ]
   },
   {
-    "method": "GET",
     "path": "/academic-calendar/semesters",
+    "method": "GET",
     "summary": "List Semesters",
     "tags": [
       "Academic Calendar"
     ],
+    "operationId": "list_semesters_academic_calendar_semesters_get",
     "parameters": [
       "academic_year_id"
     ],
@@ -1768,12 +3714,13 @@
     ]
   },
   {
-    "method": "POST",
     "path": "/academic-calendar/semesters",
+    "method": "POST",
     "summary": "Create Semester",
     "tags": [
       "Academic Calendar"
     ],
+    "operationId": "create_semester_academic_calendar_semesters_post",
     "parameters": [],
     "has_request_body": true,
     "responses": [
@@ -1782,12 +3729,13 @@
     ]
   },
   {
-    "method": "GET",
     "path": "/academic-calendar/days",
+    "method": "GET",
     "summary": "Get Calendar Range",
     "tags": [
       "Academic Calendar"
     ],
+    "operationId": "get_calendar_range_academic_calendar_days_get",
     "parameters": [
       "start",
       "end"
@@ -1799,12 +3747,13 @@
     ]
   },
   {
-    "method": "GET",
     "path": "/academic-calendar/days/{the_date}",
+    "method": "GET",
     "summary": "Get Calendar Day",
     "tags": [
       "Academic Calendar"
     ],
+    "operationId": "get_calendar_day_academic_calendar_days__the_date__get",
     "parameters": [
       "the_date"
     ],
@@ -1815,12 +3764,13 @@
     ]
   },
   {
-    "method": "DELETE",
     "path": "/academic-calendar/days/{the_date}",
+    "method": "DELETE",
     "summary": "Delete Calendar Day",
     "tags": [
       "Academic Calendar"
     ],
+    "operationId": "delete_calendar_day_academic_calendar_days__the_date__delete",
     "parameters": [
       "the_date"
     ],
@@ -1831,12 +3781,13 @@
     ]
   },
   {
-    "method": "POST",
     "path": "/academic-calendar/days/mark",
+    "method": "POST",
     "summary": "Mark Day",
     "tags": [
       "Academic Calendar"
     ],
+    "operationId": "mark_day_academic_calendar_days_mark_post",
     "parameters": [],
     "has_request_body": true,
     "responses": [
@@ -1845,12 +3796,13 @@
     ]
   },
   {
-    "method": "POST",
     "path": "/academic-calendar/days/bulk-mark",
+    "method": "POST",
     "summary": "Bulk Mark Days",
     "tags": [
       "Academic Calendar"
     ],
+    "operationId": "bulk_mark_days_academic_calendar_days_bulk_mark_post",
     "parameters": [],
     "has_request_body": true,
     "responses": [
@@ -1859,12 +3811,13 @@
     ]
   },
   {
-    "method": "POST",
     "path": "/academic-calendar/days/day-order/assign",
+    "method": "POST",
     "summary": "Assign Day Order",
     "tags": [
       "Academic Calendar"
     ],
+    "operationId": "assign_day_order_academic_calendar_days_day_order_assign_post",
     "parameters": [],
     "has_request_body": true,
     "responses": [
@@ -1873,12 +3826,13 @@
     ]
   },
   {
-    "method": "POST",
     "path": "/academic-calendar/days/day-order/skip",
+    "method": "POST",
     "summary": "Skip Day Order",
     "tags": [
       "Academic Calendar"
     ],
+    "operationId": "skip_day_order_academic_calendar_days_day_order_skip_post",
     "parameters": [],
     "has_request_body": true,
     "responses": [
@@ -1887,12 +3841,13 @@
     ]
   },
   {
-    "method": "DELETE",
     "path": "/academic-calendar/days/{the_date}/override",
+    "method": "DELETE",
     "summary": "Clear Override",
     "tags": [
       "Academic Calendar"
     ],
+    "operationId": "clear_override_academic_calendar_days__the_date__override_delete",
     "parameters": [
       "the_date"
     ],
@@ -1903,12 +3858,13 @@
     ]
   },
   {
-    "method": "GET",
     "path": "/academic-calendar/resolve",
+    "method": "GET",
     "summary": "Resolve",
     "tags": [
       "Academic Calendar"
     ],
+    "operationId": "resolve_academic_calendar_resolve_get",
     "parameters": [
       "date"
     ],
@@ -1919,12 +3875,13 @@
     ]
   },
   {
-    "method": "GET",
     "path": "/academic-calendar/today-summary",
+    "method": "GET",
     "summary": "Today Summary",
     "tags": [
       "Academic Calendar"
     ],
+    "operationId": "today_summary_academic_calendar_today_summary_get",
     "parameters": [
       "date",
       "X-Department-ID"
@@ -1936,12 +3893,13 @@
     ]
   },
   {
-    "method": "GET",
     "path": "/academic-calendar/my-today-summary",
+    "method": "GET",
     "summary": "My Today Summary",
     "tags": [
       "Academic Calendar"
     ],
+    "operationId": "my_today_summary_academic_calendar_my_today_summary_get",
     "parameters": [
       "date"
     ],
@@ -1952,12 +3910,13 @@
     ]
   },
   {
-    "method": "GET",
     "path": "/academic-calendar/reports/working-days",
+    "method": "GET",
     "summary": "Working Day Report",
     "tags": [
       "Academic Calendar"
     ],
+    "operationId": "working_day_report_academic_calendar_reports_working_days_get",
     "parameters": [
       "start",
       "end"
@@ -1969,12 +3928,13 @@
     ]
   },
   {
-    "method": "GET",
     "path": "/academic-calendar/reports/holidays",
+    "method": "GET",
     "summary": "Holiday Report",
     "tags": [
       "Academic Calendar"
     ],
+    "operationId": "holiday_report_academic_calendar_reports_holidays_get",
     "parameters": [
       "start",
       "end"
@@ -1986,12 +3946,13 @@
     ]
   },
   {
-    "method": "GET",
     "path": "/academic-calendar/reports/day-orders",
+    "method": "GET",
     "summary": "Day Order Report",
     "tags": [
       "Academic Calendar"
     ],
+    "operationId": "day_order_report_academic_calendar_reports_day_orders_get",
     "parameters": [
       "start",
       "end"
@@ -2003,12 +3964,13 @@
     ]
   },
   {
-    "method": "GET",
     "path": "/academic-calendar/reports/faculty-workload",
+    "method": "GET",
     "summary": "Faculty Workload Report",
     "tags": [
       "Academic Calendar"
     ],
+    "operationId": "faculty_workload_report_academic_calendar_reports_faculty_workload_get",
     "parameters": [
       "X-Department-ID"
     ],
@@ -2019,12 +3981,326 @@
     ]
   },
   {
+    "path": "/api/academic-calendar/academic-years",
     "method": "GET",
+    "summary": "List Academic Years",
+    "tags": [
+      "Academic Calendar"
+    ],
+    "operationId": "list_academic_years_api_academic_calendar_academic_years_get",
+    "parameters": [],
+    "has_request_body": false,
+    "responses": [
+      "200"
+    ]
+  },
+  {
+    "path": "/api/academic-calendar/academic-years",
+    "method": "POST",
+    "summary": "Create Academic Year",
+    "tags": [
+      "Academic Calendar"
+    ],
+    "operationId": "create_academic_year_api_academic_calendar_academic_years_post",
+    "parameters": [],
+    "has_request_body": true,
+    "responses": [
+      "201",
+      "422"
+    ]
+  },
+  {
+    "path": "/api/academic-calendar/semesters",
+    "method": "GET",
+    "summary": "List Semesters",
+    "tags": [
+      "Academic Calendar"
+    ],
+    "operationId": "list_semesters_api_academic_calendar_semesters_get",
+    "parameters": [
+      "academic_year_id"
+    ],
+    "has_request_body": false,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "path": "/api/academic-calendar/semesters",
+    "method": "POST",
+    "summary": "Create Semester",
+    "tags": [
+      "Academic Calendar"
+    ],
+    "operationId": "create_semester_api_academic_calendar_semesters_post",
+    "parameters": [],
+    "has_request_body": true,
+    "responses": [
+      "201",
+      "422"
+    ]
+  },
+  {
+    "path": "/api/academic-calendar/days",
+    "method": "GET",
+    "summary": "Get Calendar Range",
+    "tags": [
+      "Academic Calendar"
+    ],
+    "operationId": "get_calendar_range_api_academic_calendar_days_get",
+    "parameters": [
+      "start",
+      "end"
+    ],
+    "has_request_body": false,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "path": "/api/academic-calendar/days/{the_date}",
+    "method": "GET",
+    "summary": "Get Calendar Day",
+    "tags": [
+      "Academic Calendar"
+    ],
+    "operationId": "get_calendar_day_api_academic_calendar_days__the_date__get",
+    "parameters": [
+      "the_date"
+    ],
+    "has_request_body": false,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "path": "/api/academic-calendar/days/{the_date}",
+    "method": "DELETE",
+    "summary": "Delete Calendar Day",
+    "tags": [
+      "Academic Calendar"
+    ],
+    "operationId": "delete_calendar_day_api_academic_calendar_days__the_date__delete",
+    "parameters": [
+      "the_date"
+    ],
+    "has_request_body": false,
+    "responses": [
+      "204",
+      "422"
+    ]
+  },
+  {
+    "path": "/api/academic-calendar/days/mark",
+    "method": "POST",
+    "summary": "Mark Day",
+    "tags": [
+      "Academic Calendar"
+    ],
+    "operationId": "mark_day_api_academic_calendar_days_mark_post",
+    "parameters": [],
+    "has_request_body": true,
+    "responses": [
+      "201",
+      "422"
+    ]
+  },
+  {
+    "path": "/api/academic-calendar/days/bulk-mark",
+    "method": "POST",
+    "summary": "Bulk Mark Days",
+    "tags": [
+      "Academic Calendar"
+    ],
+    "operationId": "bulk_mark_days_api_academic_calendar_days_bulk_mark_post",
+    "parameters": [],
+    "has_request_body": true,
+    "responses": [
+      "201",
+      "422"
+    ]
+  },
+  {
+    "path": "/api/academic-calendar/days/day-order/assign",
+    "method": "POST",
+    "summary": "Assign Day Order",
+    "tags": [
+      "Academic Calendar"
+    ],
+    "operationId": "assign_day_order_api_academic_calendar_days_day_order_assign_post",
+    "parameters": [],
+    "has_request_body": true,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "path": "/api/academic-calendar/days/day-order/skip",
+    "method": "POST",
+    "summary": "Skip Day Order",
+    "tags": [
+      "Academic Calendar"
+    ],
+    "operationId": "skip_day_order_api_academic_calendar_days_day_order_skip_post",
+    "parameters": [],
+    "has_request_body": true,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "path": "/api/academic-calendar/days/{the_date}/override",
+    "method": "DELETE",
+    "summary": "Clear Override",
+    "tags": [
+      "Academic Calendar"
+    ],
+    "operationId": "clear_override_api_academic_calendar_days__the_date__override_delete",
+    "parameters": [
+      "the_date"
+    ],
+    "has_request_body": false,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "path": "/api/academic-calendar/resolve",
+    "method": "GET",
+    "summary": "Resolve",
+    "tags": [
+      "Academic Calendar"
+    ],
+    "operationId": "resolve_api_academic_calendar_resolve_get",
+    "parameters": [
+      "date"
+    ],
+    "has_request_body": false,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "path": "/api/academic-calendar/today-summary",
+    "method": "GET",
+    "summary": "Today Summary",
+    "tags": [
+      "Academic Calendar"
+    ],
+    "operationId": "today_summary_api_academic_calendar_today_summary_get",
+    "parameters": [
+      "date",
+      "X-Department-ID"
+    ],
+    "has_request_body": false,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "path": "/api/academic-calendar/my-today-summary",
+    "method": "GET",
+    "summary": "My Today Summary",
+    "tags": [
+      "Academic Calendar"
+    ],
+    "operationId": "my_today_summary_api_academic_calendar_my_today_summary_get",
+    "parameters": [
+      "date"
+    ],
+    "has_request_body": false,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "path": "/api/academic-calendar/reports/working-days",
+    "method": "GET",
+    "summary": "Working Day Report",
+    "tags": [
+      "Academic Calendar"
+    ],
+    "operationId": "working_day_report_api_academic_calendar_reports_working_days_get",
+    "parameters": [
+      "start",
+      "end"
+    ],
+    "has_request_body": false,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "path": "/api/academic-calendar/reports/holidays",
+    "method": "GET",
+    "summary": "Holiday Report",
+    "tags": [
+      "Academic Calendar"
+    ],
+    "operationId": "holiday_report_api_academic_calendar_reports_holidays_get",
+    "parameters": [
+      "start",
+      "end"
+    ],
+    "has_request_body": false,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "path": "/api/academic-calendar/reports/day-orders",
+    "method": "GET",
+    "summary": "Day Order Report",
+    "tags": [
+      "Academic Calendar"
+    ],
+    "operationId": "day_order_report_api_academic_calendar_reports_day_orders_get",
+    "parameters": [
+      "start",
+      "end"
+    ],
+    "has_request_body": false,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "path": "/api/academic-calendar/reports/faculty-workload",
+    "method": "GET",
+    "summary": "Faculty Workload Report",
+    "tags": [
+      "Academic Calendar"
+    ],
+    "operationId": "faculty_workload_report_api_academic_calendar_reports_faculty_workload_get",
+    "parameters": [
+      "X-Department-ID"
+    ],
+    "has_request_body": false,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
     "path": "/campus-operations/cross-department-substitutions",
+    "method": "GET",
     "summary": "Get Cross Department Substitutions",
     "tags": [
       "Campus Operations"
     ],
+    "operationId": "get_cross_department_substitutions_campus_operations_cross_department_substitutions_get",
     "parameters": [
       "X-Department-ID"
     ],
@@ -2035,12 +4311,13 @@
     ]
   },
   {
-    "method": "PUT",
     "path": "/campus-operations/cross-department-substitutions",
+    "method": "PUT",
     "summary": "Set Cross Department Substitutions",
     "tags": [
       "Campus Operations"
     ],
+    "operationId": "set_cross_department_substitutions_campus_operations_cross_department_substitutions_put",
     "parameters": [
       "enabled",
       "X-Department-ID"
@@ -2052,12 +4329,13 @@
     ]
   },
   {
-    "method": "GET",
     "path": "/campus-operations/mode",
+    "method": "GET",
     "summary": "Get Mode",
     "tags": [
       "Campus Operations"
     ],
+    "operationId": "get_mode_campus_operations_mode_get",
     "parameters": [
       "X-Department-ID"
     ],
@@ -2068,12 +4346,13 @@
     ]
   },
   {
-    "method": "PUT",
     "path": "/campus-operations/mode",
+    "method": "PUT",
     "summary": "Set Mode",
     "tags": [
       "Campus Operations"
     ],
+    "operationId": "set_mode_campus_operations_mode_put",
     "parameters": [
       "X-Department-ID"
     ],
@@ -2084,12 +4363,13 @@
     ]
   },
   {
-    "method": "GET",
     "path": "/campus-operations/preferences/me",
+    "method": "GET",
     "summary": "Get My Preferences",
     "tags": [
       "Campus Operations"
     ],
+    "operationId": "get_my_preferences_campus_operations_preferences_me_get",
     "parameters": [],
     "has_request_body": false,
     "responses": [
@@ -2097,12 +4377,13 @@
     ]
   },
   {
-    "method": "PUT",
     "path": "/campus-operations/preferences/me",
+    "method": "PUT",
     "summary": "Update My Preferences",
     "tags": [
       "Campus Operations"
     ],
+    "operationId": "update_my_preferences_campus_operations_preferences_me_put",
     "parameters": [],
     "has_request_body": true,
     "responses": [
@@ -2111,12 +4392,13 @@
     ]
   },
   {
-    "method": "GET",
     "path": "/campus-operations/preferences/{teacher_id}",
+    "method": "GET",
     "summary": "Get Teacher Preferences",
     "tags": [
       "Campus Operations"
     ],
+    "operationId": "get_teacher_preferences_campus_operations_preferences__teacher_id__get",
     "parameters": [
       "teacher_id",
       "X-Department-ID"
@@ -2128,12 +4410,13 @@
     ]
   },
   {
-    "method": "PUT",
     "path": "/campus-operations/preferences/{teacher_id}",
+    "method": "PUT",
     "summary": "Update Teacher Preferences",
     "tags": [
       "Campus Operations"
     ],
+    "operationId": "update_teacher_preferences_campus_operations_preferences__teacher_id__put",
     "parameters": [
       "teacher_id",
       "X-Department-ID"
@@ -2145,12 +4428,13 @@
     ]
   },
   {
-    "method": "GET",
     "path": "/campus-operations/system-analytics",
+    "method": "GET",
     "summary": "Get System Analytics",
     "tags": [
       "Campus Operations"
     ],
+    "operationId": "get_system_analytics_campus_operations_system_analytics_get",
     "parameters": [],
     "has_request_body": false,
     "responses": [
@@ -2158,12 +4442,13 @@
     ]
   },
   {
-    "method": "POST",
     "path": "/campus-operations/dry-run",
+    "method": "POST",
     "summary": "Run Dry Run",
     "tags": [
       "Campus Operations"
     ],
+    "operationId": "run_dry_run_campus_operations_dry_run_post",
     "parameters": [],
     "has_request_body": true,
     "responses": [
@@ -2172,12 +4457,13 @@
     ]
   },
   {
-    "method": "POST",
     "path": "/campus-operations/bulk-config",
+    "method": "POST",
     "summary": "Bulk Config",
     "tags": [
       "Campus Operations"
     ],
+    "operationId": "bulk_config_campus_operations_bulk_config_post",
     "parameters": [],
     "has_request_body": true,
     "responses": [
@@ -2186,12 +4472,13 @@
     ]
   },
   {
-    "method": "PUT",
     "path": "/campus-operations/preferences/bulk-override",
+    "method": "PUT",
     "summary": "Bulk Override Preferences",
     "tags": [
       "Campus Operations"
     ],
+    "operationId": "bulk_override_preferences_campus_operations_preferences_bulk_override_put",
     "parameters": [
       "X-Department-ID"
     ],
@@ -2202,12 +4489,82 @@
     ]
   },
   {
+    "path": "/api/campus-operations/cross-department-substitutions",
     "method": "GET",
-    "path": "/teacher/substitution/enabled",
-    "summary": "Check Enabled",
+    "summary": "Get Cross Department Substitutions",
     "tags": [
-      "Teacher Substitution"
+      "Campus Operations"
     ],
+    "operationId": "get_cross_department_substitutions_api_campus_operations_cross_department_substitutions_get",
+    "parameters": [
+      "X-Department-ID"
+    ],
+    "has_request_body": false,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "path": "/api/campus-operations/cross-department-substitutions",
+    "method": "PUT",
+    "summary": "Set Cross Department Substitutions",
+    "tags": [
+      "Campus Operations"
+    ],
+    "operationId": "set_cross_department_substitutions_api_campus_operations_cross_department_substitutions_put",
+    "parameters": [
+      "enabled",
+      "X-Department-ID"
+    ],
+    "has_request_body": false,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "path": "/api/campus-operations/mode",
+    "method": "GET",
+    "summary": "Get Mode",
+    "tags": [
+      "Campus Operations"
+    ],
+    "operationId": "get_mode_api_campus_operations_mode_get",
+    "parameters": [
+      "X-Department-ID"
+    ],
+    "has_request_body": false,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "path": "/api/campus-operations/mode",
+    "method": "PUT",
+    "summary": "Set Mode",
+    "tags": [
+      "Campus Operations"
+    ],
+    "operationId": "set_mode_api_campus_operations_mode_put",
+    "parameters": [
+      "X-Department-ID"
+    ],
+    "has_request_body": true,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "path": "/api/campus-operations/preferences/me",
+    "method": "GET",
+    "summary": "Get My Preferences",
+    "tags": [
+      "Campus Operations"
+    ],
+    "operationId": "get_my_preferences_api_campus_operations_preferences_me_get",
     "parameters": [],
     "has_request_body": false,
     "responses": [
@@ -2215,12 +4572,139 @@
     ]
   },
   {
+    "path": "/api/campus-operations/preferences/me",
+    "method": "PUT",
+    "summary": "Update My Preferences",
+    "tags": [
+      "Campus Operations"
+    ],
+    "operationId": "update_my_preferences_api_campus_operations_preferences_me_put",
+    "parameters": [],
+    "has_request_body": true,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "path": "/api/campus-operations/preferences/{teacher_id}",
     "method": "GET",
+    "summary": "Get Teacher Preferences",
+    "tags": [
+      "Campus Operations"
+    ],
+    "operationId": "get_teacher_preferences_api_campus_operations_preferences__teacher_id__get",
+    "parameters": [
+      "teacher_id",
+      "X-Department-ID"
+    ],
+    "has_request_body": false,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "path": "/api/campus-operations/preferences/{teacher_id}",
+    "method": "PUT",
+    "summary": "Update Teacher Preferences",
+    "tags": [
+      "Campus Operations"
+    ],
+    "operationId": "update_teacher_preferences_api_campus_operations_preferences__teacher_id__put",
+    "parameters": [
+      "teacher_id",
+      "X-Department-ID"
+    ],
+    "has_request_body": true,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "path": "/api/campus-operations/system-analytics",
+    "method": "GET",
+    "summary": "Get System Analytics",
+    "tags": [
+      "Campus Operations"
+    ],
+    "operationId": "get_system_analytics_api_campus_operations_system_analytics_get",
+    "parameters": [],
+    "has_request_body": false,
+    "responses": [
+      "200"
+    ]
+  },
+  {
+    "path": "/api/campus-operations/dry-run",
+    "method": "POST",
+    "summary": "Run Dry Run",
+    "tags": [
+      "Campus Operations"
+    ],
+    "operationId": "run_dry_run_api_campus_operations_dry_run_post",
+    "parameters": [],
+    "has_request_body": true,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "path": "/api/campus-operations/bulk-config",
+    "method": "POST",
+    "summary": "Bulk Config",
+    "tags": [
+      "Campus Operations"
+    ],
+    "operationId": "bulk_config_api_campus_operations_bulk_config_post",
+    "parameters": [],
+    "has_request_body": true,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "path": "/api/campus-operations/preferences/bulk-override",
+    "method": "PUT",
+    "summary": "Bulk Override Preferences",
+    "tags": [
+      "Campus Operations"
+    ],
+    "operationId": "bulk_override_preferences_api_campus_operations_preferences_bulk_override_put",
+    "parameters": [
+      "X-Department-ID"
+    ],
+    "has_request_body": true,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "path": "/teacher/substitution/enabled",
+    "method": "GET",
+    "summary": "Check Enabled",
+    "tags": [
+      "Teacher Substitution"
+    ],
+    "operationId": "check_enabled_teacher_substitution_enabled_get",
+    "parameters": [],
+    "has_request_body": false,
+    "responses": [
+      "200"
+    ]
+  },
+  {
     "path": "/teacher/substitution/my-leaves",
+    "method": "GET",
     "summary": "Get My Leaves",
     "tags": [
       "Teacher Substitution"
     ],
+    "operationId": "get_my_leaves_teacher_substitution_my_leaves_get",
     "parameters": [
       "include_expired"
     ],
@@ -2231,12 +4715,13 @@
     ]
   },
   {
-    "method": "GET",
     "path": "/teacher/substitution/leave/{leave_id}/candidates",
+    "method": "GET",
     "summary": "Get Candidates",
     "tags": [
       "Teacher Substitution"
     ],
+    "operationId": "get_candidates_teacher_substitution_leave__leave_id__candidates_get",
     "parameters": [
       "leave_id",
       "include_cross_department",
@@ -2249,12 +4734,13 @@
     ]
   },
   {
-    "method": "GET",
     "path": "/teacher/substitution/leave/{leave_id}/free-teachers",
+    "method": "GET",
     "summary": "Get Free Teachers",
     "tags": [
       "Teacher Substitution"
     ],
+    "operationId": "get_free_teachers_teacher_substitution_leave__leave_id__free_teachers_get",
     "parameters": [
       "leave_id",
       "include_cross_department",
@@ -2267,12 +4753,13 @@
     ]
   },
   {
-    "method": "POST",
     "path": "/teacher/substitution/leave/{leave_id}/assign/{substitute_id}",
+    "method": "POST",
     "summary": "Assign Substitute",
     "tags": [
       "Teacher Substitution"
     ],
+    "operationId": "assign_substitute_teacher_substitution_leave__leave_id__assign__substitute_id__post",
     "parameters": [
       "leave_id",
       "substitute_id",
@@ -2286,12 +4773,13 @@
     ]
   },
   {
-    "method": "PUT",
     "path": "/teacher/substitution/leave/{leave_id}/override/{substitute_id}",
+    "method": "PUT",
     "summary": "Override Substitute",
     "tags": [
       "Teacher Substitution"
     ],
+    "operationId": "override_substitute_teacher_substitution_leave__leave_id__override__substitute_id__put",
     "parameters": [
       "leave_id",
       "substitute_id",
@@ -2305,12 +4793,13 @@
     ]
   },
   {
-    "method": "POST",
     "path": "/teacher/substitution/leave/{leave_id}/undo-assignment",
+    "method": "POST",
     "summary": "Undo Assignment",
     "tags": [
       "Teacher Substitution"
     ],
+    "operationId": "undo_assignment_teacher_substitution_leave__leave_id__undo_assignment_post",
     "parameters": [
       "leave_id"
     ],
@@ -2321,12 +4810,13 @@
     ]
   },
   {
-    "method": "POST",
     "path": "/teacher/substitution/leave/{leave_id}/lock",
+    "method": "POST",
     "summary": "Set Assignment Lock",
     "tags": [
       "Teacher Substitution"
     ],
+    "operationId": "set_assignment_lock_teacher_substitution_leave__leave_id__lock_post",
     "parameters": [
       "leave_id"
     ],
@@ -2337,12 +4827,13 @@
     ]
   },
   {
-    "method": "DELETE",
     "path": "/teacher/substitution/clear-all-assignments",
+    "method": "DELETE",
     "summary": "Clear All Assignments",
     "tags": [
       "Teacher Substitution"
     ],
+    "operationId": "clear_all_assignments_teacher_substitution_clear_all_assignments_delete",
     "parameters": [],
     "has_request_body": false,
     "responses": [
@@ -2350,12 +4841,13 @@
     ]
   },
   {
-    "method": "DELETE",
     "path": "/teacher/substitution/reset-preferences",
+    "method": "DELETE",
     "summary": "Reset Preferences",
     "tags": [
       "Teacher Substitution"
     ],
+    "operationId": "reset_preferences_teacher_substitution_reset_preferences_delete",
     "parameters": [],
     "has_request_body": false,
     "responses": [
@@ -2363,12 +4855,13 @@
     ]
   },
   {
-    "method": "GET",
     "path": "/teacher/substitution/config",
+    "method": "GET",
     "summary": "Get Config",
     "tags": [
       "Teacher Substitution"
     ],
+    "operationId": "get_config_teacher_substitution_config_get",
     "parameters": [],
     "has_request_body": false,
     "responses": [
@@ -2376,12 +4869,13 @@
     ]
   },
   {
-    "method": "PUT",
     "path": "/teacher/substitution/config",
+    "method": "PUT",
     "summary": "Update Config",
     "tags": [
       "Teacher Substitution"
     ],
+    "operationId": "update_config_teacher_substitution_config_put",
     "parameters": [],
     "has_request_body": true,
     "responses": [
@@ -2390,12 +4884,213 @@
     ]
   },
   {
+    "path": "/api/teacher/substitution/enabled",
     "method": "GET",
+    "summary": "Check Enabled",
+    "tags": [
+      "Teacher Substitution"
+    ],
+    "operationId": "check_enabled_api_teacher_substitution_enabled_get",
+    "parameters": [],
+    "has_request_body": false,
+    "responses": [
+      "200"
+    ]
+  },
+  {
+    "path": "/api/teacher/substitution/my-leaves",
+    "method": "GET",
+    "summary": "Get My Leaves",
+    "tags": [
+      "Teacher Substitution"
+    ],
+    "operationId": "get_my_leaves_api_teacher_substitution_my_leaves_get",
+    "parameters": [
+      "include_expired"
+    ],
+    "has_request_body": false,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "path": "/api/teacher/substitution/leave/{leave_id}/candidates",
+    "method": "GET",
+    "summary": "Get Candidates",
+    "tags": [
+      "Teacher Substitution"
+    ],
+    "operationId": "get_candidates_api_teacher_substitution_leave__leave_id__candidates_get",
+    "parameters": [
+      "leave_id",
+      "include_cross_department",
+      "only_handles_class"
+    ],
+    "has_request_body": false,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "path": "/api/teacher/substitution/leave/{leave_id}/free-teachers",
+    "method": "GET",
+    "summary": "Get Free Teachers",
+    "tags": [
+      "Teacher Substitution"
+    ],
+    "operationId": "get_free_teachers_api_teacher_substitution_leave__leave_id__free_teachers_get",
+    "parameters": [
+      "leave_id",
+      "include_cross_department",
+      "only_handles_class"
+    ],
+    "has_request_body": false,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "path": "/api/teacher/substitution/leave/{leave_id}/assign/{substitute_id}",
+    "method": "POST",
+    "summary": "Assign Substitute",
+    "tags": [
+      "Teacher Substitution"
+    ],
+    "operationId": "assign_substitute_api_teacher_substitution_leave__leave_id__assign__substitute_id__post",
+    "parameters": [
+      "leave_id",
+      "substitute_id",
+      "include_cross_department",
+      "override_substitution_limit"
+    ],
+    "has_request_body": false,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "path": "/api/teacher/substitution/leave/{leave_id}/override/{substitute_id}",
+    "method": "PUT",
+    "summary": "Override Substitute",
+    "tags": [
+      "Teacher Substitution"
+    ],
+    "operationId": "override_substitute_api_teacher_substitution_leave__leave_id__override__substitute_id__put",
+    "parameters": [
+      "leave_id",
+      "substitute_id",
+      "include_cross_department",
+      "override_substitution_limit"
+    ],
+    "has_request_body": false,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "path": "/api/teacher/substitution/leave/{leave_id}/undo-assignment",
+    "method": "POST",
+    "summary": "Undo Assignment",
+    "tags": [
+      "Teacher Substitution"
+    ],
+    "operationId": "undo_assignment_api_teacher_substitution_leave__leave_id__undo_assignment_post",
+    "parameters": [
+      "leave_id"
+    ],
+    "has_request_body": false,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "path": "/api/teacher/substitution/leave/{leave_id}/lock",
+    "method": "POST",
+    "summary": "Set Assignment Lock",
+    "tags": [
+      "Teacher Substitution"
+    ],
+    "operationId": "set_assignment_lock_api_teacher_substitution_leave__leave_id__lock_post",
+    "parameters": [
+      "leave_id"
+    ],
+    "has_request_body": true,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "path": "/api/teacher/substitution/clear-all-assignments",
+    "method": "DELETE",
+    "summary": "Clear All Assignments",
+    "tags": [
+      "Teacher Substitution"
+    ],
+    "operationId": "clear_all_assignments_api_teacher_substitution_clear_all_assignments_delete",
+    "parameters": [],
+    "has_request_body": false,
+    "responses": [
+      "200"
+    ]
+  },
+  {
+    "path": "/api/teacher/substitution/reset-preferences",
+    "method": "DELETE",
+    "summary": "Reset Preferences",
+    "tags": [
+      "Teacher Substitution"
+    ],
+    "operationId": "reset_preferences_api_teacher_substitution_reset_preferences_delete",
+    "parameters": [],
+    "has_request_body": false,
+    "responses": [
+      "200"
+    ]
+  },
+  {
+    "path": "/api/teacher/substitution/config",
+    "method": "GET",
+    "summary": "Get Config",
+    "tags": [
+      "Teacher Substitution"
+    ],
+    "operationId": "get_config_api_teacher_substitution_config_get",
+    "parameters": [],
+    "has_request_body": false,
+    "responses": [
+      "200"
+    ]
+  },
+  {
+    "path": "/api/teacher/substitution/config",
+    "method": "PUT",
+    "summary": "Update Config",
+    "tags": [
+      "Teacher Substitution"
+    ],
+    "operationId": "update_config_api_teacher_substitution_config_put",
+    "parameters": [],
+    "has_request_body": true,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
     "path": "/substitutions/today",
+    "method": "GET",
     "summary": "Get Today Substitutions",
     "tags": [
       "Today's Substitutions"
     ],
+    "operationId": "get_today_substitutions_substitutions_today_get",
     "parameters": [
       "date",
       "X-Department-ID"
@@ -2407,12 +5102,31 @@
     ]
   },
   {
+    "path": "/api/substitutions/today",
     "method": "GET",
+    "summary": "Get Today Substitutions",
+    "tags": [
+      "Today's Substitutions"
+    ],
+    "operationId": "get_today_substitutions_api_substitutions_today_get",
+    "parameters": [
+      "date",
+      "X-Department-ID"
+    ],
+    "has_request_body": false,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
     "path": "/principal/overview",
+    "method": "GET",
     "summary": "Get Principal Overview",
     "tags": [
       "Principal Dashboard"
     ],
+    "operationId": "get_principal_overview_principal_overview_get",
     "parameters": [],
     "has_request_body": false,
     "responses": [
@@ -2420,12 +5134,27 @@
     ]
   },
   {
+    "path": "/api/principal/overview",
     "method": "GET",
+    "summary": "Get Principal Overview",
+    "tags": [
+      "Principal Dashboard"
+    ],
+    "operationId": "get_principal_overview_api_principal_overview_get",
+    "parameters": [],
+    "has_request_body": false,
+    "responses": [
+      "200"
+    ]
+  },
+  {
     "path": "/manager/dashboard",
+    "method": "GET",
     "summary": "Get Manager Dashboard",
     "tags": [
       "manager"
     ],
+    "operationId": "get_manager_dashboard_manager_dashboard_get",
     "parameters": [
       "X-Department-ID"
     ],
@@ -2436,12 +5165,13 @@
     ]
   },
   {
-    "method": "GET",
     "path": "/manager/staff",
+    "method": "GET",
     "summary": "List Staff",
     "tags": [
       "manager"
     ],
+    "operationId": "list_staff_manager_staff_get",
     "parameters": [
       "category",
       "employment_status",
@@ -2456,12 +5186,13 @@
     ]
   },
   {
-    "method": "POST",
     "path": "/manager/staff",
+    "method": "POST",
     "summary": "Create Staff",
     "tags": [
       "manager"
     ],
+    "operationId": "create_staff_manager_staff_post",
     "parameters": [],
     "has_request_body": true,
     "responses": [
@@ -2470,12 +5201,13 @@
     ]
   },
   {
-    "method": "GET",
     "path": "/manager/staff/{staff_id}",
+    "method": "GET",
     "summary": "Get Staff",
     "tags": [
       "manager"
     ],
+    "operationId": "get_staff_manager_staff__staff_id__get",
     "parameters": [
       "staff_id",
       "X-Department-ID"
@@ -2487,12 +5219,13 @@
     ]
   },
   {
-    "method": "PUT",
     "path": "/manager/staff/{staff_id}",
+    "method": "PUT",
     "summary": "Update Staff",
     "tags": [
       "manager"
     ],
+    "operationId": "update_staff_manager_staff__staff_id__put",
     "parameters": [
       "staff_id"
     ],
@@ -2503,12 +5236,13 @@
     ]
   },
   {
-    "method": "DELETE",
     "path": "/manager/staff/{staff_id}",
+    "method": "DELETE",
     "summary": "Delete Staff",
     "tags": [
       "manager"
     ],
+    "operationId": "delete_staff_manager_staff__staff_id__delete",
     "parameters": [
       "staff_id"
     ],
@@ -2519,12 +5253,13 @@
     ]
   },
   {
-    "method": "PATCH",
     "path": "/manager/staff/{staff_id}/status",
+    "method": "PATCH",
     "summary": "Toggle Staff Status",
     "tags": [
       "manager"
     ],
+    "operationId": "toggle_staff_status_manager_staff__staff_id__status_patch",
     "parameters": [
       "staff_id",
       "employment_status"
@@ -2536,12 +5271,13 @@
     ]
   },
   {
-    "method": "GET",
     "path": "/manager/labs",
+    "method": "GET",
     "summary": "Get Available Labs",
     "tags": [
       "manager"
     ],
+    "operationId": "get_available_labs_manager_labs_get",
     "parameters": [
       "X-Department-ID"
     ],
@@ -2552,12 +5288,13 @@
     ]
   },
   {
-    "method": "GET",
     "path": "/manager/leaves",
+    "method": "GET",
     "summary": "List Manager Staff Leaves",
     "tags": [
       "manager"
     ],
+    "operationId": "list_manager_staff_leaves_manager_leaves_get",
     "parameters": [
       "status_filter",
       "category_filter",
@@ -2570,12 +5307,13 @@
     ]
   },
   {
-    "method": "POST",
     "path": "/manager/leaves/{leave_id}/approve",
+    "method": "POST",
     "summary": "Approve Staff Leave",
     "tags": [
       "manager"
     ],
+    "operationId": "approve_staff_leave_manager_leaves__leave_id__approve_post",
     "parameters": [
       "leave_id"
     ],
@@ -2586,12 +5324,13 @@
     ]
   },
   {
-    "method": "POST",
     "path": "/manager/leaves/{leave_id}/reject",
+    "method": "POST",
     "summary": "Reject Staff Leave",
     "tags": [
       "manager"
     ],
+    "operationId": "reject_staff_leave_manager_leaves__leave_id__reject_post",
     "parameters": [
       "leave_id"
     ],
@@ -2602,12 +5341,13 @@
     ]
   },
   {
-    "method": "GET",
     "path": "/manager/credits",
+    "method": "GET",
     "summary": "List Staff Credits",
     "tags": [
       "manager"
     ],
+    "operationId": "list_staff_credits_manager_credits_get",
     "parameters": [
       "category_filter",
       "X-Department-ID"
@@ -2619,12 +5359,13 @@
     ]
   },
   {
-    "method": "GET",
     "path": "/manager/credits/{staff_id}/ledger",
+    "method": "GET",
     "summary": "Get Staff Credit Ledger",
     "tags": [
       "manager"
     ],
+    "operationId": "get_staff_credit_ledger_manager_credits__staff_id__ledger_get",
     "parameters": [
       "staff_id"
     ],
@@ -2635,12 +5376,13 @@
     ]
   },
   {
-    "method": "POST",
     "path": "/manager/credits/adjust",
+    "method": "POST",
     "summary": "Adjust Staff Credit Balance",
     "tags": [
       "manager"
     ],
+    "operationId": "adjust_staff_credit_balance_manager_credits_adjust_post",
     "parameters": [],
     "has_request_body": true,
     "responses": [
@@ -2649,12 +5391,13 @@
     ]
   },
   {
-    "method": "POST",
     "path": "/manager/credits/quota",
+    "method": "POST",
     "summary": "Update Staff Leave Limit Quota",
     "tags": [
       "manager"
     ],
+    "operationId": "update_staff_leave_limit_quota_manager_credits_quota_post",
     "parameters": [],
     "has_request_body": true,
     "responses": [
@@ -2663,12 +5406,271 @@
     ]
   },
   {
+    "path": "/api/manager/dashboard",
     "method": "GET",
+    "summary": "Get Manager Dashboard",
+    "tags": [
+      "manager"
+    ],
+    "operationId": "get_manager_dashboard_api_manager_dashboard_get",
+    "parameters": [
+      "X-Department-ID"
+    ],
+    "has_request_body": false,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "path": "/api/manager/staff",
+    "method": "GET",
+    "summary": "List Staff",
+    "tags": [
+      "manager"
+    ],
+    "operationId": "list_staff_api_manager_staff_get",
+    "parameters": [
+      "category",
+      "employment_status",
+      "assigned_room_id",
+      "search",
+      "X-Department-ID"
+    ],
+    "has_request_body": false,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "path": "/api/manager/staff",
+    "method": "POST",
+    "summary": "Create Staff",
+    "tags": [
+      "manager"
+    ],
+    "operationId": "create_staff_api_manager_staff_post",
+    "parameters": [],
+    "has_request_body": true,
+    "responses": [
+      "201",
+      "422"
+    ]
+  },
+  {
+    "path": "/api/manager/staff/{staff_id}",
+    "method": "GET",
+    "summary": "Get Staff",
+    "tags": [
+      "manager"
+    ],
+    "operationId": "get_staff_api_manager_staff__staff_id__get",
+    "parameters": [
+      "staff_id",
+      "X-Department-ID"
+    ],
+    "has_request_body": false,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "path": "/api/manager/staff/{staff_id}",
+    "method": "PUT",
+    "summary": "Update Staff",
+    "tags": [
+      "manager"
+    ],
+    "operationId": "update_staff_api_manager_staff__staff_id__put",
+    "parameters": [
+      "staff_id"
+    ],
+    "has_request_body": true,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "path": "/api/manager/staff/{staff_id}",
+    "method": "DELETE",
+    "summary": "Delete Staff",
+    "tags": [
+      "manager"
+    ],
+    "operationId": "delete_staff_api_manager_staff__staff_id__delete",
+    "parameters": [
+      "staff_id"
+    ],
+    "has_request_body": false,
+    "responses": [
+      "204",
+      "422"
+    ]
+  },
+  {
+    "path": "/api/manager/staff/{staff_id}/status",
+    "method": "PATCH",
+    "summary": "Toggle Staff Status",
+    "tags": [
+      "manager"
+    ],
+    "operationId": "toggle_staff_status_api_manager_staff__staff_id__status_patch",
+    "parameters": [
+      "staff_id",
+      "employment_status"
+    ],
+    "has_request_body": false,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "path": "/api/manager/labs",
+    "method": "GET",
+    "summary": "Get Available Labs",
+    "tags": [
+      "manager"
+    ],
+    "operationId": "get_available_labs_api_manager_labs_get",
+    "parameters": [
+      "X-Department-ID"
+    ],
+    "has_request_body": false,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "path": "/api/manager/leaves",
+    "method": "GET",
+    "summary": "List Manager Staff Leaves",
+    "tags": [
+      "manager"
+    ],
+    "operationId": "list_manager_staff_leaves_api_manager_leaves_get",
+    "parameters": [
+      "status_filter",
+      "category_filter",
+      "X-Department-ID"
+    ],
+    "has_request_body": false,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "path": "/api/manager/leaves/{leave_id}/approve",
+    "method": "POST",
+    "summary": "Approve Staff Leave",
+    "tags": [
+      "manager"
+    ],
+    "operationId": "approve_staff_leave_api_manager_leaves__leave_id__approve_post",
+    "parameters": [
+      "leave_id"
+    ],
+    "has_request_body": true,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "path": "/api/manager/leaves/{leave_id}/reject",
+    "method": "POST",
+    "summary": "Reject Staff Leave",
+    "tags": [
+      "manager"
+    ],
+    "operationId": "reject_staff_leave_api_manager_leaves__leave_id__reject_post",
+    "parameters": [
+      "leave_id"
+    ],
+    "has_request_body": true,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "path": "/api/manager/credits",
+    "method": "GET",
+    "summary": "List Staff Credits",
+    "tags": [
+      "manager"
+    ],
+    "operationId": "list_staff_credits_api_manager_credits_get",
+    "parameters": [
+      "category_filter",
+      "X-Department-ID"
+    ],
+    "has_request_body": false,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "path": "/api/manager/credits/{staff_id}/ledger",
+    "method": "GET",
+    "summary": "Get Staff Credit Ledger",
+    "tags": [
+      "manager"
+    ],
+    "operationId": "get_staff_credit_ledger_api_manager_credits__staff_id__ledger_get",
+    "parameters": [
+      "staff_id"
+    ],
+    "has_request_body": false,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "path": "/api/manager/credits/adjust",
+    "method": "POST",
+    "summary": "Adjust Staff Credit Balance",
+    "tags": [
+      "manager"
+    ],
+    "operationId": "adjust_staff_credit_balance_api_manager_credits_adjust_post",
+    "parameters": [],
+    "has_request_body": true,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "path": "/api/manager/credits/quota",
+    "method": "POST",
+    "summary": "Update Staff Leave Limit Quota",
+    "tags": [
+      "manager"
+    ],
+    "operationId": "update_staff_leave_limit_quota_api_manager_credits_quota_post",
+    "parameters": [],
+    "has_request_body": true,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
     "path": "/staff/me",
+    "method": "GET",
     "summary": "Get My Staff Profile",
     "tags": [
       "Staff Portal"
     ],
+    "operationId": "get_my_staff_profile_staff_me_get",
     "parameters": [],
     "has_request_body": false,
     "responses": [
@@ -2676,12 +5678,13 @@
     ]
   },
   {
-    "method": "GET",
     "path": "/staff/dashboard",
+    "method": "GET",
     "summary": "Get Staff Dashboard",
     "tags": [
       "Staff Portal"
     ],
+    "operationId": "get_staff_dashboard_staff_dashboard_get",
     "parameters": [
       "selected_room_id"
     ],
@@ -2692,12 +5695,13 @@
     ]
   },
   {
-    "method": "POST",
     "path": "/staff/leaves",
+    "method": "POST",
     "summary": "Apply Leave",
     "tags": [
       "Staff Portal"
     ],
+    "operationId": "apply_leave_staff_leaves_post",
     "parameters": [],
     "has_request_body": true,
     "responses": [
@@ -2706,12 +5710,13 @@
     ]
   },
   {
-    "method": "GET",
     "path": "/staff/leaves",
+    "method": "GET",
     "summary": "Get My Leaves",
     "tags": [
       "Staff Portal"
     ],
+    "operationId": "get_my_leaves_staff_leaves_get",
     "parameters": [
       "status_filter"
     ],
@@ -2722,12 +5727,13 @@
     ]
   },
   {
-    "method": "DELETE",
     "path": "/staff/leaves/{leave_id}",
+    "method": "DELETE",
     "summary": "Cancel Leave",
     "tags": [
       "Staff Portal"
     ],
+    "operationId": "cancel_leave_staff_leaves__leave_id__delete",
     "parameters": [
       "leave_id"
     ],
@@ -2738,12 +5744,13 @@
     ]
   },
   {
-    "method": "GET",
     "path": "/staff/ledger",
+    "method": "GET",
     "summary": "Get My Ledger",
     "tags": [
       "Staff Portal"
     ],
+    "operationId": "get_my_ledger_staff_ledger_get",
     "parameters": [],
     "has_request_body": false,
     "responses": [
@@ -2751,12 +5758,13 @@
     ]
   },
   {
-    "method": "POST",
     "path": "/staff/me/biometrics/enroll",
+    "method": "POST",
     "summary": "Enroll Staff Biometrics",
     "tags": [
       "Staff Portal"
     ],
+    "operationId": "enroll_staff_biometrics_staff_me_biometrics_enroll_post",
     "parameters": [],
     "has_request_body": false,
     "responses": [
@@ -2764,12 +5772,13 @@
     ]
   },
   {
+    "path": "/api/staff/me",
     "method": "GET",
-    "path": "/admin/backups/schedule",
-    "summary": "Get Backup Schedule",
+    "summary": "Get My Staff Profile",
     "tags": [
-      "Backup & Restore"
+      "Staff Portal"
     ],
+    "operationId": "get_my_staff_profile_api_staff_me_get",
     "parameters": [],
     "has_request_body": false,
     "responses": [
@@ -2777,39 +5786,30 @@
     ]
   },
   {
-    "method": "PUT",
-    "path": "/admin/backups/schedule",
-    "summary": "Update Backup Schedule",
+    "path": "/api/staff/dashboard",
+    "method": "GET",
+    "summary": "Get Staff Dashboard",
     "tags": [
-      "Backup & Restore"
+      "Staff Portal"
     ],
-    "parameters": [],
-    "has_request_body": true,
+    "operationId": "get_staff_dashboard_api_staff_dashboard_get",
+    "parameters": [
+      "selected_room_id"
+    ],
+    "has_request_body": false,
     "responses": [
       "200",
       "422"
     ]
   },
   {
+    "path": "/api/staff/leaves",
     "method": "POST",
-    "path": "/admin/backups/schedule/run-now",
-    "summary": "Run Auto Backup Now",
+    "summary": "Apply Leave",
     "tags": [
-      "Backup & Restore"
+      "Staff Portal"
     ],
-    "parameters": [],
-    "has_request_body": false,
-    "responses": [
-      "200"
-    ]
-  },
-  {
-    "method": "POST",
-    "path": "/admin/backups/import",
-    "summary": "Import Backup File",
-    "tags": [
-      "Backup & Restore"
-    ],
+    "operationId": "apply_leave_api_staff_leaves_post",
     "parameters": [],
     "has_request_body": true,
     "responses": [
@@ -2818,12 +5818,47 @@
     ]
   },
   {
+    "path": "/api/staff/leaves",
     "method": "GET",
-    "path": "/admin/backups",
-    "summary": "List Backups",
+    "summary": "Get My Leaves",
     "tags": [
-      "Backup & Restore"
+      "Staff Portal"
     ],
+    "operationId": "get_my_leaves_api_staff_leaves_get",
+    "parameters": [
+      "status_filter"
+    ],
+    "has_request_body": false,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "path": "/api/staff/leaves/{leave_id}",
+    "method": "DELETE",
+    "summary": "Cancel Leave",
+    "tags": [
+      "Staff Portal"
+    ],
+    "operationId": "cancel_leave_api_staff_leaves__leave_id__delete",
+    "parameters": [
+      "leave_id"
+    ],
+    "has_request_body": false,
+    "responses": [
+      "204",
+      "422"
+    ]
+  },
+  {
+    "path": "/api/staff/ledger",
+    "method": "GET",
+    "summary": "Get My Ledger",
+    "tags": [
+      "Staff Portal"
+    ],
+    "operationId": "get_my_ledger_api_staff_ledger_get",
     "parameters": [],
     "has_request_body": false,
     "responses": [
@@ -2831,12 +5866,99 @@
     ]
   },
   {
+    "path": "/api/staff/me/biometrics/enroll",
     "method": "POST",
+    "summary": "Enroll Staff Biometrics",
+    "tags": [
+      "Staff Portal"
+    ],
+    "operationId": "enroll_staff_biometrics_api_staff_me_biometrics_enroll_post",
+    "parameters": [],
+    "has_request_body": false,
+    "responses": [
+      "200"
+    ]
+  },
+  {
+    "path": "/admin/backups/schedule",
+    "method": "GET",
+    "summary": "Get Backup Schedule",
+    "tags": [
+      "Backup & Restore"
+    ],
+    "operationId": "get_backup_schedule_admin_backups_schedule_get",
+    "parameters": [],
+    "has_request_body": false,
+    "responses": [
+      "200"
+    ]
+  },
+  {
+    "path": "/admin/backups/schedule",
+    "method": "PUT",
+    "summary": "Update Backup Schedule",
+    "tags": [
+      "Backup & Restore"
+    ],
+    "operationId": "update_backup_schedule_admin_backups_schedule_put",
+    "parameters": [],
+    "has_request_body": true,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "path": "/admin/backups/schedule/run-now",
+    "method": "POST",
+    "summary": "Run Auto Backup Now",
+    "tags": [
+      "Backup & Restore"
+    ],
+    "operationId": "run_auto_backup_now_admin_backups_schedule_run_now_post",
+    "parameters": [],
+    "has_request_body": false,
+    "responses": [
+      "200"
+    ]
+  },
+  {
+    "path": "/admin/backups/import",
+    "method": "POST",
+    "summary": "Import Backup File",
+    "tags": [
+      "Backup & Restore"
+    ],
+    "operationId": "import_backup_file_admin_backups_import_post",
+    "parameters": [],
+    "has_request_body": true,
+    "responses": [
+      "201",
+      "422"
+    ]
+  },
+  {
     "path": "/admin/backups",
+    "method": "GET",
+    "summary": "List Backups",
+    "tags": [
+      "Backup & Restore"
+    ],
+    "operationId": "list_backups_admin_backups_get",
+    "parameters": [],
+    "has_request_body": false,
+    "responses": [
+      "200"
+    ]
+  },
+  {
+    "path": "/admin/backups",
+    "method": "POST",
     "summary": "Create Backup",
     "tags": [
       "Backup & Restore"
     ],
+    "operationId": "create_backup_admin_backups_post",
     "parameters": [],
     "has_request_body": false,
     "responses": [
@@ -2844,12 +5966,13 @@
     ]
   },
   {
-    "method": "GET",
     "path": "/admin/backups/summary",
+    "method": "GET",
     "summary": "Get Summary",
     "tags": [
       "Backup & Restore"
     ],
+    "operationId": "get_summary_admin_backups_summary_get",
     "parameters": [],
     "has_request_body": false,
     "responses": [
@@ -2857,12 +5980,13 @@
     ]
   },
   {
-    "method": "GET",
     "path": "/admin/backups/{backup_id}",
+    "method": "GET",
     "summary": "Get Backup",
     "tags": [
       "Backup & Restore"
     ],
+    "operationId": "get_backup_admin_backups__backup_id__get",
     "parameters": [
       "backup_id"
     ],
@@ -2873,12 +5997,13 @@
     ]
   },
   {
-    "method": "DELETE",
     "path": "/admin/backups/{backup_id}",
+    "method": "DELETE",
     "summary": "Delete Backup",
     "tags": [
       "Backup & Restore"
     ],
+    "operationId": "delete_backup_admin_backups__backup_id__delete",
     "parameters": [
       "backup_id"
     ],
@@ -2889,12 +6014,13 @@
     ]
   },
   {
-    "method": "GET",
     "path": "/admin/backups/{backup_id}/download",
+    "method": "GET",
     "summary": "Download Backup",
     "tags": [
       "Backup & Restore"
     ],
+    "operationId": "download_backup_admin_backups__backup_id__download_get",
     "parameters": [
       "backup_id"
     ],
@@ -2905,12 +6031,13 @@
     ]
   },
   {
-    "method": "POST",
     "path": "/admin/backups/{backup_id}/validate",
+    "method": "POST",
     "summary": "Validate Backup",
     "tags": [
       "Backup & Restore"
     ],
+    "operationId": "validate_backup_admin_backups__backup_id__validate_post",
     "parameters": [
       "backup_id"
     ],
@@ -2921,12 +6048,13 @@
     ]
   },
   {
-    "method": "POST",
     "path": "/admin/backups/{backup_id}/restore",
+    "method": "POST",
     "summary": "Restore Backup",
     "tags": [
       "Backup & Restore"
     ],
+    "operationId": "restore_backup_admin_backups__backup_id__restore_post",
     "parameters": [
       "backup_id"
     ],
@@ -2937,12 +6065,13 @@
     ]
   },
   {
+    "path": "/api/admin/backups/schedule",
     "method": "GET",
-    "path": "/governance/overview",
-    "summary": "Get Overview",
+    "summary": "Get Backup Schedule",
     "tags": [
-      "Governance Command Center"
+      "Backup & Restore"
     ],
+    "operationId": "get_backup_schedule_api_admin_backups_schedule_get",
     "parameters": [],
     "has_request_body": false,
     "responses": [
@@ -2950,12 +6079,198 @@
     ]
   },
   {
+    "path": "/api/admin/backups/schedule",
+    "method": "PUT",
+    "summary": "Update Backup Schedule",
+    "tags": [
+      "Backup & Restore"
+    ],
+    "operationId": "update_backup_schedule_api_admin_backups_schedule_put",
+    "parameters": [],
+    "has_request_body": true,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "path": "/api/admin/backups/schedule/run-now",
+    "method": "POST",
+    "summary": "Run Auto Backup Now",
+    "tags": [
+      "Backup & Restore"
+    ],
+    "operationId": "run_auto_backup_now_api_admin_backups_schedule_run_now_post",
+    "parameters": [],
+    "has_request_body": false,
+    "responses": [
+      "200"
+    ]
+  },
+  {
+    "path": "/api/admin/backups/import",
+    "method": "POST",
+    "summary": "Import Backup File",
+    "tags": [
+      "Backup & Restore"
+    ],
+    "operationId": "import_backup_file_api_admin_backups_import_post",
+    "parameters": [],
+    "has_request_body": true,
+    "responses": [
+      "201",
+      "422"
+    ]
+  },
+  {
+    "path": "/api/admin/backups",
     "method": "GET",
+    "summary": "List Backups",
+    "tags": [
+      "Backup & Restore"
+    ],
+    "operationId": "list_backups_api_admin_backups_get",
+    "parameters": [],
+    "has_request_body": false,
+    "responses": [
+      "200"
+    ]
+  },
+  {
+    "path": "/api/admin/backups",
+    "method": "POST",
+    "summary": "Create Backup",
+    "tags": [
+      "Backup & Restore"
+    ],
+    "operationId": "create_backup_api_admin_backups_post",
+    "parameters": [],
+    "has_request_body": false,
+    "responses": [
+      "201"
+    ]
+  },
+  {
+    "path": "/api/admin/backups/summary",
+    "method": "GET",
+    "summary": "Get Summary",
+    "tags": [
+      "Backup & Restore"
+    ],
+    "operationId": "get_summary_api_admin_backups_summary_get",
+    "parameters": [],
+    "has_request_body": false,
+    "responses": [
+      "200"
+    ]
+  },
+  {
+    "path": "/api/admin/backups/{backup_id}",
+    "method": "GET",
+    "summary": "Get Backup",
+    "tags": [
+      "Backup & Restore"
+    ],
+    "operationId": "get_backup_api_admin_backups__backup_id__get",
+    "parameters": [
+      "backup_id"
+    ],
+    "has_request_body": false,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "path": "/api/admin/backups/{backup_id}",
+    "method": "DELETE",
+    "summary": "Delete Backup",
+    "tags": [
+      "Backup & Restore"
+    ],
+    "operationId": "delete_backup_api_admin_backups__backup_id__delete",
+    "parameters": [
+      "backup_id"
+    ],
+    "has_request_body": false,
+    "responses": [
+      "204",
+      "422"
+    ]
+  },
+  {
+    "path": "/api/admin/backups/{backup_id}/download",
+    "method": "GET",
+    "summary": "Download Backup",
+    "tags": [
+      "Backup & Restore"
+    ],
+    "operationId": "download_backup_api_admin_backups__backup_id__download_get",
+    "parameters": [
+      "backup_id"
+    ],
+    "has_request_body": false,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "path": "/api/admin/backups/{backup_id}/validate",
+    "method": "POST",
+    "summary": "Validate Backup",
+    "tags": [
+      "Backup & Restore"
+    ],
+    "operationId": "validate_backup_api_admin_backups__backup_id__validate_post",
+    "parameters": [
+      "backup_id"
+    ],
+    "has_request_body": false,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "path": "/api/admin/backups/{backup_id}/restore",
+    "method": "POST",
+    "summary": "Restore Backup",
+    "tags": [
+      "Backup & Restore"
+    ],
+    "operationId": "restore_backup_api_admin_backups__backup_id__restore_post",
+    "parameters": [
+      "backup_id"
+    ],
+    "has_request_body": true,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "path": "/governance/overview",
+    "method": "GET",
+    "summary": "Get Overview",
+    "tags": [
+      "Governance Command Center"
+    ],
+    "operationId": "get_overview_governance_overview_get",
+    "parameters": [],
+    "has_request_body": false,
+    "responses": [
+      "200"
+    ]
+  },
+  {
     "path": "/governance/search",
+    "method": "GET",
     "summary": "Search Entities",
     "tags": [
       "Governance Command Center"
     ],
+    "operationId": "search_entities_governance_search_get",
     "parameters": [
       "q"
     ],
@@ -2966,12 +6281,13 @@
     ]
   },
   {
-    "method": "GET",
     "path": "/governance/candidates/{leave_id}",
+    "method": "GET",
     "summary": "Get Candidates For Leave",
     "tags": [
       "Governance Command Center"
     ],
+    "operationId": "get_candidates_for_leave_governance_candidates__leave_id__get",
     "parameters": [
       "leave_id"
     ],
@@ -2982,12 +6298,13 @@
     ]
   },
   {
-    "method": "POST",
     "path": "/governance/emergency-override",
+    "method": "POST",
     "summary": "Emergency Override",
     "tags": [
       "Governance Command Center"
     ],
+    "operationId": "emergency_override_governance_emergency_override_post",
     "parameters": [],
     "has_request_body": true,
     "responses": [
@@ -2996,12 +6313,13 @@
     ]
   },
   {
-    "method": "POST",
     "path": "/governance/assign-substitute",
+    "method": "POST",
     "summary": "Assign Substitute",
     "tags": [
       "Governance Command Center"
     ],
+    "operationId": "assign_substitute_governance_assign_substitute_post",
     "parameters": [],
     "has_request_body": true,
     "responses": [
@@ -3010,12 +6328,91 @@
     ]
   },
   {
+    "path": "/api/governance/overview",
     "method": "GET",
+    "summary": "Get Overview",
+    "tags": [
+      "Governance Command Center"
+    ],
+    "operationId": "get_overview_api_governance_overview_get",
+    "parameters": [],
+    "has_request_body": false,
+    "responses": [
+      "200"
+    ]
+  },
+  {
+    "path": "/api/governance/search",
+    "method": "GET",
+    "summary": "Search Entities",
+    "tags": [
+      "Governance Command Center"
+    ],
+    "operationId": "search_entities_api_governance_search_get",
+    "parameters": [
+      "q"
+    ],
+    "has_request_body": false,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "path": "/api/governance/candidates/{leave_id}",
+    "method": "GET",
+    "summary": "Get Candidates For Leave",
+    "tags": [
+      "Governance Command Center"
+    ],
+    "operationId": "get_candidates_for_leave_api_governance_candidates__leave_id__get",
+    "parameters": [
+      "leave_id"
+    ],
+    "has_request_body": false,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "path": "/api/governance/emergency-override",
+    "method": "POST",
+    "summary": "Emergency Override",
+    "tags": [
+      "Governance Command Center"
+    ],
+    "operationId": "emergency_override_api_governance_emergency_override_post",
+    "parameters": [],
+    "has_request_body": true,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "path": "/api/governance/assign-substitute",
+    "method": "POST",
+    "summary": "Assign Substitute",
+    "tags": [
+      "Governance Command Center"
+    ],
+    "operationId": "assign_substitute_api_governance_assign_substitute_post",
+    "parameters": [],
+    "has_request_body": true,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
     "path": "/admin/data-retention/stats",
+    "method": "GET",
     "summary": "Get Storage Stats",
     "tags": [
       "Data Retention & Purge"
     ],
+    "operationId": "get_storage_stats_admin_data_retention_stats_get",
     "parameters": [],
     "has_request_body": false,
     "responses": [
@@ -3023,12 +6420,13 @@
     ]
   },
   {
-    "method": "GET",
     "path": "/admin/data-retention/policy",
+    "method": "GET",
     "summary": "Get Retention Policy",
     "tags": [
       "Data Retention & Purge"
     ],
+    "operationId": "get_retention_policy_admin_data_retention_policy_get",
     "parameters": [],
     "has_request_body": false,
     "responses": [
@@ -3036,12 +6434,13 @@
     ]
   },
   {
-    "method": "PUT",
     "path": "/admin/data-retention/policy",
+    "method": "PUT",
     "summary": "Update Retention Policy",
     "tags": [
       "Data Retention & Purge"
     ],
+    "operationId": "update_retention_policy_admin_data_retention_policy_put",
     "parameters": [],
     "has_request_body": true,
     "responses": [
@@ -3050,12 +6449,13 @@
     ]
   },
   {
-    "method": "POST",
     "path": "/admin/data-retention/run-auto-cleanup",
+    "method": "POST",
     "summary": "Run Auto Cleanup Now",
     "tags": [
       "Data Retention & Purge"
     ],
+    "operationId": "run_auto_cleanup_now_admin_data_retention_run_auto_cleanup_post",
     "parameters": [],
     "has_request_body": false,
     "responses": [
@@ -3063,12 +6463,13 @@
     ]
   },
   {
-    "method": "POST",
     "path": "/admin/data-retention/preview",
+    "method": "POST",
     "summary": "Preview Selective Purge",
     "tags": [
       "Data Retention & Purge"
     ],
+    "operationId": "preview_selective_purge_admin_data_retention_preview_post",
     "parameters": [],
     "has_request_body": true,
     "responses": [
@@ -3077,12 +6478,13 @@
     ]
   },
   {
-    "method": "POST",
     "path": "/admin/data-retention/purge",
+    "method": "POST",
     "summary": "Execute Selective Purge",
     "tags": [
       "Data Retention & Purge"
     ],
+    "operationId": "execute_selective_purge_admin_data_retention_purge_post",
     "parameters": [],
     "has_request_body": true,
     "responses": [
@@ -3091,26 +6493,13 @@
     ]
   },
   {
-    "method": "POST",
-    "path": "/geofences/test-location",
-    "summary": "Test Campus Location",
-    "tags": [
-      "Campus Geofences"
-    ],
-    "parameters": [],
-    "has_request_body": true,
-    "responses": [
-      "200",
-      "422"
-    ]
-  },
-  {
+    "path": "/api/admin/data-retention/stats",
     "method": "GET",
-    "path": "/geofences/active",
-    "summary": "Get Active Geofences For Mobile",
+    "summary": "Get Storage Stats",
     "tags": [
-      "Campus Geofences"
+      "Data Retention & Purge"
     ],
+    "operationId": "get_storage_stats_api_admin_data_retention_stats_get",
     "parameters": [],
     "has_request_body": false,
     "responses": [
@@ -3118,12 +6507,115 @@
     ]
   },
   {
+    "path": "/api/admin/data-retention/policy",
     "method": "GET",
+    "summary": "Get Retention Policy",
+    "tags": [
+      "Data Retention & Purge"
+    ],
+    "operationId": "get_retention_policy_api_admin_data_retention_policy_get",
+    "parameters": [],
+    "has_request_body": false,
+    "responses": [
+      "200"
+    ]
+  },
+  {
+    "path": "/api/admin/data-retention/policy",
+    "method": "PUT",
+    "summary": "Update Retention Policy",
+    "tags": [
+      "Data Retention & Purge"
+    ],
+    "operationId": "update_retention_policy_api_admin_data_retention_policy_put",
+    "parameters": [],
+    "has_request_body": true,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "path": "/api/admin/data-retention/run-auto-cleanup",
+    "method": "POST",
+    "summary": "Run Auto Cleanup Now",
+    "tags": [
+      "Data Retention & Purge"
+    ],
+    "operationId": "run_auto_cleanup_now_api_admin_data_retention_run_auto_cleanup_post",
+    "parameters": [],
+    "has_request_body": false,
+    "responses": [
+      "200"
+    ]
+  },
+  {
+    "path": "/api/admin/data-retention/preview",
+    "method": "POST",
+    "summary": "Preview Selective Purge",
+    "tags": [
+      "Data Retention & Purge"
+    ],
+    "operationId": "preview_selective_purge_api_admin_data_retention_preview_post",
+    "parameters": [],
+    "has_request_body": true,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "path": "/api/admin/data-retention/purge",
+    "method": "POST",
+    "summary": "Execute Selective Purge",
+    "tags": [
+      "Data Retention & Purge"
+    ],
+    "operationId": "execute_selective_purge_api_admin_data_retention_purge_post",
+    "parameters": [],
+    "has_request_body": true,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "path": "/geofences/test-location",
+    "method": "POST",
+    "summary": "Test Campus Location",
+    "tags": [
+      "Campus Geofences"
+    ],
+    "operationId": "test_campus_location_geofences_test_location_post",
+    "parameters": [],
+    "has_request_body": true,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "path": "/geofences/active",
+    "method": "GET",
+    "summary": "Get Active Geofences For Mobile",
+    "tags": [
+      "Campus Geofences"
+    ],
+    "operationId": "get_active_geofences_for_mobile_geofences_active_get",
+    "parameters": [],
+    "has_request_body": false,
+    "responses": [
+      "200"
+    ]
+  },
+  {
     "path": "/geofences/",
+    "method": "GET",
     "summary": "List All Geofences Admin",
     "tags": [
       "Campus Geofences"
     ],
+    "operationId": "list_all_geofences_admin_geofences__get",
     "parameters": [
       "is_active"
     ],
@@ -3134,12 +6626,13 @@
     ]
   },
   {
-    "method": "POST",
     "path": "/geofences/",
+    "method": "POST",
     "summary": "Create Geofence Admin",
     "tags": [
       "Campus Geofences"
     ],
+    "operationId": "create_geofence_admin_geofences__post",
     "parameters": [],
     "has_request_body": true,
     "responses": [
@@ -3148,12 +6641,13 @@
     ]
   },
   {
-    "method": "GET",
     "path": "/geofences/{geofence_id}",
+    "method": "GET",
     "summary": "Get Geofence Admin",
     "tags": [
       "Campus Geofences"
     ],
+    "operationId": "get_geofence_admin_geofences__geofence_id__get",
     "parameters": [
       "geofence_id"
     ],
@@ -3164,12 +6658,13 @@
     ]
   },
   {
-    "method": "PUT",
     "path": "/geofences/{geofence_id}",
+    "method": "PUT",
     "summary": "Update Geofence Admin",
     "tags": [
       "Campus Geofences"
     ],
+    "operationId": "update_geofence_admin_geofences__geofence_id__put",
     "parameters": [
       "geofence_id"
     ],
@@ -3180,12 +6675,13 @@
     ]
   },
   {
-    "method": "DELETE",
     "path": "/geofences/{geofence_id}",
+    "method": "DELETE",
     "summary": "Delete Geofence Admin",
     "tags": [
       "Campus Geofences"
     ],
+    "operationId": "delete_geofence_admin_geofences__geofence_id__delete",
     "parameters": [
       "geofence_id"
     ],
@@ -3196,12 +6692,13 @@
     ]
   },
   {
-    "method": "PATCH",
     "path": "/geofences/{geofence_id}/toggle",
+    "method": "PATCH",
     "summary": "Toggle Geofence Admin",
     "tags": [
       "Campus Geofences"
     ],
+    "operationId": "toggle_geofence_admin_geofences__geofence_id__toggle_patch",
     "parameters": [
       "geofence_id",
       "is_active"
@@ -3213,12 +6710,13 @@
     ]
   },
   {
+    "path": "/api/geofences/test-location",
     "method": "POST",
-    "path": "/attendance/check-in",
-    "summary": "Check In",
+    "summary": "Test Campus Location",
     "tags": [
-      "Staff Attendance"
+      "Campus Geofences"
     ],
+    "operationId": "test_campus_location_api_geofences_test_location_post",
     "parameters": [],
     "has_request_body": true,
     "responses": [
@@ -3227,26 +6725,13 @@
     ]
   },
   {
-    "method": "POST",
-    "path": "/attendance/check-out",
-    "summary": "Check Out",
-    "tags": [
-      "Staff Attendance"
-    ],
-    "parameters": [],
-    "has_request_body": true,
-    "responses": [
-      "200",
-      "422"
-    ]
-  },
-  {
+    "path": "/api/geofences/active",
     "method": "GET",
-    "path": "/attendance/today",
-    "summary": "Get Today Summary",
+    "summary": "Get Active Geofences For Mobile",
     "tags": [
-      "Staff Attendance"
+      "Campus Geofences"
     ],
+    "operationId": "get_active_geofences_for_mobile_api_geofences_active_get",
     "parameters": [],
     "has_request_body": false,
     "responses": [
@@ -3254,12 +6739,158 @@
     ]
   },
   {
+    "path": "/api/geofences/",
     "method": "GET",
+    "summary": "List All Geofences Admin",
+    "tags": [
+      "Campus Geofences"
+    ],
+    "operationId": "list_all_geofences_admin_api_geofences__get",
+    "parameters": [
+      "is_active"
+    ],
+    "has_request_body": false,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "path": "/api/geofences/",
+    "method": "POST",
+    "summary": "Create Geofence Admin",
+    "tags": [
+      "Campus Geofences"
+    ],
+    "operationId": "create_geofence_admin_api_geofences__post",
+    "parameters": [],
+    "has_request_body": true,
+    "responses": [
+      "201",
+      "422"
+    ]
+  },
+  {
+    "path": "/api/geofences/{geofence_id}",
+    "method": "GET",
+    "summary": "Get Geofence Admin",
+    "tags": [
+      "Campus Geofences"
+    ],
+    "operationId": "get_geofence_admin_api_geofences__geofence_id__get",
+    "parameters": [
+      "geofence_id"
+    ],
+    "has_request_body": false,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "path": "/api/geofences/{geofence_id}",
+    "method": "PUT",
+    "summary": "Update Geofence Admin",
+    "tags": [
+      "Campus Geofences"
+    ],
+    "operationId": "update_geofence_admin_api_geofences__geofence_id__put",
+    "parameters": [
+      "geofence_id"
+    ],
+    "has_request_body": true,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "path": "/api/geofences/{geofence_id}",
+    "method": "DELETE",
+    "summary": "Delete Geofence Admin",
+    "tags": [
+      "Campus Geofences"
+    ],
+    "operationId": "delete_geofence_admin_api_geofences__geofence_id__delete",
+    "parameters": [
+      "geofence_id"
+    ],
+    "has_request_body": false,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "path": "/api/geofences/{geofence_id}/toggle",
+    "method": "PATCH",
+    "summary": "Toggle Geofence Admin",
+    "tags": [
+      "Campus Geofences"
+    ],
+    "operationId": "toggle_geofence_admin_api_geofences__geofence_id__toggle_patch",
+    "parameters": [
+      "geofence_id",
+      "is_active"
+    ],
+    "has_request_body": false,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "path": "/attendance/check-in",
+    "method": "POST",
+    "summary": "Check In",
+    "tags": [
+      "Staff Attendance"
+    ],
+    "operationId": "check_in_attendance_check_in_post",
+    "parameters": [],
+    "has_request_body": true,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "path": "/attendance/check-out",
+    "method": "POST",
+    "summary": "Check Out",
+    "tags": [
+      "Staff Attendance"
+    ],
+    "operationId": "check_out_attendance_check_out_post",
+    "parameters": [],
+    "has_request_body": true,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "path": "/attendance/today",
+    "method": "GET",
+    "summary": "Get Today Summary",
+    "tags": [
+      "Staff Attendance"
+    ],
+    "operationId": "get_today_summary_attendance_today_get",
+    "parameters": [],
+    "has_request_body": false,
+    "responses": [
+      "200"
+    ]
+  },
+  {
     "path": "/attendance/my",
+    "method": "GET",
     "summary": "Get My Attendance History",
     "tags": [
       "Staff Attendance"
     ],
+    "operationId": "get_my_attendance_history_attendance_my_get",
     "parameters": [
       "limit",
       "offset"
@@ -3271,12 +6902,13 @@
     ]
   },
   {
-    "method": "GET",
     "path": "/attendance/admin/live-status",
+    "method": "GET",
     "summary": "Get Supervisor Live Status",
     "tags": [
       "Staff Attendance"
     ],
+    "operationId": "get_supervisor_live_status_attendance_admin_live_status_get",
     "parameters": [],
     "has_request_body": false,
     "responses": [
@@ -3284,12 +6916,89 @@
     ]
   },
   {
+    "path": "/api/attendance/check-in",
+    "method": "POST",
+    "summary": "Check In",
+    "tags": [
+      "Staff Attendance"
+    ],
+    "operationId": "check_in_api_attendance_check_in_post",
+    "parameters": [],
+    "has_request_body": true,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "path": "/api/attendance/check-out",
+    "method": "POST",
+    "summary": "Check Out",
+    "tags": [
+      "Staff Attendance"
+    ],
+    "operationId": "check_out_api_attendance_check_out_post",
+    "parameters": [],
+    "has_request_body": true,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "path": "/api/attendance/today",
     "method": "GET",
+    "summary": "Get Today Summary",
+    "tags": [
+      "Staff Attendance"
+    ],
+    "operationId": "get_today_summary_api_attendance_today_get",
+    "parameters": [],
+    "has_request_body": false,
+    "responses": [
+      "200"
+    ]
+  },
+  {
+    "path": "/api/attendance/my",
+    "method": "GET",
+    "summary": "Get My Attendance History",
+    "tags": [
+      "Staff Attendance"
+    ],
+    "operationId": "get_my_attendance_history_api_attendance_my_get",
+    "parameters": [
+      "limit",
+      "offset"
+    ],
+    "has_request_body": false,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "path": "/api/attendance/admin/live-status",
+    "method": "GET",
+    "summary": "Get Supervisor Live Status",
+    "tags": [
+      "Staff Attendance"
+    ],
+    "operationId": "get_supervisor_live_status_api_attendance_admin_live_status_get",
+    "parameters": [],
+    "has_request_body": false,
+    "responses": [
+      "200"
+    ]
+  },
+  {
     "path": "/system/dashboard",
+    "method": "GET",
     "summary": "Get Control Panel Dashboard",
     "tags": [
       "Governance Control Plane"
     ],
+    "operationId": "get_control_panel_dashboard_system_dashboard_get",
     "parameters": [],
     "has_request_body": false,
     "responses": [
@@ -3297,12 +7006,13 @@
     ]
   },
   {
-    "method": "GET",
     "path": "/system/institutions",
+    "method": "GET",
     "summary": "List Institutions",
     "tags": [
       "Governance Control Plane"
     ],
+    "operationId": "list_institutions_system_institutions_get",
     "parameters": [],
     "has_request_body": false,
     "responses": [
@@ -3310,12 +7020,13 @@
     ]
   },
   {
-    "method": "POST",
     "path": "/system/institutions",
+    "method": "POST",
     "summary": "Create Institution",
     "tags": [
       "Governance Control Plane"
     ],
+    "operationId": "create_institution_system_institutions_post",
     "parameters": [],
     "has_request_body": true,
     "responses": [
@@ -3324,12 +7035,13 @@
     ]
   },
   {
-    "method": "GET",
     "path": "/system/institutions/{institution_id}",
+    "method": "GET",
     "summary": "Get Institution",
     "tags": [
       "Governance Control Plane"
     ],
+    "operationId": "get_institution_system_institutions__institution_id__get",
     "parameters": [
       "institution_id"
     ],
@@ -3340,12 +7052,13 @@
     ]
   },
   {
-    "method": "PUT",
     "path": "/system/institutions/{institution_id}",
+    "method": "PUT",
     "summary": "Update Institution",
     "tags": [
       "Governance Control Plane"
     ],
+    "operationId": "update_institution_system_institutions__institution_id__put",
     "parameters": [
       "institution_id"
     ],
@@ -3356,12 +7069,13 @@
     ]
   },
   {
-    "method": "POST",
     "path": "/system/institutions/{institution_id}/assign-plan",
+    "method": "POST",
     "summary": "Assign Plan",
     "tags": [
       "Governance Control Plane"
     ],
+    "operationId": "assign_plan_system_institutions__institution_id__assign_plan_post",
     "parameters": [
       "institution_id",
       "plan"
@@ -3373,12 +7087,13 @@
     ]
   },
   {
-    "method": "GET",
     "path": "/system/institutions/{institution_id}/features",
+    "method": "GET",
     "summary": "List Features",
     "tags": [
       "Governance Control Plane"
     ],
+    "operationId": "list_features_system_institutions__institution_id__features_get",
     "parameters": [
       "institution_id"
     ],
@@ -3389,12 +7104,13 @@
     ]
   },
   {
-    "method": "POST",
     "path": "/system/institutions/{institution_id}/features/{feature_key}/enable",
+    "method": "POST",
     "summary": "Enable Feature",
     "tags": [
       "Governance Control Plane"
     ],
+    "operationId": "enable_feature_system_institutions__institution_id__features__feature_key__enable_post",
     "parameters": [
       "institution_id",
       "feature_key"
@@ -3406,12 +7122,13 @@
     ]
   },
   {
-    "method": "POST",
     "path": "/system/institutions/{institution_id}/features/{feature_key}/disable",
+    "method": "POST",
     "summary": "Disable Feature",
     "tags": [
       "Governance Control Plane"
     ],
+    "operationId": "disable_feature_system_institutions__institution_id__features__feature_key__disable_post",
     "parameters": [
       "institution_id",
       "feature_key"
@@ -3423,12 +7140,13 @@
     ]
   },
   {
-    "method": "POST",
     "path": "/system/institutions/{institution_id}/features/{feature_key}/lock",
+    "method": "POST",
     "summary": "Lock Feature",
     "tags": [
       "Governance Control Plane"
     ],
+    "operationId": "lock_feature_system_institutions__institution_id__features__feature_key__lock_post",
     "parameters": [
       "institution_id",
       "feature_key"
@@ -3440,12 +7158,13 @@
     ]
   },
   {
-    "method": "POST",
     "path": "/system/institutions/{institution_id}/features/{feature_key}/unlock",
+    "method": "POST",
     "summary": "Unlock Feature",
     "tags": [
       "Governance Control Plane"
     ],
+    "operationId": "unlock_feature_system_institutions__institution_id__features__feature_key__unlock_post",
     "parameters": [
       "institution_id",
       "feature_key"
@@ -3457,12 +7176,13 @@
     ]
   },
   {
-    "method": "GET",
     "path": "/system/institutions/{institution_id}/biometric-policy",
+    "method": "GET",
     "summary": "Get Biometric Policy",
     "tags": [
       "Governance Control Plane"
     ],
+    "operationId": "get_biometric_policy_system_institutions__institution_id__biometric_policy_get",
     "parameters": [
       "institution_id"
     ],
@@ -3473,12 +7193,13 @@
     ]
   },
   {
-    "method": "PUT",
     "path": "/system/institutions/{institution_id}/biometric-policy",
+    "method": "PUT",
     "summary": "Update Biometric Policy",
     "tags": [
       "Governance Control Plane"
     ],
+    "operationId": "update_biometric_policy_system_institutions__institution_id__biometric_policy_put",
     "parameters": [
       "institution_id"
     ],
@@ -3489,12 +7210,13 @@
     ]
   },
   {
-    "method": "GET",
     "path": "/system/institutions/{institution_id}/policy",
+    "method": "GET",
     "summary": "Get Institution Policy",
     "tags": [
       "Governance Control Plane"
     ],
+    "operationId": "get_institution_policy_system_institutions__institution_id__policy_get",
     "parameters": [
       "institution_id"
     ],
@@ -3505,12 +7227,13 @@
     ]
   },
   {
-    "method": "GET",
     "path": "/system/audit-logs",
+    "method": "GET",
     "summary": "List Audit Logs",
     "tags": [
       "Governance Control Plane"
     ],
+    "operationId": "list_audit_logs_system_audit_logs_get",
     "parameters": [
       "institution_id",
       "limit",
@@ -3523,12 +7246,1535 @@
     ]
   },
   {
+    "path": "/api/system/dashboard",
     "method": "GET",
+    "summary": "Get Control Panel Dashboard",
+    "tags": [
+      "Governance Control Plane"
+    ],
+    "operationId": "get_control_panel_dashboard_api_system_dashboard_get",
+    "parameters": [],
+    "has_request_body": false,
+    "responses": [
+      "200"
+    ]
+  },
+  {
+    "path": "/api/system/institutions",
+    "method": "GET",
+    "summary": "List Institutions",
+    "tags": [
+      "Governance Control Plane"
+    ],
+    "operationId": "list_institutions_api_system_institutions_get",
+    "parameters": [],
+    "has_request_body": false,
+    "responses": [
+      "200"
+    ]
+  },
+  {
+    "path": "/api/system/institutions",
+    "method": "POST",
+    "summary": "Create Institution",
+    "tags": [
+      "Governance Control Plane"
+    ],
+    "operationId": "create_institution_api_system_institutions_post",
+    "parameters": [],
+    "has_request_body": true,
+    "responses": [
+      "201",
+      "422"
+    ]
+  },
+  {
+    "path": "/api/system/institutions/{institution_id}",
+    "method": "GET",
+    "summary": "Get Institution",
+    "tags": [
+      "Governance Control Plane"
+    ],
+    "operationId": "get_institution_api_system_institutions__institution_id__get",
+    "parameters": [
+      "institution_id"
+    ],
+    "has_request_body": false,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "path": "/api/system/institutions/{institution_id}",
+    "method": "PUT",
+    "summary": "Update Institution",
+    "tags": [
+      "Governance Control Plane"
+    ],
+    "operationId": "update_institution_api_system_institutions__institution_id__put",
+    "parameters": [
+      "institution_id"
+    ],
+    "has_request_body": true,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "path": "/api/system/institutions/{institution_id}/assign-plan",
+    "method": "POST",
+    "summary": "Assign Plan",
+    "tags": [
+      "Governance Control Plane"
+    ],
+    "operationId": "assign_plan_api_system_institutions__institution_id__assign_plan_post",
+    "parameters": [
+      "institution_id",
+      "plan"
+    ],
+    "has_request_body": false,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "path": "/api/system/institutions/{institution_id}/features",
+    "method": "GET",
+    "summary": "List Features",
+    "tags": [
+      "Governance Control Plane"
+    ],
+    "operationId": "list_features_api_system_institutions__institution_id__features_get",
+    "parameters": [
+      "institution_id"
+    ],
+    "has_request_body": false,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "path": "/api/system/institutions/{institution_id}/features/{feature_key}/enable",
+    "method": "POST",
+    "summary": "Enable Feature",
+    "tags": [
+      "Governance Control Plane"
+    ],
+    "operationId": "enable_feature_api_system_institutions__institution_id__features__feature_key__enable_post",
+    "parameters": [
+      "institution_id",
+      "feature_key"
+    ],
+    "has_request_body": true,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "path": "/api/system/institutions/{institution_id}/features/{feature_key}/disable",
+    "method": "POST",
+    "summary": "Disable Feature",
+    "tags": [
+      "Governance Control Plane"
+    ],
+    "operationId": "disable_feature_api_system_institutions__institution_id__features__feature_key__disable_post",
+    "parameters": [
+      "institution_id",
+      "feature_key"
+    ],
+    "has_request_body": true,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "path": "/api/system/institutions/{institution_id}/features/{feature_key}/lock",
+    "method": "POST",
+    "summary": "Lock Feature",
+    "tags": [
+      "Governance Control Plane"
+    ],
+    "operationId": "lock_feature_api_system_institutions__institution_id__features__feature_key__lock_post",
+    "parameters": [
+      "institution_id",
+      "feature_key"
+    ],
+    "has_request_body": true,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "path": "/api/system/institutions/{institution_id}/features/{feature_key}/unlock",
+    "method": "POST",
+    "summary": "Unlock Feature",
+    "tags": [
+      "Governance Control Plane"
+    ],
+    "operationId": "unlock_feature_api_system_institutions__institution_id__features__feature_key__unlock_post",
+    "parameters": [
+      "institution_id",
+      "feature_key"
+    ],
+    "has_request_body": true,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "path": "/api/system/institutions/{institution_id}/biometric-policy",
+    "method": "GET",
+    "summary": "Get Biometric Policy",
+    "tags": [
+      "Governance Control Plane"
+    ],
+    "operationId": "get_biometric_policy_api_system_institutions__institution_id__biometric_policy_get",
+    "parameters": [
+      "institution_id"
+    ],
+    "has_request_body": false,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "path": "/api/system/institutions/{institution_id}/biometric-policy",
+    "method": "PUT",
+    "summary": "Update Biometric Policy",
+    "tags": [
+      "Governance Control Plane"
+    ],
+    "operationId": "update_biometric_policy_api_system_institutions__institution_id__biometric_policy_put",
+    "parameters": [
+      "institution_id"
+    ],
+    "has_request_body": true,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "path": "/api/system/institutions/{institution_id}/policy",
+    "method": "GET",
+    "summary": "Get Institution Policy",
+    "tags": [
+      "Governance Control Plane"
+    ],
+    "operationId": "get_institution_policy_api_system_institutions__institution_id__policy_get",
+    "parameters": [
+      "institution_id"
+    ],
+    "has_request_body": false,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "path": "/api/system/audit-logs",
+    "method": "GET",
+    "summary": "List Audit Logs",
+    "tags": [
+      "Governance Control Plane"
+    ],
+    "operationId": "list_audit_logs_api_system_audit_logs_get",
+    "parameters": [
+      "institution_id",
+      "limit",
+      "offset"
+    ],
+    "has_request_body": false,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "path": "/student-attendance/today",
+    "method": "GET",
+    "summary": "Get Teacher Today Attendance",
+    "tags": [
+      "Student Attendance"
+    ],
+    "operationId": "get_teacher_today_attendance_student_attendance_today_get",
+    "parameters": [
+      "target_date"
+    ],
+    "has_request_body": false,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "path": "/student-attendance/classes/{class_id}/roster",
+    "method": "GET",
+    "summary": "Get Class Roster",
+    "tags": [
+      "Student Attendance"
+    ],
+    "operationId": "get_class_roster_student_attendance_classes__class_id__roster_get",
+    "parameters": [
+      "class_id"
+    ],
+    "has_request_body": false,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "path": "/student-attendance/sessions/{id}",
+    "method": "GET",
+    "summary": "Get Session Details",
+    "tags": [
+      "Student Attendance"
+    ],
+    "operationId": "get_session_details_student_attendance_sessions__id__get",
+    "parameters": [
+      "id"
+    ],
+    "has_request_body": false,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "path": "/student-attendance/sessions",
+    "method": "POST",
+    "summary": "Create Or Get Session",
+    "tags": [
+      "Student Attendance"
+    ],
+    "operationId": "create_or_get_session_student_attendance_sessions_post",
+    "parameters": [],
+    "has_request_body": true,
+    "responses": [
+      "201",
+      "422"
+    ]
+  },
+  {
+    "path": "/student-attendance/sessions/{id}/submit",
+    "method": "POST",
+    "summary": "Submit Attendance By Id",
+    "tags": [
+      "Student Attendance"
+    ],
+    "operationId": "submit_attendance_by_id_student_attendance_sessions__id__submit_post",
+    "parameters": [
+      "id"
+    ],
+    "has_request_body": true,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "path": "/student-attendance/sessions/submit",
+    "method": "POST",
+    "summary": "Submit Attendance",
+    "tags": [
+      "Student Attendance"
+    ],
+    "operationId": "submit_attendance_student_attendance_sessions_submit_post",
+    "parameters": [],
+    "has_request_body": true,
+    "responses": [
+      "201",
+      "422"
+    ]
+  },
+  {
+    "path": "/student-attendance/emergency",
+    "method": "POST",
+    "summary": "Emergency Attendance",
+    "tags": [
+      "Student Attendance"
+    ],
+    "operationId": "emergency_attendance_student_attendance_emergency_post",
+    "parameters": [],
+    "has_request_body": true,
+    "responses": [
+      "201",
+      "422"
+    ]
+  },
+  {
+    "path": "/student-attendance/sessions/{id}/students/{student_id}",
+    "method": "PATCH",
+    "summary": "Correct Student Attendance",
+    "tags": [
+      "Student Attendance"
+    ],
+    "operationId": "correct_student_attendance_student_attendance_sessions__id__students__student_id__patch",
+    "parameters": [
+      "id",
+      "student_id"
+    ],
+    "has_request_body": true,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "path": "/student-attendance/sync",
+    "method": "POST",
+    "summary": "Process Offline Sync",
+    "tags": [
+      "Student Attendance"
+    ],
+    "operationId": "process_offline_sync_student_attendance_sync_post",
+    "parameters": [],
+    "has_request_body": true,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "path": "/student-attendance/hod/overview",
+    "method": "GET",
+    "summary": "Get Hod Attendance Overview",
+    "tags": [
+      "Student Attendance"
+    ],
+    "operationId": "get_hod_attendance_overview_student_attendance_hod_overview_get",
+    "parameters": [
+      "target_date"
+    ],
+    "has_request_body": false,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "path": "/student-attendance/principal/overview",
+    "method": "GET",
+    "summary": "Get Principal Overview",
+    "tags": [
+      "Student Attendance"
+    ],
+    "operationId": "get_principal_overview_student_attendance_principal_overview_get",
+    "parameters": [
+      "target_date"
+    ],
+    "has_request_body": false,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "path": "/student-attendance/principal/sessions",
+    "method": "GET",
+    "summary": "Get Principal Sessions",
+    "tags": [
+      "Student Attendance"
+    ],
+    "operationId": "get_principal_sessions_student_attendance_principal_sessions_get",
+    "parameters": [
+      "target_date",
+      "department_id",
+      "class_id",
+      "status",
+      "type",
+      "is_late",
+      "is_emergency"
+    ],
+    "has_request_body": false,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "path": "/student-attendance/principal/classes/{class_id}/matrix",
+    "method": "GET",
+    "summary": "Get Class Period Matrix",
+    "tags": [
+      "Student Attendance"
+    ],
+    "operationId": "get_class_period_matrix_student_attendance_principal_classes__class_id__matrix_get",
+    "parameters": [
+      "class_id",
+      "target_date"
+    ],
+    "has_request_body": false,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "path": "/student-attendance/principal/students/{student_id}",
+    "method": "GET",
+    "summary": "Get Student Attendance Profile",
+    "tags": [
+      "Student Attendance"
+    ],
+    "operationId": "get_student_attendance_profile_student_attendance_principal_students__student_id__get",
+    "parameters": [
+      "student_id",
+      "start_date",
+      "end_date"
+    ],
+    "has_request_body": false,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "path": "/student-attendance/principal/teacher-compliance",
+    "method": "GET",
+    "summary": "Get Teacher Submission Compliance",
+    "tags": [
+      "Student Attendance"
+    ],
+    "operationId": "get_teacher_submission_compliance_student_attendance_principal_teacher_compliance_get",
+    "parameters": [
+      "target_date",
+      "department_id"
+    ],
+    "has_request_body": false,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "path": "/student-attendance/principal/exceptions",
+    "method": "GET",
+    "summary": "Get Principal Exceptions",
+    "tags": [
+      "Student Attendance"
+    ],
+    "operationId": "get_principal_exceptions_student_attendance_principal_exceptions_get",
+    "parameters": [
+      "target_date",
+      "type",
+      "department_id"
+    ],
+    "has_request_body": false,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "path": "/student-attendance/principal/sessions/{id}/lock",
+    "method": "POST",
+    "summary": "Admin Toggle Session Lock",
+    "tags": [
+      "Student Attendance"
+    ],
+    "operationId": "admin_toggle_session_lock_student_attendance_principal_sessions__id__lock_post",
+    "parameters": [
+      "id"
+    ],
+    "has_request_body": true,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "path": "/student-attendance/principal/sessions/{id}/lock",
+    "method": "PATCH",
+    "summary": "Admin Toggle Session Lock",
+    "tags": [
+      "Student Attendance"
+    ],
+    "operationId": "admin_toggle_session_lock_student_attendance_principal_sessions__id__lock_patch",
+    "parameters": [
+      "id"
+    ],
+    "has_request_body": true,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "path": "/student-attendance/principal/sessions/{id}/students/{student_id}/override",
+    "method": "POST",
+    "summary": "Admin Override Student Attendance",
+    "tags": [
+      "Student Attendance"
+    ],
+    "operationId": "admin_override_student_attendance_student_attendance_principal_sessions__id__students__student_id__override_post",
+    "parameters": [
+      "id",
+      "student_id"
+    ],
+    "has_request_body": true,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "path": "/student-attendance/principal/sessions/{id}/students/{student_id}/override",
+    "method": "PATCH",
+    "summary": "Admin Override Student Attendance",
+    "tags": [
+      "Student Attendance"
+    ],
+    "operationId": "admin_override_student_attendance_student_attendance_principal_sessions__id__students__student_id__override_patch",
+    "parameters": [
+      "id",
+      "student_id"
+    ],
+    "has_request_body": true,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "path": "/student-attendance/principal/sessions/{id}/students/{student_id}",
+    "method": "POST",
+    "summary": "Admin Override Student Attendance",
+    "tags": [
+      "Student Attendance"
+    ],
+    "operationId": "admin_override_student_attendance_student_attendance_principal_sessions__id__students__student_id__post",
+    "parameters": [
+      "id",
+      "student_id"
+    ],
+    "has_request_body": true,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "path": "/student-attendance/principal/sessions/{id}/students/{student_id}",
+    "method": "PATCH",
+    "summary": "Admin Override Student Attendance",
+    "tags": [
+      "Student Attendance"
+    ],
+    "operationId": "admin_override_student_attendance_student_attendance_principal_sessions__id__students__student_id__patch",
+    "parameters": [
+      "id",
+      "student_id"
+    ],
+    "has_request_body": true,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "path": "/student-attendance/principal/export",
+    "method": "GET",
+    "summary": "Export Attendance Report",
+    "tags": [
+      "Student Attendance"
+    ],
+    "operationId": "export_attendance_report_student_attendance_principal_export_get",
+    "parameters": [
+      "report_type",
+      "target_date",
+      "department_id"
+    ],
+    "has_request_body": false,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "path": "/api/student-attendance/today",
+    "method": "GET",
+    "summary": "Get Teacher Today Attendance",
+    "tags": [
+      "Student Attendance"
+    ],
+    "operationId": "get_teacher_today_attendance_api_student_attendance_today_get",
+    "parameters": [
+      "target_date"
+    ],
+    "has_request_body": false,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "path": "/api/student-attendance/classes/{class_id}/roster",
+    "method": "GET",
+    "summary": "Get Class Roster",
+    "tags": [
+      "Student Attendance"
+    ],
+    "operationId": "get_class_roster_api_student_attendance_classes__class_id__roster_get",
+    "parameters": [
+      "class_id"
+    ],
+    "has_request_body": false,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "path": "/api/student-attendance/sessions/{id}",
+    "method": "GET",
+    "summary": "Get Session Details",
+    "tags": [
+      "Student Attendance"
+    ],
+    "operationId": "get_session_details_api_student_attendance_sessions__id__get",
+    "parameters": [
+      "id"
+    ],
+    "has_request_body": false,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "path": "/api/student-attendance/sessions",
+    "method": "POST",
+    "summary": "Create Or Get Session",
+    "tags": [
+      "Student Attendance"
+    ],
+    "operationId": "create_or_get_session_api_student_attendance_sessions_post",
+    "parameters": [],
+    "has_request_body": true,
+    "responses": [
+      "201",
+      "422"
+    ]
+  },
+  {
+    "path": "/api/student-attendance/sessions/{id}/submit",
+    "method": "POST",
+    "summary": "Submit Attendance By Id",
+    "tags": [
+      "Student Attendance"
+    ],
+    "operationId": "submit_attendance_by_id_api_student_attendance_sessions__id__submit_post",
+    "parameters": [
+      "id"
+    ],
+    "has_request_body": true,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "path": "/api/student-attendance/sessions/submit",
+    "method": "POST",
+    "summary": "Submit Attendance",
+    "tags": [
+      "Student Attendance"
+    ],
+    "operationId": "submit_attendance_api_student_attendance_sessions_submit_post",
+    "parameters": [],
+    "has_request_body": true,
+    "responses": [
+      "201",
+      "422"
+    ]
+  },
+  {
+    "path": "/api/student-attendance/emergency",
+    "method": "POST",
+    "summary": "Emergency Attendance",
+    "tags": [
+      "Student Attendance"
+    ],
+    "operationId": "emergency_attendance_api_student_attendance_emergency_post",
+    "parameters": [],
+    "has_request_body": true,
+    "responses": [
+      "201",
+      "422"
+    ]
+  },
+  {
+    "path": "/api/student-attendance/sessions/{id}/students/{student_id}",
+    "method": "PATCH",
+    "summary": "Correct Student Attendance",
+    "tags": [
+      "Student Attendance"
+    ],
+    "operationId": "correct_student_attendance_api_student_attendance_sessions__id__students__student_id__patch",
+    "parameters": [
+      "id",
+      "student_id"
+    ],
+    "has_request_body": true,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "path": "/api/student-attendance/sync",
+    "method": "POST",
+    "summary": "Process Offline Sync",
+    "tags": [
+      "Student Attendance"
+    ],
+    "operationId": "process_offline_sync_api_student_attendance_sync_post",
+    "parameters": [],
+    "has_request_body": true,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "path": "/api/student-attendance/hod/overview",
+    "method": "GET",
+    "summary": "Get Hod Attendance Overview",
+    "tags": [
+      "Student Attendance"
+    ],
+    "operationId": "get_hod_attendance_overview_api_student_attendance_hod_overview_get",
+    "parameters": [
+      "target_date"
+    ],
+    "has_request_body": false,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "path": "/api/student-attendance/principal/overview",
+    "method": "GET",
+    "summary": "Get Principal Overview",
+    "tags": [
+      "Student Attendance"
+    ],
+    "operationId": "get_principal_overview_api_student_attendance_principal_overview_get",
+    "parameters": [
+      "target_date"
+    ],
+    "has_request_body": false,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "path": "/api/student-attendance/principal/sessions",
+    "method": "GET",
+    "summary": "Get Principal Sessions",
+    "tags": [
+      "Student Attendance"
+    ],
+    "operationId": "get_principal_sessions_api_student_attendance_principal_sessions_get",
+    "parameters": [
+      "target_date",
+      "department_id",
+      "class_id",
+      "status",
+      "type",
+      "is_late",
+      "is_emergency"
+    ],
+    "has_request_body": false,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "path": "/api/student-attendance/principal/classes/{class_id}/matrix",
+    "method": "GET",
+    "summary": "Get Class Period Matrix",
+    "tags": [
+      "Student Attendance"
+    ],
+    "operationId": "get_class_period_matrix_api_student_attendance_principal_classes__class_id__matrix_get",
+    "parameters": [
+      "class_id",
+      "target_date"
+    ],
+    "has_request_body": false,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "path": "/api/student-attendance/principal/students/{student_id}",
+    "method": "GET",
+    "summary": "Get Student Attendance Profile",
+    "tags": [
+      "Student Attendance"
+    ],
+    "operationId": "get_student_attendance_profile_api_student_attendance_principal_students__student_id__get",
+    "parameters": [
+      "student_id",
+      "start_date",
+      "end_date"
+    ],
+    "has_request_body": false,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "path": "/api/student-attendance/principal/teacher-compliance",
+    "method": "GET",
+    "summary": "Get Teacher Submission Compliance",
+    "tags": [
+      "Student Attendance"
+    ],
+    "operationId": "get_teacher_submission_compliance_api_student_attendance_principal_teacher_compliance_get",
+    "parameters": [
+      "target_date",
+      "department_id"
+    ],
+    "has_request_body": false,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "path": "/api/student-attendance/principal/exceptions",
+    "method": "GET",
+    "summary": "Get Principal Exceptions",
+    "tags": [
+      "Student Attendance"
+    ],
+    "operationId": "get_principal_exceptions_api_student_attendance_principal_exceptions_get",
+    "parameters": [
+      "target_date",
+      "type",
+      "department_id"
+    ],
+    "has_request_body": false,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "path": "/api/student-attendance/principal/sessions/{id}/lock",
+    "method": "POST",
+    "summary": "Admin Toggle Session Lock",
+    "tags": [
+      "Student Attendance"
+    ],
+    "operationId": "admin_toggle_session_lock_api_student_attendance_principal_sessions__id__lock_post",
+    "parameters": [
+      "id"
+    ],
+    "has_request_body": true,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "path": "/api/student-attendance/principal/sessions/{id}/lock",
+    "method": "PATCH",
+    "summary": "Admin Toggle Session Lock",
+    "tags": [
+      "Student Attendance"
+    ],
+    "operationId": "admin_toggle_session_lock_api_student_attendance_principal_sessions__id__lock_patch",
+    "parameters": [
+      "id"
+    ],
+    "has_request_body": true,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "path": "/api/student-attendance/principal/sessions/{id}/students/{student_id}/override",
+    "method": "POST",
+    "summary": "Admin Override Student Attendance",
+    "tags": [
+      "Student Attendance"
+    ],
+    "operationId": "admin_override_student_attendance_api_student_attendance_principal_sessions__id__students__student_id__override_post",
+    "parameters": [
+      "id",
+      "student_id"
+    ],
+    "has_request_body": true,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "path": "/api/student-attendance/principal/sessions/{id}/students/{student_id}/override",
+    "method": "PATCH",
+    "summary": "Admin Override Student Attendance",
+    "tags": [
+      "Student Attendance"
+    ],
+    "operationId": "admin_override_student_attendance_api_student_attendance_principal_sessions__id__students__student_id__override_patch",
+    "parameters": [
+      "id",
+      "student_id"
+    ],
+    "has_request_body": true,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "path": "/api/student-attendance/principal/sessions/{id}/students/{student_id}",
+    "method": "POST",
+    "summary": "Admin Override Student Attendance",
+    "tags": [
+      "Student Attendance"
+    ],
+    "operationId": "admin_override_student_attendance_api_student_attendance_principal_sessions__id__students__student_id__post",
+    "parameters": [
+      "id",
+      "student_id"
+    ],
+    "has_request_body": true,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "path": "/api/student-attendance/principal/sessions/{id}/students/{student_id}",
+    "method": "PATCH",
+    "summary": "Admin Override Student Attendance",
+    "tags": [
+      "Student Attendance"
+    ],
+    "operationId": "admin_override_student_attendance_api_student_attendance_principal_sessions__id__students__student_id__patch",
+    "parameters": [
+      "id",
+      "student_id"
+    ],
+    "has_request_body": true,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "path": "/api/student-attendance/principal/export",
+    "method": "GET",
+    "summary": "Export Attendance Report",
+    "tags": [
+      "Student Attendance"
+    ],
+    "operationId": "export_attendance_report_api_student_attendance_principal_export_get",
+    "parameters": [
+      "report_type",
+      "target_date",
+      "department_id"
+    ],
+    "has_request_body": false,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "path": "/intelligence/live",
+    "method": "GET",
+    "summary": "Get Live Campus Intelligence",
+    "tags": [
+      "Academic Intelligence"
+    ],
+    "operationId": "get_live_campus_intelligence_intelligence_live_get",
+    "parameters": [
+      "date",
+      "department_id"
+    ],
+    "has_request_body": false,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "path": "/intelligence/events",
+    "method": "GET",
+    "summary": "Get Intelligence Events",
+    "tags": [
+      "Academic Intelligence"
+    ],
+    "operationId": "get_intelligence_events_intelligence_events_get",
+    "parameters": [
+      "date",
+      "department_id",
+      "event_type",
+      "severity",
+      "state",
+      "limit",
+      "offset"
+    ],
+    "has_request_body": false,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "path": "/intelligence/events/{id}",
+    "method": "GET",
+    "summary": "Get Event Detail",
+    "tags": [
+      "Academic Intelligence"
+    ],
+    "operationId": "get_event_detail_intelligence_events__id__get",
+    "parameters": [
+      "id"
+    ],
+    "has_request_body": false,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "path": "/intelligence/events/{id}/acknowledge",
+    "method": "PATCH",
+    "summary": "Acknowledge Intelligence Event",
+    "tags": [
+      "Academic Intelligence"
+    ],
+    "operationId": "acknowledge_intelligence_event_intelligence_events__id__acknowledge_patch",
+    "parameters": [
+      "id"
+    ],
+    "has_request_body": false,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "path": "/api/intelligence/live",
+    "method": "GET",
+    "summary": "Get Live Campus Intelligence",
+    "tags": [
+      "Academic Intelligence"
+    ],
+    "operationId": "get_live_campus_intelligence_api_intelligence_live_get",
+    "parameters": [
+      "date",
+      "department_id"
+    ],
+    "has_request_body": false,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "path": "/api/intelligence/events",
+    "method": "GET",
+    "summary": "Get Intelligence Events",
+    "tags": [
+      "Academic Intelligence"
+    ],
+    "operationId": "get_intelligence_events_api_intelligence_events_get",
+    "parameters": [
+      "date",
+      "department_id",
+      "event_type",
+      "severity",
+      "state",
+      "limit",
+      "offset"
+    ],
+    "has_request_body": false,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "path": "/api/intelligence/events/{id}",
+    "method": "GET",
+    "summary": "Get Event Detail",
+    "tags": [
+      "Academic Intelligence"
+    ],
+    "operationId": "get_event_detail_api_intelligence_events__id__get",
+    "parameters": [
+      "id"
+    ],
+    "has_request_body": false,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "path": "/api/intelligence/events/{id}/acknowledge",
+    "method": "PATCH",
+    "summary": "Acknowledge Intelligence Event",
+    "tags": [
+      "Academic Intelligence"
+    ],
+    "operationId": "acknowledge_intelligence_event_api_intelligence_events__id__acknowledge_patch",
+    "parameters": [
+      "id"
+    ],
+    "has_request_body": false,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "path": "/classes/{class_id}/roll-rule",
+    "method": "GET",
+    "summary": "Get Class Roll Rule",
+    "tags": [
+      "Class Roll Configuration & Rollover"
+    ],
+    "operationId": "get_class_roll_rule_classes__class_id__roll_rule_get",
+    "parameters": [
+      "class_id",
+      "academic_year_id"
+    ],
+    "has_request_body": false,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "path": "/classes/{class_id}/roll-rule",
+    "method": "POST",
+    "summary": "Create Or Update Roll Rule",
+    "tags": [
+      "Class Roll Configuration & Rollover"
+    ],
+    "operationId": "create_or_update_roll_rule_classes__class_id__roll_rule_post",
+    "parameters": [
+      "class_id"
+    ],
+    "has_request_body": true,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "path": "/classes/{class_id}/roll-exceptions",
+    "method": "POST",
+    "summary": "Add Roll Exception",
+    "tags": [
+      "Class Roll Configuration & Rollover"
+    ],
+    "operationId": "add_roll_exception_classes__class_id__roll_exceptions_post",
+    "parameters": [
+      "class_id"
+    ],
+    "has_request_body": true,
+    "responses": [
+      "201",
+      "422"
+    ]
+  },
+  {
+    "path": "/classes/{class_id}/roll-exceptions/{exception_id}",
+    "method": "DELETE",
+    "summary": "Delete Roll Exception",
+    "tags": [
+      "Class Roll Configuration & Rollover"
+    ],
+    "operationId": "delete_roll_exception_classes__class_id__roll_exceptions__exception_id__delete",
+    "parameters": [
+      "class_id",
+      "exception_id"
+    ],
+    "has_request_body": false,
+    "responses": [
+      "204",
+      "422"
+    ]
+  },
+  {
+    "path": "/classes/{class_id}/effective-roster",
+    "method": "GET",
+    "summary": "Get Effective Class Roster",
+    "tags": [
+      "Class Roll Configuration & Rollover"
+    ],
+    "operationId": "get_effective_class_roster_classes__class_id__effective_roster_get",
+    "parameters": [
+      "class_id",
+      "academic_year_id"
+    ],
+    "has_request_body": false,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "path": "/classes/{class_id}/students/import/preview",
+    "method": "POST",
+    "summary": "Preview Student Import",
+    "tags": [
+      "Class Roll Configuration & Rollover"
+    ],
+    "operationId": "preview_student_import_classes__class_id__students_import_preview_post",
+    "parameters": [
+      "class_id",
+      "academic_year_id"
+    ],
+    "has_request_body": true,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "path": "/classes/{class_id}/students/import/commit",
+    "method": "POST",
+    "summary": "Commit Student Import",
+    "tags": [
+      "Class Roll Configuration & Rollover"
+    ],
+    "operationId": "commit_student_import_classes__class_id__students_import_commit_post",
+    "parameters": [
+      "class_id"
+    ],
+    "has_request_body": true,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "path": "/academic-years/rollover/preview",
+    "method": "POST",
+    "summary": "Preview Academic Year Rollover",
+    "tags": [
+      "Class Roll Configuration & Rollover"
+    ],
+    "operationId": "preview_academic_year_rollover_academic_years_rollover_preview_post",
+    "parameters": [
+      "from_year_id",
+      "to_year_id",
+      "department_id"
+    ],
+    "has_request_body": false,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "path": "/academic-years/rollover/execute",
+    "method": "POST",
+    "summary": "Execute Academic Year Rollover",
+    "tags": [
+      "Class Roll Configuration & Rollover"
+    ],
+    "operationId": "execute_academic_year_rollover_academic_years_rollover_execute_post",
+    "parameters": [],
+    "has_request_body": true,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "path": "/api/classes/{class_id}/roll-rule",
+    "method": "GET",
+    "summary": "Get Class Roll Rule",
+    "tags": [
+      "Class Roll Configuration & Rollover"
+    ],
+    "operationId": "get_class_roll_rule_api_classes__class_id__roll_rule_get",
+    "parameters": [
+      "class_id",
+      "academic_year_id"
+    ],
+    "has_request_body": false,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "path": "/api/classes/{class_id}/roll-rule",
+    "method": "POST",
+    "summary": "Create Or Update Roll Rule",
+    "tags": [
+      "Class Roll Configuration & Rollover"
+    ],
+    "operationId": "create_or_update_roll_rule_api_classes__class_id__roll_rule_post",
+    "parameters": [
+      "class_id"
+    ],
+    "has_request_body": true,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "path": "/api/classes/{class_id}/roll-exceptions",
+    "method": "POST",
+    "summary": "Add Roll Exception",
+    "tags": [
+      "Class Roll Configuration & Rollover"
+    ],
+    "operationId": "add_roll_exception_api_classes__class_id__roll_exceptions_post",
+    "parameters": [
+      "class_id"
+    ],
+    "has_request_body": true,
+    "responses": [
+      "201",
+      "422"
+    ]
+  },
+  {
+    "path": "/api/classes/{class_id}/roll-exceptions/{exception_id}",
+    "method": "DELETE",
+    "summary": "Delete Roll Exception",
+    "tags": [
+      "Class Roll Configuration & Rollover"
+    ],
+    "operationId": "delete_roll_exception_api_classes__class_id__roll_exceptions__exception_id__delete",
+    "parameters": [
+      "class_id",
+      "exception_id"
+    ],
+    "has_request_body": false,
+    "responses": [
+      "204",
+      "422"
+    ]
+  },
+  {
+    "path": "/api/classes/{class_id}/effective-roster",
+    "method": "GET",
+    "summary": "Get Effective Class Roster",
+    "tags": [
+      "Class Roll Configuration & Rollover"
+    ],
+    "operationId": "get_effective_class_roster_api_classes__class_id__effective_roster_get",
+    "parameters": [
+      "class_id",
+      "academic_year_id"
+    ],
+    "has_request_body": false,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "path": "/api/classes/{class_id}/students/import/preview",
+    "method": "POST",
+    "summary": "Preview Student Import",
+    "tags": [
+      "Class Roll Configuration & Rollover"
+    ],
+    "operationId": "preview_student_import_api_classes__class_id__students_import_preview_post",
+    "parameters": [
+      "class_id",
+      "academic_year_id"
+    ],
+    "has_request_body": true,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "path": "/api/classes/{class_id}/students/import/commit",
+    "method": "POST",
+    "summary": "Commit Student Import",
+    "tags": [
+      "Class Roll Configuration & Rollover"
+    ],
+    "operationId": "commit_student_import_api_classes__class_id__students_import_commit_post",
+    "parameters": [
+      "class_id"
+    ],
+    "has_request_body": true,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "path": "/api/academic-years/rollover/preview",
+    "method": "POST",
+    "summary": "Preview Academic Year Rollover",
+    "tags": [
+      "Class Roll Configuration & Rollover"
+    ],
+    "operationId": "preview_academic_year_rollover_api_academic_years_rollover_preview_post",
+    "parameters": [
+      "from_year_id",
+      "to_year_id",
+      "department_id"
+    ],
+    "has_request_body": false,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
+    "path": "/api/academic-years/rollover/execute",
+    "method": "POST",
+    "summary": "Execute Academic Year Rollover",
+    "tags": [
+      "Class Roll Configuration & Rollover"
+    ],
+    "operationId": "execute_academic_year_rollover_api_academic_years_rollover_execute_post",
+    "parameters": [],
+    "has_request_body": true,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  {
     "path": "/api/v1/health",
+    "method": "GET",
     "summary": "Health",
     "tags": [
       "Health"
     ],
+    "operationId": "health_api_v1_health_get",
     "parameters": [],
     "has_request_body": false,
     "responses": [
@@ -3536,12 +8782,27 @@
     ]
   },
   {
+    "path": "/api/health",
     "method": "GET",
+    "summary": "Health",
+    "tags": [
+      "Health"
+    ],
+    "operationId": "health_api_health_get",
+    "parameters": [],
+    "has_request_body": false,
+    "responses": [
+      "200"
+    ]
+  },
+  {
     "path": "/health",
+    "method": "GET",
     "summary": "Health",
     "tags": [
       "Health"
     ],
+    "operationId": "health_health_get",
     "parameters": [],
     "has_request_body": false,
     "responses": [
@@ -3549,12 +8810,27 @@
     ]
   },
   {
+    "path": "/api/settings/public",
     "method": "GET",
-    "path": "/settings/public",
     "summary": "Public Settings",
     "tags": [
       "Settings"
     ],
+    "operationId": "public_settings_api_settings_public_get",
+    "parameters": [],
+    "has_request_body": false,
+    "responses": [
+      "200"
+    ]
+  },
+  {
+    "path": "/settings/public",
+    "method": "GET",
+    "summary": "Public Settings",
+    "tags": [
+      "Settings"
+    ],
+    "operationId": "public_settings_settings_public_get",
     "parameters": [],
     "has_request_body": false,
     "responses": [

@@ -1,7 +1,7 @@
 {
-  "total_backend_endpoints": 230,
-  "total_frontend_calls": 210,
-  "total_android_calls": 43,
+  "total_backend_endpoints": 531,
+  "total_frontend_calls": 241,
+  "total_android_calls": 50,
   "frontend_calls_sample": [
     {
       "file": "api\\services.js",
@@ -322,6 +322,48 @@
       "method": "POST",
       "raw_path": "teachers/me/biometrics/enroll",
       "normalized_path": "/teachers/me/biometrics/enroll"
+    },
+    {
+      "file": "com\\governence\\faflow\\core\\network\\FaflowApiService.kt",
+      "method": "GET",
+      "raw_path": "student-attendance/today",
+      "normalized_path": "/student-attendance/today"
+    },
+    {
+      "file": "com\\governence\\faflow\\core\\network\\FaflowApiService.kt",
+      "method": "GET",
+      "raw_path": "student-attendance/classes/{class_id}/roster",
+      "normalized_path": "/student-attendance/classes/{id}/roster"
+    },
+    {
+      "file": "com\\governence\\faflow\\core\\network\\FaflowApiService.kt",
+      "method": "GET",
+      "raw_path": "student-attendance/sessions/{session_id}",
+      "normalized_path": "/student-attendance/sessions/{id}"
+    },
+    {
+      "file": "com\\governence\\faflow\\core\\network\\FaflowApiService.kt",
+      "method": "POST",
+      "raw_path": "student-attendance/sessions",
+      "normalized_path": "/student-attendance/sessions"
+    },
+    {
+      "file": "com\\governence\\faflow\\core\\network\\FaflowApiService.kt",
+      "method": "POST",
+      "raw_path": "student-attendance/sessions/{session_id}/submit",
+      "normalized_path": "/student-attendance/sessions/{id}/submit"
+    },
+    {
+      "file": "com\\governence\\faflow\\core\\network\\FaflowApiService.kt",
+      "method": "POST",
+      "raw_path": "student-attendance/emergency",
+      "normalized_path": "/student-attendance/emergency"
+    },
+    {
+      "file": "com\\governence\\faflow\\core\\network\\FaflowApiService.kt",
+      "method": "POST",
+      "raw_path": "student-attendance/sync",
+      "normalized_path": "/student-attendance/sync"
     }
   ]
 }

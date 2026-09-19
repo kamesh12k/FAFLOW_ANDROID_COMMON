@@ -1,9 +1,11 @@
 import { useState, useEffect } from 'react'
+import { Link } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 import { useTheme } from '../../context/ThemeContext'
 import { BRAND_CONFIG } from '../../config/branding'
 import api from '../../api/client'
 import { Spinner, Card, StatCard, Table, Tabs, Badge } from '../../components/ui'
+import { UsersIcon } from '../../components/icons'
 
 export default function PrincipalDashboard() {
   const { user } = useAuth()
@@ -86,6 +88,28 @@ export default function PrincipalDashboard() {
             <StatCard label="Pending Leave Periods" value={data.pending_leave_periods !== undefined ? data.pending_leave_periods : data.total_pending_leaves} accent="yellow" />
             <StatCard label="Teachers on Leave" value={data.teachers_on_leave_today !== undefined ? data.teachers_on_leave_today : '-'} accent="red" />
             <StatCard label="Leave Periods Today" value={data.leave_periods_today !== undefined ? data.leave_periods_today : data.total_leaves_today} accent="orange" />
+          </div>
+
+          {/* Institutional Student Attendance Quick Action Banner */}
+          <div className="p-5 bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 rounded-2xl shadow-lg border border-slate-800 text-white flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div className="flex items-center gap-3.5">
+              <div className="p-3 bg-indigo-500/20 text-indigo-300 rounded-xl border border-indigo-400/30">
+                <UsersIcon className="w-6 h-6" />
+              </div>
+              <div>
+                <h3 className="text-base font-bold tracking-tight">Institutional Student Attendance Console</h3>
+                <p className="text-xs text-slate-400 mt-0.5">
+                  Real-time hourly attendance monitoring, department rosters, faculty compliance & shortage tracking
+                </p>
+              </div>
+            </div>
+            <Link
+              to="/principal/student-attendance"
+              className="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-xl text-xs transition-colors shadow-md flex items-center justify-center gap-1.5 self-start sm:self-auto"
+            >
+              <span>Open Attendance Console</span>
+              <span>→</span>
+            </Link>
           </div>
 
           {/* Department Breakdown Grid */}

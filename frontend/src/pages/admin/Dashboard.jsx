@@ -4,13 +4,7 @@ import { useAuth } from '../../context/AuthContext'
 import { useTheme } from '../../context/ThemeContext'
 import { academicCalendarApi, teachersApi, adminApi, departmentsApi, campusOperationsApi } from '../../api/services'
 import { Spinner, DayTypeBadge, Card, StatCard, Table, Timeline, Button } from '../../components/ui'
-import { UsersIcon, DocIcon, CalIcon, SwapIcon, PlusIcon, SettingsIcon } from '../../components/icons'
-
-const RefreshIcon = ({ className = 'w-4 h-4' }) => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
-    <path d="M21 12a9 9 0 1 1-2.64-6.36" /><path d="M21 3v6h-6" />
-  </svg>
-)
+import { UsersIcon, DocIcon, CalIcon, SwapIcon, PlusIcon, SettingsIcon, RefreshIcon, DatabaseIcon, DoorIcon, BookIcon } from '../../components/icons'
 
 const AVATAR_PALETTE = [
   { bg: 'bg-violet-100', text: 'text-violet-700' },
@@ -218,67 +212,44 @@ export default function AdminDashboard() {
 
         {/* Quick Management Shortcuts */}
         <div>
-          <h2 className="text-xs font-extrabold text-slate-500 uppercase tracking-wider mb-3">Resource & Setup Shortcuts</h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            <div className="card p-4 flex flex-col justify-between space-y-3 bg-white border border-slate-200/80 hover:shadow-md transition-all">
-              <div className="flex items-center gap-3">
-                <span className="w-10 h-10 rounded-xl bg-indigo-50 text-indigo-700 flex items-center justify-center font-bold text-lg">🏫</span>
-                <div>
-                  <h3 className="text-xs font-extrabold text-slate-800">Classes</h3>
-                  <p className="text-[10px] text-slate-400 font-medium">Single & Bulk Range</p>
-                </div>
+          <h2 className="section-label mb-3">Platform Setup</h2>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            <Link to="/admin/classes" className="card p-4 flex items-center gap-3 hover:shadow-card-hover hover:-translate-y-0.5 transition-all duration-200">
+              <span className="w-9 h-9 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center shrink-0">
+                <UsersIcon className="w-4 h-4" />
+              </span>
+              <div className="min-w-0">
+                <p className="text-xs font-bold text-slate-800 truncate">Classes</p>
+                <p className="text-[10px] text-slate-400 font-medium">Single & bulk range</p>
               </div>
-              <div className="flex items-center gap-2 pt-1">
-                <Link to="/admin/classes" className="btn-primary text-[11px] py-1.5 px-3 flex-1 text-center font-bold">
-                  + Create Classes
-                </Link>
+            </Link>
+            <Link to="/admin/rooms" className="card p-4 flex items-center gap-3 hover:shadow-card-hover hover:-translate-y-0.5 transition-all duration-200">
+              <span className="w-9 h-9 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center shrink-0">
+                <DocIcon className="w-4 h-4" />
+              </span>
+              <div className="min-w-0">
+                <p className="text-xs font-bold text-slate-800 truncate">Rooms & Labs</p>
+                <p className="text-[10px] text-slate-400 font-medium">Single & bulk range</p>
               </div>
-            </div>
-
-            <div className="card p-4 flex flex-col justify-between space-y-3 bg-white border border-slate-200/80 hover:shadow-md transition-all">
-              <div className="flex items-center gap-3">
-                <span className="w-10 h-10 rounded-xl bg-purple-50 text-purple-700 flex items-center justify-center font-bold text-lg">🚪</span>
-                <div>
-                  <h3 className="text-xs font-extrabold text-slate-800">Rooms & Labs</h3>
-                  <p className="text-[10px] text-slate-400 font-medium">Single & Bulk Range</p>
-                </div>
+            </Link>
+            <Link to="/admin/departments" className="card p-4 flex items-center gap-3 hover:shadow-card-hover hover:-translate-y-0.5 transition-all duration-200">
+              <span className="w-9 h-9 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center shrink-0">
+                <CalIcon className="w-4 h-4" />
+              </span>
+              <div className="min-w-0">
+                <p className="text-xs font-bold text-slate-800 truncate">Departments</p>
+                <p className="text-[10px] text-slate-400 font-medium">Depts & HOD accounts</p>
               </div>
-              <div className="flex items-center gap-2 pt-1">
-                <Link to="/admin/rooms" className="btn-primary text-[11px] py-1.5 px-3 flex-1 text-center font-bold">
-                  + Create Rooms
-                </Link>
+            </Link>
+            <Link to="/admin/subjects" className="card p-4 flex items-center gap-3 hover:shadow-card-hover hover:-translate-y-0.5 transition-all duration-200">
+              <span className="w-9 h-9 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0">
+                <DocIcon className="w-4 h-4" />
+              </span>
+              <div className="min-w-0">
+                <p className="text-xs font-bold text-slate-800 truncate">Subjects</p>
+                <p className="text-[10px] text-slate-400 font-medium">Course catalog</p>
               </div>
-            </div>
-
-            <div className="card p-4 flex flex-col justify-between space-y-3 bg-white border border-slate-200/80 hover:shadow-md transition-all">
-              <div className="flex items-center gap-3">
-                <span className="w-10 h-10 rounded-xl bg-blue-50 text-blue-700 flex items-center justify-center font-bold text-lg">📂</span>
-                <div>
-                  <h3 className="text-xs font-extrabold text-slate-800">Departments</h3>
-                  <p className="text-[10px] text-slate-400 font-medium">Depts & HOD Accounts</p>
-                </div>
-              </div>
-              <div className="flex items-center gap-2 pt-1">
-                <Link to="/admin/departments" className="btn-secondary text-[11px] py-1.5 px-3 flex-1 text-center font-bold">
-                  Manage Depts
-                </Link>
-              </div>
-            </div>
-
-            <div className="card p-4 flex flex-col justify-between space-y-3 bg-white border border-slate-200/80 hover:shadow-md transition-all">
-              <div className="flex items-center gap-3">
-                <span className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-700 flex items-center justify-center font-bold text-lg">📚</span>
-                <div>
-                  <h3 className="text-xs font-extrabold text-slate-800">Subjects</h3>
-                  <p className="text-[10px] text-slate-400 font-medium">Course Catalog</p>
-                </div>
-              </div>
-              <div className="flex items-center gap-2 pt-1">
-                <Link to="/admin/subjects" className="btn-secondary text-[11px] py-1.5 px-3 flex-1 text-center font-bold">
-                  View Subjects
-                </Link>
-              </div>
-            </div>
+            </Link>
           </div>
         </div>
 
@@ -367,28 +338,28 @@ export default function AdminDashboard() {
 
           {/* Quick Actions Controls */}
           <div className="space-y-6">
-            <Card title="Global Controls">
-              <div className="space-y-2.5">
+            <Card title="Quick Actions">
+              <div className="space-y-1.5">
                 <Link to="/admin/classes" className="w-full flex items-center justify-between px-4 py-2.5 rounded-xl border border-slate-100 hover:bg-slate-50 transition-colors font-bold text-xs text-slate-700">
-                  <span>🏫 Manage & Create Classes</span>
+                  <span className="flex items-center gap-2"><UsersIcon className="w-4 h-4 text-indigo-500" />Manage Classes</span>
                   <span className="text-indigo-600 font-extrabold">+</span>
                 </Link>
                 <Link to="/admin/rooms" className="w-full flex items-center justify-between px-4 py-2.5 rounded-xl border border-slate-100 hover:bg-slate-50 transition-colors font-bold text-xs text-slate-700">
-                  <span>🚪 Manage & Create Rooms</span>
+                  <span className="flex items-center gap-2"><DocIcon className="w-4 h-4 text-purple-500" />Manage Rooms</span>
                   <span className="text-indigo-600 font-extrabold">+</span>
                 </Link>
                 <Link to="/admin/departments" className="w-full flex items-center justify-between px-4 py-2.5 rounded-xl border border-slate-100 hover:bg-slate-50 transition-colors font-bold text-xs text-slate-700">
-                  <span>📂 Manage Departments</span>
+                  <span className="flex items-center gap-2"><CalIcon className="w-4 h-4 text-blue-500" />Manage Departments</span>
                   <span>→</span>
                 </Link>
                 <Link to="/admin/settings" className="w-full flex items-center justify-between px-4 py-2.5 rounded-xl border border-slate-100 hover:bg-slate-50 transition-colors font-bold text-xs text-slate-700">
-                  <span>⚙️ System Configuration</span>
+                  <span className="flex items-center gap-2"><SettingsIcon className="w-4 h-4 text-slate-500" />System Configuration</span>
                   <span>→</span>
                 </Link>
                 <div className="pt-3 border-t border-slate-100 mt-2">
-                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2.5">Quick Setup</p>
-                  <Link to="/admin/settings" className="block text-center px-4 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-bold transition-all">
-                    Launch Setup wizard
+                  <p className="section-label mb-2.5">Quick Setup</p>
+                  <Link to="/admin/setup" className="block text-center px-4 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-bold transition-all">
+                    Setup Guide
                   </Link>
                 </div>
               </div>

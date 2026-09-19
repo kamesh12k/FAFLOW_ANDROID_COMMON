@@ -111,6 +111,27 @@ export const classesApi = {
   faculty: (id) => api.get(`/classes/${id}/faculty`),
 }
 
+export const classRollRulesApi = {
+  getRule: (classId, academicYearId) =>
+    api.get(`/classes/${classId}/roll-rule`, { params: academicYearId ? { academic_year_id: academicYearId } : {} }),
+  saveRule: (classId, data) =>
+    api.post(`/classes/${classId}/roll-rule`, data),
+  addException: (classId, data) =>
+    api.post(`/classes/${classId}/roll-exceptions`, data),
+  deleteException: (classId, exceptionId) =>
+    api.delete(`/classes/${classId}/roll-exceptions/${exceptionId}`),
+  getEffectiveRoster: (classId, academicYearId) =>
+    api.get(`/classes/${classId}/effective-roster`, { params: academicYearId ? { academic_year_id: academicYearId } : {} }),
+  previewImport: (classId, content, academicYearId) =>
+    api.post(`/classes/${classId}/students/import/preview`, { content }, { params: academicYearId ? { academic_year_id: academicYearId } : {} }),
+  commitImport: (classId, data) =>
+    api.post(`/classes/${classId}/students/import/commit`, data),
+  previewRollover: (fromYearId, toYearId, departmentId) =>
+    api.post('/academic-years/rollover/preview', null, { params: { from_year_id: fromYearId, to_year_id: toYearId, ...(departmentId ? { department_id: departmentId } : {}) } }),
+  executeRollover: (data) =>
+    api.post('/academic-years/rollover/execute', data),
+}
+
 export const roomsApi = {
   list: (roomType) => api.get('/rooms/', { params: roomType ? { room_type: roomType } : {} }),
   create: (data) => api.post('/rooms/', data),
@@ -315,9 +336,35 @@ export const attendanceApi = {
   getMyHistory: (params) => api.get('/attendance/my', { params }),
   getSupervisorLiveStatus: () => api.get('/attendance/admin/live-status'),
 }
+export const studentAttendanceApi = {
+  getTodaySchedule: (date) => api.get('/student-attendance/today', { params: date ? { target_date: date } : {} }),
+  getClassRoster: (classId) => api.get(`/student-attendance/classes/${classId}/roster`),
+  getSession: (sessionId) => api.get(`/student-attendance/sessions/${sessionId}`),
+  createSession: (data) => api.post('/student-attendance/sessions', data),
+  submitAttendance: (sessionId, data) => api.post(`/student-attendance/sessions/${sessionId}/submit`, data),
+  emergencyAttendance: (data) => api.post('/student-attendance/emergency', data),
+  correctAttendance: (sessionId, studentId, data) => api.patch(`/student-attendance/sessions/${sessionId}/students/${studentId}`, data),
+  getHodOverview: (date) => api.get('/student-attendance/hod/overview', { params: date ? { target_date: date } : {} }),
+  syncOfflineBatch: (data) => api.post('/student-attendance/sync', data),
 
+  // Principal & Institutional Governance Endpoints
+  getPrincipalOverview: (date) => api.get('/student-attendance/principal/overview', { params: date ? { target_date: date } : {} }),
+  getPrincipalSessions: (params) => api.get('/student-attendance/principal/sessions', { params }),
+  getClassPeriodMatrix: (classId, date) => api.get(`/student-attendance/principal/classes/${classId}/matrix`, { params: date ? { target_date: date } : {} }),
+  getStudentProfile: (studentId, params) => api.get(`/student-attendance/principal/students/${studentId}`, { params }),
+  getTeacherCompliance: (params) => api.get('/student-attendance/principal/teacher-compliance', { params }),
+  getPrincipalExceptions: (params) => api.get('/student-attendance/principal/exceptions', { params }),
+  adminLockSession: (sessionId, data) => api.post(`/student-attendance/principal/sessions/${sessionId}/lock`, data),
+  adminOverrideAttendance: (sessionId, studentId, data) => api.post(`/student-attendance/principal/sessions/${sessionId}/students/${studentId}/override`, data),
+  exportReport: (params) => api.get('/student-attendance/principal/export', { params, responseType: 'blob' }),
+}
 
-
+export const intelligenceApi = {
+  getLive: (params) => api.get('/intelligence/live', { params }),
+  getEvents: (params) => api.get('/intelligence/events', { params }),
+  getEventDetail: (id) => api.get(`/intelligence/events/${id}`),
+  acknowledgeEvent: (id) => api.patch(`/intelligence/events/${id}/acknowledge`),
+}
 
 
 

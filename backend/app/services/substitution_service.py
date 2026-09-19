@@ -574,7 +574,7 @@ def _is_hard_eligible(
     if leave.is_emergency and require_auto_opt_in and not pref.allow_emergency_assignments:
         return False, "has opted out of emergency assignments"
 
-    if pref.max_weekly_substitutions is not None:
+    if require_auto_opt_in and pref.max_weekly_substitutions is not None:
         since = datetime.now(timezone.utc) - timedelta(days=7)
         recent = count_recent_substitutions(db, candidate.id, since)
         if recent >= pref.max_weekly_substitutions:
@@ -962,6 +962,11 @@ def score_candidate(
     if result.leave_recovery > 0:
         result.reasons.append(f"Leave recovery (+{result.leave_recovery} pts)")
 
+    if limit_info.get("limit_reached"):
+        result.reasons.append(
+            f"⚠ 7-day limit reached ({limit_info['current_allocations']}/{limit_info['max_allocations']})"
+        )
+
     # --- Final Normalized Integer Score (0 - 100) ---
     raw_total = (
         daily_score
@@ -971,6 +976,7 @@ def score_candidate(
         + dept_score
         + fair_score
         + result.preference_score
+        + min(10.0, result.leave_recovery)
     )
     clamped_score = max(0, min(100, int(round(raw_total))))
     result.score = clamped_score

@@ -45,6 +45,7 @@ const AdminAttendance = lazy(() => import('./pages/admin/Attendance'))
 
 // Principal pages (lazy loaded)
 const PrincipalDashboard = lazy(() => import('./pages/admin/PrincipalDashboard'))
+const PrincipalStudentAttendance = lazy(() => import('./pages/admin/PrincipalStudentAttendance'))
 
 // Manager pages (lazy loaded)
 const ManagerDashboard = lazy(() => import('./pages/manager/Dashboard'))
@@ -70,6 +71,8 @@ const LeaveHistory = lazy(() => import('./pages/teacher/LeaveHistory'))
 const MyCredits = lazy(() => import('./pages/teacher/Credits'))
 const SubstitutionPreferences = lazy(() => import('./pages/teacher/Preferences'))
 const TeacherSubstitution = lazy(() => import('./pages/teacher/Substitution'))
+const StudentAttendance = lazy(() => import('./pages/teacher/StudentAttendance'))
+const HodStudentAttendance = lazy(() => import('./pages/admin/HodStudentAttendance'))
 
 export default function App() {
   useEffect(() => {
@@ -102,6 +105,7 @@ export default function App() {
               <Route element={<AppShell />}>
                 <Route path="/admin/dashboard" element={<AdminDashboard />} />
                 <Route path="/admin/attendance" element={<AdminAttendance />} />
+                <Route path="/admin/student-attendance" element={<HodStudentAttendance />} />
                 <Route path="/admin/setup" element={<SetupGuide />} />
                 <Route path="/admin/academic-calendar" element={<AcademicCalendar />} />
                 <Route path="/admin/academic-calendar/reports" element={<AcademicCalendarReports />} />
@@ -140,6 +144,7 @@ export default function App() {
               <Route element={<AppShell />}>
                 <Route path="/governance" element={<GovernanceDashboard />} />
                 <Route path="/governance/attendance" element={<AdminAttendance />} />
+                <Route path="/governance/student-attendance" element={<PrincipalStudentAttendance />} />
                 <Route path="/governance/timetable" element={<HodTimetable />} />
               </Route>
             </Route>
@@ -151,6 +156,7 @@ export default function App() {
               <Route element={<AppShell />}>
                 <Route path="/principal/dashboard" element={<PrincipalDashboard />} />
                 <Route path="/principal/attendance" element={<AdminAttendance />} />
+                <Route path="/principal/student-attendance" element={<PrincipalStudentAttendance />} />
                 <Route path="/principal/class-timetable" element={<ClasswiseTimetable />} />
               </Route>
             </Route>
@@ -184,6 +190,7 @@ export default function App() {
             <Route element={<RequireCredentialsSet />}>
               <Route element={<AppShell />}>
                 <Route path="/teacher/dashboard" element={<TeacherDashboard />} />
+                <Route path="/teacher/student-attendance" element={<StudentAttendance />} />
                 <Route path="/teacher/timetable" element={<MyTimetable />} />
                 <Route path="/teacher/class-timetable" element={<ClasswiseTimetable />} />
                 <Route path="/teacher/leave/apply" element={<ApplyLeave />} />

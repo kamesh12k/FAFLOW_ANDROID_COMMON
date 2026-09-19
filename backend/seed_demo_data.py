@@ -13,7 +13,11 @@ from app.models.class_ import Class
 from app.models.room import Room, RoomType
 from app.models.timetable import TimetableSlot
 from app.models.credit import TeacherCredit
-from app.core.security import hash_password
+from datetime import date
+from app.models.academic_calendar import AcademicYear
+from app.models.student import Student
+from app.models.student_enrollment import StudentEnrollment
+from app.models.class_roll_rule import ClassRollRule, ClassRollException, RollExceptionType
 
 def seed():
     db = SessionLocal()
@@ -173,9 +177,69 @@ def seed():
                         slots_assigned += 1
                         total_slots_created += 1
                         
+        # 3. Create Academic Year
+        ay = db.query(AcademicYear).filter(AcademicYear.name == "2026-2027").first()
+        if not ay:
+            ay = AcademicYear(name="2026-2027", start_date=date(2026, 6, 1), end_date=date(2027, 5, 31), is_active=True)
+            db.add(ay)
+            db.commit()
+            db.refresh(ay)
+
+        # 4. Seed students, roll rules, exceptions for classes
+        total_students_seeded = 0
+        all_seeded_classes = db.query(Class).all()
+        for cls in all_seeded_classes:
+            prefix = f"26{cls.department.code[:3].upper()}" if cls.department else "26STU"
+            rule = db.query(ClassRollRule).filter(ClassRollRule.class_id == cls.id, ClassRollRule.academic_year_id == ay.id).first()
+            if not rule:
+                rule = ClassRollRule(
+                    class_id=cls.id,
+                    academic_year_id=ay.id,
+                    prefix=prefix,
+                    start_number=1,
+                    end_number=20,
+                    is_active=True
+                )
+                db.add(rule)
+                db.commit()
+                db.refresh(rule)
+
+            for num in range(1, 21):
+                roll = f"{prefix}{num:03d}"
+                stu = db.query(Student).filter(Student.roll_number == roll).first()
+                if not stu:
+                    stu = Student(
+                        roll_number=roll,
+                        name=f"Student {cls.name} {num}",
+                        class_id=cls.id,
+                        department_id=cls.department_id,
+                        admission_year=2026,
+                        is_active=True
+                    )
+                    db.add(stu)
+                    db.commit()
+                    db.refresh(stu)
+                    total_students_seeded += 1
+
+                # Ensure enrollment exists
+                enr = db.query(StudentEnrollment).filter(
+                    StudentEnrollment.student_id == stu.id,
+                    StudentEnrollment.academic_year_id == ay.id
+                ).first()
+                if not enr:
+                    db.add(StudentEnrollment(
+                        student_id=stu.id,
+                        academic_year_id=ay.id,
+                        class_id=cls.id,
+                        roll_number=roll,
+                        status="active"
+                    ))
+                    db.commit()
+
         print(f"Demo seeding finished successfully!")
         print(f"Created {total_teachers_created} new teachers.")
         print(f"Created {total_slots_created} new timetable slots.")
+        print(f"Seeded {total_students_seeded} students across {len(all_seeded_classes)} classes with active roll rules and enrollments.")
     except Exception as e:
         db.rollback()
         print(f"Seeding failed: {e}")

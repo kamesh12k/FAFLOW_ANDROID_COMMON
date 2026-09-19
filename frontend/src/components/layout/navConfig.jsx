@@ -1,66 +1,16 @@
 import {
   GridIcon, UsersIcon, CalIcon, BookIcon, DoorIcon, DocIcon, ChartIcon,
   PlusIcon, SwapIcon,
+  DatabaseIcon, TrashNavIcon, GeofenceIcon, BiometricIcon, AttendanceNavIcon,
 } from '../icons'
-
-function DatabaseIcon() {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round" style={{width:'100%',height:'100%'}}>
-      <ellipse cx="12" cy="5" rx="9" ry="3" />
-      <path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3" />
-      <path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5" />
-    </svg>
-  )
-}
-
-function TrashNavIcon() {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round" style={{width:'100%',height:'100%'}}>
-      <polyline points="3 6 5 6 21 6" />
-      <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
-    </svg>
-  )
-}
-
-function GeofenceIcon() {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round" style={{width:'100%',height:'100%'}}>
-      <circle cx="12" cy="12" r="9" />
-      <circle cx="12" cy="12" r="4" />
-      <path d="M12 3v3m0 12v3M3 12h3m12 0h3" />
-    </svg>
-  )
-}
-
-function BiometricIcon() {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round" style={{width:'100%',height:'100%'}}>
-      <path d="M9 3a3 3 0 0 1 6 0" />
-      <path d="M6 9a6 6 0 0 1 12 0" />
-      <path d="M12 9v6" />
-      <path d="M9 15a3 3 0 0 0 6 0" />
-      <path d="M7 19a5 5 0 0 0 10 0" />
-      <path d="M12 19v2" />
-    </svg>
-  )
-}
-
-function AttendanceNavIcon() {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round" style={{width:'100%',height:'100%'}}>
-      <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
-      <circle cx="9" cy="7" r="4" />
-      <polyline points="16 11 18 13 22 9" />
-    </svg>
-  )
-}
 
 export const ADMIN_NAV = [
   {
     section: null,
     items: [
       { to: '/admin/dashboard', label: 'Home', icon: <GridIcon />, end: true },
-      { to: '/admin/attendance', label: 'Live Attendance', icon: <AttendanceNavIcon /> },
+      { to: '/admin/attendance', label: 'Staff Attendance', icon: <AttendanceNavIcon /> },
+      { to: '/admin/student-attendance', label: 'Student Attendance', icon: <UsersIcon /> },
     ],
   },
   {
@@ -79,7 +29,7 @@ export const ADMIN_NAV = [
     items: [
       { to: '/admin/leaves', label: 'Leave Requests', icon: <DocIcon /> },
       { to: '/admin/leave-entry', label: 'Admin Leave Entry', icon: <PlusIcon /> },
-      { to: '/admin/today-substitutions', label: "Today's Substitutions", icon: <DocIcon /> },
+      { to: '/admin/today-substitutions', label: "Today's Substitutions", icon: <SwapIcon /> },
       { to: '/admin/credits', label: 'Credits', icon: <ChartIcon /> },
     ],
   },
@@ -91,16 +41,16 @@ export const ADMIN_NAV = [
       { to: '/admin/subjects', label: 'Subjects', icon: <BookIcon /> },
       { to: '/admin/classes', label: 'Classes', icon: <UsersIcon /> },
       { to: '/admin/rooms', label: 'Rooms & Labs', icon: <DoorIcon /> },
-      { to: '/admin/settings', label: 'Settings & History', icon: <DocIcon /> },
     ],
   },
 ]
 
 export const TEACHER_NAV = [
   {
-    section: 'Timetable & Classes',
+    section: 'My Work',
     items: [
       { to: '/teacher/dashboard', label: 'Home', icon: <GridIcon />, end: true },
+      { to: '/teacher/student-attendance', label: 'Student Attendance', icon: <AttendanceNavIcon /> },
       { to: '/teacher/timetable', label: 'My Timetable', icon: <CalIcon /> },
       { to: '/teacher/class-timetable', label: 'Classwise Timetable', icon: <CalIcon /> },
     ],
@@ -112,7 +62,7 @@ export const TEACHER_NAV = [
       { to: '/teacher/leave/apply', label: 'Apply for Leave', icon: <PlusIcon /> },
       { to: '/teacher/leaves', label: 'Leave History', icon: <DocIcon /> },
       { to: '/teacher/substitution', label: 'Manage Substitutes', icon: <SwapIcon /> },
-      { to: '/teacher/today-coverage', label: "Today's Coverage", icon: <DocIcon /> },
+      { to: '/teacher/today-coverage', label: "Today's Coverage", icon: <SwapIcon /> },
       { to: '/teacher/credits', label: 'My Credits', icon: <ChartIcon /> },
     ],
   },
@@ -121,20 +71,32 @@ export const TEACHER_NAV = [
 
 export const SYSTEM_ADMIN_NAV = [
   {
+    section: null,
+    items: [
+      { to: '/admin/dashboard', label: 'Home', icon: <GridIcon />, end: true },
+    ],
+  },
+  {
     section: 'Calendar & Timetable',
     items: [
       { to: '/admin/academic-calendar', label: 'Calendar & Day Order', icon: <CalIcon /> },
-      { to: '/admin/timetable', label: 'Timetable & Reset', icon: <CalIcon /> },
+      { to: '/admin/timetable', label: 'Timetable', icon: <CalIcon /> },
       { to: '/admin/class-timetable', label: 'Classwise Timetable', icon: <CalIcon /> },
       { to: '/admin/timetable/approvals', label: 'Timetable Approvals', icon: <DocIcon /> },
     ],
   },
   {
-    section: 'System & Security Setup',
+    section: 'Security & Campus',
     items: [
-      { to: '/admin/setup', label: 'Setup Guide', icon: <DocIcon /> },
       { to: '/admin/geofences', label: 'Campus Geofences', icon: <GeofenceIcon /> },
       { to: '/admin/biometrics', label: 'Biometrics & Face Profiles', icon: <BiometricIcon /> },
+      { to: '/admin/attendance', label: 'Live Attendance', icon: <AttendanceNavIcon /> },
+    ],
+  },
+  {
+    section: 'Platform Setup',
+    items: [
+      { to: '/admin/setup', label: 'Setup Guide', icon: <DocIcon /> },
       { to: '/admin/departments', label: 'Departments', icon: <UsersIcon />, end: true },
       { to: '/admin/managers', label: 'Managers', icon: <UsersIcon /> },
       { to: '/admin/classes', label: 'Classes', icon: <UsersIcon /> },
@@ -144,9 +106,8 @@ export const SYSTEM_ADMIN_NAV = [
     ],
   },
   {
-    section: 'Performance & Audit',
+    section: 'Monitoring & Audit',
     items: [
-      { to: '/admin/attendance', label: 'Live Attendance', icon: <AttendanceNavIcon /> },
       { to: '/admin/system-metrics', label: 'Real-time Traffic', icon: <ChartIcon /> },
       { to: '/admin/settings', label: 'Settings & History', icon: <DocIcon /> },
     ],
@@ -183,7 +144,8 @@ export const PRINCIPAL_NAV = [
     section: null,
     items: [
       { to: '/principal/dashboard', label: 'Home', icon: <GridIcon />, end: true },
-      { to: '/principal/attendance', label: 'Live Attendance', icon: <AttendanceNavIcon /> },
+      { to: '/principal/student-attendance', label: 'Student Attendance', icon: <UsersIcon /> },
+      { to: '/principal/attendance', label: 'Faculty Attendance', icon: <AttendanceNavIcon /> },
       { to: '/principal/class-timetable', label: 'Classwise Timetable', icon: <CalIcon /> },
     ],
   },
@@ -209,11 +171,12 @@ export const GOVERNANCE_NAV = [
     section: 'Governance',
     items: [
       { to: '/governance', label: 'Command Center', icon: <GridIcon />, end: true },
+      { to: '/governance/student-attendance', label: 'Student Attendance', icon: <UsersIcon /> },
       { to: '/governance/attendance', label: 'Live Attendance', icon: <AttendanceNavIcon /> },
     ],
   },
   {
-    section: 'Operations & Oversight',
+    section: 'Oversight',
     items: [
       { to: '/admin/academic-calendar', label: 'Campus Calendar', icon: <CalIcon /> },
       { to: '/admin/class-timetable', label: 'College Timetable', icon: <CalIcon /> },
@@ -224,8 +187,3 @@ export const GOVERNANCE_NAV = [
     ],
   },
 ]
-
-
-
-
-
