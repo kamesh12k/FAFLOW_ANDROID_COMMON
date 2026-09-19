@@ -24,14 +24,13 @@ router = APIRouter(prefix="", tags=["Class Roll Configuration & Rollover"])
 
 
 def verify_class_access(current_user: User, target_class: Class):
-    """Enforces that System Admins can manage any class, while HODs are restricted
-
+    """Enforces that System Admins can manage any class, while Department Admins (HODs) are restricted
     strictly to classes belonging to their own department. Teachers have no management rights.
     """
     if current_user.is_system_admin:
         return
-    if current_user.role == Role.hod:
-        if current_user.department_id != target_class.department_id:
+    if current_user.role == Role.admin:
+        if current_user.department_id and current_user.department_id != target_class.department_id:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="Access denied: You can only configure classes within your own department."
@@ -39,7 +38,7 @@ def verify_class_access(current_user: User, target_class: Class):
         return
     raise HTTPException(
         status_code=status.HTTP_403_FORBIDDEN,
-        detail="Access denied: Only System Administrators and HODs can configure class roll numbers."
+        detail="Access denied: Only System Administrators and Department Admins can configure class roll numbers."
     )
 
 
@@ -342,11 +341,11 @@ def preview_academic_year_rollover(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    # If HOD, enforce their department
-    if current_user.role == Role.hod:
+    # If Department Admin, enforce their department
+    if current_user.role == Role.admin:
         department_id = current_user.department_id
     elif not current_user.is_system_admin:
-        raise HTTPException(status_code=403, detail="Only Admins and HODs can preview academic rollover.")
+        raise HTTPException(status_code=403, detail="Only System Admins and Department Admins can preview academic rollover.")
 
     return RolloverService.preview_rollover(db, from_year_id, to_year_id, department_id)
 

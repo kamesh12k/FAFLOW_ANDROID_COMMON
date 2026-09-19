@@ -212,6 +212,25 @@ def sync_table_constraints_and_columns():
                                 ALTER TABLE substitution_preferences ADD COLUMN only_my_classes BOOLEAN NOT NULL DEFAULT FALSE;
                             END IF;
                         END IF;
+
+                        -- 5. Ensure admission_year and updated_at exist on students table
+                        IF EXISTS (
+                            SELECT 1 FROM information_schema.tables 
+                            WHERE table_schema = 'public' AND table_name = 'students'
+                        ) THEN
+                            IF NOT EXISTS (
+                                SELECT 1 FROM information_schema.columns
+                                WHERE table_schema = 'public' AND table_name = 'students' AND column_name = 'admission_year'
+                            ) THEN
+                                ALTER TABLE students ADD COLUMN admission_year INTEGER;
+                            END IF;
+                            IF NOT EXISTS (
+                                SELECT 1 FROM information_schema.columns
+                                WHERE table_schema = 'public' AND table_name = 'students' AND column_name = 'updated_at'
+                            ) THEN
+                                ALTER TABLE students ADD COLUMN updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW();
+                            END IF;
+                        END IF;
                     END $$;
                 """))
             except Exception as e:
