@@ -568,4 +568,55 @@ class TestBackupRouteAuthorization:
         assert meta["backup_type"] == "auto"
         assert "auto_backup_" in meta["filename"]
 
+    def test_restore_resilient_to_extraneous_columns(self, client, auth_headers_super_admin, tmp_path, monkeypatch, db_session):
+        from app.services import backup_service
+        monkeypatch.setattr(backup_service, "_backup_dir", lambda: tmp_path)
+
+        # 1. Create a valid backup first
+        create_res = client.post(
+            "/admin/backups",
+            headers=auth_headers_super_admin,
+            params={"backup_type": "manual"},
+        )
+        assert create_res.status_code == 201
+        meta = create_res.json()
+        backup_id = meta["backup_id"]
+        filename = meta["filename"]
+
+        # 2. Modify the JSON file on disk to inject extraneous columns that do not exist in DB schema
+        file_path = tmp_path / filename
+        content = json.loads(file_path.read_text(encoding="utf-8"))
+        
+        # Inject fake/legacy columns into departments, rooms, users
+        if "departments" in content["data"] and content["data"]["departments"]:
+            for d in content["data"]["departments"]:
+                d["non_existent_campus_id"] = 999
+                d["legacy_deprecated_field"] = "foo"
+        if "users" in content["data"] and content["data"]["users"]:
+            for u in content["data"]["users"]:
+                u["non_existent_face_descriptor"] = "fake_descriptor"
+
+        file_path.write_text(json.dumps(content), encoding="utf-8")
+
+        # 3. Update checksum so validation doesn't fail
+        import hashlib
+        new_sha = hashlib.sha256(file_path.read_bytes()).hexdigest()
+        index = backup_service._load_index()
+        for e in index:
+            if e["backup_id"] == backup_id:
+                e["checksum_sha256"] = new_sha
+                e["file_size_bytes"] = file_path.stat().st_size
+        backup_service._save_index(index)
+
+        # 4. Trigger restore — must succeed without UndefinedColumn error
+        restore_res = client.post(
+            f"/admin/backups/{backup_id}/restore",
+            headers=auth_headers_super_admin,
+            json={"confirmation_text": "I understand that the current data will be replaced"},
+        )
+        assert restore_res.status_code == 200
+        res_data = restore_res.json()
+        assert res_data["restored_backup_id"] == backup_id
+
+
 

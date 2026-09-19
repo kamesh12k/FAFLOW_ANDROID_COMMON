@@ -940,6 +940,21 @@ def restore_backup(
 
         # Insert in parents-first order (reverse of delete order)
         insert_order = list(reversed(_RESTORE_DELETE_ORDER))
+
+        # Cache table column names from destination database so extraneous or legacy
+        # keys in backup payloads (e.g. campus_id, geofence_id) never cause UndefinedColumn crashes.
+        target_table_columns: dict[str, set[str]] = {}
+        try:
+            from sqlalchemy import inspect as sa_inspect
+            insp = sa_inspect(db.get_bind())
+            for t in insert_order:
+                try:
+                    target_table_columns[t] = {c["name"] for c in insp.get_columns(t)}
+                except Exception:
+                    pass
+        except Exception as insp_err:
+            logger.debug("restore: could not inspect target table columns: %s", insp_err)
+
         for table in insert_order:
             rows = data.get(table, [])
             if not rows:
@@ -954,6 +969,8 @@ def restore_backup(
                     )
             except Exception:
                 pass
+
+            valid_columns = target_table_columns.get(table)
 
             for row in rows:
                 if not row or not isinstance(row, dict):
@@ -991,15 +1008,22 @@ def restore_backup(
                                 pass
 
                 # Adapt complex types (dict, list) to JSON strings for PostgreSQL / psycopg2
+                # and filter out any columns that do not exist in destination database table
                 cleaned_row = {}
                 for k, v in row.items():
+                    if valid_columns is not None and k not in valid_columns:
+                        continue
                     if isinstance(v, (dict, list)):
                         cleaned_row[k] = json.dumps(v)
                     else:
                         cleaned_row[k] = v
 
                 if table == "users":
-                    cleaned_row.setdefault("has_face_enrolled", False)
+                    if valid_columns is None or "has_face_enrolled" in valid_columns:
+                        cleaned_row.setdefault("has_face_enrolled", False)
+
+                if not cleaned_row:
+                    continue
 
                 cols = ", ".join(f'"{k}"' for k in cleaned_row.keys())
                 placeholders = ", ".join(f":{k}" for k in cleaned_row.keys())
