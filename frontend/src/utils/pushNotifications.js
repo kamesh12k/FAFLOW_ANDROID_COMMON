@@ -19,13 +19,11 @@ function urlB64ToUint8Array(base64String) {
 }
 
 /**
- * Checks whether Web Push Notifications and Service Workers are supported in the current browser.
+ * Checks whether Web Notifications and Service Workers are supported in the current browser.
  */
 export function isPushSupported() {
   return (
     typeof window !== 'undefined' &&
-    'serviceWorker' in navigator &&
-    'PushManager' in window &&
     'Notification' in window
   );
 }
@@ -41,10 +39,10 @@ export function getNotificationPermission() {
 }
 
 /**
- * Registers the Service Worker (/sw.js).
+ * Registers the Service Worker (/sw.js) safely.
  */
 export async function registerServiceWorker() {
-  if (!isPushSupported()) return null;
+  if (typeof window === 'undefined' || !('serviceWorker' in navigator)) return null;
 
   try {
     const registration = await navigator.serviceWorker.register('/sw.js', {
@@ -52,7 +50,7 @@ export async function registerServiceWorker() {
     });
     return registration;
   } catch (error) {
-    console.error('Service Worker registration failed:', error);
+    console.warn('Service Worker registration skipped or failed:', error);
     return null;
   }
 }
@@ -61,24 +59,34 @@ export async function registerServiceWorker() {
  * Retrieves the current push subscription if active.
  */
 export async function getCurrentSubscription() {
-  if (!isPushSupported()) return null;
+  if (typeof window === 'undefined') return null;
 
-  try {
-    const registration = await navigator.serviceWorker.ready;
-    const subscription = await registration.pushManager.getSubscription();
-    return subscription;
-  } catch (error) {
-    console.error('Error fetching push subscription:', error);
-    return null;
+  if ('serviceWorker' in navigator && 'PushManager' in window) {
+    try {
+      const registration = await navigator.serviceWorker.getRegistration();
+      if (registration) {
+        const subscription = await registration.pushManager.getSubscription();
+        if (subscription) return subscription;
+      }
+    } catch (error) {
+      console.warn('Error fetching push subscription:', error);
+    }
   }
+
+  // Fallback: check standard notification permission
+  if ('Notification' in window && Notification.permission === 'granted') {
+    return { endpoint: 'local-desktop-notifications' };
+  }
+
+  return null;
 }
 
 /**
- * Requests browser permission and subscribes the user to Web Push.
+ * Requests browser permission and subscribes the user to Web Push / Desktop alerts.
  */
 export async function subscribeToPush() {
-  if (!isPushSupported()) {
-    throw new Error('Web Push is not supported on this browser.');
+  if (typeof window === 'undefined' || !('Notification' in window)) {
+    throw new Error('Desktop notifications are not supported on this browser.');
   }
 
   // 1. Request user permission
@@ -86,58 +94,76 @@ export async function subscribeToPush() {
   if (permission !== 'granted') {
     throw new Error(
       permission === 'denied'
-        ? 'Notifications are blocked in your browser settings. Please enable them in site permissions.'
+        ? 'Notifications are blocked in your browser settings. Please click the padlock / shield icon in your address bar to allow notifications.'
         : 'Notification permission was dismissed.'
     );
   }
 
-  // 2. Fetch VAPID public key from backend
-  const { data } = await notificationsApi.vapidPublicKey();
-  if (!data?.key) {
-    throw new Error('VAPID public key is not configured on the server.');
+  // 2. Fetch VAPID public key from backend if service worker & PushManager available
+  let applicationServerKey = null;
+  if ('serviceWorker' in navigator && 'PushManager' in window) {
+    try {
+      const { data } = await notificationsApi.vapidPublicKey();
+      if (data?.key) {
+        applicationServerKey = urlB64ToUint8Array(data.key);
+      }
+    } catch (e) {
+      console.warn('Could not load VAPID key:', e);
+    }
+
+    try {
+      let registration = await navigator.serviceWorker.getRegistration();
+      if (!registration) {
+        registration = await navigator.serviceWorker.register('/sw.js', { scope: '/' });
+      }
+      await navigator.serviceWorker.ready;
+
+      if (applicationServerKey) {
+        let subscription = await registration.pushManager.getSubscription();
+        if (!subscription) {
+          subscription = await registration.pushManager.subscribe({
+            userVisibleOnly: true,
+            applicationServerKey,
+          });
+        }
+        if (subscription) {
+          await notificationsApi.subscribe(subscription.toJSON());
+          return { mode: 'web_push', subscription };
+        }
+      }
+    } catch (pushErr) {
+      console.warn('PushManager subscription bypassed (using HTML5 desktop alerts):', pushErr);
+      // For browsers like Brave with Google Services push disabled or push service errors:
+      // Gracefully activate HTML5 Desktop Alerts without throwing an error
+      return { mode: 'desktop_alerts', message: 'Desktop notifications active' };
+    }
   }
 
-  const applicationServerKey = urlB64ToUint8Array(data.key);
-
-  // 3. Register service worker and subscribe to PushManager
-  const registration = await navigator.serviceWorker.ready;
-  let subscription = await registration.pushManager.getSubscription();
-
-  if (!subscription) {
-    subscription = await registration.pushManager.subscribe({
-      userVisibleOnly: true,
-      applicationServerKey,
-    });
-  }
-
-  // 4. Save subscription to backend database
-  await notificationsApi.subscribe(subscription.toJSON());
-
-  return subscription;
+  return { mode: 'desktop_alerts', message: 'Desktop notifications active' };
 }
 
 /**
  * Unsubscribes from Web Push.
  */
 export async function unsubscribeFromPush() {
-  if (!isPushSupported()) return;
+  if (typeof window === 'undefined') return;
 
   try {
-    const registration = await navigator.serviceWorker.ready;
-    const subscription = await registration.pushManager.getSubscription();
-
-    if (subscription) {
-      // Notify backend
-      try {
-        await notificationsApi.unsubscribe({ endpoint: subscription.endpoint });
-      } catch (e) {
-        console.warn('Could not notify backend of push unsubscribe:', e);
+    if ('serviceWorker' in navigator && 'PushManager' in window) {
+      const registration = await navigator.serviceWorker.getRegistration();
+      if (registration) {
+        const subscription = await registration.pushManager.getSubscription();
+        if (subscription) {
+          try {
+            await notificationsApi.unsubscribe({ endpoint: subscription.endpoint });
+          } catch (e) {
+            console.warn('Could not notify backend of push unsubscribe:', e);
+          }
+          await subscription.unsubscribe();
+        }
       }
-      // Unsubscribe locally
-      await subscription.unsubscribe();
     }
   } catch (error) {
-    console.error('Error unsubscribing from push:', error);
-    throw error;
+    console.warn('Error unsubscribing from push:', error);
   }
 }

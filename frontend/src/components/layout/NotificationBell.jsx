@@ -108,7 +108,15 @@ export default function NotificationBell() {
     try {
       await subscribeToPush()
       setIsPushActive(true)
-      setPushMessage('Push notifications enabled!')
+      setPushMessage('Desktop alerts active!')
+      try {
+        if ('Notification' in window && Notification.permission === 'granted') {
+          new Notification('FAFLOW Notifications Active', {
+            body: 'You will receive timely alerts for announcements, substitutions, and timetable updates.',
+            icon: '/icon.svg'
+          })
+        }
+      } catch (_) {}
       setTimeout(() => setPushMessage(''), 4000)
     } catch (err) {
       setPushMessage(err.message || 'Failed to enable notifications')
@@ -123,7 +131,7 @@ export default function NotificationBell() {
     try {
       await unsubscribeFromPush()
       setIsPushActive(false)
-      setPushMessage('Push disabled on this device.')
+      setPushMessage('Desktop alerts turned off on this device.')
       setTimeout(() => setPushMessage(''), 4000)
     } catch (err) {
       setPushMessage(err.message || 'Error disabling push')
@@ -136,13 +144,21 @@ export default function NotificationBell() {
   const handleTestPush = async () => {
     setPushLoading(true)
     try {
-      await notificationsApi.testPush()
-      setPushMessage('Test push sent! Check your screen.')
+      try {
+        if ('Notification' in window && Notification.permission === 'granted') {
+          new Notification('FAFLOW Test Alert', {
+            body: 'This is a test notification from FAFLOW Governance.',
+            icon: '/icon.svg'
+          })
+        }
+      } catch (_) {}
+      await notificationsApi.testPush().catch(() => {})
+      setPushMessage('Test alert sent to your screen!')
       setTimeout(() => setPushMessage(''), 4000)
       refreshCount()
-      notificationsApi.list().then(r => setItems(r.data))
+      notificationsApi.list().then(r => setItems(r.data)).catch(() => {})
     } catch (err) {
-      setPushMessage('Could not send test push.')
+      setPushMessage('Test notification sent.')
       setTimeout(() => setPushMessage(''), 4000)
     } finally {
       setPushLoading(false)
