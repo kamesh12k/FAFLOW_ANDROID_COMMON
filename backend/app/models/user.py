@@ -56,6 +56,9 @@ class User(Base):
     # are still at a default/bootstrap value. Backend blocks all routes
     # except the first-login-setup endpoint until this is cleared.
     must_change_credentials = Column(Boolean, default=False, nullable=False)
+    policy_version_accepted = Column(String(20), nullable=True)
+    policy_accepted_at = Column(DateTime(timezone=True), nullable=True)
+    onboarding_completed = Column(Boolean, default=False, nullable=True)
     is_active = Column(Boolean, default=True, nullable=False)
     has_face_enrolled = Column(Boolean, default=False, nullable=False)
     face_enrolled_at = Column(DateTime(timezone=True), nullable=True)

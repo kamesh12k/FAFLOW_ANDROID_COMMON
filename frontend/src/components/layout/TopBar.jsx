@@ -16,7 +16,7 @@ function todayIso() {
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`
 }
 
-export default function TopBar() {
+export default function TopBar({ onOpenHelp }) {
   const { user, isAdmin, isSystemAdmin } = useAuth()
   const dept = useDepartment()
   const { app_name, activeTheme, changeTheme, THEMES } = useTheme() || {}
@@ -62,7 +62,7 @@ export default function TopBar() {
               <span>{app_name || BRAND_CONFIG.appName}</span>
             </span>
             {today && (
-              <span className="hidden sm:flex items-center gap-1.5 text-xs text-slate-400 font-bold uppercase tracking-wider">
+              <span data-tour="topbar-calendar" className="hidden sm:flex items-center gap-1.5 text-xs text-slate-400 font-bold uppercase tracking-wider">
                 <span className="hidden md:inline text-[10px] text-slate-400 font-bold">Today</span>
                 {today.day_type === 'working' && today.day_order ? (
                   <span className="inline-flex items-center rounded-lg font-bold bg-green-50 text-green-700 border border-green-150 px-2 py-0.5 text-[10px]">
@@ -109,8 +109,21 @@ export default function TopBar() {
               </kbd>
             </button>
 
+            {/* Help & Guides Button */}
+            <button
+              type="button"
+              onClick={onOpenHelp}
+              className="flex items-center justify-center p-2 rounded-xl border border-slate-200 bg-slate-50/20 text-slate-400 hover:text-primary-600 hover:bg-primary-50/40 hover:border-primary-200 transition-all text-xs font-bold shadow-[0_1px_2px_rgba(0,0,0,0.01)] min-h-[36px] min-w-[36px]"
+              title="Help & Workflow Guides"
+              aria-label="Help and Guides"
+            >
+              <span className="text-sm">💡</span>
+            </button>
+
             {/* Notification Bell */}
-            <NotificationBell />
+            <div data-tour="notification-bell">
+              <NotificationBell />
+            </div>
           </div>
         </div>
       </header>

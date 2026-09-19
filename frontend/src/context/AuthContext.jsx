@@ -15,6 +15,11 @@ export function AuthProvider({ children }) {
     setUser(userData)
   }, [])
 
+  const updateUser = useCallback((userData) => {
+    localStorage.setItem('credits_user', JSON.stringify(userData))
+    setUser(userData)
+  }, [])
+
   const logout = useCallback(() => {
     localStorage.removeItem('credits_token')
     localStorage.removeItem('credits_user')
@@ -27,6 +32,7 @@ export function AuthProvider({ children }) {
       user,
       token,
       login,
+      updateUser,
       logout,
       isAdmin: user?.role === 'admin' || user?.role === 'system_admin' || user?.role === 'principal' || user?.role === 'governance',
       isSystemAdmin: user?.role === 'system_admin',

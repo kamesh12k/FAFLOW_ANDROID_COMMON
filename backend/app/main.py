@@ -33,7 +33,7 @@ from app.routes import (
     departments, subjects, classes, rooms, day_order, admin, academic_calendar,
     campus_operations, teacher_substitution, substitutions, principal, manager, staff,
     backup, governance, data_retention, geofences, attendance, system_control,
-    student_attendance, intelligence, class_roll_rules, announcements,
+    student_attendance, intelligence, class_roll_rules, announcements, policy,
 )
 from app.services.admin_service import bootstrap_default_super_admin
 from app.services.governance_service import bootstrap_governance_user
@@ -231,6 +231,31 @@ def sync_table_constraints_and_columns():
                                 ALTER TABLE students ADD COLUMN updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW();
                             END IF;
                         END IF;
+
+                        -- 6. Ensure policy_version_accepted, policy_accepted_at, onboarding_completed on users table
+                        IF EXISTS (
+                            SELECT 1 FROM information_schema.tables 
+                            WHERE table_schema = 'public' AND table_name = 'users'
+                        ) THEN
+                            IF NOT EXISTS (
+                                SELECT 1 FROM information_schema.columns
+                                WHERE table_schema = 'public' AND table_name = 'users' AND column_name = 'policy_version_accepted'
+                            ) THEN
+                                ALTER TABLE users ADD COLUMN policy_version_accepted VARCHAR(20);
+                            END IF;
+                            IF NOT EXISTS (
+                                SELECT 1 FROM information_schema.columns
+                                WHERE table_schema = 'public' AND table_name = 'users' AND column_name = 'policy_accepted_at'
+                            ) THEN
+                                ALTER TABLE users ADD COLUMN policy_accepted_at TIMESTAMP WITH TIME ZONE;
+                            END IF;
+                            IF NOT EXISTS (
+                                SELECT 1 FROM information_schema.columns
+                                WHERE table_schema = 'public' AND table_name = 'users' AND column_name = 'onboarding_completed'
+                            ) THEN
+                                ALTER TABLE users ADD COLUMN onboarding_completed BOOLEAN NOT NULL DEFAULT FALSE;
+                            END IF;
+                        END IF;
                     END $$;
                 """))
             except Exception as e:
@@ -244,8 +269,20 @@ def sync_table_constraints_and_columns():
                 if "default_room_id" not in col_names:
                     conn.execute(text("ALTER TABLE classes ADD COLUMN default_room_id INTEGER REFERENCES rooms(id) ON DELETE SET NULL"))
                     conn.commit()
+                
+                user_res = conn.execute(text("PRAGMA table_info(users)")).fetchall()
+                user_cols = [r[1] for r in user_res]
+                if "policy_version_accepted" not in user_cols:
+                    conn.execute(text("ALTER TABLE users ADD COLUMN policy_version_accepted VARCHAR(20)"))
+                    conn.commit()
+                if "policy_accepted_at" not in user_cols:
+                    conn.execute(text("ALTER TABLE users ADD COLUMN policy_accepted_at TIMESTAMP"))
+                    conn.commit()
+                if "onboarding_completed" not in user_cols:
+                    conn.execute(text("ALTER TABLE users ADD COLUMN onboarding_completed BOOLEAN NOT NULL DEFAULT 0"))
+                    conn.commit()
             except Exception as e:
-                logger.warning("Could not sync sqlite classes default_room_id: %s", e)
+                logger.warning("Could not sync sqlite classes default_room_id or user policy cols: %s", e)
 
 
 def _db_is_ready() -> bool:
@@ -447,6 +484,7 @@ ROUTERS = [
     intelligence.router,
     class_roll_rules.router,
     announcements.router,
+    policy.router,
 ]
 
 for r in ROUTERS:

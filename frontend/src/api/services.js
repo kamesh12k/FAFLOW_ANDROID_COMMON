@@ -9,6 +9,13 @@ export const authApi = {
   register: (data) => api.post('/auth/register', data),
 }
 
+export const policyApi = {
+  getCurrent: () => api.get('/policy/current'),
+  acceptPolicy: (version) => api.post('/policy/accept', { version }),
+  completeOnboarding: () => api.post('/policy/onboarding/complete'),
+  resetOnboarding: () => api.post('/policy/onboarding/reset'),
+}
+
 export const adminApi = {
   firstLoginSetup: (data) => api.post('/admin/first-login/setup', data),
   listSecondaryAdmins: () => api.get('/admin/secondary-admins'),

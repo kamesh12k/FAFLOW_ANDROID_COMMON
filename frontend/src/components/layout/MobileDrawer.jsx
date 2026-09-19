@@ -5,7 +5,7 @@ import { ADMIN_NAV, TEACHER_NAV, SYSTEM_ADMIN_NAV, PRINCIPAL_NAV, MANAGER_NAV, S
 import { announcementApi } from '../../api/announcements'
 import { SettingsIcon, LogoutIcon, CloseIcon } from '../icons'
 
-export default function MobileDrawer({ open, onClose }) {
+export default function MobileDrawer({ open, onClose, onOpenHelp }) {
   const { user, isAdmin, isSystemAdmin, isPrincipal, isGovernance, isManager, isStaff, logout } = useAuth()
   const navigate = useNavigate()
   const [unreadCount, setUnreadCount] = useState(0)
@@ -143,6 +143,15 @@ export default function MobileDrawer({ open, onClose }) {
               <span>Substitution Preferences</span>
             </NavLink>
           )}
+
+          <button
+            type="button"
+            onClick={() => { onClose(); if (onOpenHelp) onOpenHelp(); }}
+            className="flex items-center gap-3 w-full px-3 py-3 rounded-xl text-sm font-medium text-gray-300 hover:text-white hover:bg-white/10 transition-colors text-left"
+          >
+            <span className="text-base shrink-0">💡</span>
+            <span>Help & Guides</span>
+          </button>
 
           <button 
             onClick={handleLogout} 

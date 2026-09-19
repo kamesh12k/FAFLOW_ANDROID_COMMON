@@ -49,7 +49,7 @@ function NavItem({ to, icon, label, end, collapsed, unreadCount }) {
   )
 }
 
-export default function Sidebar() {
+export default function Sidebar({ onOpenHelp }) {
   const { user, isAdmin, isSystemAdmin, isPrincipal, isGovernance, isManager, isStaff, logout } = useAuth()
   const { app_name, themePreset } = useTheme() || {}
   const { departments, activeDepartmentId, setActiveDepartmentId, activeDepartmentName } = useDepartment()
@@ -259,6 +259,23 @@ export default function Sidebar() {
             )}
           </NavLink>
         )}
+
+        {/* Help & Guide link */}
+        <button
+          type="button"
+          onClick={onOpenHelp}
+          className={`w-full flex items-center gap-3 px-3.5 py-2 rounded-xl text-xs font-semibold transition-all group relative text-left ${
+            isDark ? 'text-slate-400 hover:text-white hover:bg-slate-800/50' : 'text-slate-500 hover:text-slate-800 hover:bg-slate-100'
+          }`}
+        >
+          <span className="text-base shrink-0">💡</span>
+          {!collapsed && <span>Help & Guides</span>}
+          {collapsed && (
+            <div className="absolute left-16 top-1/2 -translate-y-1/2 ml-2 px-3 py-1.5 bg-slate-900 text-white text-[11px] font-bold rounded-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 shadow-lg border border-slate-800 z-50 whitespace-nowrap">
+              Help & Guides
+            </div>
+          )}
+        </button>
 
         {/* User identity card */}
         {!collapsed ? (

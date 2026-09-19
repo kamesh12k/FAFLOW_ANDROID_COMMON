@@ -34,6 +34,9 @@ class UserOut(BaseModel):
     department: str | None
     department_id: int | None = None
     must_change_credentials: bool
+    policy_version_accepted: str | None = None
+    policy_accepted_at: datetime | None = None
+    onboarding_completed: bool = False
     is_active: bool
     has_face_enrolled: bool = False
     face_enrolled_at: datetime | None = None
