@@ -33,7 +33,32 @@ class TimetableSlotOut(BaseModel):
     day_order: int
     period_number: int
 
-    model_config = {"from_attributes": True}
+    # Enriched display fields resolved from relations — avoids N+1 list fetches on frontend
+    subject_name: str | None = None
+    subject_code: str | None = None
+    class_name: str | None = None
+    class_section: str | None = None
+    room_number: str | None = None
+
+    model_config = {"from_attributes": False}
+
+    @classmethod
+    def from_orm_slot(cls, slot: object) -> "TimetableSlotOut":
+        """Construct from a TimetableSlot ORM instance, resolving relation names."""
+        return cls(
+            id=slot.id,
+            teacher_id=slot.teacher_id,
+            subject_id=slot.subject_id,
+            class_id=slot.class_id,
+            room_id=slot.room_id,
+            day_order=slot.day_order,
+            period_number=slot.period_number,
+            subject_name=slot.subject.name if slot.subject else None,
+            subject_code=slot.subject.code if slot.subject else None,
+            class_name=slot.class_.name if slot.class_ else None,
+            class_section=slot.class_.section if slot.class_ else None,
+            room_number=slot.room.room_number if slot.room else None,
+        )
 
 
 class BulkTimetableCreate(BaseModel):

@@ -65,7 +65,7 @@ const ClasswiseTimetable = lazy(() => import('./pages/common/ClasswiseTimetable'
 
 // Teacher pages (lazy loaded)
 const TeacherDashboard = lazy(() => import('./pages/teacher/Dashboard'))
-const MyTimetable = lazy(() => import('./pages/teacher/Timetable'))
+const TimetableView = lazy(() => import('./pages/teacher/TimetableView'))
 const ApplyLeave = lazy(() => import('./pages/teacher/ApplyLeave'))
 const LeaveHistory = lazy(() => import('./pages/teacher/LeaveHistory'))
 const MyCredits = lazy(() => import('./pages/teacher/Credits'))
@@ -195,7 +195,7 @@ export default function App() {
               <Route element={<AppShell />}>
                 <Route path="/teacher/dashboard" element={<TeacherDashboard />} />
                 <Route path="/teacher/student-attendance" element={<StudentAttendance />} />
-                <Route path="/teacher/timetable" element={<MyTimetable />} />
+                <Route path="/teacher/timetable" element={<TimetableView />} />
                 <Route path="/teacher/class-timetable" element={<ClasswiseTimetable />} />
                 <Route path="/teacher/leave/apply" element={<ApplyLeave />} />
                 <Route path="/teacher/leaves" element={<LeaveHistory />} />

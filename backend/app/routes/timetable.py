@@ -107,7 +107,8 @@ def get_timetable_by_teacher(
     db: Session = Depends(get_db),
     tenant_department_id: int | None = Depends(get_tenant_department_id),
 ):
-    return timetable_service.get_by_teacher(teacher_id, db, tenant_department_id)
+    slots = timetable_service.get_by_teacher(teacher_id, db, tenant_department_id)
+    return [TimetableSlotOut.from_orm_slot(s) for s in slots]
 
 
 @router.get("/class/{class_id}", response_model=list[TimetableSlotOut])
@@ -117,7 +118,8 @@ def get_timetable_by_class(
     db: Session = Depends(get_db),
     tenant_department_id: int | None = Depends(get_tenant_department_id),
 ):
-    return timetable_service.get_by_class(class_id, db, tenant_department_id)
+    slots = timetable_service.get_by_class(class_id, db, tenant_department_id)
+    return [TimetableSlotOut.from_orm_slot(s) for s in slots]
 
 
 @router.delete("/{slot_id}", status_code=204)

@@ -1,4 +1,4 @@
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 from sqlalchemy.exc import IntegrityError
 from fastapi import HTTPException
 
@@ -168,13 +168,33 @@ def get_by_teacher(teacher_id: int, db: Session, tenant_department_id: int | Non
         teacher = db.query(User).filter(User.id == teacher_id).first()
         if not teacher or teacher.department_id != tenant_department_id:
             raise HTTPException(status_code=403, detail="Access denied")
-    return db.query(TimetableSlot).filter(TimetableSlot.teacher_id == teacher_id).order_by(TimetableSlot.day_order, TimetableSlot.period_number).all()
+    return (
+        db.query(TimetableSlot)
+        .options(
+            joinedload(TimetableSlot.subject),
+            joinedload(TimetableSlot.class_),
+            joinedload(TimetableSlot.room),
+        )
+        .filter(TimetableSlot.teacher_id == teacher_id)
+        .order_by(TimetableSlot.day_order, TimetableSlot.period_number)
+        .all()
+    )
 
 
 def get_by_class(class_id: int, db: Session, tenant_department_id: int | None = None) -> list[TimetableSlot]:
     if not db.query(Class).filter(Class.id == class_id).first():
         raise HTTPException(status_code=404, detail="Class not found")
-    return db.query(TimetableSlot).filter(TimetableSlot.class_id == class_id).order_by(TimetableSlot.day_order, TimetableSlot.period_number).all()
+    return (
+        db.query(TimetableSlot)
+        .options(
+            joinedload(TimetableSlot.subject),
+            joinedload(TimetableSlot.class_),
+            joinedload(TimetableSlot.room),
+        )
+        .filter(TimetableSlot.class_id == class_id)
+        .order_by(TimetableSlot.day_order, TimetableSlot.period_number)
+        .all()
+    )
 
 
 def list_slots(
