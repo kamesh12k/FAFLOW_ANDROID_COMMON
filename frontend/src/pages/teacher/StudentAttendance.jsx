@@ -520,9 +520,20 @@ export default function StudentAttendance() {
 
                   {/* Absent Last-3-Digits Input Field */}
                   <div className="mt-5 space-y-2">
-                    <label className="block text-xs font-black text-slate-700 uppercase tracking-wider">
-                      Absent Students (Enter last 3 digits of roll numbers)
-                    </label>
+                    <div className="flex items-center justify-between">
+                      <label className="block text-xs font-black text-slate-700 uppercase tracking-wider">
+                        Absent Students (Enter last 3 digits of roll numbers)
+                      </label>
+                      {(absentInput || Object.keys(specialStatuses).length > 0) && (
+                        <button
+                          type="button"
+                          onClick={() => { setAbsentInput(''); setSpecialStatuses({}); }}
+                          className="text-xs text-rose-600 hover:text-rose-800 font-bold hover:underline"
+                        >
+                          ✕ Clear All Entries
+                        </button>
+                      )}
+                    </div>
                     <div className="relative">
                       <input
                         type="text"
@@ -530,8 +541,18 @@ export default function StudentAttendance() {
                         onChange={(e) => setAbsentInput(e.target.value)}
                         placeholder="e.g. 044 051 073"
                         disabled={activeSession && !activeSession.can_edit && activeSession.status !== 'OPEN' && activeSession.status !== 'NOT_OPEN'}
-                        className="w-full px-4 py-3 bg-slate-50 border border-slate-300 rounded-xl text-sm font-mono tracking-wide focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all"
+                        className="w-full px-4 py-3 bg-slate-50 border border-slate-300 rounded-xl text-sm font-mono tracking-wide focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all pr-10"
                       />
+                      {absentInput && (
+                        <button
+                          type="button"
+                          onClick={() => setAbsentInput('')}
+                          className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 font-bold"
+                          title="Clear input"
+                        >
+                          ✕
+                        </button>
+                      )}
                     </div>
                     <p className="text-xs text-slate-500">
                       Separate numbers by spaces, commas, or newlines. All other students are automatically marked <strong>PRESENT</strong>.

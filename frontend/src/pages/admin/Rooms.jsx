@@ -363,6 +363,17 @@ export default function AdminRooms() {
                 <option value="">All Departments</option>
                 {departments.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
               </select>
+              <div className="flex items-center gap-2 sm:col-span-4">
+                {(searchQuery || filterStatus !== 'all' || filterType || filterDept) && (
+                  <button
+                    type="button"
+                    onClick={() => { setSearchQuery(''); setFilterStatus('all'); setFilterType(''); setFilterDept(''); }}
+                    className="text-xs text-rose-600 hover:text-rose-800 font-bold px-2.5 py-1.5 bg-rose-50 hover:bg-rose-100 rounded-lg transition-colors ml-auto"
+                  >
+                    ✕ Clear All Filters
+                  </button>
+                )}
+              </div>
             </div>
           </div>
 

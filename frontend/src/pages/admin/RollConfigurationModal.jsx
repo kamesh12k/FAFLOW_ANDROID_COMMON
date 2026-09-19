@@ -138,6 +138,19 @@ export default function RollConfigurationModal({ isOpen, onClose, selectedClass,
     }
   }
 
+  const handleClearAllExceptions = async (type) => {
+    const targetList = exceptions.filter(e => e.exception_type === type)
+    if (targetList.length === 0) return
+    try {
+      setError('')
+      await Promise.all(targetList.map(e => classRollRulesApi.deleteException(selectedClass.id, e.id)))
+      await loadData()
+      if (onSaved) onSaved()
+    } catch (err) {
+      setError(err.response?.data?.detail || 'Failed to clear all exceptions')
+    }
+  }
+
   const validation = rosterData?.validation
   const expectedCount = Math.max(0, endNum - startNum + 1)
   const includes = exceptions.filter(e => e.exception_type === 'INCLUDE')
@@ -312,9 +325,20 @@ export default function RollConfigurationModal({ isOpen, onClose, selectedClass,
                   <div className="text-xs font-black uppercase text-slate-600 tracking-wider">
                     2. Additional Students (Others / Lateral Entry)
                   </div>
-                  <span className="text-[10px] font-bold bg-blue-50 text-blue-700 px-2 py-0.5 rounded-full border border-blue-200">
-                    {includes.length} Included
-                  </span>
+                  <div className="flex items-center gap-2">
+                    <span className="text-[10px] font-bold bg-blue-50 text-blue-700 px-2 py-0.5 rounded-full border border-blue-200">
+                      {includes.length} Included
+                    </span>
+                    {includes.length > 0 && (
+                      <button
+                        type="button"
+                        onClick={() => handleClearAllExceptions('INCLUDE')}
+                        className="text-[10px] font-bold text-rose-600 hover:text-rose-800 hover:underline"
+                      >
+                        Clear All
+                      </button>
+                    )}
+                  </div>
                 </div>
 
                 <div className="flex flex-wrap gap-2">
@@ -370,9 +394,20 @@ export default function RollConfigurationModal({ isOpen, onClose, selectedClass,
                   <div className="text-xs font-black uppercase text-slate-600 tracking-wider">
                     3. Excluded Students (Transferred / Inactive / Detained)
                   </div>
-                  <span className="text-[10px] font-bold bg-rose-50 text-rose-700 px-2 py-0.5 rounded-full border border-rose-200">
-                    {excludes.length} Excluded
-                  </span>
+                  <div className="flex items-center gap-2">
+                    <span className="text-[10px] font-bold bg-rose-50 text-rose-700 px-2 py-0.5 rounded-full border border-rose-200">
+                      {excludes.length} Excluded
+                    </span>
+                    {excludes.length > 0 && (
+                      <button
+                        type="button"
+                        onClick={() => handleClearAllExceptions('EXCLUDE')}
+                        className="text-[10px] font-bold text-rose-600 hover:text-rose-800 hover:underline"
+                      >
+                        Clear All
+                      </button>
+                    )}
+                  </div>
                 </div>
 
                 <div className="flex flex-wrap gap-2">

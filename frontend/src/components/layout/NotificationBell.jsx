@@ -90,6 +90,14 @@ export default function NotificationBell() {
     setUnread(0)
   }
 
+  const handleClearAll = async () => {
+    try {
+      await notificationsApi.markAllRead()
+      setItems([])
+      setUnread(0)
+    } catch (_) {}
+  }
+
   const handleItemClick = async (item) => {
     if (!item.is_read) {
       await notificationsApi.markRead(item.id)
@@ -181,11 +189,18 @@ export default function NotificationBell() {
               <p className="text-sm font-semibold text-gray-800">Notifications</p>
               {unread > 0 && <p className="text-[11px] text-gray-500">{unread} unread</p>}
             </div>
-            {unread > 0 && (
-              <button onClick={handleMarkAll} className="text-xs text-primary-600 hover:underline font-medium">
-                Mark all read
-              </button>
-            )}
+            <div className="flex items-center gap-2">
+              {unread > 0 && (
+                <button onClick={handleMarkAll} className="text-xs text-primary-600 hover:underline font-medium">
+                  Mark all read
+                </button>
+              )}
+              {items.length > 0 && (
+                <button onClick={handleClearAll} className="text-xs text-rose-600 hover:underline font-semibold">
+                  Clear All
+                </button>
+              )}
+            </div>
           </div>
 
           {/* Web Push Subscription Banner */}

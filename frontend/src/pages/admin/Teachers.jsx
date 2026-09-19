@@ -529,6 +529,14 @@ export default function Teachers() {
           <option value="active">Active only</option>
           <option value="disabled">Disabled only</option>
         </select>
+        {filtersActive && (
+          <button
+            onClick={resetFilters}
+            className="text-xs text-rose-600 hover:text-rose-800 font-bold px-2.5 py-1.5 bg-rose-50 hover:bg-rose-100 rounded-lg transition-colors"
+          >
+            ✕ Clear All Filters
+          </button>
+        )}
         <button onClick={handleExportCsv} disabled={sorted.length === 0} className="btn-secondary text-sm inline-flex items-center gap-1.5 disabled:opacity-50">
           <IconDownload className="h-4 w-4" /> Export CSV
         </button>
@@ -541,7 +549,7 @@ export default function Teachers() {
           <button disabled={bulkBusy} onClick={() => handleBulkStatus(true)} className="text-xs font-semibold text-green-700 hover:underline disabled:opacity-50">Activate</button>
           <button disabled={bulkBusy} onClick={() => handleBulkStatus(false)} className="text-xs font-semibold text-gray-600 hover:underline disabled:opacity-50">Disable</button>
           <button disabled={bulkBusy} onClick={() => setBulkDeleteOpen(true)} className="text-xs font-semibold text-red-600 hover:underline disabled:opacity-50">Delete</button>
-          <button onClick={() => setSelected(new Set())} className="ml-auto text-xs text-gray-500 hover:underline">Clear selection</button>
+          <button onClick={() => setSelected(new Set())} className="ml-auto text-xs text-rose-600 hover:underline font-semibold">Clear All Selected</button>
         </div>
       )}
 
