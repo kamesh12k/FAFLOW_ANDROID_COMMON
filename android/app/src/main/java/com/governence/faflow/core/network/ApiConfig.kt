@@ -17,12 +17,12 @@ object ApiConfig {
     const val EMULATOR_127_0_0_1_URL = "http://127.0.0.1:8000/"
 
     // Physical device development server fallback
-    const val DEFAULT_LAN_URL = "http://172.21.135.207:8000/"
+    const val DEFAULT_LAN_URL = "https://faflowgovernence.online/"
 
-    // Production secure endpoint (Render Live Backend)
-    const val PRODUCTION_BASE_URL = "https://faflow-android-common.onrender.com/"
+    // Production secure endpoint (FAFLOW Azure Production Server)
+    const val PRODUCTION_BASE_URL = "https://faflowgovernence.online/"
 
-    // Sensible timeout configurations avoiding hangs while handling Render cold starts
+    // Sensible timeout configurations avoiding hangs while handling network calls
     const val CONNECT_TIMEOUT_SECONDS = 15L
     const val READ_TIMEOUT_SECONDS = 25L
     const val WRITE_TIMEOUT_SECONDS = 25L
@@ -31,10 +31,12 @@ object ApiConfig {
     private const val PREFS_NAME = "faflow_network_prefs"
     private const val KEY_BASE_URL = "server_base_url"
     private const val KEY_MIGRATION_VERSION = "network_config_migration_ver"
-    private const val CURRENT_MIGRATION_VERSION = 2
+    private const val CURRENT_MIGRATION_VERSION = 3
 
     // Obsolete / legacy URLs that must be migrated away from in production
     private val LEGACY_OBSOLETE_URLS = listOf(
+        "https://faflow-android-common.onrender.com/",
+        "http://faflow-android-common.onrender.com/",
         "https://api.faflow.institution.edu/",
         "http://api.faflow.institution.edu/",
         "http://10.0.2.2:8000/",
@@ -62,13 +64,8 @@ object ApiConfig {
      * Determines default base URL based on build flavor and environment.
      */
     fun getDefaultBaseUrl(): String {
-        return if (BuildConfig.DEBUG) {
-            if (isEmulator()) {
-                // Works with both 10.0.2.2 and 127.0.0.1 (reverse proxy)
-                EMULATOR_127_0_0_1_URL
-            } else {
-                DEFAULT_LAN_URL
-            }
+        return if (isEmulator()) {
+            EMULATOR_127_0_0_1_URL
         } else {
             PRODUCTION_BASE_URL
         }
@@ -82,20 +79,16 @@ object ApiConfig {
         val saved = prefs.getString(KEY_BASE_URL, null)
         val migrationVer = prefs.getInt(KEY_MIGRATION_VERSION, 0)
 
-        // Version-aware migration: ensure Release build is never trapped in obsolete URLs
-        if (!BuildConfig.DEBUG) {
-            val isObsolete = saved == null ||
-                    LEGACY_OBSOLETE_URLS.any { saved.equals(it, ignoreCase = true) || saved.contains("faflow.institution.edu") } ||
-                    saved.contains("10.0.2.2") ||
-                    saved.contains("127.0.0.1") ||
-                    saved.contains("172.21.135.207") ||
-                    saved.contains("localhost")
+        // Version-aware migration: ensure device is updated to live server
+        val isObsolete = saved == null ||
+                LEGACY_OBSOLETE_URLS.any { saved.equals(it, ignoreCase = true) || saved.contains("onrender.com") || saved.contains("faflow.institution.edu") } ||
+                saved.contains("172.21.135.207") ||
+                (!isEmulator() && (saved.contains("10.0.2.2") || saved.contains("127.0.0.1") || saved.contains("localhost")))
 
-            if (migrationVer < CURRENT_MIGRATION_VERSION || isObsolete) {
-                saveBaseUrl(context, PRODUCTION_BASE_URL)
-                prefs.edit().putInt(KEY_MIGRATION_VERSION, CURRENT_MIGRATION_VERSION).apply()
-                return PRODUCTION_BASE_URL
-            }
+        if (migrationVer < CURRENT_MIGRATION_VERSION || isObsolete) {
+            saveBaseUrl(context, PRODUCTION_BASE_URL)
+            prefs.edit().putInt(KEY_MIGRATION_VERSION, CURRENT_MIGRATION_VERSION).apply()
+            return PRODUCTION_BASE_URL
         }
 
         val candidate = saved ?: getDefaultBaseUrl()
