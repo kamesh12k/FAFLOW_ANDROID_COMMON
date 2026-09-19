@@ -24,6 +24,7 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Block
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -114,41 +115,20 @@ fun ApplyLeaveScreen(
 
     Scaffold(
         topBar = {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = FaflowSpacing.md, vertical = FaflowSpacing.sm),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                IconButton(onClick = onNavigateBack) {
-                    Icon(
-                        imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                        contentDescription = "Back",
-                        tint = MaterialTheme.colorScheme.onSurface
-                    )
-                }
-                Spacer(modifier = Modifier.width(FaflowSpacing.xs))
-                Column {
-                    Text(
-                        text = "Apply for Leave",
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onSurface
-                    )
-                    Text(
-                        text = "Request single period or whole-day coverage",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-            }
+            com.governence.faflow.ui.components.AppTopBar(
+                title = "Apply for Leave",
+                subtitle = "Request single period or whole-day coverage",
+                canNavigateBack = true,
+                onNavigateBack = onNavigateBack
+            )
         },
-        containerColor = MaterialTheme.colorScheme.background
+        containerColor = com.governence.faflow.ui.theme.FaflowBg
     ) { innerPadding ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
+                .background(com.governence.faflow.ui.theme.FaflowBg)
                 .padding(horizontal = FaflowSpacing.lg)
                 .verticalScroll(rememberScrollState())
         ) {
@@ -179,19 +159,44 @@ fun ApplyLeaveScreen(
                     }
                 }
                 Spacer(modifier = Modifier.height(FaflowSpacing.md))
+            } else if (state.hasExistingLeaveOnDate) {
+                // Duplicate Leave Warning Banner
+                FaflowSurface(
+                    modifier = Modifier.fillMaxWidth(),
+                    backgroundColor = FaflowStatusColors.PendingBg,
+                    borderColor = FaflowStatusColors.Pending.copy(alpha = 0.5f),
+                    contentPadding = PaddingValues(FaflowSpacing.md)
+                ) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(
+                            imageVector = Icons.Default.Warning,
+                            contentDescription = null,
+                            tint = FaflowStatusColors.Pending,
+                            modifier = Modifier.size(20.dp)
+                        )
+                        Spacer(modifier = Modifier.width(FaflowSpacing.sm))
+                        Text(
+                            text = "A leave request is already recorded for $leaveDate${if (state.existingLeavePeriods.isNotEmpty()) " (Periods: ${state.existingLeavePeriods.sorted().joinToString()})" else ""}. Please review your leave history before submitting again.",
+                            style = MaterialTheme.typography.bodySmall,
+                            fontWeight = FontWeight.SemiBold,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                    }
+                }
+                Spacer(modifier = Modifier.height(FaflowSpacing.md))
             } else {
                 // Standard Contextual Guidance
                 FaflowSurface(
                     modifier = Modifier.fillMaxWidth(),
-                    backgroundColor = FaflowStatusColors.PendingBg,
-                    borderColor = FaflowStatusColors.Pending.copy(alpha = 0.3f),
+                    backgroundColor = Color.White,
+                    borderColor = com.governence.faflow.ui.theme.FaflowBorder,
                     contentPadding = PaddingValues(FaflowSpacing.md)
                 ) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Icon(
                             imageVector = Icons.Default.Info,
                             contentDescription = null,
-                            tint = FaflowStatusColors.Pending,
+                            tint = com.governence.faflow.ui.theme.FaflowNavy,
                             modifier = Modifier.size(20.dp)
                         )
                         Spacer(modifier = Modifier.width(FaflowSpacing.sm))
@@ -226,14 +231,14 @@ fun ApplyLeaveScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .clip(FaflowShapes.pill)
-                    .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
+                    .background(com.governence.faflow.ui.theme.FaflowDivider)
                     .padding(4.dp)
             ) {
                 Box(
                     modifier = Modifier
                         .weight(1f)
                         .clip(FaflowShapes.pill)
-                        .background(if (isWholeDay) MaterialTheme.colorScheme.primary else Color.Transparent)
+                        .background(if (isWholeDay) com.governence.faflow.ui.theme.FaflowNavy else Color.Transparent)
                         .clickable { isWholeDay = true }
                         .padding(vertical = 8.dp),
                     contentAlignment = Alignment.Center
@@ -249,7 +254,7 @@ fun ApplyLeaveScreen(
                     modifier = Modifier
                         .weight(1f)
                         .clip(FaflowShapes.pill)
-                        .background(if (!isWholeDay) MaterialTheme.colorScheme.primary else Color.Transparent)
+                        .background(if (!isWholeDay) com.governence.faflow.ui.theme.FaflowNavy else Color.Transparent)
                         .clickable { isWholeDay = false }
                         .padding(vertical = 8.dp),
                     contentAlignment = Alignment.Center
@@ -280,7 +285,9 @@ fun ApplyLeaveScreen(
                 shape = FaflowShapes.medium,
                 colors = OutlinedTextFieldDefaults.colors(
                     focusedBorderColor = PrimaryBlue,
-                    unfocusedBorderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.4f)
+                    unfocusedBorderColor = com.governence.faflow.ui.theme.FaflowBorder,
+                    focusedContainerColor = Color.White,
+                    unfocusedContainerColor = Color.White
                 ),
                 modifier = Modifier.fillMaxWidth()
             )
@@ -330,9 +337,9 @@ fun ApplyLeaveScreen(
             ) {
                 (1..5).forEach { period ->
                     val isSelected = selectedPeriods.contains(period)
-                    val bg = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surface
+                    val bg = if (isSelected) com.governence.faflow.ui.theme.FaflowNavy else Color.White
                     val fg = if (isSelected) Color.White else MaterialTheme.colorScheme.onSurface
-                    val border = if (isSelected) Color.Transparent else MaterialTheme.colorScheme.outline.copy(alpha = 0.35f)
+                    val border = if (isSelected) Color.Transparent else com.governence.faflow.ui.theme.FaflowBorder
 
                     Column(
                         modifier = Modifier
@@ -385,10 +392,10 @@ fun ApplyLeaveScreen(
                     Box(
                         modifier = Modifier
                             .clip(FaflowShapes.pill)
-                            .background(if (isPicked) MaterialTheme.colorScheme.primary.copy(alpha = 0.12f) else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f))
+                            .background(if (isPicked) com.governence.faflow.ui.theme.FaflowNavy.copy(alpha = 0.12f) else Color.White)
                             .border(
                                 width = 1.dp,
-                                color = if (isPicked) MaterialTheme.colorScheme.primary else Color.Transparent,
+                                color = if (isPicked) com.governence.faflow.ui.theme.FaflowNavy else com.governence.faflow.ui.theme.FaflowBorder,
                                 shape = FaflowShapes.pill
                             )
                             .clickable { reason = preset }
@@ -399,7 +406,7 @@ fun ApplyLeaveScreen(
                                 Icon(
                                     imageVector = Icons.Default.Check,
                                     contentDescription = null,
-                                    tint = MaterialTheme.colorScheme.primary,
+                                    tint = com.governence.faflow.ui.theme.FaflowNavy,
                                     modifier = Modifier.size(12.dp)
                                 )
                                 Spacer(modifier = Modifier.width(4.dp))
@@ -408,7 +415,7 @@ fun ApplyLeaveScreen(
                                 text = preset,
                                 style = MaterialTheme.typography.bodySmall,
                                 fontWeight = if (isPicked) FontWeight.Bold else FontWeight.Normal,
-                                color = if (isPicked) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
+                                color = if (isPicked) com.governence.faflow.ui.theme.FaflowNavy else MaterialTheme.colorScheme.onSurface
                             )
                         }
                     }
@@ -434,7 +441,9 @@ fun ApplyLeaveScreen(
                 shape = FaflowShapes.medium,
                 colors = OutlinedTextFieldDefaults.colors(
                     focusedBorderColor = PrimaryBlue,
-                    unfocusedBorderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.4f)
+                    unfocusedBorderColor = com.governence.faflow.ui.theme.FaflowBorder,
+                    focusedContainerColor = Color.White,
+                    unfocusedContainerColor = Color.White
                 ),
                 modifier = Modifier.fillMaxWidth()
             )
@@ -442,7 +451,8 @@ fun ApplyLeaveScreen(
             Spacer(modifier = Modifier.height(FaflowSpacing.xxl))
 
             // Submit Button
-            val isSubmitEnabled = reason.isNotBlank() && selectedPeriods.isNotEmpty() && !state.isBlockedDate
+            val hasConflict = state.hasExistingLeaveOnDate && (isWholeDay || selectedPeriods.any { it in state.existingLeavePeriods })
+            val isSubmitEnabled = reason.isNotBlank() && selectedPeriods.isNotEmpty() && !state.isBlockedDate && !hasConflict
 
             if (state.isLoading) {
                 CircularProgressIndicator(

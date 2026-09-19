@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
@@ -19,6 +20,7 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.ripple
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -99,9 +101,11 @@ fun MainBottomNavigation(
                         Column(
                             modifier = Modifier
                                 .weight(1f)
+                                .defaultMinSize(minHeight = 48.dp)
+                                .clip(RoundedCornerShape(8.dp))
                                 .clickable(
                                     interactionSource = remember { MutableInteractionSource() },
-                                    indication = null
+                                    indication = ripple(bounded = true, color = activeColor.copy(alpha = 0.12f))
                                 ) {
                                     if (currentRoute != item.route) {
                                         navController.navigate(item.route) {
@@ -113,7 +117,8 @@ fun MainBottomNavigation(
                                         }
                                     }
                                 },
-                            horizontalAlignment = Alignment.CenterHorizontally
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.Center
                         ) {
                             // Top indicator pill (18px x 2.5px, border-radius 2px)
                             Box(
@@ -124,7 +129,7 @@ fun MainBottomNavigation(
                                     .background(if (selected) activeColor else Color.Transparent)
                             )
 
-                            Spacer(modifier = Modifier.height(7.dp))
+                            Spacer(modifier = Modifier.height(6.dp))
 
                             Icon(
                                 imageVector = item.icon,
@@ -133,13 +138,13 @@ fun MainBottomNavigation(
                                 modifier = Modifier.size(20.dp)
                             )
 
-                            Spacer(modifier = Modifier.height(4.dp))
+                            Spacer(modifier = Modifier.height(3.dp))
 
                             Text(
                                 text = item.title,
                                 color = itemColor,
                                 fontSize = 10.sp,
-                                fontWeight = FontWeight.SemiBold,
+                                fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium,
                                 letterSpacing = (-0.01).sp
                             )
                         }

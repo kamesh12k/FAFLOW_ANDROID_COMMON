@@ -25,6 +25,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -261,6 +262,90 @@ fun FaflowEmptyState(
 }
 
 @Composable
+fun FaflowErrorState(
+    title: String = "Notice",
+    description: String,
+    modifier: Modifier = Modifier,
+    icon: ImageVector = androidx.compose.material.icons.Icons.Default.Tune,
+    actionText: String? = "Retry",
+    onActionClick: (() -> Unit)? = null
+) {
+    Column(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(FaflowSpacing.xxl),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
+    ) {
+        Box(
+            modifier = Modifier
+                .size(56.dp)
+                .clip(CircleShape)
+                .background(com.governence.faflow.ui.theme.FaflowDanger.copy(alpha = 0.10f)),
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(
+                imageVector = icon,
+                contentDescription = null,
+                tint = com.governence.faflow.ui.theme.FaflowDanger,
+                modifier = Modifier.size(28.dp)
+            )
+        }
+        Spacer(modifier = Modifier.height(FaflowSpacing.md))
+        Text(
+            text = title,
+            style = MaterialTheme.typography.titleSmall,
+            fontWeight = FontWeight.Bold,
+            color = MaterialTheme.colorScheme.onSurface,
+            textAlign = TextAlign.Center
+        )
+        Spacer(modifier = Modifier.height(FaflowSpacing.xs))
+        Text(
+            text = description,
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            textAlign = TextAlign.Center,
+            modifier = Modifier.padding(horizontal = FaflowSpacing.md)
+        )
+        if (actionText != null && onActionClick != null) {
+            Spacer(modifier = Modifier.height(FaflowSpacing.lg))
+            FaflowPillButton(
+                text = actionText,
+                onClick = onActionClick,
+                isPrimary = true
+            )
+        }
+    }
+}
+
+@Composable
+fun FaflowLoadingState(
+    message: String = "Loading...",
+    modifier: Modifier = Modifier
+) {
+    Column(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(FaflowSpacing.xxl),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
+    ) {
+        CircularProgressIndicator(
+            modifier = Modifier.size(32.dp),
+            color = com.governence.faflow.ui.theme.FaflowNavy,
+            strokeWidth = 2.5.dp
+        )
+        Spacer(modifier = Modifier.height(FaflowSpacing.md))
+        Text(
+            text = message,
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            textAlign = TextAlign.Center
+        )
+    }
+}
+
+@Composable
 fun FaflowProgressStep(
     stepNumber: Int,
     label: String,
@@ -430,7 +515,7 @@ fun FaflowSkeletonLoader(
 // =========================================================================
 
 /**
- * Institutional logo mark: Navy box with pure white checkmark stroke.
+ * Institutional logo mark: Renders official FAFLOW app logo drawable.
  */
 @Composable
 fun FaflowLogoMark(
@@ -438,35 +523,14 @@ fun FaflowLogoMark(
     size: Dp = 32.dp,
     cornerRadius: Dp = 9.dp
 ) {
-    Box(
+    androidx.compose.foundation.Image(
+        painter = androidx.compose.ui.res.painterResource(id = com.governence.faflow.R.drawable.app_logo),
+        contentDescription = "FAFLOW Logo",
         modifier = modifier
             .size(size)
-            .clip(RoundedCornerShape(cornerRadius))
-            .background(com.governence.faflow.ui.theme.FaflowNavy),
-        contentAlignment = Alignment.Center
-    ) {
-        androidx.compose.foundation.Canvas(
-            modifier = Modifier.size(size * 0.52f)
-        ) {
-            val w = this.size.width
-            val h = this.size.height
-            val path = androidx.compose.ui.graphics.Path().apply {
-                // Equivalent to SVG "M4 12.5l5 5L20 6" normalized to canvas
-                moveTo(w * 0.15f, h * 0.52f)
-                lineTo(w * 0.42f, h * 0.78f)
-                lineTo(w * 0.88f, h * 0.22f)
-            }
-            drawPath(
-                path = path,
-                color = Color.White,
-                style = androidx.compose.ui.graphics.drawscope.Stroke(
-                    width = (size.toPx() * 0.09f).coerceAtLeast(3f),
-                    cap = androidx.compose.ui.graphics.StrokeCap.Round,
-                    join = androidx.compose.ui.graphics.StrokeJoin.Round
-                )
-            )
-        }
-    }
+            .clip(RoundedCornerShape(cornerRadius)),
+        contentScale = androidx.compose.ui.layout.ContentScale.Fit
+    )
 }
 
 /**
@@ -507,48 +571,55 @@ fun FaflowHeaderLockup(
     onSettingsClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    Row(
+    Box(
         modifier = modifier
             .fillMaxWidth()
-            .padding(horizontal = 18.dp, vertical = 10.dp),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically
+            .background(com.governence.faflow.ui.theme.FaflowBg)
     ) {
         Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(10.dp)
+            modifier = Modifier
+                .fillMaxWidth()
+                .statusBarsPadding()
+                .padding(horizontal = 18.dp, vertical = 10.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            FaflowLogoMark(size = 32.dp, cornerRadius = 9.dp)
-            Column {
-                Text(
-                    text = "GOVERNANCE / FAFLOW",
-                    fontSize = 9.5.sp,
-                    fontWeight = FontWeight.Bold,
-                    letterSpacing = 0.1.sp,
-                    color = com.governence.faflow.ui.theme.FaflowText3,
-                    lineHeight = 11.sp
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
+                FaflowLogoMark(size = 32.dp, cornerRadius = 9.dp)
+                Column {
+                    Text(
+                        text = "GOVERNANCE / FAFLOW",
+                        fontSize = 9.5.sp,
+                        fontWeight = FontWeight.Bold,
+                        letterSpacing = 0.1.sp,
+                        color = com.governence.faflow.ui.theme.FaflowText3,
+                        lineHeight = 11.sp
+                    )
+                    Text(
+                        text = greeting,
+                        fontSize = 15.sp,
+                        fontWeight = FontWeight.Bold,
+                        letterSpacing = (-0.01).sp,
+                        color = com.governence.faflow.ui.theme.FaflowText1,
+                        lineHeight = 18.sp
+                    )
+                }
+            }
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                FaflowIconButton(
+                    icon = androidx.compose.material.icons.Icons.Default.Notifications,
+                    onClick = onBellClick,
+                    contentDescription = "Notifications"
                 )
-                Text(
-                    text = greeting,
-                    fontSize = 15.sp,
-                    fontWeight = FontWeight.Bold,
-                    letterSpacing = (-0.01).sp,
-                    color = com.governence.faflow.ui.theme.FaflowText1,
-                    lineHeight = 18.sp
+                FaflowIconButton(
+                    icon = androidx.compose.material.icons.Icons.Default.Tune,
+                    onClick = onSettingsClick,
+                    contentDescription = "Settings"
                 )
             }
-        }
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            FaflowIconButton(
-                icon = androidx.compose.material.icons.Icons.Default.Notifications,
-                onClick = onBellClick,
-                contentDescription = "Notifications"
-            )
-            FaflowIconButton(
-                icon = androidx.compose.material.icons.Icons.Default.Tune,
-                onClick = onSettingsClick,
-                contentDescription = "Settings"
-            )
         }
     }
 }

@@ -117,6 +117,10 @@ data class VerificationSession(
         livenessVerifiedTimeMs = System.currentTimeMillis()
     }
 
+    fun cancel() {
+        isCancelled = true
+    }
+
     /**
      * Absolute atomic condition required before attendance submission is permitted.
      * Fails closed if session has expired, was cancelled, does not match, or either

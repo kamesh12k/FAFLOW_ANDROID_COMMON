@@ -85,13 +85,14 @@ fun HodDashboardScreen(
                     }
                 }
             )
-        }
+        },
+        containerColor = com.governence.faflow.ui.theme.FaflowBg
     ) { innerPadding ->
         Box(
             modifier = modifier
                 .fillMaxSize()
                 .padding(innerPadding)
-                .background(MaterialTheme.colorScheme.background)
+                .background(com.governence.faflow.ui.theme.FaflowBg)
         ) {
             if (dashboardState.isLoading) {
                 Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {

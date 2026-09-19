@@ -30,7 +30,17 @@ data class DashboardUiState(
     val activeDutiesCount: Int = 0,
     val isDutiesLoading: Boolean = false,
     val errorMessage: String? = null,
-    val isOfflineOrUnreachable: Boolean = false
+    val isOfflineOrUnreachable: Boolean = false,
+    // Contextual Phase 2 Intelligence
+    val activeSlot: TimetableSlot? = null,
+    val nextUpcomingSlot: TimetableSlot? = null,
+    val currentPeriodNumber: Int? = null,
+    val isFreePeriod: Boolean = false,
+    val shiftState: ShiftState = ShiftState.NOT_STARTED,
+    val todayCheckInTime: String? = null,
+    val todayWorkingDuration: String? = null,
+    val pendingSyncCount: Int = 0,
+    val urgentSubstituteDuties: List<com.governence.faflow.core.network.SubstituteDutyDto> = emptyList()
 )
 
 class DashboardViewModel(
@@ -38,7 +48,9 @@ class DashboardViewModel(
     private val academicSummaryRepository: AcademicSummaryRepository,
     private val timetableRepository: TimetableRepository,
     private val creditRepository: CreditRepository,
-    private val substitutionRepository: SubstitutionRepository
+    private val substitutionRepository: SubstitutionRepository,
+    private val attendanceRepository: com.governence.faflow.attendance.data.AttendanceRepository? = null,
+    private val studentAttendanceRepository: com.governence.faflow.attendance.student.data.StudentAttendanceRepository? = null
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(DashboardUiState())
@@ -59,8 +71,41 @@ class DashboardViewModel(
         loadDashboardData(isRefresh = true)
     }
 
+    private fun resolvePeriodIntelligence(
+        slots: List<TimetableSlot>,
+        serverCurrentPeriod: Int?
+    ): Triple<Int?, TimetableSlot?, TimetableSlot?> {
+        val cal = java.util.Calendar.getInstance()
+        val minutesSinceMidnight = cal.get(java.util.Calendar.HOUR_OF_DAY) * 60 + cal.get(java.util.Calendar.MINUTE)
+
+        // Calculate period based on standard academic timings or server authority
+        val period = serverCurrentPeriod ?: when (minutesSinceMidnight) {
+            in (8 * 60 + 15)..(9 * 60 + 25) -> 1
+            in (9 * 60 + 25)..(10 * 60 + 20) -> 2
+            in (10 * 60 + 20)..(11 * 60 + 30) -> 3
+            in (11 * 60 + 30)..(12 * 60 + 25) -> 4
+            in (12 * 60 + 25)..(14 * 60 + 10) -> 5
+            in (14 * 60 + 10)..(15 * 60 + 5) -> 6
+            in (15 * 60 + 5)..(16 * 60) -> 7
+            in (16 * 60)..(16 * 60 + 50) -> 8
+            else -> null
+        }
+
+        val active = if (period != null) slots.firstOrNull { it.periodNumber == period } else null
+        val nextUpcoming = if (period != null) {
+            slots.filter { it.periodNumber > period }.minByOrNull { it.periodNumber }
+        } else if (minutesSinceMidnight < (8 * 60 + 15)) {
+            slots.minByOrNull { it.periodNumber }
+        } else {
+            null
+        }
+
+        return Triple(period, active, nextUpcoming)
+    }
+
     fun loadDashboardData(isRefresh: Boolean = false) {
         val currentStaff = authRepository.getStoredStaffInfo()
+        val pendingCount = studentAttendanceRepository?.getPendingCount() ?: 0
         _uiState.value = _uiState.value.copy(
             isLoading = !isRefresh,
             isRefreshing = isRefresh,
@@ -69,7 +114,8 @@ class DashboardViewModel(
             isOfflineOrUnreachable = false,
             isSummaryLoading = true,
             isCreditsLoading = true,
-            isDutiesLoading = true
+            isDutiesLoading = true,
+            pendingSyncCount = pendingCount
         )
 
         viewModelScope.launch {
@@ -89,8 +135,10 @@ class DashboardViewModel(
             val summaryDeferred = async { academicSummaryRepository.getMyTodaySummary() }
             val creditDeferred = async { creditRepository.getCreditBalance(staffId) }
             val dutyDeferred = async { substitutionRepository.getMyDuties() }
+            val attendanceDeferred = async { attendanceRepository?.getTodaySummary() }
 
             var hasConnectionError = false
+            var fetchedSlots = _uiState.value.todaySlots
 
             // Process Summary & Timetable
             val summaryRes = summaryDeferred.await()
@@ -99,6 +147,7 @@ class DashboardViewModel(
                     val summary = summaryRes.data
                     _uiState.value = _uiState.value.copy(
                         todaySummary = summary,
+                        urgentSubstituteDuties = summary.substituteDutiesToday,
                         isSummaryLoading = false
                     )
 
@@ -107,8 +156,14 @@ class DashboardViewModel(
                         _uiState.value = _uiState.value.copy(isTimetableLoading = true)
                         when (val ttRes = timetableRepository.getTimetableByDayOrder(staffId, summary.dayOrder)) {
                             is NetworkResult.Success -> {
+                                fetchedSlots = ttRes.data
+                                val (period, active, nextUp) = resolvePeriodIntelligence(fetchedSlots, null)
                                 _uiState.value = _uiState.value.copy(
-                                    todaySlots = ttRes.data,
+                                    todaySlots = fetchedSlots,
+                                    activeSlot = active,
+                                    nextUpcomingSlot = nextUp,
+                                    currentPeriodNumber = period,
+                                    isFreePeriod = period != null && active == null && fetchedSlots.isNotEmpty(),
                                     isTimetableLoading = false
                                 )
                             }
@@ -124,6 +179,22 @@ class DashboardViewModel(
                     _uiState.value = _uiState.value.copy(isSummaryLoading = false)
                 }
                 NetworkResult.Loading -> Unit
+            }
+
+            // Process Shift Attendance Status
+            val attRes = attendanceDeferred.await()
+            if (attRes is NetworkResult.Success) {
+                val attData = attRes.data
+                val shift = when {
+                    attData.isCheckedOut -> ShiftState.COMPLETED
+                    attData.isCheckedIn -> ShiftState.ON_DUTY
+                    else -> ShiftState.NOT_STARTED
+                }
+                _uiState.value = _uiState.value.copy(
+                    shiftState = shift,
+                    todayCheckInTime = attData.checkInTime,
+                    todayWorkingDuration = attData.workingDuration
+                )
             }
 
             // Process Credits
@@ -154,6 +225,17 @@ class DashboardViewModel(
                     _uiState.value = _uiState.value.copy(isDutiesLoading = false)
                 }
                 NetworkResult.Loading -> Unit
+            }
+
+            // Fallback period resolution if slots exist
+            if (_uiState.value.activeSlot == null && fetchedSlots.isNotEmpty()) {
+                val (period, active, nextUp) = resolvePeriodIntelligence(fetchedSlots, null)
+                _uiState.value = _uiState.value.copy(
+                    activeSlot = active,
+                    nextUpcomingSlot = nextUp,
+                    currentPeriodNumber = period,
+                    isFreePeriod = period != null && active == null && fetchedSlots.isNotEmpty()
+                )
             }
 
             _uiState.value = _uiState.value.copy(

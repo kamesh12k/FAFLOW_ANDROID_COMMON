@@ -17,6 +17,7 @@ import com.governence.faflow.faflow.data.LeaveRepositoryImpl
 import com.governence.faflow.faflow.data.NotificationRepositoryImpl
 import com.governence.faflow.faflow.data.PreferencesRepositoryImpl
 import com.governence.faflow.faflow.data.SubstitutionRepositoryImpl
+import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -32,6 +33,8 @@ data class LeaveUiState(
     val resolvedDayOrder: Int? = null,
     val isBlockedDate: Boolean = false,
     val dayType: String? = null,
+    val hasExistingLeaveOnDate: Boolean = false,
+    val existingLeavePeriods: List<Int> = emptyList(),
     val errorMessage: String? = null
 )
 
@@ -68,6 +71,15 @@ class LeaveViewModel(
     }
 
     fun resolveDateDayOrder(date: String) {
+        val existing = _uiState.value.myLeaves.filter { it.date == date && it.status != LeaveStatus.REJECTED }
+        val hasConflict = existing.isNotEmpty()
+        val conflictPeriods = existing.map { it.periodNumber }
+
+        _uiState.value = _uiState.value.copy(
+            hasExistingLeaveOnDate = hasConflict,
+            existingLeavePeriods = conflictPeriods
+        )
+
         viewModelScope.launch {
             when (val res = academicSummaryRepository.resolveDate(date)) {
                 is NetworkResult.Success -> {
@@ -259,14 +271,11 @@ class CreditsViewModel(
 
 data class SubstitutionUiState(
     val isLoading: Boolean = false,
-    // Tab 1: My leaves that need a substitute assigned (pending or unassigned)
-    val activeTab: String = "NEEDS_COVER", // "NEEDS_COVER" vs "COVERED"
-    // All my leaves from teacher/substitution/my-leaves
+    val activeTab: String = "MY_DUTIES", // "MY_DUTIES", "NEEDS_COVER", "COVERED"
     val allMySubstitutionLeaves: List<LeaveRequest> = emptyList(),
-    // Leaves without an assigned substitute (Needs Cover tab)
     val leavesNeedingCoverage: List<LeaveRequest> = emptyList(),
-    // Leaves already covered (Assigned/Covered tab)
     val coveredLeaves: List<LeaveRequest> = emptyList(),
+    val myAssignedDuties: List<LeaveRequest> = emptyList(),
     val selectedLeaveForCandidates: LeaveRequest? = null,
     val candidates: List<com.governence.faflow.core.network.RecommendationOutDto> = emptyList(),
     val isLoadingCandidates: Boolean = false,
@@ -293,25 +302,34 @@ class SubstitutionViewModel(
     fun loadData() {
         _uiState.value = _uiState.value.copy(isLoading = true, errorMessage = null, actionMessage = null)
         viewModelScope.launch {
-            when (val res = substitutionRepository.getMyLeavesNeedingCoverage()) {
-                is NetworkResult.Success -> {
-                    val all = res.data
-                    // Needs Cover: leaves without a substitute assigned
-                    val needsCover = all.filter { it.substituteTeacherName == null }
-                    // Covered: leaves that already have a substitute assigned
-                    val covered = all.filter { it.substituteTeacherName != null }
-                    _uiState.value = _uiState.value.copy(
-                        isLoading = false,
-                        allMySubstitutionLeaves = all,
-                        leavesNeedingCoverage = needsCover,
-                        coveredLeaves = covered
-                    )
-                }
-                is NetworkResult.Error -> {
-                    _uiState.value = _uiState.value.copy(isLoading = false, errorMessage = res.message)
-                }
-                NetworkResult.Loading -> Unit
-            }
+            val leavesDeferred = async { substitutionRepository.getMyLeavesNeedingCoverage() }
+            val dutiesDeferred = async { substitutionRepository.getMyDuties() }
+
+            val leavesRes = leavesDeferred.await()
+            val dutiesRes = dutiesDeferred.await()
+
+            val all = if (leavesRes is NetworkResult.Success) leavesRes.data else emptyList()
+            val duties = if (dutiesRes is NetworkResult.Success) dutiesRes.data else emptyList()
+
+            val needsCover = all.filter { it.substituteTeacherName == null }
+            val covered = all.filter { it.substituteTeacherName != null }
+
+            val errorMsg = (leavesRes as? NetworkResult.Error)?.message
+                ?: (dutiesRes as? NetworkResult.Error)?.message
+
+            val resolvedTab = if (duties.isNotEmpty() && _uiState.value.activeTab == "MY_DUTIES") "MY_DUTIES"
+                else if (needsCover.isNotEmpty() && _uiState.value.activeTab == "MY_DUTIES") "NEEDS_COVER"
+                else _uiState.value.activeTab
+
+            _uiState.value = _uiState.value.copy(
+                isLoading = false,
+                activeTab = resolvedTab,
+                allMySubstitutionLeaves = all,
+                leavesNeedingCoverage = needsCover,
+                coveredLeaves = covered,
+                myAssignedDuties = duties,
+                errorMessage = errorMsg
+            )
         }
     }
 

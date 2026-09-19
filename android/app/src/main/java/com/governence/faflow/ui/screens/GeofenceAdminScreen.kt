@@ -89,11 +89,12 @@ fun GeofenceAdminScreen(
                 }
             )
         },
-        containerColor = MaterialTheme.colorScheme.background
+        containerColor = com.governence.faflow.ui.theme.FaflowBg
     ) { innerPadding ->
         Box(
             modifier = Modifier
                 .fillMaxSize()
+                .background(com.governence.faflow.ui.theme.FaflowBg)
                 .padding(innerPadding)
                 .padding(16.dp)
         ) {
@@ -196,7 +197,8 @@ fun CampusMapVisualizerCard(geofences: List<GeofenceOutDto>) {
             .fillMaxWidth()
             .height(180.dp),
         shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = Color(0xFF0F172A))
+        colors = CardDefaults.cardColors(containerColor = Color.White),
+        border = androidx.compose.foundation.BorderStroke(1.dp, com.governence.faflow.ui.theme.FaflowBorder)
     ) {
         Box(modifier = Modifier.fillMaxSize()) {
             Canvas(modifier = Modifier.fillMaxSize()) {
@@ -205,7 +207,7 @@ fun CampusMapVisualizerCard(geofences: List<GeofenceOutDto>) {
                 // Draw Grid
                 for (i in 1..4) {
                     drawCircle(
-                        color = Color.White.copy(alpha = 0.05f),
+                        color = com.governence.faflow.ui.theme.FaflowBorder,
                         radius = (size.height / 5f) * i,
                         center = centerOffset,
                         style = Stroke(width = 1.dp.toPx())
@@ -254,13 +256,14 @@ fun CampusMapVisualizerCard(geofences: List<GeofenceOutDto>) {
                     .align(Alignment.TopStart)
                     .padding(10.dp)
                     .clip(RoundedCornerShape(8.dp))
-                    .background(Color.Black.copy(alpha = 0.6f))
+                    .background(com.governence.faflow.ui.theme.FaflowNavyTint)
+                    .border(1.dp, com.governence.faflow.ui.theme.FaflowBorder, RoundedCornerShape(8.dp))
                     .padding(horizontal = 8.dp, vertical = 4.dp)
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(imageVector = Icons.Default.Layers, contentDescription = null, tint = Color.White, modifier = Modifier.size(12.dp))
+                    Icon(imageVector = Icons.Default.Layers, contentDescription = null, tint = com.governence.faflow.ui.theme.FaflowNavy, modifier = Modifier.size(12.dp))
                     Spacer(modifier = Modifier.width(4.dp))
-                    Text("Interactive Perimeter Map View", style = MaterialTheme.typography.labelSmall, color = Color.White)
+                    Text("Interactive Perimeter Map View", style = MaterialTheme.typography.labelSmall, color = com.governence.faflow.ui.theme.FaflowNavy)
                 }
             }
         }
@@ -276,7 +279,8 @@ fun GeofenceItemCard(
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(14.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+        colors = CardDefaults.cardColors(containerColor = Color.White),
+        border = androidx.compose.foundation.BorderStroke(1.dp, com.governence.faflow.ui.theme.FaflowBorder)
     ) {
         Row(
             modifier = Modifier

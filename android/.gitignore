@@ -14,4 +14,5 @@
 .cxx
 .kotlin
 local.properties
-
+.agents/
+.idea/

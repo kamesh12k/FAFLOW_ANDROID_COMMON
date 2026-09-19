@@ -42,18 +42,18 @@ val FaflowSlateTint = Color(0xFFEEF0F2)
 val FaflowSuccess = Color(0xFF1E8E5A)
 val FaflowDanger = Color(0xFFC13F3F)
 
-// Dark Palette Backgrounds (Refined Neutrals)
-val DarkBackground = Color(0xFF090D16)
-val DarkSurface = Color(0xFF131B2E)
-val DarkSurfaceVariant = Color(0xFF1E293B)
-val DarkBorder = Color(0xFF334155)
-val TextPrimaryDark = Color(0xFFF8FAFC)
-val TextSecondaryDark = Color(0xFF94A3B8)
+// Dark Palette Backgrounds (Aligned with Institutional Neutral Light Palette)
+val DarkBackground = FaflowBg
+val DarkSurface = FaflowSurface
+val DarkSurfaceVariant = FaflowDivider
+val DarkBorder = FaflowBorder
+val TextPrimaryDark = FaflowText1
+val TextSecondaryDark = FaflowText2
 
 // Light Palette Backgrounds
 val LightBackground = FaflowBg
 val LightSurface = FaflowSurface
-val LightSurfaceVariant = FaflowNavyTint
+val LightSurfaceVariant = FaflowDivider
 val LightBorder = FaflowBorder
 val TextPrimaryLight = FaflowText1
 val TextSecondaryLight = FaflowText2

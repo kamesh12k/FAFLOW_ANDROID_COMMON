@@ -1,6 +1,7 @@
 package com.governence.faflow.ui.screens
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -36,6 +37,7 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -47,6 +49,7 @@ import com.governence.faflow.ui.theme.FaflowBg
 import com.governence.faflow.ui.theme.FaflowBorder
 import com.governence.faflow.ui.theme.FaflowNavy
 import com.governence.faflow.ui.theme.FaflowNavyTint
+import com.governence.faflow.ui.theme.FaflowShapes
 import com.governence.faflow.ui.theme.FaflowText1
 import com.governence.faflow.ui.theme.FaflowText2
 import com.governence.faflow.ui.theme.FaflowText3
@@ -57,39 +60,37 @@ import com.governence.faflow.ui.viewmodels.NotificationsViewModel
 @Composable
 fun NotificationsScreen(
     viewModel: NotificationsViewModel,
-    onNavigateBack: () -> Unit
+    onNavigateBack: () -> Unit,
+    onNavigateToSubstitution: () -> Unit = {},
+    onNavigateToLeaveHistory: () -> Unit = {},
+    onNavigateToAttendance: () -> Unit = {}
 ) {
     val state by viewModel.uiState.collectAsState()
+    var selectedFilter by androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf("ALL") }
+
+    val needsAttention = state.notifications.filter { notif ->
+        val type = notif.eventType?.lowercase() ?: ""
+        val title = notif.title.lowercase()
+        val body = notif.body.lowercase()
+        type.contains("substitut") || type.contains("leave") || type.contains("action") ||
+                title.contains("substitut") || title.contains("leave") || title.contains("urgent") ||
+                title.contains("attendance") || notif.relatedLeaveId != null
+    }
+    val informationOnly = state.notifications.filter { it !in needsAttention }
+
+    val displayedNotifications = when (selectedFilter) {
+        "ATTENTION" -> needsAttention
+        "INFO" -> informationOnly
+        else -> state.notifications
+    }
 
     Scaffold(
         topBar = {
-            TopAppBar(
-                title = {
-                    Column {
-                        Text(
-                            "Notifications",
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 18.sp,
-                            color = FaflowText1
-                        )
-                        if (state.unreadCount > 0) {
-                            Text(
-                                "${state.unreadCount} unread",
-                                fontSize = 12.sp,
-                                color = FaflowNavy
-                            )
-                        }
-                    }
-                },
-                navigationIcon = {
-                    IconButton(onClick = onNavigateBack) {
-                        Icon(
-                            Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Back",
-                            tint = FaflowText1
-                        )
-                    }
-                },
+            com.governence.faflow.ui.components.AppTopBar(
+                title = "Notification Center",
+                subtitle = if (state.unreadCount > 0) "${state.unreadCount} unread notices" else "All updates caught up",
+                canNavigateBack = true,
+                onNavigateBack = onNavigateBack,
                 actions = {
                     if (state.unreadCount > 0) {
                         TextButton(onClick = { viewModel.markAllRead() }) {
@@ -108,119 +109,243 @@ fun NotificationsScreen(
                             )
                         }
                     }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = Color.White
-                )
+                }
             )
         },
         containerColor = FaflowBg
     ) { innerPadding ->
-        if (state.isLoading) {
-            Box(
-                modifier = Modifier.fillMaxSize().padding(innerPadding),
-                contentAlignment = Alignment.Center
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(innerPadding)
+                .background(FaflowBg)
+        ) {
+            // Category Segmented Tabs
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 8.dp)
+                    .clip(FaflowShapes.pill)
+                    .background(com.governence.faflow.ui.theme.FaflowDivider)
+                    .padding(4.dp)
             ) {
-                CircularProgressIndicator(color = FaflowNavy)
-            }
-        } else if (state.notifications.isEmpty()) {
-            Box(
-                modifier = Modifier.fillMaxSize().padding(innerPadding),
-                contentAlignment = Alignment.Center
-            ) {
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Icon(
-                        Icons.Default.NotificationsNone,
-                        contentDescription = null,
-                        tint = FaflowText3,
-                        modifier = Modifier.size(56.dp)
-                    )
-                    Spacer(Modifier.height(12.dp))
-                    Text(
-                        "No notifications",
-                        fontWeight = FontWeight.Bold,
-                        color = FaflowText2,
-                        fontSize = 16.sp
-                    )
-                    Text(
-                        "You're all caught up!",
-                        fontSize = 13.sp,
-                        color = FaflowText3
-                    )
+                listOf(
+                    "ALL" to "All (${state.notifications.size})",
+                    "ATTENTION" to "Needs Attention (${needsAttention.size})",
+                    "INFO" to "Information (${informationOnly.size})"
+                ).forEach { (key, label) ->
+                    val isSelected = selectedFilter == key
+                    Box(
+                        modifier = Modifier
+                            .weight(1f)
+                            .clip(FaflowShapes.pill)
+                            .background(if (isSelected) MaterialTheme.colorScheme.primary else Color.Transparent)
+                            .clickable { selectedFilter = key }
+                            .padding(vertical = 7.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = label,
+                            style = MaterialTheme.typography.labelSmall,
+                            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
+                            color = if (isSelected) Color.White else MaterialTheme.colorScheme.onSurface,
+                            maxLines = 1
+                        )
+                    }
                 }
             }
-        } else {
-            LazyColumn(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(innerPadding),
-                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp),
-                verticalArrangement = Arrangement.spacedBy(10.dp)
-            ) {
-                items(state.notifications) { notif ->
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clip(RoundedCornerShape(14.dp))
-                            .background(
-                                if (!notif.isRead) FaflowNavyTint
-                                else Color.White
-                            )
-                            .clickable { viewModel.markRead(notif.id) }
-                            .padding(16.dp),
-                        verticalAlignment = Alignment.Top
-                    ) {
-                        // Unread dot indicator
-                        Box(
-                            modifier = Modifier
-                                .padding(top = 4.dp)
-                                .size(if (!notif.isRead) 8.dp else 8.dp)
-                                .clip(CircleShape)
-                                .background(
-                                    if (!notif.isRead) FaflowNavy else Color.Transparent
-                                )
+
+            if (state.isLoading) {
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    CircularProgressIndicator(color = FaflowNavy)
+                }
+            } else if (displayedNotifications.isEmpty()) {
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Icon(
+                            Icons.Default.NotificationsNone,
+                            contentDescription = null,
+                            tint = FaflowText3,
+                            modifier = Modifier.size(56.dp)
                         )
-                        Spacer(Modifier.width(10.dp))
+                        Spacer(Modifier.height(12.dp))
+                        Text(
+                            text = if (selectedFilter == "ATTENTION") "No Action Items" else "No Notifications",
+                            fontWeight = FontWeight.Bold,
+                            color = FaflowText2,
+                            fontSize = 16.sp
+                        )
+                        Text(
+                            text = if (selectedFilter == "ATTENTION") "Everything requiring your attention is cleared." else "You're all caught up!",
+                            fontSize = 13.sp,
+                            color = FaflowText3
+                        )
+                    }
+                }
+            } else {
+                LazyColumn(
+                    modifier = Modifier.fillMaxSize(),
+                    contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
+                    verticalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
+                    items(displayedNotifications) { notif ->
+                        val isActionRequired = notif in needsAttention
+                        val isSubstitution = notif.title.contains("substitut", ignoreCase = true) ||
+                                notif.body.contains("substitut", ignoreCase = true)
+                        val isLeave = notif.title.contains("leave", ignoreCase = true) ||
+                                notif.body.contains("leave", ignoreCase = true)
+                        val isAttendance = notif.title.contains("attendance", ignoreCase = true) ||
+                                notif.body.contains("attendance", ignoreCase = true)
 
-                        // Icon
-                        Box(
+                        Column(
                             modifier = Modifier
-                                .size(40.dp)
-                                .clip(RoundedCornerShape(10.dp))
-                                .background(if (!notif.isRead) FaflowNavy.copy(alpha = 0.15f) else FaflowBg),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Icon(
-                                Icons.Default.Notifications,
-                                contentDescription = null,
-                                tint = if (!notif.isRead) FaflowNavy else FaflowText3,
-                                modifier = Modifier.size(20.dp)
-                            )
-                        }
-                        Spacer(Modifier.width(12.dp))
-
-                        Column(modifier = Modifier.weight(1f)) {
-                            Text(
-                                text = notif.title,
-                                fontWeight = if (!notif.isRead) FontWeight.Bold else FontWeight.SemiBold,
-                                fontSize = 14.sp,
-                                color = if (!notif.isRead) FaflowText1 else FaflowText2
-                            )
-                            if (notif.body.isNotBlank()) {
-                                Spacer(Modifier.height(2.dp))
-                                Text(
-                                    text = notif.body,
-                                    fontSize = 12.sp,
-                                    color = FaflowText2,
-                                    maxLines = 2
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(14.dp))
+                                .background(Color.White)
+                                .border(
+                                    1.dp,
+                                    if (isActionRequired) com.governence.faflow.ui.theme.PrimaryBlue.copy(alpha = 0.35f)
+                                    else if (!notif.isRead) FaflowNavy.copy(alpha = 0.3f)
+                                    else com.governence.faflow.ui.theme.FaflowBorder,
+                                    RoundedCornerShape(14.dp)
                                 )
+                                .clickable { viewModel.markRead(notif.id) }
+                                .padding(16.dp)
+                        ) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                verticalAlignment = Alignment.Top
+                            ) {
+                                // Dot
+                                Box(
+                                    modifier = Modifier
+                                        .padding(top = 5.dp)
+                                        .size(8.dp)
+                                        .clip(CircleShape)
+                                        .background(
+                                            if (isActionRequired) com.governence.faflow.ui.theme.PrimaryBlue
+                                            else if (!notif.isRead) FaflowNavy
+                                            else Color.Transparent
+                                        )
+                                )
+                                Spacer(Modifier.width(10.dp))
+
+                                // Icon
+                                Box(
+                                    modifier = Modifier
+                                        .size(38.dp)
+                                        .clip(RoundedCornerShape(10.dp))
+                                        .background(
+                                            if (isActionRequired) com.governence.faflow.ui.theme.PrimaryBlue.copy(alpha = 0.12f)
+                                            else if (!notif.isRead) FaflowNavy.copy(alpha = 0.12f)
+                                            else FaflowBg
+                                        ),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Icon(
+                                        Icons.Default.Notifications,
+                                        contentDescription = null,
+                                        tint = if (isActionRequired) com.governence.faflow.ui.theme.PrimaryBlue
+                                        else if (!notif.isRead) FaflowNavy
+                                        else FaflowText3,
+                                        modifier = Modifier.size(18.dp)
+                                    )
+                                }
+                                Spacer(Modifier.width(12.dp))
+
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.SpaceBetween,
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Text(
+                                            text = notif.title,
+                                            fontWeight = if (!notif.isRead || isActionRequired) FontWeight.Bold else FontWeight.SemiBold,
+                                            fontSize = 14.sp,
+                                            color = if (!notif.isRead || isActionRequired) FaflowText1 else FaflowText2,
+                                            modifier = Modifier.weight(1f)
+                                        )
+                                        if (isActionRequired) {
+                                            Box(
+                                                modifier = Modifier
+                                                    .clip(FaflowShapes.pill)
+                                                    .background(com.governence.faflow.ui.theme.PrimaryBlue.copy(alpha = 0.12f))
+                                                    .padding(horizontal = 6.dp, vertical = 2.dp)
+                                            ) {
+                                                Text(
+                                                    text = "ACTION",
+                                                    fontSize = 9.sp,
+                                                    fontWeight = FontWeight.Bold,
+                                                    color = com.governence.faflow.ui.theme.PrimaryBlue
+                                                )
+                                            }
+                                        }
+                                    }
+                                    if (notif.body.isNotBlank()) {
+                                        Spacer(Modifier.height(3.dp))
+                                        Text(
+                                            text = notif.body,
+                                            fontSize = 12.5.sp,
+                                            color = FaflowText2
+                                        )
+                                    }
+                                    Spacer(Modifier.height(6.dp))
+                                    Text(
+                                        text = notif.createdAt,
+                                        fontSize = 10.5.sp,
+                                        color = FaflowText3
+                                    )
+                                }
                             }
-                            Spacer(Modifier.height(4.dp))
-                            Text(
-                                text = notif.createdAt,
-                                fontSize = 10.sp,
-                                color = FaflowText3
-                            )
+
+                            // Contextual Action Row for actionable items
+                            if (isActionRequired) {
+                                Spacer(Modifier.height(12.dp))
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.End
+                                ) {
+                                    when {
+                                        isSubstitution -> {
+                                            com.governence.faflow.ui.components.FaflowPillButton(
+                                                text = "Open Substitution",
+                                                onClick = {
+                                                    viewModel.markRead(notif.id)
+                                                    onNavigateToSubstitution()
+                                                },
+                                                isPrimary = true
+                                            )
+                                        }
+                                        isLeave -> {
+                                            com.governence.faflow.ui.components.FaflowPillButton(
+                                                text = "View Leave Request",
+                                                onClick = {
+                                                    viewModel.markRead(notif.id)
+                                                    onNavigateToLeaveHistory()
+                                                },
+                                                isPrimary = true
+                                            )
+                                        }
+                                        isAttendance -> {
+                                            com.governence.faflow.ui.components.FaflowPillButton(
+                                                text = "Open Attendance",
+                                                onClick = {
+                                                    viewModel.markRead(notif.id)
+                                                    onNavigateToAttendance()
+                                                },
+                                                isPrimary = true
+                                            )
+                                        }
+                                    }
+                                }
+                            }
                         }
                     }
                 }

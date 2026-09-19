@@ -1,16 +1,17 @@
 <?xml version="1.0" encoding="utf-8"?>
 <network-security-config>
-    <!-- Permitted for development environments; production uses HTTPS endpoints -->
-    <base-config cleartextTrafficPermitted="true">
+    <!-- Base config: production uses HTTPS endpoints with system certificate authority -->
+    <base-config cleartextTrafficPermitted="false">
         <trust-anchors>
             <certificates src="system" />
-            <certificates src="user" />
         </trust-anchors>
     </base-config>
 
-    <!-- Cleartext permitted for localhost & loopback domains -->
+    <!-- Cleartext permitted for development loopback domains -->
     <domain-config cleartextTrafficPermitted="true">
         <domain includeSubdomains="true">localhost</domain>
+        <domain includeSubdomains="true">10.0.2.2</domain>
+        <domain includeSubdomains="true">127.0.0.1</domain>
     </domain-config>
 
     <!-- Debug overrides for local developer environments -->

@@ -61,6 +61,7 @@ export default function PrincipalStudentAttendance() {
   const [error, setError] = useState('')
   const [successMsg, setSuccessMsg] = useState('')
   const [exporting, setExporting] = useState(false)
+  const [showExportMenu, setShowExportMenu] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
 
   // 1. Load Overview & Departments
@@ -365,33 +366,34 @@ export default function PrincipalStudentAttendance() {
           {/* Export Dropdown */}
           <div className="relative group">
             <button
+              onClick={() => setShowExportMenu(prev => !prev)}
               disabled={exporting}
               className="flex items-center gap-2 px-3 py-1.5 bg-slate-800 hover:bg-slate-700 border border-slate-600 rounded-xl text-xs font-semibold text-slate-200 transition-colors"
             >
               <DownloadIcon className="w-3.5 h-3.5 text-indigo-400" />
               <span>{exporting ? 'Exporting...' : 'Export Reports'}</span>
             </button>
-            <div className="hidden group-hover:block absolute right-0 mt-1 w-56 bg-slate-900 border border-slate-700 rounded-xl shadow-2xl py-2 z-50 text-xs">
+            <div className={`${showExportMenu ? 'block' : 'hidden'} group-hover:block absolute right-0 mt-1 w-56 bg-slate-900 border border-slate-700 rounded-xl shadow-2xl py-2 z-50 text-xs`}>
               <button
-                onClick={() => handleExport('daily_summary')}
+                onClick={() => { setShowExportMenu(false); handleExport('daily_summary') }}
                 className="w-full text-left px-4 py-2 hover:bg-slate-800 text-slate-200 font-medium"
               >
                 Daily Institutional Summary
               </button>
               <button
-                onClick={() => handleExport('shortage_list')}
+                onClick={() => { setShowExportMenu(false); handleExport('shortage_list') }}
                 className="w-full text-left px-4 py-2 hover:bg-slate-800 text-rose-300 font-medium"
               >
                 Attendance Shortage Report (&lt; 75%)
               </button>
               <button
-                onClick={() => handleExport('teacher_compliance')}
+                onClick={() => { setShowExportMenu(false); handleExport('teacher_compliance') }}
                 className="w-full text-left px-4 py-2 hover:bg-slate-800 text-amber-300 font-medium"
               >
                 Faculty Submission Compliance
               </button>
               <button
-                onClick={() => handleExport('sessions')}
+                onClick={() => { setShowExportMenu(false); handleExport('sessions') }}
                 className="w-full text-left px-4 py-2 hover:bg-slate-800 text-indigo-300 font-medium"
               >
                 All Scheduled Period Sessions

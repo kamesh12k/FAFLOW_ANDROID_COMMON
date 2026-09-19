@@ -74,13 +74,14 @@ fun TodayCoverageScreen(
                     }
                 }
             )
-        }
+        },
+        containerColor = com.governence.faflow.ui.theme.FaflowBg
     ) { innerPadding ->
         Box(
             modifier = modifier
                 .fillMaxSize()
                 .padding(innerPadding)
-                .background(MaterialTheme.colorScheme.background)
+                .background(com.governence.faflow.ui.theme.FaflowBg)
         ) {
             if (coverageState.isLoading) {
                 Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
@@ -140,7 +141,8 @@ fun TodayCoverageScreen(
                             Card(
                                 modifier = Modifier.fillMaxWidth(),
                                 shape = FaflowShapes.card,
-                                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+                                colors = CardDefaults.cardColors(containerColor = Color.White),
+                                border = androidx.compose.foundation.BorderStroke(1.dp, com.governence.faflow.ui.theme.FaflowBorder)
                             ) {
                                 Box(
                                     modifier = Modifier
@@ -179,8 +181,9 @@ fun SubstitutionCoverageCard(
     Card(
         modifier = modifier.fillMaxWidth(),
         shape = FaflowShapes.card,
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+        colors = CardDefaults.cardColors(containerColor = Color.White),
+        border = androidx.compose.foundation.BorderStroke(1.dp, com.governence.faflow.ui.theme.FaflowBorder),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.5.dp)
     ) {
         Column(
             modifier = Modifier.padding(FaflowSpacing.lg)

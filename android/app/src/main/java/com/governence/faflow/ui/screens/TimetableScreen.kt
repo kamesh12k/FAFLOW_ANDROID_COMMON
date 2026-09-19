@@ -65,43 +65,12 @@ fun TimetableScreen(
 
     Scaffold(
         topBar = {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .background(com.governence.faflow.ui.theme.FaflowBg)
-                    .padding(horizontal = 18.dp, vertical = 12.dp)
-            ) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    IconButton(
-                        onClick = onNavigateBack,
-                        modifier = Modifier.size(34.dp)
-                    ) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Back",
-                            tint = com.governence.faflow.ui.theme.FaflowText1,
-                            modifier = Modifier.size(18.dp)
-                        )
-                    }
-                    Spacer(modifier = Modifier.width(6.dp))
-                    Column {
-                        Text(
-                            text = "Weekly timetable",
-                            fontSize = 19.sp,
-                            fontWeight = FontWeight.Bold,
-                            letterSpacing = (-0.01).sp,
-                            color = com.governence.faflow.ui.theme.FaflowText1
-                        )
-                        Text(
-                            text = "Academic schedule by day order",
-                            fontSize = 12.sp,
-                            color = com.governence.faflow.ui.theme.FaflowText3
-                        )
-                    }
-                }
-            }
+            com.governence.faflow.ui.components.AppTopBar(
+                title = "Weekly Timetable",
+                subtitle = "Academic schedule by day order",
+                canNavigateBack = true,
+                onNavigateBack = onNavigateBack
+            )
         },
         containerColor = com.governence.faflow.ui.theme.FaflowBg
     ) { innerPadding ->
@@ -112,13 +81,16 @@ fun TimetableScreen(
                 .background(com.governence.faflow.ui.theme.FaflowBg)
         ) {
             // Day tabs (.daytabs)
+            val maxDayOrder = state.allSlots.map { it.dayOrder }.maxOrNull()?.coerceIn(5, 6) ?: 5
+            val dayOrderList = (1..maxDayOrder).toList()
+
             LazyRow(
                 modifier = Modifier
                     .fillMaxWidth()
                     .background(com.governence.faflow.ui.theme.FaflowBg)
                     .padding(horizontal = 18.dp)
             ) {
-                items((1..5).toList()) { day ->
+                items(dayOrderList) { day ->
                     val isSelected = day == state.selectedDayOrder
                     Column(
                         modifier = Modifier
@@ -161,6 +133,10 @@ fun TimetableScreen(
                     onRetry = { viewModel.retry() }
                 )
             } else {
+                val assignedPeriods = state.daySlots.size
+                val maxPeriodNumber = state.daySlots.map { it.periodNumber }.maxOrNull()?.coerceAtLeast(5) ?: 5
+                val periodList = (1..maxPeriodNumber).toList()
+
                 LazyColumn(
                     modifier = Modifier
                         .fillMaxSize()
@@ -169,7 +145,7 @@ fun TimetableScreen(
                 ) {
                     item {
                         Text(
-                            text = "${state.daySlots.size} teaching period assigned",
+                            text = if (assignedPeriods == 1) "1 teaching period assigned" else "$assignedPeriods teaching periods assigned",
                             fontSize = 13.sp,
                             fontWeight = FontWeight.Bold,
                             color = com.governence.faflow.ui.theme.FaflowText1,
@@ -177,7 +153,7 @@ fun TimetableScreen(
                         )
                     }
 
-                    items((1..5).toList()) { period ->
+                    items(periodList) { period ->
                         val slot = state.daySlots.find { it.periodNumber == period }
                         TimetablePeriodItem(period = period, slot = slot)
                     }
@@ -242,7 +218,7 @@ fun TimetablePeriodItem(period: Int, slot: TimetableSlot?) {
 
             // Period Body
             Column(modifier = Modifier.weight(1f)) {
-                if (isBusy && slot != null) {
+                if (slot != null) {
                     Text(
                         text = slot.subjectName,
                         fontSize = 14.sp,

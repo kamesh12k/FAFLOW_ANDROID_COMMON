@@ -81,8 +81,23 @@ def align_apk(apk_path):
             zout.writestr(item, data, compress_type=item.compress_type)
             
     if modified:
-        zipalign_path = r'C:\Users\kames\AppData\Local\Android\Sdk\build-tools\36.0.0\zipalign.exe'
-        if os.path.exists(zipalign_path):
+        def find_zipalign():
+            import shutil
+            found = shutil.which("zipalign") or shutil.which("zipalign.exe")
+            if found:
+                return found
+            sdk_root = os.environ.get("ANDROID_HOME") or os.environ.get("ANDROID_SDK_ROOT")
+            if sdk_root:
+                build_tools_dir = os.path.join(sdk_root, "build-tools")
+                if os.path.isdir(build_tools_dir):
+                    for v in sorted(os.listdir(build_tools_dir), reverse=True):
+                        cand = os.path.join(build_tools_dir, v, "zipalign.exe" if os.name == "nt" else "zipalign")
+                        if os.path.exists(cand):
+                            return cand
+            return None
+
+        zipalign_path = find_zipalign()
+        if zipalign_path and os.path.exists(zipalign_path):
             final_aligned = apk_path + '.zipaligned.apk'
             res = subprocess.run([zipalign_path, '-f', '-P', '16', '-v', '4', temp_apk, final_aligned], capture_output=True)
             if res.returncode == 0:

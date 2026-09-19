@@ -116,6 +116,15 @@ class AppContainer(private val context: Context) {
         com.governence.faflow.attendance.data.AttendanceRepository(apiService, attendanceLocalQueue)
     }
 
+    // Student Attendance Offline-First Subsystem (Lazy)
+    val studentAttendanceLocalDb: com.governence.faflow.attendance.student.data.StudentAttendanceLocalDb by lazy {
+        com.governence.faflow.attendance.student.data.StudentAttendanceLocalDb(context.applicationContext)
+    }
+
+    val studentAttendanceRepository: com.governence.faflow.attendance.student.data.StudentAttendanceRepository by lazy {
+        com.governence.faflow.attendance.student.data.StudentAttendanceRepository(apiService, studentAttendanceLocalDb)
+    }
+
     val deviceIntegrityVerifier: com.governence.faflow.core.security.DeviceIntegrityVerifier by lazy {
         com.governence.faflow.core.security.StandardDeviceIntegrityVerifier(context.applicationContext)
     }

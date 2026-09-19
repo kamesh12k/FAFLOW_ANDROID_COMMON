@@ -19,17 +19,29 @@ object ApiConfig {
     // Physical device development server fallback
     const val DEFAULT_LAN_URL = "http://172.21.135.207:8000/"
 
-    // Production secure endpoint
-    const val PRODUCTION_BASE_URL = "https://api.faflow.institution.edu/"
+    // Production secure endpoint (Render Live Backend)
+    const val PRODUCTION_BASE_URL = "https://faflow-android-common.onrender.com/"
 
-    // Sensible timeout configurations avoiding 15-second hangs
-    const val CONNECT_TIMEOUT_SECONDS = 6L
-    const val READ_TIMEOUT_SECONDS = 12L
-    const val WRITE_TIMEOUT_SECONDS = 12L
-    const val CALL_TIMEOUT_SECONDS = 15L
+    // Sensible timeout configurations avoiding hangs while handling Render cold starts
+    const val CONNECT_TIMEOUT_SECONDS = 15L
+    const val READ_TIMEOUT_SECONDS = 25L
+    const val WRITE_TIMEOUT_SECONDS = 25L
+    const val CALL_TIMEOUT_SECONDS = 30L
 
     private const val PREFS_NAME = "faflow_network_prefs"
     private const val KEY_BASE_URL = "server_base_url"
+    private const val KEY_MIGRATION_VERSION = "network_config_migration_ver"
+    private const val CURRENT_MIGRATION_VERSION = 2
+
+    // Obsolete / legacy URLs that must be migrated away from in production
+    private val LEGACY_OBSOLETE_URLS = listOf(
+        "https://api.faflow.institution.edu/",
+        "http://api.faflow.institution.edu/",
+        "http://10.0.2.2:8000/",
+        "http://127.0.0.1:8000/",
+        "http://172.21.135.207:8000/",
+        "http://localhost:8000/"
+    )
 
     fun isEmulator(): Boolean {
         return (Build.BRAND.startsWith("generic") && Build.DEVICE.startsWith("generic")) ||
@@ -63,11 +75,29 @@ object ApiConfig {
     }
 
     /**
-     * Retrieves the persisted or default base URL.
+     * Retrieves the persisted or default base URL with safe migration for Release builds.
      */
     fun getBaseUrl(context: Context): String {
         val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
         val saved = prefs.getString(KEY_BASE_URL, null)
+        val migrationVer = prefs.getInt(KEY_MIGRATION_VERSION, 0)
+
+        // Version-aware migration: ensure Release build is never trapped in obsolete URLs
+        if (!BuildConfig.DEBUG) {
+            val isObsolete = saved == null ||
+                    LEGACY_OBSOLETE_URLS.any { saved.equals(it, ignoreCase = true) || saved.contains("faflow.institution.edu") } ||
+                    saved.contains("10.0.2.2") ||
+                    saved.contains("127.0.0.1") ||
+                    saved.contains("172.21.135.207") ||
+                    saved.contains("localhost")
+
+            if (migrationVer < CURRENT_MIGRATION_VERSION || isObsolete) {
+                saveBaseUrl(context, PRODUCTION_BASE_URL)
+                prefs.edit().putInt(KEY_MIGRATION_VERSION, CURRENT_MIGRATION_VERSION).apply()
+                return PRODUCTION_BASE_URL
+            }
+        }
+
         val candidate = saved ?: getDefaultBaseUrl()
         return if (candidate.endsWith("/")) candidate else "$candidate/"
     }

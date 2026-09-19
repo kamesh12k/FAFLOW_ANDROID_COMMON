@@ -73,26 +73,10 @@ fun StaffAttendanceScreen(
 
     Scaffold(
         topBar = {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .background(com.governence.faflow.ui.theme.FaflowBg)
-                    .padding(horizontal = 18.dp, vertical = 12.dp)
-            ) {
-                Text(
-                    text = "Staff attendance",
-                    fontSize = 19.sp,
-                    fontWeight = FontWeight.Bold,
-                    letterSpacing = (-0.01).sp,
-                    color = com.governence.faflow.ui.theme.FaflowText1
-                )
-                Spacer(modifier = Modifier.height(2.dp))
-                Text(
-                    text = todayDateFormatted,
-                    fontSize = 12.sp,
-                    color = com.governence.faflow.ui.theme.FaflowText3
-                )
-            }
+            com.governence.faflow.ui.components.AppTopBar(
+                title = "Staff Attendance",
+                subtitle = todayDateFormatted
+            )
         },
         containerColor = com.governence.faflow.ui.theme.FaflowBg
     ) { innerPadding ->

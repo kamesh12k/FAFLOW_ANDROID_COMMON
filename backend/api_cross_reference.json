@@ -1,0 +1,462 @@
+[
+  {
+    "service": "publicSettingsApi",
+    "action": "get",
+    "frontend_method": "GET",
+    "frontend_url": "/settings/public",
+    "backend_path": "/settings/public",
+    "backend_endpoint": "public_settings",
+    "status": "MATCHED",
+    "dependencies": [
+      "<function get_db at 0x0000023403266770>"
+    ]
+  },
+  {
+    "service": "authApi",
+    "action": "login",
+    "frontend_method": "POST",
+    "frontend_url": "/auth/login",
+    "status": "UNMATCHED"
+  },
+  {
+    "service": "authApi",
+    "action": "register",
+    "frontend_method": "POST",
+    "frontend_url": "/auth/register",
+    "status": "UNMATCHED"
+  },
+  {
+    "service": "adminApi",
+    "action": "firstLoginSetup",
+    "frontend_method": "POST",
+    "frontend_url": "/admin/first-login/setup",
+    "status": "UNMATCHED"
+  },
+  {
+    "service": "adminApi",
+    "action": "listSecondaryAdmins",
+    "frontend_method": "GET",
+    "frontend_url": "/admin/secondary-admins",
+    "status": "UNMATCHED"
+  },
+  {
+    "service": "adminApi",
+    "action": "createSecondaryAdmin",
+    "frontend_method": "POST",
+    "frontend_url": "/admin/secondary-admins",
+    "status": "UNMATCHED"
+  },
+  {
+    "service": "adminApi",
+    "action": "enableAdmin",
+    "frontend_method": "PATCH",
+    "frontend_url": "/admin/secondary-admins/${id",
+    "status": "UNMATCHED"
+  },
+  {
+    "service": "backupApi",
+    "action": "create",
+    "frontend_method": "POST",
+    "frontend_url": "/admin/backups",
+    "status": "UNMATCHED"
+  },
+  {
+    "service": "dataRetentionApi",
+    "action": "getStats",
+    "frontend_method": "GET",
+    "frontend_url": "/admin/data-retention/stats",
+    "status": "UNMATCHED"
+  },
+  {
+    "service": "dataRetentionApi",
+    "action": "getPolicy",
+    "frontend_method": "GET",
+    "frontend_url": "/admin/data-retention/policy",
+    "status": "UNMATCHED"
+  },
+  {
+    "service": "dataRetentionApi",
+    "action": "updatePolicy",
+    "frontend_method": "PUT",
+    "frontend_url": "/admin/data-retention/policy",
+    "status": "UNMATCHED"
+  },
+  {
+    "service": "dataRetentionApi",
+    "action": "runAutoCleanupNow",
+    "frontend_method": "POST",
+    "frontend_url": "/admin/data-retention/run-auto-cleanup",
+    "status": "UNMATCHED"
+  },
+  {
+    "service": "dataRetentionApi",
+    "action": "previewPurge",
+    "frontend_method": "POST",
+    "frontend_url": "/admin/data-retention/preview",
+    "status": "UNMATCHED"
+  },
+  {
+    "service": "dataRetentionApi",
+    "action": "executePurge",
+    "frontend_method": "POST",
+    "frontend_url": "/admin/data-retention/purge",
+    "status": "UNMATCHED"
+  },
+  {
+    "service": "teachersApi",
+    "action": "list",
+    "frontend_method": "GET",
+    "frontend_url": "/teachers/",
+    "status": "UNMATCHED"
+  },
+  {
+    "service": "timetableApi",
+    "action": "getByTeacher",
+    "frontend_method": "GET",
+    "frontend_url": "/timetable/teacher/${teacherId",
+    "status": "UNMATCHED"
+  },
+  {
+    "service": "departmentsApi",
+    "action": "list",
+    "frontend_method": "GET",
+    "frontend_url": "/departments/",
+    "status": "UNMATCHED"
+  },
+  {
+    "service": "subjectsApi",
+    "action": "list",
+    "frontend_method": "GET",
+    "frontend_url": "/subjects/",
+    "status": "UNMATCHED"
+  },
+  {
+    "service": "classesApi",
+    "action": "list",
+    "frontend_method": "GET",
+    "frontend_url": "/classes/",
+    "status": "UNMATCHED"
+  },
+  {
+    "service": "classesApi",
+    "action": "create",
+    "frontend_method": "POST",
+    "frontend_url": "/classes/",
+    "status": "UNMATCHED"
+  },
+  {
+    "service": "classesApi",
+    "action": "bulkCreate",
+    "frontend_method": "POST",
+    "frontend_url": "/classes/bulk",
+    "status": "UNMATCHED"
+  },
+  {
+    "service": "classesApi",
+    "action": "update",
+    "frontend_method": "PATCH",
+    "frontend_url": "/classes/${id",
+    "status": "UNMATCHED"
+  },
+  {
+    "service": "roomsApi",
+    "action": "list",
+    "frontend_method": "GET",
+    "frontend_url": "/rooms/",
+    "status": "UNMATCHED"
+  },
+  {
+    "service": "dayOrderApi",
+    "action": "getRange",
+    "frontend_method": "GET",
+    "frontend_url": "/day-order-calendar/",
+    "status": "UNMATCHED"
+  },
+  {
+    "service": "academicCalendarApi",
+    "action": "listAcademicYears",
+    "frontend_method": "GET",
+    "frontend_url": "/academic-calendar/academic-years",
+    "status": "UNMATCHED"
+  },
+  {
+    "service": "academicCalendarApi",
+    "action": "createAcademicYear",
+    "frontend_method": "POST",
+    "frontend_url": "/academic-calendar/academic-years",
+    "status": "UNMATCHED"
+  },
+  {
+    "service": "academicCalendarApi",
+    "action": "listSemesters",
+    "frontend_method": "GET",
+    "frontend_url": "/academic-calendar/semesters",
+    "status": "UNMATCHED"
+  },
+  {
+    "service": "leavesApi",
+    "action": "apply",
+    "frontend_method": "POST",
+    "frontend_url": "/leaves/",
+    "status": "UNMATCHED"
+  },
+  {
+    "service": "leavesApi",
+    "action": "applyBatch",
+    "frontend_method": "POST",
+    "frontend_url": "/leaves/batch",
+    "status": "UNMATCHED"
+  },
+  {
+    "service": "leavesApi",
+    "action": "myLeaves",
+    "frontend_method": "GET",
+    "frontend_url": "/leaves/my",
+    "status": "UNMATCHED"
+  },
+  {
+    "service": "leavesApi",
+    "action": "all",
+    "frontend_method": "GET",
+    "frontend_url": "/leaves/",
+    "status": "UNMATCHED"
+  },
+  {
+    "service": "leavesApi",
+    "action": "approve",
+    "frontend_method": "PATCH",
+    "frontend_url": "/leaves/${id",
+    "status": "UNMATCHED"
+  },
+  {
+    "service": "campusOperationsApi",
+    "action": "getMode",
+    "frontend_method": "GET",
+    "frontend_url": "/campus-operations/mode",
+    "status": "UNMATCHED"
+  },
+  {
+    "service": "campusOperationsApi",
+    "action": "setMode",
+    "frontend_method": "PUT",
+    "frontend_url": "/campus-operations/mode",
+    "status": "UNMATCHED"
+  },
+  {
+    "service": "campusOperationsApi",
+    "action": "myPreferences",
+    "frontend_method": "GET",
+    "frontend_url": "/campus-operations/preferences/me",
+    "status": "UNMATCHED"
+  },
+  {
+    "service": "campusOperationsApi",
+    "action": "updateMyPreferences",
+    "frontend_method": "PUT",
+    "frontend_url": "/campus-operations/preferences/me",
+    "status": "UNMATCHED"
+  },
+  {
+    "service": "campusOperationsApi",
+    "action": "teacherPreferences",
+    "frontend_method": "GET",
+    "frontend_url": "/campus-operations/preferences/${teacherId",
+    "status": "UNMATCHED"
+  },
+  {
+    "service": "notificationsApi",
+    "action": "list",
+    "frontend_method": "GET",
+    "frontend_url": "/notifications/",
+    "status": "UNMATCHED"
+  },
+  {
+    "service": "creditsApi",
+    "action": "myTransactions",
+    "frontend_method": "GET",
+    "frontend_url": "/credits/my/transactions",
+    "status": "UNMATCHED"
+  },
+  {
+    "service": "creditsApi",
+    "action": "allTransactions",
+    "frontend_method": "GET",
+    "frontend_url": "/credits/transactions",
+    "status": "UNMATCHED"
+  },
+  {
+    "service": "creditsApi",
+    "action": "report",
+    "frontend_method": "GET",
+    "frontend_url": "/credits/report",
+    "status": "UNMATCHED"
+  },
+  {
+    "service": "creditsApi",
+    "action": "adjust",
+    "frontend_method": "POST",
+    "frontend_url": "/credits/adjust",
+    "status": "UNMATCHED"
+  },
+  {
+    "service": "teacherSubstitutionApi",
+    "action": "enabled",
+    "frontend_method": "GET",
+    "frontend_url": "/teacher/substitution/enabled",
+    "status": "UNMATCHED"
+  },
+  {
+    "service": "teacherSubstitutionApi",
+    "action": "myLeaves",
+    "frontend_method": "GET",
+    "frontend_url": "/teacher/substitution/my-leaves",
+    "status": "UNMATCHED"
+  },
+  {
+    "service": "teachersModeApi",
+    "action": "getConfig",
+    "frontend_method": "GET",
+    "frontend_url": "/teacher/substitution/config",
+    "status": "UNMATCHED"
+  },
+  {
+    "service": "teachersModeApi",
+    "action": "updateConfig",
+    "frontend_method": "PUT",
+    "frontend_url": "/teacher/substitution/config",
+    "status": "UNMATCHED"
+  },
+  {
+    "service": "substitutionsApi",
+    "action": "getToday",
+    "frontend_method": "GET",
+    "frontend_url": "/substitutions/today",
+    "status": "UNMATCHED"
+  },
+  {
+    "service": "managersApi",
+    "action": "list",
+    "frontend_method": "GET",
+    "frontend_url": "/admin/managers",
+    "status": "UNMATCHED"
+  },
+  {
+    "service": "managersApi",
+    "action": "create",
+    "frontend_method": "POST",
+    "frontend_url": "/admin/managers",
+    "status": "UNMATCHED"
+  },
+  {
+    "service": "managersApi",
+    "action": "get",
+    "frontend_method": "GET",
+    "frontend_url": "/admin/managers/${id",
+    "status": "UNMATCHED"
+  },
+  {
+    "service": "operationalStaffApi",
+    "action": "getStats",
+    "frontend_method": "GET",
+    "frontend_url": "/manager/dashboard",
+    "status": "UNMATCHED"
+  },
+  {
+    "service": "operationalStaffApi",
+    "action": "list",
+    "frontend_method": "GET",
+    "frontend_url": "/manager/staff",
+    "status": "UNMATCHED"
+  },
+  {
+    "service": "staffPortalApi",
+    "action": "getMyProfile",
+    "frontend_method": "GET",
+    "frontend_url": "/staff/me",
+    "status": "UNMATCHED"
+  },
+  {
+    "service": "staffPortalApi",
+    "action": "getDashboard",
+    "frontend_method": "GET",
+    "frontend_url": "/staff/dashboard",
+    "status": "UNMATCHED"
+  },
+  {
+    "service": "managerLeavesApi",
+    "action": "list",
+    "frontend_method": "GET",
+    "frontend_url": "/manager/leaves",
+    "status": "UNMATCHED"
+  },
+  {
+    "service": "governanceApi",
+    "action": "getOverview",
+    "frontend_method": "GET",
+    "frontend_url": "/governance/overview",
+    "status": "UNMATCHED"
+  },
+  {
+    "service": "governanceApi",
+    "action": "search",
+    "frontend_method": "GET",
+    "frontend_url": "/governance/search",
+    "status": "UNMATCHED"
+  },
+  {
+    "service": "geofencesApi",
+    "action": "list",
+    "frontend_method": "GET",
+    "frontend_url": "/geofences/",
+    "status": "UNMATCHED"
+  },
+  {
+    "service": "biometricsApi",
+    "action": "listFaculty",
+    "frontend_method": "GET",
+    "frontend_url": "/teachers/",
+    "status": "UNMATCHED"
+  },
+  {
+    "service": "attendanceApi",
+    "action": "checkIn",
+    "frontend_method": "POST",
+    "frontend_url": "/attendance/check-in",
+    "status": "UNMATCHED"
+  },
+  {
+    "service": "attendanceApi",
+    "action": "checkOut",
+    "frontend_method": "POST",
+    "frontend_url": "/attendance/check-out",
+    "status": "UNMATCHED"
+  },
+  {
+    "service": "attendanceApi",
+    "action": "getToday",
+    "frontend_method": "GET",
+    "frontend_url": "/attendance/today",
+    "status": "UNMATCHED"
+  },
+  {
+    "service": "attendanceApi",
+    "action": "getMyHistory",
+    "frontend_method": "GET",
+    "frontend_url": "/attendance/my",
+    "status": "UNMATCHED"
+  },
+  {
+    "service": "studentAttendanceApi",
+    "action": "getTodaySchedule",
+    "frontend_method": "GET",
+    "frontend_url": "/student-attendance/today",
+    "status": "UNMATCHED"
+  },
+  {
+    "service": "intelligenceApi",
+    "action": "getLive",
+    "frontend_method": "GET",
+    "frontend_url": "/intelligence/live",
+    "status": "UNMATCHED"
+  }
+]

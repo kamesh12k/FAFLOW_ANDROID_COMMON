@@ -21,10 +21,13 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowForwardIos
 import androidx.compose.material.icons.automirrored.filled.EventNote
+import androidx.compose.material.icons.automirrored.filled.Login
 import androidx.compose.material.icons.filled.AccountBalanceWallet
+import androidx.compose.material.icons.filled.CloudSync
 import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Fingerprint
+import androidx.compose.material.icons.filled.Groups
 import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.MeetingRoom
 import androidx.compose.material.icons.filled.Notifications
@@ -88,7 +91,8 @@ fun DashboardScreen(
     onNavigateToSubstitution: () -> Unit,
     onNavigateToAttendanceHistory: () -> Unit,
     onNavigateToNotifications: () -> Unit,
-    onNavigateToProfile: () -> Unit
+    onNavigateToProfile: () -> Unit,
+    onNavigateToStudentAttendance: (periodNumber: Int?, classId: Int?) -> Unit = { _, _ -> }
 ) {
     val state by viewModel.uiState.collectAsState()
     val todayDateFormatted = SimpleDateFormat("EEEE, d MMMM", Locale.getDefault()).format(Date())
@@ -151,13 +155,13 @@ fun DashboardScreen(
                                         Spacer(modifier = Modifier.width(8.dp))
                                         Column {
                                             Text(
-                                                text = "Unable to connect to server",
+                                                text = "Offline Mode Active",
                                                 fontSize = 12.5.sp,
                                                 fontWeight = FontWeight.SemiBold,
                                                 color = com.governence.faflow.ui.theme.FaflowDanger
                                             )
                                             Text(
-                                                text = "Check connection or server settings.",
+                                                text = "Working offline. Changes are saved securely on device.",
                                                 fontSize = 11.sp,
                                                 color = com.governence.faflow.ui.theme.FaflowText2
                                             )
@@ -173,7 +177,136 @@ fun DashboardScreen(
                         }
                     }
 
-                    // 1. HERO CARD (Navy tint, calendar badge, eyebrow, headline, subtext)
+                    // Offline Sync Queue Notification (if records pending)
+                    if (state.pendingSyncCount > 0) {
+                        item {
+                            FaflowSurface(
+                                modifier = Modifier.fillMaxWidth(),
+                                backgroundColor = com.governence.faflow.ui.theme.FaflowGoldTint,
+                                borderColor = com.governence.faflow.ui.theme.FaflowGold.copy(alpha = 0.4f),
+                                contentPadding = PaddingValues(12.dp)
+                            ) {
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Row(
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        modifier = Modifier.weight(1f)
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Default.CloudSync,
+                                            contentDescription = null,
+                                            tint = com.governence.faflow.ui.theme.FaflowGold,
+                                            modifier = Modifier.size(20.dp)
+                                        )
+                                        Spacer(modifier = Modifier.width(8.dp))
+                                        Column {
+                                            Text(
+                                                text = "${state.pendingSyncCount} Records Pending Sync",
+                                                fontSize = 12.5.sp,
+                                                fontWeight = FontWeight.Bold,
+                                                color = com.governence.faflow.ui.theme.FaflowText1
+                                            )
+                                            Text(
+                                                text = "Will automatically upload when connectivity restores.",
+                                                fontSize = 11.sp,
+                                                color = com.governence.faflow.ui.theme.FaflowText2
+                                            )
+                                        }
+                                    }
+                                    FaflowPillButton(
+                                        text = "Sync",
+                                        onClick = { viewModel.refresh() },
+                                        icon = Icons.Default.Refresh,
+                                        isPrimary = false
+                                    )
+                                }
+                            }
+                        }
+                    }
+
+                    // Urgent Substitution Duty Banner (Action Workflow)
+                    if (state.urgentSubstituteDuties.isNotEmpty()) {
+                        val duty = state.urgentSubstituteDuties.first()
+                        item {
+                            FaflowSurface(
+                                modifier = Modifier.fillMaxWidth(),
+                                backgroundColor = Color(0xFFEFF6FF),
+                                borderColor = com.governence.faflow.ui.theme.PrimaryBlue.copy(alpha = 0.4f),
+                                contentPadding = PaddingValues(14.dp)
+                            ) {
+                                Column(modifier = Modifier.fillMaxWidth()) {
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.SpaceBetween,
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Row(
+                                            verticalAlignment = Alignment.CenterVertically,
+                                            horizontalArrangement = Arrangement.spacedBy(6.dp)
+                                        ) {
+                                            Box(
+                                                modifier = Modifier
+                                                    .clip(FaflowShapes.pill)
+                                                    .background(com.governence.faflow.ui.theme.PrimaryBlue)
+                                                    .padding(horizontal = 8.dp, vertical = 2.dp)
+                                            ) {
+                                                Text(
+                                                    text = "ATTENTION",
+                                                    fontSize = 10.sp,
+                                                    fontWeight = FontWeight.Bold,
+                                                    color = Color.White
+                                                )
+                                            }
+                                            Text(
+                                                text = "Substitution Duty Today",
+                                                fontSize = 12.sp,
+                                                fontWeight = FontWeight.Bold,
+                                                color = com.governence.faflow.ui.theme.PrimaryBlue
+                                            )
+                                        }
+                                        Text(
+                                            text = "Period ${duty.periodNumber}",
+                                            fontSize = 12.sp,
+                                            fontWeight = FontWeight.Bold,
+                                            color = com.governence.faflow.ui.theme.FaflowText1
+                                        )
+                                    }
+                                    Spacer(modifier = Modifier.height(6.dp))
+                                    Text(
+                                        text = "${duty.className ?: "Assigned Class"} • Covering for ${duty.coveringForName ?: "Faculty"}",
+                                        fontSize = 13.5.sp,
+                                        fontWeight = FontWeight.SemiBold,
+                                        color = com.governence.faflow.ui.theme.FaflowText1
+                                    )
+                                    Spacer(modifier = Modifier.height(10.dp))
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                    ) {
+                                        FaflowPillButton(
+                                            text = "Mark Class Attendance",
+                                            onClick = { onNavigateToStudentAttendance(duty.periodNumber, null) },
+                                            icon = Icons.Default.Groups,
+                                            isPrimary = true,
+                                            modifier = Modifier.weight(1.3f)
+                                        )
+                                        FaflowPillButton(
+                                            text = "View Duty",
+                                            onClick = onNavigateToSubstitution,
+                                            icon = Icons.Default.SwapHoriz,
+                                            isPrimary = false,
+                                            modifier = Modifier.weight(0.9f)
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    // 1. HERO CARD (Calendar badge, eyebrow, headline, subtext)
                     item {
                         val isClosed = state.todaySummary?.blocksOperations ?: false
                         val eyebrow = SimpleDateFormat("EEEE, d MMMM", Locale.getDefault()).format(Date())
@@ -231,58 +364,318 @@ fun DashboardScreen(
                         }
                     }
 
-                    // 3. SECTION HEAD: Faculty services
-                    item {
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(top = 4.dp),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Text(
-                                text = "Faculty services",
-                                fontSize = 13.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = com.governence.faflow.ui.theme.FaflowText1
-                            )
+                    // 3. CONTEXTUAL ACTION HUB (Understands Shift Status + Class Schedule)
+                    if (!(state.todaySummary?.blocksOperations ?: false)) {
+                        when {
+                            // Context 1: Morning Check-In Needed
+                            state.shiftState == com.governence.faflow.ui.viewmodels.ShiftState.NOT_STARTED -> {
+                                item {
+                                    FaflowSurface(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        backgroundColor = com.governence.faflow.ui.theme.FaflowNavyTint,
+                                        borderColor = com.governence.faflow.ui.theme.FaflowNavy.copy(alpha = 0.25f),
+                                        contentPadding = PaddingValues(16.dp),
+                                        onClick = onNavigateToCheckIn
+                                    ) {
+                                        Row(
+                                            modifier = Modifier.fillMaxWidth(),
+                                            horizontalArrangement = Arrangement.SpaceBetween,
+                                            verticalAlignment = Alignment.CenterVertically
+                                        ) {
+                                            Column(modifier = Modifier.weight(1f)) {
+                                                Box(
+                                                    modifier = Modifier
+                                                        .clip(FaflowShapes.pill)
+                                                        .background(com.governence.faflow.ui.theme.FaflowNavy)
+                                                        .padding(horizontal = 8.dp, vertical = 2.dp)
+                                                ) {
+                                                    Text(
+                                                        text = "ATTENDANCE REQUIRED",
+                                                        fontSize = 10.sp,
+                                                        fontWeight = FontWeight.Bold,
+                                                        color = Color.White
+                                                    )
+                                                }
+                                                Spacer(modifier = Modifier.height(6.dp))
+                                                Text(
+                                                    text = "Morning Shift Check-In",
+                                                    fontSize = 16.sp,
+                                                    fontWeight = FontWeight.Bold,
+                                                    color = com.governence.faflow.ui.theme.FaflowNavy
+                                                )
+                                                Text(
+                                                    text = "Verify campus presence with face recognition",
+                                                    fontSize = 12.sp,
+                                                    color = com.governence.faflow.ui.theme.FaflowText2
+                                                )
+                                            }
+                                            Spacer(modifier = Modifier.width(12.dp))
+                                            FaflowPillButton(
+                                                text = "Check In",
+                                                onClick = onNavigateToCheckIn,
+                                                icon = Icons.AutoMirrored.Filled.Login,
+                                                isPrimary = true
+                                            )
+                                        }
+                                    }
+                                }
+                            }
+
+                            // Context 2: Currently Teaching Class
+                            state.activeSlot != null -> {
+                                val currentSlot = state.activeSlot!!
+                                item {
+                                    FaflowSurface(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        backgroundColor = com.governence.faflow.ui.theme.FaflowSurface,
+                                        borderColor = com.governence.faflow.ui.theme.FaflowNavy.copy(alpha = 0.25f),
+                                        contentPadding = PaddingValues(16.dp),
+                                        onClick = onNavigateToTimetable
+                                    ) {
+                                        Column(modifier = Modifier.fillMaxWidth()) {
+                                            Row(
+                                                modifier = Modifier.fillMaxWidth(),
+                                                horizontalArrangement = Arrangement.SpaceBetween,
+                                                verticalAlignment = Alignment.CenterVertically
+                                            ) {
+                                                Row(
+                                                    verticalAlignment = Alignment.CenterVertically,
+                                                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                                ) {
+                                                    Box(
+                                                        modifier = Modifier
+                                                            .clip(FaflowShapes.pill)
+                                                            .background(Color(0xFF059669))
+                                                            .padding(horizontal = 8.dp, vertical = 3.dp)
+                                                    ) {
+                                                        Text(
+                                                            text = "IN SESSION • PERIOD ${currentSlot.periodNumber}",
+                                                            fontSize = 10.5.sp,
+                                                            fontWeight = FontWeight.Bold,
+                                                            color = Color.White
+                                                        )
+                                                    }
+                                                }
+                                                Text(
+                                                    text = "Room ${currentSlot.roomNumber}",
+                                                    fontSize = 12.sp,
+                                                    fontWeight = FontWeight.Bold,
+                                                    color = com.governence.faflow.ui.theme.FaflowText1
+                                                )
+                                            }
+                                            Spacer(modifier = Modifier.height(8.dp))
+                                            Text(
+                                                text = currentSlot.subjectName,
+                                                fontSize = 16.sp,
+                                                fontWeight = FontWeight.Bold,
+                                                color = com.governence.faflow.ui.theme.FaflowText1
+                                            )
+                                            Text(
+                                                text = "${currentSlot.className} (${currentSlot.section})",
+                                                fontSize = 13.sp,
+                                                color = com.governence.faflow.ui.theme.FaflowText2
+                                            )
+                                            Spacer(modifier = Modifier.height(12.dp))
+                                            Row(
+                                                modifier = Modifier.fillMaxWidth(),
+                                                horizontalArrangement = Arrangement.End
+                                            ) {
+                                                FaflowPillButton(
+                                                    text = "Mark Period ${currentSlot.periodNumber} Attendance",
+                                                    onClick = { onNavigateToStudentAttendance(currentSlot.periodNumber, null) },
+                                                    icon = Icons.Default.Groups,
+                                                    isPrimary = true
+                                                )
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+
+                            // Context 3: Free Period during teaching hours
+                            state.isFreePeriod -> {
+                                item {
+                                    FaflowSurface(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        backgroundColor = com.governence.faflow.ui.theme.FaflowSurface,
+                                        borderColor = com.governence.faflow.ui.theme.FaflowBorder,
+                                        contentPadding = PaddingValues(16.dp),
+                                        onClick = onNavigateToTimetable
+                                    ) {
+                                        Row(
+                                            modifier = Modifier.fillMaxWidth(),
+                                            horizontalArrangement = Arrangement.SpaceBetween,
+                                            verticalAlignment = Alignment.CenterVertically
+                                        ) {
+                                            Column(modifier = Modifier.weight(1f)) {
+                                                Box(
+                                                    modifier = Modifier
+                                                        .clip(FaflowShapes.pill)
+                                                        .background(com.governence.faflow.ui.theme.FaflowTealTint)
+                                                        .padding(horizontal = 8.dp, vertical = 2.dp)
+                                                ) {
+                                                    Text(
+                                                        text = "FREE PERIOD • PERIOD ${state.currentPeriodNumber ?: "-"}",
+                                                        fontSize = 10.5.sp,
+                                                        fontWeight = FontWeight.Bold,
+                                                        color = com.governence.faflow.ui.theme.FaflowTeal
+                                                    )
+                                                }
+                                                Spacer(modifier = Modifier.height(6.dp))
+                                                Text(
+                                                    text = if (state.nextUpcomingSlot != null) "Next: ${state.nextUpcomingSlot!!.subjectName}" else "No remaining classes today",
+                                                    fontSize = 14.5.sp,
+                                                    fontWeight = FontWeight.Bold,
+                                                    color = com.governence.faflow.ui.theme.FaflowText1
+                                                )
+                                                Text(
+                                                    text = if (state.nextUpcomingSlot != null) "Period ${state.nextUpcomingSlot!!.periodNumber} in Room ${state.nextUpcomingSlot!!.roomNumber}" else "Academic prep time",
+                                                    fontSize = 12.sp,
+                                                    color = com.governence.faflow.ui.theme.FaflowText2
+                                                )
+                                            }
+                                            FaflowPillButton(
+                                                text = "Timetable",
+                                                onClick = onNavigateToTimetable,
+                                                icon = Icons.Default.CalendarMonth,
+                                                isPrimary = false
+                                            )
+                                        }
+                                    }
+                                }
+                            }
+
+                            // Context 4: Upcoming Next Activity
+                            state.nextUpcomingSlot != null -> {
+                                val upcoming = state.nextUpcomingSlot!!
+                                item {
+                                    FaflowSurface(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        backgroundColor = com.governence.faflow.ui.theme.FaflowSurface,
+                                        borderColor = com.governence.faflow.ui.theme.FaflowNavy.copy(alpha = 0.2f),
+                                        contentPadding = PaddingValues(16.dp),
+                                        onClick = onNavigateToTimetable
+                                    ) {
+                                        Column(modifier = Modifier.fillMaxWidth()) {
+                                            Row(
+                                                modifier = Modifier.fillMaxWidth(),
+                                                horizontalArrangement = Arrangement.SpaceBetween,
+                                                verticalAlignment = Alignment.CenterVertically
+                                            ) {
+                                                Row(
+                                                    verticalAlignment = Alignment.CenterVertically,
+                                                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                                ) {
+                                                    Box(
+                                                        modifier = Modifier
+                                                            .clip(FaflowShapes.pill)
+                                                            .background(com.governence.faflow.ui.theme.FaflowNavyTint)
+                                                            .padding(horizontal = 8.dp, vertical = 3.dp)
+                                                    ) {
+                                                        Text(
+                                                            text = "PERIOD ${upcoming.periodNumber}",
+                                                            fontSize = 11.sp,
+                                                            fontWeight = FontWeight.Bold,
+                                                            color = com.governence.faflow.ui.theme.FaflowNavy
+                                                        )
+                                                    }
+                                                    Text(
+                                                        text = "Upcoming Class",
+                                                        fontSize = 12.sp,
+                                                        fontWeight = FontWeight.SemiBold,
+                                                        color = com.governence.faflow.ui.theme.FaflowText2
+                                                    )
+                                                }
+                                                Text(
+                                                    text = "Room ${upcoming.roomNumber}",
+                                                    fontSize = 12.sp,
+                                                    fontWeight = FontWeight.Bold,
+                                                    color = com.governence.faflow.ui.theme.FaflowText1
+                                                )
+                                            }
+                                            Spacer(modifier = Modifier.height(8.dp))
+                                            Text(
+                                                text = upcoming.subjectName,
+                                                fontSize = 16.sp,
+                                                fontWeight = FontWeight.Bold,
+                                                color = com.governence.faflow.ui.theme.FaflowText1
+                                            )
+                                            Text(
+                                                text = "${upcoming.className} (${upcoming.section})",
+                                                fontSize = 13.sp,
+                                                color = com.governence.faflow.ui.theme.FaflowText2
+                                            )
+                                            Spacer(modifier = Modifier.height(12.dp))
+                                            Row(
+                                                modifier = Modifier.fillMaxWidth(),
+                                                horizontalArrangement = Arrangement.End
+                                            ) {
+                                                FaflowPillButton(
+                                                    text = "Mark Attendance",
+                                                    onClick = { onNavigateToStudentAttendance(upcoming.periodNumber, null) },
+                                                    icon = Icons.Default.Groups,
+                                                    isPrimary = true
+                                                )
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+
+                            // Context 5: Shift Completed
+                            state.shiftState == com.governence.faflow.ui.viewmodels.ShiftState.COMPLETED -> {
+                                item {
+                                    FaflowSurface(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        backgroundColor = Color(0xFFF0FDF4),
+                                        borderColor = Color(0xFFBBF7D0),
+                                        contentPadding = PaddingValues(16.dp),
+                                        onClick = onNavigateToAttendanceHistory
+                                    ) {
+                                        Row(
+                                            modifier = Modifier.fillMaxWidth(),
+                                            horizontalArrangement = Arrangement.SpaceBetween,
+                                            verticalAlignment = Alignment.CenterVertically
+                                        ) {
+                                            Row(
+                                                verticalAlignment = Alignment.CenterVertically,
+                                                modifier = Modifier.weight(1f)
+                                            ) {
+                                                Icon(
+                                                    imageVector = Icons.Default.CheckCircle,
+                                                    contentDescription = null,
+                                                    tint = Color(0xFF16A34A),
+                                                    modifier = Modifier.size(24.dp)
+                                                )
+                                                Spacer(modifier = Modifier.width(10.dp))
+                                                Column {
+                                                    Text(
+                                                        text = "Shift Attendance Complete",
+                                                        fontSize = 14.sp,
+                                                        fontWeight = FontWeight.Bold,
+                                                        color = Color(0xFF15803D)
+                                                    )
+                                                    Text(
+                                                        text = "Working Duration: ${state.todayWorkingDuration ?: "Standard Shift"}",
+                                                        fontSize = 12.sp,
+                                                        color = com.governence.faflow.ui.theme.FaflowText2
+                                                    )
+                                                }
+                                            }
+                                            FaflowPillButton(
+                                                text = "Logs",
+                                                onClick = onNavigateToAttendanceHistory,
+                                                icon = Icons.Default.History,
+                                                isPrimary = false
+                                            )
+                                        }
+                                    }
+                                }
+                            }
                         }
                     }
 
-                    // 4. LIST CARD: 3 rows with colored icons
-                    item {
-                        com.governence.faflow.ui.components.FaflowListCard {
-                            com.governence.faflow.ui.components.FaflowListRow(
-                                icon = Icons.AutoMirrored.Filled.EventNote,
-                                iconBg = com.governence.faflow.ui.theme.FaflowNavyTint,
-                                iconTint = com.governence.faflow.ui.theme.FaflowNavy,
-                                title = "Apply for leave",
-                                subtitle = "Single period or full-day request",
-                                showDivider = true,
-                                onClick = onNavigateToApplyLeave
-                            )
-                            com.governence.faflow.ui.components.FaflowListRow(
-                                icon = Icons.Default.SwapHoriz,
-                                iconBg = com.governence.faflow.ui.theme.FaflowVioletTint,
-                                iconTint = com.governence.faflow.ui.theme.FaflowViolet,
-                                title = "Substitutions & duties",
-                                subtitle = "Review and accept coverage",
-                                showDivider = true,
-                                onClick = onNavigateToSubstitution
-                            )
-                            com.governence.faflow.ui.components.FaflowListRow(
-                                icon = Icons.Default.CalendarMonth,
-                                iconBg = com.governence.faflow.ui.theme.FaflowTealTint,
-                                iconTint = com.governence.faflow.ui.theme.FaflowTeal,
-                                title = "Classwise timetable",
-                                subtitle = "Explore schedules across sections",
-                                showDivider = false,
-                                onClick = onNavigateToClassTimetable
-                            )
-                        }
-                    }
-
-                    // Today's Timetable Section
+                    // 4. TODAY'S SCHEDULE
                     item {
                         FaflowSectionHeader(
                             title = "Today's Schedule",
@@ -367,117 +760,62 @@ fun DashboardScreen(
                         }
                     }
 
-                    // Faculty Services Group (Unified Surface with Hairline Dividers)
+                    // 5. UNIFIED FACULTY SERVICES
                     item {
                         FaflowSectionHeader(title = "Faculty Services")
                     }
 
                     item {
-                        FaflowSurface(
-                            modifier = Modifier.fillMaxWidth(),
-                            contentPadding = PaddingValues(0.dp)
-                        ) {
-                            Column {
-                                FacultyServiceRow(
-                                    title = "Apply for Leave",
-                                    subtitle = "Request day or period leave with instant credit preview",
-                                    icon = Icons.AutoMirrored.Filled.EventNote,
-                                    iconColor = PrimaryBlue,
-                                    onClick = onNavigateToApplyLeave
-                                )
-                                HorizontalDivider(
-                                    color = MaterialTheme.colorScheme.outline.copy(alpha = 0.2f),
-                                    thickness = 1.dp,
-                                    modifier = Modifier.padding(start = 56.dp)
-                                )
-                                FacultyServiceRow(
-                                    title = "Substitutions & Duties",
-                                    subtitle = "Review and accept coverage assignments",
-                                    icon = Icons.Default.SwapHoriz,
-                                    iconColor = FaflowStatusColors.Pending,
-                                    onClick = onNavigateToSubstitution
-                                )
-                                HorizontalDivider(
-                                    color = MaterialTheme.colorScheme.outline.copy(alpha = 0.2f),
-                                    thickness = 1.dp,
-                                    modifier = Modifier.padding(start = 56.dp)
-                                )
-                                FacultyServiceRow(
-                                    title = "Leave History",
-                                    subtitle = "Track approvals, statuses, and ledger deductions",
-                                    icon = Icons.Default.History,
-                                    iconColor = FaflowStatusColors.Approved,
-                                    onClick = onNavigateToLeaveHistory
-                                )
-                                HorizontalDivider(
-                                    color = MaterialTheme.colorScheme.outline.copy(alpha = 0.2f),
-                                    thickness = 1.dp,
-                                    modifier = Modifier.padding(start = 56.dp)
-                                )
-                                FacultyServiceRow(
-                                    title = "Classwise Timetable",
-                                    subtitle = "Explore student schedules across sections",
-                                    icon = Icons.Default.CalendarMonth,
-                                    iconColor = PrimaryBlue,
-                                    onClick = onNavigateToClassTimetable
-                                )
-                            }
+                        com.governence.faflow.ui.components.FaflowListCard {
+                            com.governence.faflow.ui.components.FaflowListRow(
+                                icon = Icons.Default.Groups,
+                                iconBg = Color(0xFFEFF6FF),
+                                iconTint = PrimaryBlue,
+                                title = "Student Attendance",
+                                subtitle = "Mark hourly attendance, emergency & substitutions",
+                                showDivider = true,
+                                onClick = { onNavigateToStudentAttendance(null, null) }
+                            )
+                            com.governence.faflow.ui.components.FaflowListRow(
+                                icon = Icons.AutoMirrored.Filled.EventNote,
+                                iconBg = com.governence.faflow.ui.theme.FaflowNavyTint,
+                                iconTint = com.governence.faflow.ui.theme.FaflowNavy,
+                                title = "Apply for Leave",
+                                subtitle = "Single period or full-day leave request",
+                                showDivider = true,
+                                onClick = onNavigateToApplyLeave
+                            )
+                            com.governence.faflow.ui.components.FaflowListRow(
+                                icon = Icons.Default.History,
+                                iconBg = com.governence.faflow.ui.theme.FaflowTealTint,
+                                iconTint = com.governence.faflow.ui.theme.FaflowTeal,
+                                title = "Leave History",
+                                subtitle = "Track approvals, statuses, and ledger deductions",
+                                showDivider = true,
+                                onClick = onNavigateToLeaveHistory
+                            )
+                            com.governence.faflow.ui.components.FaflowListRow(
+                                icon = Icons.Default.SwapHoriz,
+                                iconBg = com.governence.faflow.ui.theme.FaflowVioletTint,
+                                iconTint = com.governence.faflow.ui.theme.FaflowViolet,
+                                title = "Substitutions & Duties",
+                                subtitle = "Review and accept coverage assignments",
+                                showDivider = true,
+                                onClick = onNavigateToSubstitution
+                            )
+                            com.governence.faflow.ui.components.FaflowListRow(
+                                icon = Icons.Default.CalendarMonth,
+                                iconBg = Color(0xFFFEF3C7),
+                                iconTint = com.governence.faflow.ui.theme.FaflowGold,
+                                title = "Classwise Timetable",
+                                subtitle = "Explore student schedules across sections",
+                                showDivider = false,
+                                onClick = onNavigateToClassTimetable
+                            )
                         }
                     }
                 }
             }
         }
-    }
-}
-
-@Composable
-private fun FacultyServiceRow(
-    title: String,
-    subtitle: String,
-    icon: ImageVector,
-    iconColor: Color,
-    onClick: () -> Unit
-) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable { onClick() }
-            .padding(horizontal = FaflowSpacing.md, vertical = FaflowSpacing.md),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Box(
-            modifier = Modifier
-                .size(36.dp)
-                .clip(CircleShape)
-                .background(iconColor.copy(alpha = 0.1f)),
-            contentAlignment = Alignment.Center
-        ) {
-            Icon(
-                imageVector = icon,
-                contentDescription = null,
-                tint = iconColor,
-                modifier = Modifier.size(18.dp)
-            )
-        }
-        Spacer(modifier = Modifier.width(FaflowSpacing.md))
-        Column(modifier = Modifier.weight(1f)) {
-            Text(
-                text = title,
-                style = MaterialTheme.typography.titleSmall,
-                fontWeight = FontWeight.SemiBold,
-                color = MaterialTheme.colorScheme.onSurface
-            )
-            Text(
-                text = subtitle,
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-        }
-        Icon(
-            imageVector = Icons.AutoMirrored.Filled.ArrowForwardIos,
-            contentDescription = null,
-            tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f),
-            modifier = Modifier.size(12.dp)
-        )
     }
 }

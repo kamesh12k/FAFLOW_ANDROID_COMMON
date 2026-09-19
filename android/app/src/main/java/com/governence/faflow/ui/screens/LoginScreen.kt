@@ -567,6 +567,9 @@ fun LoginScreen(
                     Row(
                         horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
+                        TextButton(onClick = { serverUrlInput = com.governence.faflow.core.network.ApiConfig.PRODUCTION_BASE_URL }) {
+                            Text("Render")
+                        }
                         TextButton(onClick = { serverUrlInput = FaflowApiClient.DEFAULT_EMULATOR_URL }) {
                             Text("10.0.2.2")
                         }
@@ -574,7 +577,7 @@ fun LoginScreen(
                             Text("127.0.0.1")
                         }
                         TextButton(onClick = { serverUrlInput = FaflowApiClient.DEFAULT_LAN_URL }) {
-                            Text("Wi-Fi LAN")
+                            Text("LAN")
                         }
                     }
                 }

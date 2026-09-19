@@ -79,7 +79,7 @@ fun CreditsScreen(
                 onNavigateBack = onNavigateBack
             )
         },
-        containerColor = MaterialTheme.colorScheme.background
+        containerColor = com.governence.faflow.ui.theme.FaflowBg
     ) { innerPadding ->
         if (state.isLoading && state.transactions.isEmpty()) {
             Box(modifier = Modifier.fillMaxSize().padding(innerPadding), contentAlignment = Alignment.Center) {
@@ -98,6 +98,7 @@ fun CreditsScreen(
             LazyColumn(
                 modifier = Modifier
                     .fillMaxSize()
+                    .background(com.governence.faflow.ui.theme.FaflowBg)
                     .padding(innerPadding)
                     .padding(horizontal = FaflowSpacing.lg),
                 contentPadding = PaddingValues(top = FaflowSpacing.sm, bottom = FaflowSpacing.xxxl),
@@ -107,8 +108,8 @@ fun CreditsScreen(
                 item {
                     FaflowSurface(
                         modifier = Modifier.fillMaxWidth(),
-                        backgroundColor = MaterialTheme.colorScheme.surface,
-                        borderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.35f),
+                        backgroundColor = Color.White,
+                        borderColor = com.governence.faflow.ui.theme.FaflowBorder,
                         contentPadding = PaddingValues(FaflowSpacing.lg)
                     ) {
                         Column(
@@ -138,7 +139,7 @@ fun CreditsScreen(
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .clip(FaflowShapes.medium)
-                                    .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.45f))
+                                    .background(com.governence.faflow.ui.theme.FaflowDivider)
                                     .padding(vertical = 8.dp, horizontal = 16.dp),
                                 horizontalArrangement = Arrangement.SpaceAround,
                                 verticalAlignment = Alignment.CenterVertically
@@ -204,7 +205,9 @@ fun CreditsScreen(
                         shape = FaflowShapes.pill,
                         colors = OutlinedTextFieldDefaults.colors(
                             focusedBorderColor = PrimaryBlue,
-                            unfocusedBorderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.3f)
+                            unfocusedBorderColor = com.governence.faflow.ui.theme.FaflowBorder,
+                            focusedContainerColor = Color.White,
+                            unfocusedContainerColor = Color.White
                         ),
                         modifier = Modifier
                             .fillMaxWidth()
@@ -286,8 +289,8 @@ fun CreditTransactionCard(item: CreditTransactionWithRunning) {
 
     FaflowSurface(
         modifier = Modifier.fillMaxWidth(),
-        backgroundColor = MaterialTheme.colorScheme.surface,
-        borderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.2f),
+        backgroundColor = Color.White,
+        borderColor = com.governence.faflow.ui.theme.FaflowBorder,
         contentPadding = PaddingValues(FaflowSpacing.md)
     ) {
         Row(
@@ -343,7 +346,7 @@ fun CreditTransactionCard(item: CreditTransactionWithRunning) {
             Box(
                 modifier = Modifier
                     .clip(FaflowShapes.pill)
-                    .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.6f))
+                    .background(com.governence.faflow.ui.theme.FaflowDivider)
                     .padding(horizontal = 8.dp, vertical = 4.dp)
             ) {
                 Text(

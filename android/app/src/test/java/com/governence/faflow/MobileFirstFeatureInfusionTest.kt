@@ -91,12 +91,13 @@ class MobileFirstFeatureInfusionTest {
             teacherId = 15,
             teacherName = "Dr. Rajesh Kumar",
             department = "Computer Science",
-            compatibilityScore = 0.92f,
+            compatibilityScore = 92f,
             reason = "Free slot and handles CSE-A"
         )
 
-        val percentageScore = (candidate.compatibilityScore * 100).toInt()
-        assertEquals(92, percentageScore)
+        val suitabilityScore = candidate.normalizedScore
+        assertEquals(92, suitabilityScore)
+        assertEquals("EXCELLENT", candidate.suitabilityTier)
         assertEquals("Dr. Rajesh Kumar", candidate.teacherName)
         assertEquals("Computer Science", candidate.department)
         assertNotNull(candidate.reason)

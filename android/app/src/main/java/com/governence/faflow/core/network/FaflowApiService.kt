@@ -238,4 +238,41 @@ interface FaflowApiService {
     // ---------- Biometrics ----------
     @POST("teachers/me/biometrics/enroll")
     suspend fun enrollBiometrics(): Response<UserOutDto>
+
+    // ---------- Student Attendance ----------
+    @GET("student-attendance/today")
+    suspend fun getStudentAttendanceToday(
+        @Query("target_date") targetDate: String? = null
+    ): Response<TeacherTodayScheduleDto>
+
+    @GET("student-attendance/classes/{class_id}/roster")
+    suspend fun getStudentClassRoster(
+        @Path("class_id") classId: Int
+    ): Response<ClassRosterDto>
+
+    @GET("student-attendance/sessions/{session_id}")
+    suspend fun getStudentAttendanceSession(
+        @Path("session_id") sessionId: Int
+    ): Response<AttendanceSessionDto>
+
+    @POST("student-attendance/sessions")
+    suspend fun createStudentAttendanceSession(
+        @Body request: AttendanceSessionCreateDto
+    ): Response<AttendanceSessionDto>
+
+    @POST("student-attendance/sessions/{session_id}/submit")
+    suspend fun submitStudentAttendance(
+        @Path("session_id") sessionId: Int,
+        @Body request: AttendanceSubmitRequestDto
+    ): Response<AttendanceSessionDto>
+
+    @POST("student-attendance/emergency")
+    suspend fun emergencyStudentAttendance(
+        @Body request: EmergencyAttendanceRequestDto
+    ): Response<AttendanceSessionDto>
+
+    @POST("student-attendance/sync")
+    suspend fun syncOfflineAttendanceBatch(
+        @Body request: OfflineBatchSyncRequestDto
+    ): Response<OfflineBatchSyncResponseDto>
 }

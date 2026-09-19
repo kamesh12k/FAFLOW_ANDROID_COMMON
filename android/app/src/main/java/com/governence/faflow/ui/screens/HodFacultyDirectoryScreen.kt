@@ -38,11 +38,14 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.material3.OutlinedTextFieldDefaults
+import androidx.compose.ui.graphics.Color
 import com.governence.faflow.core.network.TeacherOutDto
 import com.governence.faflow.ui.components.PremiumTopBar
 import com.governence.faflow.ui.components.RoleBadge
 import com.governence.faflow.ui.components.StatusBadge
 import com.governence.faflow.ui.theme.FaflowRoleColors
+import com.governence.faflow.ui.theme.PrimaryBlue
 import com.governence.faflow.ui.theme.FaflowShapes
 import com.governence.faflow.ui.theme.FaflowSpacing
 import com.governence.faflow.ui.viewmodels.HodViewModel
@@ -75,13 +78,14 @@ fun HodFacultyDirectoryScreen(
                     }
                 }
             )
-        }
+        },
+        containerColor = com.governence.faflow.ui.theme.FaflowBg
     ) { innerPadding ->
         Box(
             modifier = modifier
                 .fillMaxSize()
                 .padding(innerPadding)
-                .background(MaterialTheme.colorScheme.background)
+                .background(com.governence.faflow.ui.theme.FaflowBg)
         ) {
             Column(
                 modifier = Modifier
@@ -104,7 +108,13 @@ fun HodFacultyDirectoryScreen(
                     },
                     modifier = Modifier.fillMaxWidth(),
                     shape = FaflowShapes.medium,
-                    singleLine = true
+                    singleLine = true,
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedContainerColor = Color.White,
+                        unfocusedContainerColor = Color.White,
+                        focusedBorderColor = PrimaryBlue,
+                        unfocusedBorderColor = com.governence.faflow.ui.theme.FaflowBorder
+                    )
                 )
 
                 Spacer(modifier = Modifier.height(FaflowSpacing.md))
@@ -172,8 +182,9 @@ fun FacultyMemberCard(
     Card(
         modifier = modifier.fillMaxWidth(),
         shape = FaflowShapes.card,
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+        colors = CardDefaults.cardColors(containerColor = Color.White),
+        border = androidx.compose.foundation.BorderStroke(1.dp, com.governence.faflow.ui.theme.FaflowBorder),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.5.dp)
     ) {
         Row(
             modifier = Modifier

@@ -96,8 +96,16 @@ fun NavGraph(
         )
     }
 
+    val studentAttendanceViewModel = remember {
+        com.governence.faflow.attendance.student.ui.StudentAttendanceViewModel(
+            repository = appContainer.studentAttendanceRepository
+        )
+    }
+
     Scaffold(
         modifier = modifier.fillMaxSize(),
+        containerColor = com.governence.faflow.ui.theme.FaflowBg,
+        contentWindowInsets = androidx.compose.foundation.layout.WindowInsets(0, 0, 0, 0),
         bottomBar = {
             MainBottomNavigation(navController = navController, userRole = userRole)
         }
@@ -105,7 +113,7 @@ fun NavGraph(
         NavHost(
             navController = navController,
             startDestination = Screen.Splash.route,
-            modifier = Modifier.padding(innerPadding)
+            modifier = Modifier.padding(bottom = innerPadding.calculateBottomPadding())
         ) {
             // Auth & Splash
             // P0 FIX: Do NOT call getStoredStaffInfo() inside the composable body.
@@ -154,7 +162,9 @@ fun NavGraph(
                         academicSummaryRepository = appContainer.academicSummaryRepository,
                         timetableRepository = appContainer.timetableRepository,
                         creditRepository = appContainer.creditRepository,
-                        substitutionRepository = appContainer.substitutionRepository
+                        substitutionRepository = appContainer.substitutionRepository,
+                        attendanceRepository = appContainer.attendanceRepository,
+                        studentAttendanceRepository = appContainer.studentAttendanceRepository
                     )
                 }
                 DashboardScreen(
@@ -169,7 +179,10 @@ fun NavGraph(
                     onNavigateToSubstitution = { navController.navigate(Screen.Substitution.route) },
                     onNavigateToAttendanceHistory = { navController.navigate(Screen.AttendanceHistory.route) },
                     onNavigateToNotifications = { navController.navigate(Screen.Notifications.route) },
-                    onNavigateToProfile = { navController.navigate(Screen.Profile.route) }
+                    onNavigateToProfile = { navController.navigate(Screen.Profile.route) },
+                    onNavigateToStudentAttendance = { periodNumber, classId ->
+                        navController.navigate(Screen.StudentAttendance.createRoute(periodNumber, classId))
+                    }
                 )
             }
 
@@ -214,7 +227,8 @@ fun NavGraph(
                     onNavigateToGeofences = { navController.navigate(Screen.GeofenceAdmin.route) },
                     onNavigateToLeaveApprovals = { navController.navigate(Screen.HodLeaveApprovals.route) },
                     onNavigateToLiveAttendance = { navController.navigate(Screen.HodAttendance.route) },
-                    onNavigateToFacultyDirectory = { navController.navigate(Screen.HodFacultyDirectory.route) }
+                    onNavigateToFacultyDirectory = { navController.navigate(Screen.HodFacultyDirectory.route) },
+                    onNavigateToStudentAttendance = { navController.navigate(Screen.StudentAttendance.route) }
                 )
             }
 
@@ -326,7 +340,10 @@ fun NavGraph(
                 }
                 SubstitutionScreen(
                     viewModel = substitutionViewModel,
-                    onNavigateBack = { navController.popBackStack() }
+                    onNavigateBack = { navController.popBackStack() },
+                    onNavigateToStudentAttendance = { periodNumber, classId ->
+                        navController.navigate(Screen.StudentAttendance.createRoute(periodNumber, classId))
+                    }
                 )
             }
 
@@ -350,7 +367,10 @@ fun NavGraph(
                 }
                 NotificationsScreen(
                     viewModel = notificationsViewModel,
-                    onNavigateBack = { navController.popBackStack() }
+                    onNavigateBack = { navController.popBackStack() },
+                    onNavigateToSubstitution = { navController.navigate(Screen.Substitution.route) },
+                    onNavigateToLeaveHistory = { navController.navigate(Screen.LeaveHistory.route) },
+                    onNavigateToAttendance = { navController.navigate(Screen.AttendanceCheckInOut.route) }
                 )
             }
 
@@ -433,6 +453,34 @@ fun NavGraph(
                 }
                 GeofenceAdminScreen(
                     viewModel = geofenceViewModel,
+                    onNavigateBack = { navController.popBackStack() }
+                )
+            }
+
+            composable(
+                route = Screen.StudentAttendance.route,
+                arguments = listOf(
+                    androidx.navigation.navArgument("period") {
+                        type = androidx.navigation.NavType.IntType
+                        defaultValue = -1
+                    },
+                    androidx.navigation.navArgument("classId") {
+                        type = androidx.navigation.NavType.IntType
+                        defaultValue = -1
+                    }
+                )
+            ) { backStackEntry ->
+                val targetPeriod = backStackEntry.arguments?.getInt("period")?.takeIf { it != -1 }
+                val targetClassId = backStackEntry.arguments?.getInt("classId")?.takeIf { it != -1 }
+
+                androidx.compose.runtime.LaunchedEffect(targetPeriod, targetClassId) {
+                    if (targetPeriod != null || targetClassId != null) {
+                        studentAttendanceViewModel.preselectPeriod(targetPeriod, targetClassId)
+                    }
+                }
+
+                com.governence.faflow.ui.screens.StudentAttendanceScreen(
+                    viewModel = studentAttendanceViewModel,
                     onNavigateBack = { navController.popBackStack() }
                 )
             }

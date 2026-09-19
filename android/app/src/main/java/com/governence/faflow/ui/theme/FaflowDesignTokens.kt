@@ -38,6 +38,26 @@ object FaflowShapes {
     val pill = RoundedCornerShape(percent = 50)
 }
 
+object FaflowDimensions {
+    val minTouchTarget: Dp = 48.dp
+    val iconXs: Dp = 14.dp
+    val iconSm: Dp = 16.dp
+    val iconMd: Dp = 20.dp
+    val iconLg: Dp = 24.dp
+    val iconXl: Dp = 32.dp
+    val avatarSm: Dp = 32.dp
+    val avatarMd: Dp = 40.dp
+    val avatarLg: Dp = 56.dp
+}
+
+object FaflowElevation {
+    val flat: Dp = 0.dp
+    val card: Dp = 1.dp
+    val raised: Dp = 3.dp
+    val dialog: Dp = 6.dp
+    val sheet: Dp = 8.dp
+}
+
 object FaflowRoleColors {
     val TeacherPrimary = FaflowNavy
     val TeacherBackground = FaflowNavyTint

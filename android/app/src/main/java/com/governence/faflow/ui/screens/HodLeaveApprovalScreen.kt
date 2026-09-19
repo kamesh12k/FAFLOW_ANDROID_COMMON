@@ -203,13 +203,14 @@ fun HodLeaveApprovalScreen(
                     }
                 }
             )
-        }
+        },
+        containerColor = com.governence.faflow.ui.theme.FaflowBg
     ) { innerPadding ->
         Box(
             modifier = modifier
                 .fillMaxSize()
                 .padding(innerPadding)
-                .background(MaterialTheme.colorScheme.background)
+                .background(com.governence.faflow.ui.theme.FaflowBg)
         ) {
             Column(
                 modifier = Modifier
@@ -355,8 +356,9 @@ fun HodLeaveGroupItemCard(
     Card(
         modifier = modifier.fillMaxWidth(),
         shape = FaflowShapes.card,
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+        colors = CardDefaults.cardColors(containerColor = Color.White),
+        border = androidx.compose.foundation.BorderStroke(1.dp, com.governence.faflow.ui.theme.FaflowBorder),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.5.dp)
     ) {
         Column(
             modifier = Modifier.padding(FaflowSpacing.lg)
@@ -469,7 +471,7 @@ fun HodLeaveGroupItemCard(
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.35f), FaflowShapes.small)
+                        .background(com.governence.faflow.ui.theme.FaflowDivider, FaflowShapes.small)
                         .padding(FaflowSpacing.md),
                     verticalArrangement = Arrangement.spacedBy(FaflowSpacing.sm)
                 ) {

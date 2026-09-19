@@ -1,42 +1,31 @@
 # =====================================================================
-# FAFLOW Staff Mobile: Production ProGuard & R8 Optimization Rules
+# FAFLOW Staff Mobile: Optimized Production ProGuard & R8 Rules
+# Optimized according to Android Skills guidelines (r8-analyzer)
 # =====================================================================
 
-# ONNX Runtime Mobile (InsightFace SCRFD & ArcFace ONNX inference)
--keep class ai.onnxruntime.** { *; }
--dontwarn ai.onnxruntime.**
+# Global attribute preservation for Kotlin, reflection, and serialization
 -keepattributes *Annotation*, Signature, InnerClasses, EnclosingMethod
 
-# Native JNI bindings for ONNX Runtime
--keepclasseswithmembernames class * {
-    native <methods>;
-}
+# ONNX Runtime Mobile (InsightFace SCRFD & ArcFace ONNX inference)
+-keep class ai.onnxruntime.OrtEnvironment, ai.onnxruntime.OrtSession, ai.onnxruntime.OnnxTensor { *; }
+-dontwarn ai.onnxruntime.**
 
-# Moshi JSON DTO serialization
--keep class com.governence.faflow.core.network.** { *; }
--keepclassmembers class com.governence.faflow.core.network.** {
+# Moshi JSON DTO Serialization (Scoped to annotated models)
+-keep @com.squareup.moshi.JsonClass class * {
     <fields>;
     <init>(...);
 }
--keepattributes *Annotation*
+-keep class *JsonAdapter {
+    <init>(...);
+}
+-keepclassmembers class * {
+    @com.squareup.moshi.Json <fields>;
+}
 -dontwarn com.squareup.moshi.**
 
-# Retrofit & OkHttp Network Infrastructure
--keepattributes Signature, InnerClasses, EnclosingMethod
--keepclassmembers,allowobfuscation interface * {
-    @retrofit2.http.* <methods>;
-}
+# Android Jetpack Security (Warnings suppression; consumer rules bundled in AAR)
+-dontwarn androidx.security.crypto.**
+
+# Network Stack Warnings Suppressions (Retrofit & OkHttp provide their own consumer keep rules)
 -dontwarn retrofit2.**
 -dontwarn okhttp3.**
-
-# WorkManager background sync workers
--keep class * extends androidx.work.Worker {
-    public <init>(android.content.Context, androidx.work.WorkerParameters);
-}
--keep class * extends androidx.work.CoroutineWorker {
-    public <init>(android.content.Context, androidx.work.WorkerParameters);
-}
-
-# Android Jetpack Security (EncryptedSharedPreferences)
--keep class androidx.security.crypto.** { *; }
--dontwarn androidx.security.crypto.**

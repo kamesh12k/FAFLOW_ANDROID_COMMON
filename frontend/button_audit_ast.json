@@ -1,0 +1,6473 @@
+[
+  {
+    "file": "pages\\admin\\AcademicCalendar.jsx",
+    "line": 194,
+    "tag": "button",
+    "label": "(No Direct Text / Icon)",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\admin\\AcademicCalendar.jsx",
+    "line": 334,
+    "tag": "button",
+    "label": "(No Direct Text / Icon)",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\admin\\AcademicCalendar.jsx",
+    "line": 356,
+    "tag": "button",
+    "label": "(No Direct Text / Icon)",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\admin\\AcademicCalendar.jsx",
+    "line": 413,
+    "tag": "button",
+    "label": "Clear",
+    "status": "NAMED_HANDLER",
+    "details": "Handler function: onClearBatch",
+    "disabled": true
+  },
+  {
+    "file": "pages\\admin\\AcademicCalendar.jsx",
+    "line": 423,
+    "tag": "button",
+    "label": "(No Direct Text / Icon)",
+    "status": "NAMED_HANDLER",
+    "details": "Handler function: onCommitBatch",
+    "disabled": true
+  },
+  {
+    "file": "pages\\admin\\AcademicCalendar.jsx",
+    "line": 473,
+    "tag": "button",
+    "label": "(No Direct Text / Icon)",
+    "status": "NAMED_HANDLER",
+    "details": "Handler function: onRun",
+    "disabled": true
+  },
+  {
+    "file": "pages\\admin\\AcademicCalendar.jsx",
+    "line": 580,
+    "tag": "button",
+    "label": "(No Direct Text / Icon)",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\admin\\AcademicCalendar.jsx",
+    "line": 622,
+    "tag": "button",
+    "label": "Auto (sequence)",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\admin\\AcademicCalendar.jsx",
+    "line": 635,
+    "tag": "button",
+    "label": "DO",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\admin\\AcademicCalendar.jsx",
+    "line": 698,
+    "tag": "button",
+    "label": "Delete",
+    "status": "NAMED_HANDLER",
+    "details": "Handler function: handleDelete",
+    "disabled": true
+  },
+  {
+    "file": "pages\\admin\\AcademicCalendar.jsx",
+    "line": 709,
+    "tag": "button",
+    "label": "Clear override",
+    "status": "NAMED_HANDLER",
+    "details": "Handler function: handleClearOverride",
+    "disabled": true
+  },
+  {
+    "file": "pages\\admin\\AcademicCalendar.jsx",
+    "line": 713,
+    "tag": "button",
+    "label": "(No Direct Text / Icon)",
+    "status": "NAMED_HANDLER",
+    "details": "Handler function: handleSave",
+    "disabled": true
+  },
+  {
+    "file": "pages\\admin\\AcademicCalendar.jsx",
+    "line": 740,
+    "tag": "button",
+    "label": "←",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\admin\\AcademicCalendar.jsx",
+    "line": 745,
+    "tag": "button",
+    "label": "→",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\admin\\AcademicCalendar.jsx",
+    "line": 754,
+    "tag": "button",
+    "label": "(No Direct Text / Icon)",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\admin\\AcademicCalendar.jsx",
+    "line": 833,
+    "tag": "button",
+    "label": "(No Direct Text / Icon)",
+    "status": "NAMED_HANDLER",
+    "details": "Handler function: handleSubmit",
+    "disabled": true
+  },
+  {
+    "file": "pages\\admin\\AcademicCalendar.jsx",
+    "line": 891,
+    "tag": "button",
+    "label": "(No Direct Text / Icon)",
+    "status": "NAMED_HANDLER",
+    "details": "Handler function: handleSubmit",
+    "disabled": true
+  },
+  {
+    "file": "pages\\admin\\AcademicCalendar.jsx",
+    "line": 955,
+    "tag": "button",
+    "label": "(No Direct Text / Icon)",
+    "status": "NAMED_HANDLER",
+    "details": "Handler function: handleCreateYear",
+    "disabled": true
+  },
+  {
+    "file": "pages\\admin\\AcademicCalendar.jsx",
+    "line": 985,
+    "tag": "button",
+    "label": "+ Add semester",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\admin\\AcademicCalendar.jsx",
+    "line": 1234,
+    "tag": "button",
+    "label": "Manage academic years",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\admin\\AcademicCalendar.jsx",
+    "line": 1279,
+    "tag": "button",
+    "label": "←",
+    "status": "NAMED_HANDLER",
+    "details": "Handler function: goPrevMonth",
+    "disabled": false
+  },
+  {
+    "file": "pages\\admin\\AcademicCalendar.jsx",
+    "line": 1284,
+    "tag": "button",
+    "label": "(No Direct Text / Icon)",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\admin\\AcademicCalendar.jsx",
+    "line": 1297,
+    "tag": "button",
+    "label": "→",
+    "status": "NAMED_HANDLER",
+    "details": "Handler function: goNextMonth",
+    "disabled": false
+  },
+  {
+    "file": "pages\\admin\\AcademicCalendar.jsx",
+    "line": 1305,
+    "tag": "button",
+    "label": "● Jump to today",
+    "status": "NAMED_HANDLER",
+    "details": "Handler function: goToday",
+    "disabled": false
+  },
+  {
+    "file": "pages\\admin\\AcademicCalendar.jsx",
+    "line": 1366,
+    "tag": "button",
+    "label": "Advanced tools",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\admin\\AcademicCalendarReports.jsx",
+    "line": 35,
+    "tag": "button",
+    "label": "(No Direct Text / Icon)",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\admin\\AcademicCalendarReports.jsx",
+    "line": 58,
+    "tag": "button",
+    "label": "(No Direct Text / Icon)",
+    "status": "NAMED_HANDLER",
+    "details": "Handler function: onRun",
+    "disabled": true
+  },
+  {
+    "file": "pages\\admin\\AcademicCalendarReports.jsx",
+    "line": 322,
+    "tag": "button",
+    "label": "(No Direct Text / Icon)",
+    "status": "NAMED_HANDLER",
+    "details": "Handler function: run",
+    "disabled": true
+  },
+  {
+    "file": "pages\\admin\\AcademicCalendarReports.jsx",
+    "line": 353,
+    "tag": "button",
+    "label": "Sort:",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\admin\\AcademicCalendarReports.jsx",
+    "line": 412,
+    "tag": "button",
+    "label": "(No Direct Text / Icon)",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\admin\\AcademicRolloverModal.jsx",
+    "line": 141,
+    "tag": "button",
+    "label": "(No Direct Text / Icon)",
+    "status": "NAMED_HANDLER",
+    "details": "Handler function: handlePreview",
+    "disabled": true
+  },
+  {
+    "file": "pages\\admin\\AcademicRolloverModal.jsx",
+    "line": 198,
+    "tag": "button",
+    "label": "(No Direct Text / Icon)",
+    "status": "NAMED_HANDLER",
+    "details": "Handler function: handleExecute",
+    "disabled": true
+  },
+  {
+    "file": "pages\\admin\\AdminLeaveEntry.jsx",
+    "line": 421,
+    "tag": "button",
+    "label": "Full Day",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\admin\\AdminLeaveEntry.jsx",
+    "line": 428,
+    "tag": "button",
+    "label": "Morning (P1-P3)",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\admin\\AdminLeaveEntry.jsx",
+    "line": 435,
+    "tag": "button",
+    "label": "Afternoon (P4-P5)",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\admin\\AdminLeaveEntry.jsx",
+    "line": 442,
+    "tag": "button",
+    "label": "Clear",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\admin\\AdminLeaveEntry.jsx",
+    "line": 599,
+    "tag": "button",
+    "label": "(No Direct Text / Icon)",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\admin\\AdminLeaveEntry.jsx",
+    "line": 644,
+    "tag": "button",
+    "label": "(No Direct Text / Icon)",
+    "status": "FORM_SUBMIT",
+    "details": "Form submit button",
+    "disabled": true
+  },
+  {
+    "file": "pages\\admin\\Attendance.jsx",
+    "line": 98,
+    "tag": "button",
+    "label": "(No Direct Text / Icon)",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": true
+  },
+  {
+    "file": "pages\\admin\\Attendance.jsx",
+    "line": 152,
+    "tag": "button",
+    "label": "All Today ( )",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\admin\\Attendance.jsx",
+    "line": 162,
+    "tag": "button",
+    "label": "Checked In ( )",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\admin\\Attendance.jsx",
+    "line": 172,
+    "tag": "button",
+    "label": "Completed ( )",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\admin\\Backup.jsx",
+    "line": 248,
+    "tag": "button",
+    "label": "Cancel",
+    "status": "NAMED_HANDLER",
+    "details": "Handler function: onCancel",
+    "disabled": true
+  },
+  {
+    "file": "pages\\admin\\Backup.jsx",
+    "line": 249,
+    "tag": "button",
+    "label": "(No Direct Text / Icon)",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": true
+  },
+  {
+    "file": "pages\\admin\\Backup.jsx",
+    "line": 283,
+    "tag": "button",
+    "label": "Cancel",
+    "status": "NAMED_HANDLER",
+    "details": "Handler function: onCancel",
+    "disabled": true
+  },
+  {
+    "file": "pages\\admin\\Backup.jsx",
+    "line": 284,
+    "tag": "button",
+    "label": "(No Direct Text / Icon)",
+    "status": "NAMED_HANDLER",
+    "details": "Handler function: onConfirm",
+    "disabled": true
+  },
+  {
+    "file": "pages\\admin\\Backup.jsx",
+    "line": 312,
+    "tag": "button",
+    "label": "×",
+    "status": "NAMED_HANDLER",
+    "details": "Handler function: onDismiss",
+    "disabled": false
+  },
+  {
+    "file": "pages\\admin\\Backup.jsx",
+    "line": 566,
+    "tag": "Link",
+    "label": "Retention & Purge",
+    "status": "NAVIGATION",
+    "details": "Router navigation link",
+    "disabled": false
+  },
+  {
+    "file": "pages\\admin\\Backup.jsx",
+    "line": 574,
+    "tag": "button",
+    "label": "Refresh",
+    "status": "NAMED_HANDLER",
+    "details": "Handler function: fetchAll",
+    "disabled": true
+  },
+  {
+    "file": "pages\\admin\\Backup.jsx",
+    "line": 583,
+    "tag": "button",
+    "label": "(No Direct Text / Icon)",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": true
+  },
+  {
+    "file": "pages\\admin\\Backup.jsx",
+    "line": 593,
+    "tag": "button",
+    "label": "(No Direct Text / Icon)",
+    "status": "NAMED_HANDLER",
+    "details": "Handler function: handleCreate",
+    "disabled": true
+  },
+  {
+    "file": "pages\\admin\\Backup.jsx",
+    "line": 659,
+    "tag": "button",
+    "label": "(No Direct Text / Icon)",
+    "status": "NAMED_HANDLER",
+    "details": "Handler function: handleToggleSchedule",
+    "disabled": true
+  },
+  {
+    "file": "pages\\admin\\Backup.jsx",
+    "line": 694,
+    "tag": "button",
+    "label": "(No Direct Text / Icon)",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": true
+  },
+  {
+    "file": "pages\\admin\\Backup.jsx",
+    "line": 722,
+    "tag": "button",
+    "label": "(No Direct Text / Icon)",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": true
+  },
+  {
+    "file": "pages\\admin\\Backup.jsx",
+    "line": 756,
+    "tag": "button",
+    "label": "(No Direct Text / Icon)",
+    "status": "NAMED_HANDLER",
+    "details": "Handler function: handleRunAutoNow",
+    "disabled": true
+  },
+  {
+    "file": "pages\\admin\\Backup.jsx",
+    "line": 789,
+    "tag": "button",
+    "label": "Import from Local",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": true
+  },
+  {
+    "file": "pages\\admin\\Backup.jsx",
+    "line": 797,
+    "tag": "button",
+    "label": "Create Backup",
+    "status": "NAMED_HANDLER",
+    "details": "Handler function: handleCreate",
+    "disabled": true
+  },
+  {
+    "file": "pages\\admin\\Backup.jsx",
+    "line": 867,
+    "tag": "button",
+    "label": "Validate",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": true
+  },
+  {
+    "file": "pages\\admin\\Backup.jsx",
+    "line": 878,
+    "tag": "button",
+    "label": "Download",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\admin\\Backup.jsx",
+    "line": 888,
+    "tag": "button",
+    "label": "Restore",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\admin\\Backup.jsx",
+    "line": 898,
+    "tag": "button",
+    "label": "(No Direct Text / Icon)",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\admin\\Backup.jsx",
+    "line": 946,
+    "tag": "button",
+    "label": "Download",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\admin\\Backup.jsx",
+    "line": 954,
+    "tag": "button",
+    "label": "(No Direct Text / Icon)",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\admin\\Biometrics.jsx",
+    "line": 86,
+    "tag": "button",
+    "label": "✕",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\admin\\Biometrics.jsx",
+    "line": 191,
+    "tag": "button",
+    "label": "Reset Biometrics",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\admin\\Biometrics.jsx",
+    "line": 228,
+    "tag": "button",
+    "label": "Cancel",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\admin\\Biometrics.jsx",
+    "line": 235,
+    "tag": "button",
+    "label": "Confirm Reset",
+    "status": "NAMED_HANDLER",
+    "details": "Handler function: handleResetBiometric",
+    "disabled": true
+  },
+  {
+    "file": "pages\\admin\\BulkStudentImportModal.jsx",
+    "line": 104,
+    "tag": "button",
+    "label": "Cancel",
+    "status": "NAMED_HANDLER",
+    "details": "Handler function: onClose",
+    "disabled": false
+  },
+  {
+    "file": "pages\\admin\\BulkStudentImportModal.jsx",
+    "line": 111,
+    "tag": "button",
+    "label": "(No Direct Text / Icon)",
+    "status": "NAMED_HANDLER",
+    "details": "Handler function: handlePreview",
+    "disabled": true
+  },
+  {
+    "file": "pages\\admin\\BulkStudentImportModal.jsx",
+    "line": 180,
+    "tag": "button",
+    "label": "← Back to Edit",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\admin\\BulkStudentImportModal.jsx",
+    "line": 187,
+    "tag": "button",
+    "label": "(No Direct Text / Icon)",
+    "status": "NAMED_HANDLER",
+    "details": "Handler function: handleCommit",
+    "disabled": true
+  },
+  {
+    "file": "pages\\admin\\Classes.jsx",
+    "line": 328,
+    "tag": "button",
+    "label": "Academic Rollover",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\admin\\Classes.jsx",
+    "line": 335,
+    "tag": "button",
+    "label": "Bulk Add (Range)",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\admin\\Classes.jsx",
+    "line": 338,
+    "tag": "button",
+    "label": "+ Add Class",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\admin\\Classes.jsx",
+    "line": 379,
+    "tag": "button",
+    "label": "✕ Clear Filters",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\admin\\Classes.jsx",
+    "line": 401,
+    "tag": "button",
+    "label": "Reset filters",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\admin\\Classes.jsx",
+    "line": 462,
+    "tag": "button",
+    "label": "🎓 Rolls",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\admin\\Classes.jsx",
+    "line": 469,
+    "tag": "button",
+    "label": "📥 Import",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\admin\\Classes.jsx",
+    "line": 476,
+    "tag": "button",
+    "label": "Edit",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\admin\\Classes.jsx",
+    "line": 477,
+    "tag": "button",
+    "label": "Remove",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\admin\\Classes.jsx",
+    "line": 545,
+    "tag": "button",
+    "label": "Cancel",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\admin\\Classes.jsx",
+    "line": 546,
+    "tag": "button",
+    "label": "(No Direct Text / Icon)",
+    "status": "FORM_SUBMIT",
+    "details": "Form submit button",
+    "disabled": true
+  },
+  {
+    "file": "pages\\admin\\Classes.jsx",
+    "line": 564,
+    "tag": "button",
+    "label": "🔢 Years / Numbers (Year 1 .. 4)",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\admin\\Classes.jsx",
+    "line": 575,
+    "tag": "button",
+    "label": "🔤 Section Range (Sec A .. D)",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\admin\\Classes.jsx",
+    "line": 701,
+    "tag": "button",
+    "label": "Cancel",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\admin\\Classes.jsx",
+    "line": 702,
+    "tag": "button",
+    "label": "(No Direct Text / Icon)",
+    "status": "FORM_SUBMIT",
+    "details": "Form submit button",
+    "disabled": true
+  },
+  {
+    "file": "pages\\admin\\Classes.jsx",
+    "line": 758,
+    "tag": "button",
+    "label": "Cancel",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\admin\\Classes.jsx",
+    "line": 759,
+    "tag": "button",
+    "label": "(No Direct Text / Icon)",
+    "status": "FORM_SUBMIT",
+    "details": "Form submit button",
+    "disabled": true
+  },
+  {
+    "file": "pages\\admin\\Classes.jsx",
+    "line": 773,
+    "tag": "button",
+    "label": "Cancel",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\admin\\Classes.jsx",
+    "line": 774,
+    "tag": "button",
+    "label": "(No Direct Text / Icon)",
+    "status": "NAMED_HANDLER",
+    "details": "Handler function: handleDeleteConfirm",
+    "disabled": true
+  },
+  {
+    "file": "pages\\admin\\credits\\ActivityTimeline.jsx",
+    "line": 129,
+    "tag": "button",
+    "label": "(No Direct Text / Icon)",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\admin\\credits\\ActivityTimeline.jsx",
+    "line": 207,
+    "tag": "button",
+    "label": "Inspect",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\admin\\credits\\ActivityTimeline.jsx",
+    "line": 226,
+    "tag": "button",
+    "label": "Load More Records ( remaining)",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\admin\\credits\\AttentionBanner.jsx",
+    "line": 61,
+    "tag": "button",
+    "label": "Review First ( )",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\admin\\credits\\AttentionPanel.jsx",
+    "line": 100,
+    "tag": "button",
+    "label": "Review",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\admin\\credits\\BalanceTable.jsx",
+    "line": 212,
+    "tag": "button",
+    "label": "✕",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\admin\\credits\\BalanceTable.jsx",
+    "line": 244,
+    "tag": "button",
+    "label": "(No Direct Text / Icon)",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\admin\\credits\\BalanceTable.jsx",
+    "line": 267,
+    "tag": "button",
+    "label": "Clear filters",
+    "status": "NAMED_HANDLER",
+    "details": "Handler function: resetFilters",
+    "disabled": false
+  },
+  {
+    "file": "pages\\admin\\credits\\BalanceTable.jsx",
+    "line": 336,
+    "tag": "button",
+    "label": "Review",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\admin\\credits\\BalanceTable.jsx",
+    "line": 344,
+    "tag": "button",
+    "label": "Adjust",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\admin\\credits\\CreditHistoryDrawer.jsx",
+    "line": 167,
+    "tag": "button",
+    "label": "(No Direct Text / Icon)",
+    "status": "NAMED_HANDLER",
+    "details": "Handler function: onClose",
+    "disabled": false
+  },
+  {
+    "file": "pages\\admin\\credits\\CreditHistoryDrawer.jsx",
+    "line": 222,
+    "tag": "button",
+    "label": "(No Direct Text / Icon)",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\admin\\credits\\CreditHistoryDrawer.jsx",
+    "line": 236,
+    "tag": "button",
+    "label": "(No Direct Text / Icon)",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\admin\\credits\\CreditHistoryDrawer.jsx",
+    "line": 311,
+    "tag": "button",
+    "label": "Export PDF Statement",
+    "status": "NAMED_HANDLER",
+    "details": "Handler function: handleExportPdf",
+    "disabled": true
+  },
+  {
+    "file": "pages\\admin\\credits\\CreditHistoryDrawer.jsx",
+    "line": 330,
+    "tag": "button",
+    "label": "+ Adjust Credits",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\admin\\credits\\ExportBar.jsx",
+    "line": 9,
+    "tag": "button",
+    "label": "(No Direct Text / Icon)",
+    "status": "NAMED_HANDLER",
+    "details": "Handler function: onClick",
+    "disabled": true
+  },
+  {
+    "file": "pages\\admin\\credits\\ExportBar.jsx",
+    "line": 350,
+    "tag": "button",
+    "label": "Clear Dates",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\admin\\credits\\ExportBar.jsx",
+    "line": 362,
+    "tag": "button",
+    "label": "This Month",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\admin\\credits\\ExportBar.jsx",
+    "line": 375,
+    "tag": "button",
+    "label": "Last 30 Days",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\admin\\credits\\ExportBar.jsx",
+    "line": 388,
+    "tag": "button",
+    "label": "All Time",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\admin\\credits\\ExportBar.jsx",
+    "line": 429,
+    "tag": "button",
+    "label": "✕",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\admin\\credits\\index.jsx",
+    "line": 260,
+    "tag": "button",
+    "label": "Sync Data",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": true
+  },
+  {
+    "file": "pages\\admin\\credits\\index.jsx",
+    "line": 269,
+    "tag": "button",
+    "label": "Print to PDF",
+    "status": "NAMED_HANDLER",
+    "details": "Handler function: handlePrint",
+    "disabled": false
+  },
+  {
+    "file": "pages\\admin\\credits\\index.jsx",
+    "line": 278,
+    "tag": "button",
+    "label": "(No Direct Text / Icon)",
+    "status": "NAMED_HANDLER",
+    "details": "Handler function: handleGeneratePdf",
+    "disabled": true
+  },
+  {
+    "file": "pages\\admin\\credits\\index.jsx",
+    "line": 297,
+    "tag": "button",
+    "label": "Adjust Credits",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\admin\\credits\\index.jsx",
+    "line": 304,
+    "tag": "button",
+    "label": "Reset History",
+    "status": "NAMED_HANDLER",
+    "details": "Handler function: handleClearHistory",
+    "disabled": true
+  },
+  {
+    "file": "pages\\admin\\credits\\index.jsx",
+    "line": 324,
+    "tag": "button",
+    "label": "✕",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\admin\\credits\\index.jsx",
+    "line": 444,
+    "tag": "button",
+    "label": "Cancel",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\admin\\credits\\index.jsx",
+    "line": 451,
+    "tag": "button",
+    "label": "(No Direct Text / Icon)",
+    "status": "FORM_SUBMIT",
+    "details": "Form submit button",
+    "disabled": true
+  },
+  {
+    "file": "pages\\admin\\credits\\TransactionModal.jsx",
+    "line": 127,
+    "tag": "button",
+    "label": "Close",
+    "status": "NAMED_HANDLER",
+    "details": "Handler function: onClose",
+    "disabled": false
+  },
+  {
+    "file": "pages\\admin\\Dashboard.jsx",
+    "line": 196,
+    "tag": "button",
+    "label": "(No Direct Text / Icon)",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": true
+  },
+  {
+    "file": "pages\\admin\\Dashboard.jsx",
+    "line": 217,
+    "tag": "Link",
+    "label": "(No Direct Text / Icon)",
+    "status": "NAVIGATION",
+    "details": "Router navigation link",
+    "disabled": false
+  },
+  {
+    "file": "pages\\admin\\Dashboard.jsx",
+    "line": 226,
+    "tag": "Link",
+    "label": "(No Direct Text / Icon)",
+    "status": "NAVIGATION",
+    "details": "Router navigation link",
+    "disabled": false
+  },
+  {
+    "file": "pages\\admin\\Dashboard.jsx",
+    "line": 235,
+    "tag": "Link",
+    "label": "(No Direct Text / Icon)",
+    "status": "NAVIGATION",
+    "details": "Router navigation link",
+    "disabled": false
+  },
+  {
+    "file": "pages\\admin\\Dashboard.jsx",
+    "line": 244,
+    "tag": "Link",
+    "label": "(No Direct Text / Icon)",
+    "status": "NAVIGATION",
+    "details": "Router navigation link",
+    "disabled": false
+  },
+  {
+    "file": "pages\\admin\\Dashboard.jsx",
+    "line": 343,
+    "tag": "Link",
+    "label": "(No Direct Text / Icon)",
+    "status": "NAVIGATION",
+    "details": "Router navigation link",
+    "disabled": false
+  },
+  {
+    "file": "pages\\admin\\Dashboard.jsx",
+    "line": 347,
+    "tag": "Link",
+    "label": "(No Direct Text / Icon)",
+    "status": "NAVIGATION",
+    "details": "Router navigation link",
+    "disabled": false
+  },
+  {
+    "file": "pages\\admin\\Dashboard.jsx",
+    "line": 351,
+    "tag": "Link",
+    "label": "(No Direct Text / Icon)",
+    "status": "NAVIGATION",
+    "details": "Router navigation link",
+    "disabled": false
+  },
+  {
+    "file": "pages\\admin\\Dashboard.jsx",
+    "line": 355,
+    "tag": "Link",
+    "label": "(No Direct Text / Icon)",
+    "status": "NAVIGATION",
+    "details": "Router navigation link",
+    "disabled": false
+  },
+  {
+    "file": "pages\\admin\\Dashboard.jsx",
+    "line": 361,
+    "tag": "Link",
+    "label": "Setup Guide",
+    "status": "NAVIGATION",
+    "details": "Router navigation link",
+    "disabled": false
+  },
+  {
+    "file": "pages\\admin\\Dashboard.jsx",
+    "line": 388,
+    "tag": "button",
+    "label": "(No Direct Text / Icon)",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": true
+  },
+  {
+    "file": "pages\\admin\\Dashboard.jsx",
+    "line": 401,
+    "tag": "Link",
+    "label": "(No Direct Text / Icon)",
+    "status": "NAVIGATION",
+    "details": "Router navigation link",
+    "disabled": false
+  },
+  {
+    "file": "pages\\admin\\Dashboard.jsx",
+    "line": 453,
+    "tag": "Link",
+    "label": "Review Leaves",
+    "status": "NAVIGATION",
+    "details": "Router navigation link",
+    "disabled": false
+  },
+  {
+    "file": "pages\\admin\\Dashboard.jsx",
+    "line": 459,
+    "tag": "Link",
+    "label": "(No Direct Text / Icon)",
+    "status": "NAVIGATION",
+    "details": "Router navigation link",
+    "disabled": false
+  },
+  {
+    "file": "pages\\admin\\Dashboard.jsx",
+    "line": 470,
+    "tag": "Link",
+    "label": "(No Direct Text / Icon)",
+    "status": "NAVIGATION",
+    "details": "Router navigation link",
+    "disabled": false
+  },
+  {
+    "file": "pages\\admin\\Dashboard.jsx",
+    "line": 479,
+    "tag": "Link",
+    "label": "(No Direct Text / Icon)",
+    "status": "NAVIGATION",
+    "details": "Router navigation link",
+    "disabled": false
+  },
+  {
+    "file": "pages\\admin\\Dashboard.jsx",
+    "line": 488,
+    "tag": "Link",
+    "label": "(No Direct Text / Icon)",
+    "status": "NAVIGATION",
+    "details": "Router navigation link",
+    "disabled": false
+  },
+  {
+    "file": "pages\\admin\\Dashboard.jsx",
+    "line": 497,
+    "tag": "Link",
+    "label": "(No Direct Text / Icon)",
+    "status": "NAVIGATION",
+    "details": "Router navigation link",
+    "disabled": false
+  },
+  {
+    "file": "pages\\admin\\Dashboard.jsx",
+    "line": 532,
+    "tag": "Link",
+    "label": "Needs Substitute",
+    "status": "NAVIGATION",
+    "details": "Router navigation link",
+    "disabled": false
+  },
+  {
+    "file": "pages\\admin\\Dashboard.jsx",
+    "line": 545,
+    "tag": "Link",
+    "label": "(No Direct Text / Icon)",
+    "status": "NAVIGATION",
+    "details": "Router navigation link",
+    "disabled": false
+  },
+  {
+    "file": "pages\\admin\\DataRetention.jsx",
+    "line": 292,
+    "tag": "button",
+    "label": "Refresh",
+    "status": "NAMED_HANDLER",
+    "details": "Handler function: fetchData",
+    "disabled": true
+  },
+  {
+    "file": "pages\\admin\\DataRetention.jsx",
+    "line": 301,
+    "tag": "Link",
+    "label": "Backups & Snapshots",
+    "status": "NAVIGATION",
+    "details": "Router navigation link",
+    "disabled": false
+  },
+  {
+    "file": "pages\\admin\\DataRetention.jsx",
+    "line": 361,
+    "tag": "button",
+    "label": "(No Direct Text / Icon)",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\admin\\DataRetention.jsx",
+    "line": 375,
+    "tag": "button",
+    "label": "(No Direct Text / Icon)",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\admin\\DataRetention.jsx",
+    "line": 389,
+    "tag": "button",
+    "label": "(No Direct Text / Icon)",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\admin\\DataRetention.jsx",
+    "line": 433,
+    "tag": "button",
+    "label": "Dismiss",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\admin\\DataRetention.jsx",
+    "line": 452,
+    "tag": "button",
+    "label": "(No Direct Text / Icon)",
+    "status": "NAMED_HANDLER",
+    "details": "Handler function: handleSelectAllTargets",
+    "disabled": false
+  },
+  {
+    "file": "pages\\admin\\DataRetention.jsx",
+    "line": 570,
+    "tag": "button",
+    "label": "d",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\admin\\DataRetention.jsx",
+    "line": 643,
+    "tag": "button",
+    "label": "(No Direct Text / Icon)",
+    "status": "NAMED_HANDLER",
+    "details": "Handler function: handlePreviewPurge",
+    "disabled": true
+  },
+  {
+    "file": "pages\\admin\\DataRetention.jsx",
+    "line": 653,
+    "tag": "button",
+    "label": "(No Direct Text / Icon)",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": true
+  },
+  {
+    "file": "pages\\admin\\DataRetention.jsx",
+    "line": 715,
+    "tag": "button",
+    "label": "Run Auto-Cleanup Now",
+    "status": "NAMED_HANDLER",
+    "details": "Handler function: handleRunAutoCleanupNow",
+    "disabled": true
+  },
+  {
+    "file": "pages\\admin\\DataRetention.jsx",
+    "line": 893,
+    "tag": "button",
+    "label": "Save Retention Policy",
+    "status": "FORM_SUBMIT",
+    "details": "Form submit button",
+    "disabled": true
+  },
+  {
+    "file": "pages\\admin\\DataRetention.jsx",
+    "line": 992,
+    "tag": "button",
+    "label": "Cancel",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": true
+  },
+  {
+    "file": "pages\\admin\\DataRetention.jsx",
+    "line": 1000,
+    "tag": "button",
+    "label": "(No Direct Text / Icon)",
+    "status": "NAMED_HANDLER",
+    "details": "Handler function: handleExecutePurge",
+    "disabled": true
+  },
+  {
+    "file": "pages\\admin\\Departments.jsx",
+    "line": 181,
+    "tag": "button",
+    "label": "+ Add Department",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\admin\\Departments.jsx",
+    "line": 205,
+    "tag": "button",
+    "label": "Edit",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\admin\\Departments.jsx",
+    "line": 206,
+    "tag": "button",
+    "label": "Remove",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\admin\\Departments.jsx",
+    "line": 226,
+    "tag": "button",
+    "label": "+ Register Administrator",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\admin\\Departments.jsx",
+    "line": 260,
+    "tag": "button",
+    "label": "Remove",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\admin\\Departments.jsx",
+    "line": 285,
+    "tag": "button",
+    "label": "Cancel",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\admin\\Departments.jsx",
+    "line": 286,
+    "tag": "button",
+    "label": "(No Direct Text / Icon)",
+    "status": "FORM_SUBMIT",
+    "details": "Form submit button",
+    "disabled": true
+  },
+  {
+    "file": "pages\\admin\\Departments.jsx",
+    "line": 304,
+    "tag": "button",
+    "label": "Cancel",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\admin\\Departments.jsx",
+    "line": 305,
+    "tag": "button",
+    "label": "(No Direct Text / Icon)",
+    "status": "FORM_SUBMIT",
+    "details": "Form submit button",
+    "disabled": true
+  },
+  {
+    "file": "pages\\admin\\Departments.jsx",
+    "line": 318,
+    "tag": "button",
+    "label": "Cancel",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\admin\\Departments.jsx",
+    "line": 319,
+    "tag": "button",
+    "label": "(No Direct Text / Icon)",
+    "status": "NAMED_HANDLER",
+    "details": "Handler function: handleDeleteConfirm",
+    "disabled": true
+  },
+  {
+    "file": "pages\\admin\\Departments.jsx",
+    "line": 359,
+    "tag": "button",
+    "label": "Cancel",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\admin\\Departments.jsx",
+    "line": 360,
+    "tag": "button",
+    "label": "(No Direct Text / Icon)",
+    "status": "FORM_SUBMIT",
+    "details": "Form submit button",
+    "disabled": true
+  },
+  {
+    "file": "pages\\admin\\Departments.jsx",
+    "line": 373,
+    "tag": "button",
+    "label": "Cancel",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\admin\\Departments.jsx",
+    "line": 374,
+    "tag": "button",
+    "label": "(No Direct Text / Icon)",
+    "status": "NAMED_HANDLER",
+    "details": "Handler function: handleDeleteUserConfirm",
+    "disabled": true
+  },
+  {
+    "file": "pages\\admin\\Geofences.jsx",
+    "line": 552,
+    "tag": "button",
+    "label": "(No Direct Text / Icon)",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\admin\\Geofences.jsx",
+    "line": 575,
+    "tag": "button",
+    "label": "(No Direct Text / Icon)",
+    "status": "NAMED_HANDLER",
+    "details": "Handler function: startNewGeofence",
+    "disabled": false
+  },
+  {
+    "file": "pages\\admin\\Geofences.jsx",
+    "line": 594,
+    "tag": "button",
+    "label": "✕",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\admin\\Geofences.jsx",
+    "line": 609,
+    "tag": "a",
+    "label": "http://localhost:",
+    "status": "EXTERNAL_LINK",
+    "details": "Anchor link",
+    "disabled": false
+  },
+  {
+    "file": "pages\\admin\\Geofences.jsx",
+    "line": 671,
+    "tag": "button",
+    "label": "✕",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\admin\\Geofences.jsx",
+    "line": 689,
+    "tag": "button",
+    "label": "(No Direct Text / Icon)",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\admin\\Geofences.jsx",
+    "line": 711,
+    "tag": "button",
+    "label": "(No Direct Text / Icon)",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\admin\\Geofences.jsx",
+    "line": 752,
+    "tag": "button",
+    "label": "Cancel",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\admin\\Geofences.jsx",
+    "line": 763,
+    "tag": "button",
+    "label": "✕",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\admin\\Geofences.jsx",
+    "line": 836,
+    "tag": "button",
+    "label": "Exit Test Mode",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\admin\\Geofences.jsx",
+    "line": 862,
+    "tag": "button",
+    "label": "Center Here",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\admin\\Geofences.jsx",
+    "line": 887,
+    "tag": "button",
+    "label": "⭕ Circle (Radial)",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\admin\\Geofences.jsx",
+    "line": 901,
+    "tag": "button",
+    "label": "⬡ Polygon (Vertices)",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\admin\\Geofences.jsx",
+    "line": 996,
+    "tag": "button",
+    "label": "m",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\admin\\Geofences.jsx",
+    "line": 1049,
+    "tag": "button",
+    "label": "(No Direct Text / Icon)",
+    "status": "NAMED_HANDLER",
+    "details": "Handler function: handleUndoPolygon",
+    "disabled": true
+  },
+  {
+    "file": "pages\\admin\\Geofences.jsx",
+    "line": 1059,
+    "tag": "button",
+    "label": "(No Direct Text / Icon)",
+    "status": "NAMED_HANDLER",
+    "details": "Handler function: handleRedoPolygon",
+    "disabled": true
+  },
+  {
+    "file": "pages\\admin\\Geofences.jsx",
+    "line": 1069,
+    "tag": "button",
+    "label": "Clear",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": true
+  },
+  {
+    "file": "pages\\admin\\Geofences.jsx",
+    "line": 1095,
+    "tag": "button",
+    "label": "✕",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\admin\\Geofences.jsx",
+    "line": 1149,
+    "tag": "button",
+    "label": "Cancel",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\admin\\Geofences.jsx",
+    "line": 1159,
+    "tag": "button",
+    "label": "(No Direct Text / Icon)",
+    "status": "NAMED_HANDLER",
+    "details": "Handler function: handleSaveGeofence",
+    "disabled": true
+  },
+  {
+    "file": "pages\\admin\\Geofences.jsx",
+    "line": 1220,
+    "tag": "button",
+    "label": "Edit Boundary",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\admin\\Geofences.jsx",
+    "line": 1227,
+    "tag": "button",
+    "label": "(No Direct Text / Icon)",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\admin\\Geofences.jsx",
+    "line": 1262,
+    "tag": "button",
+    "label": "Add Perimeter",
+    "status": "NAMED_HANDLER",
+    "details": "Handler function: startNewGeofence",
+    "disabled": false
+  },
+  {
+    "file": "pages\\admin\\Geofences.jsx",
+    "line": 1300,
+    "tag": "button",
+    "label": "✕",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\admin\\Geofences.jsx",
+    "line": 1337,
+    "tag": "button",
+    "label": "Cancel",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\admin\\Geofences.jsx",
+    "line": 1344,
+    "tag": "button",
+    "label": "(No Direct Text / Icon)",
+    "status": "NAMED_HANDLER",
+    "details": "Handler function: handleDeleteGeofence",
+    "disabled": true
+  },
+  {
+    "file": "pages\\admin\\HodStudentAttendance.jsx",
+    "line": 181,
+    "tag": "button",
+    "label": "(No Direct Text / Icon)",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\admin\\HodStudentAttendance.jsx",
+    "line": 193,
+    "tag": "button",
+    "label": "(No Direct Text / Icon)",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\admin\\HodStudentAttendance.jsx",
+    "line": 271,
+    "tag": "button",
+    "label": "(No Direct Text / Icon)",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\admin\\HodStudentAttendance.jsx",
+    "line": 349,
+    "tag": "button",
+    "label": "Acknowledge",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\admin\\HodStudentAttendance.jsx",
+    "line": 455,
+    "tag": "button",
+    "label": "(No Direct Text / Icon)",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\admin\\HodStudentAttendance.jsx",
+    "line": 528,
+    "tag": "button",
+    "label": "Close",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\admin\\Leaves.jsx",
+    "line": 73,
+    "tag": "button",
+    "label": "(No Direct Text / Icon)",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": true
+  },
+  {
+    "file": "pages\\admin\\Leaves.jsx",
+    "line": 702,
+    "tag": "button",
+    "label": "Undo",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\admin\\Leaves.jsx",
+    "line": 712,
+    "tag": "button",
+    "label": "✕",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\admin\\Leaves.jsx",
+    "line": 727,
+    "tag": "button",
+    "label": "(No Direct Text / Icon)",
+    "status": "NAMED_HANDLER",
+    "details": "Handler function: handleClearHistory",
+    "disabled": true
+  },
+  {
+    "file": "pages\\admin\\Leaves.jsx",
+    "line": 737,
+    "tag": "button",
+    "label": "✓ Approve ( )",
+    "status": "NAMED_HANDLER",
+    "details": "Handler function: handleBulkApprove",
+    "disabled": true
+  },
+  {
+    "file": "pages\\admin\\Leaves.jsx",
+    "line": 740,
+    "tag": "button",
+    "label": "✕ Reject ( )",
+    "status": "NAMED_HANDLER",
+    "details": "Handler function: handleBulkReject",
+    "disabled": true
+  },
+  {
+    "file": "pages\\admin\\Leaves.jsx",
+    "line": 759,
+    "tag": "button",
+    "label": "(No Direct Text / Icon)",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\admin\\Leaves.jsx",
+    "line": 800,
+    "tag": "button",
+    "label": "Reset",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\admin\\Leaves.jsx",
+    "line": 819,
+    "tag": "button",
+    "label": "Clear Filters",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\admin\\Leaves.jsx",
+    "line": 898,
+    "tag": "button",
+    "label": "(No Direct Text / Icon)",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": true
+  },
+  {
+    "file": "pages\\admin\\Leaves.jsx",
+    "line": 905,
+    "tag": "button",
+    "label": "(No Direct Text / Icon)",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": true
+  },
+  {
+    "file": "pages\\admin\\Leaves.jsx",
+    "line": 915,
+    "tag": "button",
+    "label": "Assign Sub",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\admin\\Leaves.jsx",
+    "line": 923,
+    "tag": "button",
+    "label": "(No Direct Text / Icon)",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\admin\\Leaves.jsx",
+    "line": 932,
+    "tag": "button",
+    "label": "(No Direct Text / Icon)",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": true
+  },
+  {
+    "file": "pages\\admin\\Leaves.jsx",
+    "line": 1023,
+    "tag": "button",
+    "label": "(No Direct Text / Icon)",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": true
+  },
+  {
+    "file": "pages\\admin\\Leaves.jsx",
+    "line": 1073,
+    "tag": "button",
+    "label": "(No Direct Text / Icon)",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": true
+  },
+  {
+    "file": "pages\\admin\\Leaves.jsx",
+    "line": 1081,
+    "tag": "button",
+    "label": "Undo Assignment",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": true
+  },
+  {
+    "file": "pages\\admin\\Leaves.jsx",
+    "line": 1107,
+    "tag": "button",
+    "label": "Clear All",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\admin\\Leaves.jsx",
+    "line": 1130,
+    "tag": "button",
+    "label": "(No Direct Text / Icon)",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\admin\\Leaves.jsx",
+    "line": 1158,
+    "tag": "button",
+    "label": "(No Direct Text / Icon)",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": true
+  },
+  {
+    "file": "pages\\admin\\Leaves.jsx",
+    "line": 1188,
+    "tag": "button",
+    "label": "(No Direct Text / Icon)",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": true
+  },
+  {
+    "file": "pages\\admin\\Leaves.jsx",
+    "line": 1280,
+    "tag": "button",
+    "label": "Swap",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": true
+  },
+  {
+    "file": "pages\\admin\\Leaves.jsx",
+    "line": 1289,
+    "tag": "button",
+    "label": "Assign",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": true
+  },
+  {
+    "file": "pages\\admin\\Leaves.jsx",
+    "line": 1346,
+    "tag": "button",
+    "label": "Keep Leaves",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\admin\\Leaves.jsx",
+    "line": 1352,
+    "tag": "button",
+    "label": "(No Direct Text / Icon)",
+    "status": "NAMED_HANDLER",
+    "details": "Handler function: handleAdminCancel",
+    "disabled": true
+  },
+  {
+    "file": "pages\\admin\\Leaves.jsx",
+    "line": 1414,
+    "tag": "button",
+    "label": "Cancel",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": true
+  },
+  {
+    "file": "pages\\admin\\Leaves.jsx",
+    "line": 1422,
+    "tag": "button",
+    "label": "(No Direct Text / Icon)",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": true
+  },
+  {
+    "file": "pages\\admin\\Managers.jsx",
+    "line": 136,
+    "tag": "button",
+    "label": "(No Direct Text / Icon)",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\admin\\Managers.jsx",
+    "line": 152,
+    "tag": "button",
+    "label": "✕",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\admin\\Managers.jsx",
+    "line": 159,
+    "tag": "button",
+    "label": "✕",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\admin\\Managers.jsx",
+    "line": 234,
+    "tag": "button",
+    "label": "Edit",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\admin\\Managers.jsx",
+    "line": 241,
+    "tag": "button",
+    "label": "Delete",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\admin\\Managers.jsx",
+    "line": 301,
+    "tag": "button",
+    "label": "Edit",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\admin\\Managers.jsx",
+    "line": 308,
+    "tag": "button",
+    "label": "Delete",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\admin\\Managers.jsx",
+    "line": 378,
+    "tag": "button",
+    "label": "Cancel",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\admin\\Managers.jsx",
+    "line": 385,
+    "tag": "button",
+    "label": "(No Direct Text / Icon)",
+    "status": "FORM_SUBMIT",
+    "details": "Form submit button",
+    "disabled": true
+  },
+  {
+    "file": "pages\\admin\\Managers.jsx",
+    "line": 450,
+    "tag": "button",
+    "label": "Cancel",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\admin\\Managers.jsx",
+    "line": 457,
+    "tag": "button",
+    "label": "(No Direct Text / Icon)",
+    "status": "FORM_SUBMIT",
+    "details": "Form submit button",
+    "disabled": true
+  },
+  {
+    "file": "pages\\admin\\Managers.jsx",
+    "line": 478,
+    "tag": "button",
+    "label": "Cancel",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\admin\\Managers.jsx",
+    "line": 485,
+    "tag": "button",
+    "label": "(No Direct Text / Icon)",
+    "status": "NAMED_HANDLER",
+    "details": "Handler function: handleDelete",
+    "disabled": true
+  },
+  {
+    "file": "pages\\admin\\PrincipalDashboard.jsx",
+    "line": 106,
+    "tag": "Link",
+    "label": "(No Direct Text / Icon)",
+    "status": "NAVIGATION",
+    "details": "Router navigation link",
+    "disabled": false
+  },
+  {
+    "file": "pages\\admin\\PrincipalStudentAttendance.jsx",
+    "line": 368,
+    "tag": "button",
+    "label": "(No Direct Text / Icon)",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": true
+  },
+  {
+    "file": "pages\\admin\\PrincipalStudentAttendance.jsx",
+    "line": 377,
+    "tag": "button",
+    "label": "Daily Institutional Summary",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\admin\\PrincipalStudentAttendance.jsx",
+    "line": 383,
+    "tag": "button",
+    "label": "Attendance Shortage Report (< 75%)",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\admin\\PrincipalStudentAttendance.jsx",
+    "line": 389,
+    "tag": "button",
+    "label": "Faculty Submission Compliance",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\admin\\PrincipalStudentAttendance.jsx",
+    "line": 395,
+    "tag": "button",
+    "label": "All Scheduled Period Sessions",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\admin\\PrincipalStudentAttendance.jsx",
+    "line": 442,
+    "tag": "button",
+    "label": "(No Direct Text / Icon)",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\admin\\PrincipalStudentAttendance.jsx",
+    "line": 454,
+    "tag": "button",
+    "label": "(No Direct Text / Icon)",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\admin\\PrincipalStudentAttendance.jsx",
+    "line": 471,
+    "tag": "button",
+    "label": "Dismiss",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\admin\\PrincipalStudentAttendance.jsx",
+    "line": 481,
+    "tag": "button",
+    "label": "Dismiss",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\admin\\PrincipalStudentAttendance.jsx",
+    "line": 589,
+    "tag": "button",
+    "label": "Refresh",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\admin\\PrincipalStudentAttendance.jsx",
+    "line": 671,
+    "tag": "button",
+    "label": "Inspect Matrix",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\admin\\PrincipalStudentAttendance.jsx",
+    "line": 682,
+    "tag": "button",
+    "label": "Acknowledge",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\admin\\PrincipalStudentAttendance.jsx",
+    "line": 785,
+    "tag": "button",
+    "label": "(No Direct Text / Icon)",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\admin\\PrincipalStudentAttendance.jsx",
+    "line": 955,
+    "tag": "button",
+    "label": "Roster Matrix",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\admin\\PrincipalStudentAttendance.jsx",
+    "line": 965,
+    "tag": "button",
+    "label": "(No Direct Text / Icon)",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\admin\\PrincipalStudentAttendance.jsx",
+    "line": 1061,
+    "tag": "button",
+    "label": "(No Direct Text / Icon)",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\admin\\PrincipalStudentAttendance.jsx",
+    "line": 1130,
+    "tag": "button",
+    "label": "Profile",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\admin\\PrincipalStudentAttendance.jsx",
+    "line": 1238,
+    "tag": "button",
+    "label": "(No Direct Text / Icon)",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\admin\\PrincipalStudentAttendance.jsx",
+    "line": 1296,
+    "tag": "button",
+    "label": "View Student",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\admin\\PrincipalStudentAttendance.jsx",
+    "line": 1303,
+    "tag": "button",
+    "label": "Inspect Class",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\admin\\PrincipalStudentAttendance.jsx",
+    "line": 1341,
+    "tag": "button",
+    "label": "✕",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\admin\\PrincipalStudentAttendance.jsx",
+    "line": 1518,
+    "tag": "button",
+    "label": "Cancel",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": true
+  },
+  {
+    "file": "pages\\admin\\PrincipalStudentAttendance.jsx",
+    "line": 1525,
+    "tag": "button",
+    "label": "(No Direct Text / Icon)",
+    "status": "NAMED_HANDLER",
+    "details": "Handler function: handleToggleLock",
+    "disabled": true
+  },
+  {
+    "file": "pages\\admin\\PrincipalStudentAttendance.jsx",
+    "line": 1586,
+    "tag": "button",
+    "label": "Cancel",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": true
+  },
+  {
+    "file": "pages\\admin\\PrincipalStudentAttendance.jsx",
+    "line": 1593,
+    "tag": "button",
+    "label": "(No Direct Text / Icon)",
+    "status": "NAMED_HANDLER",
+    "details": "Handler function: handleAdminOverride",
+    "disabled": true
+  },
+  {
+    "file": "pages\\admin\\RollConfigurationModal.jsx",
+    "line": 218,
+    "tag": "button",
+    "label": "Roll Configuration & Exceptions",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\admin\\RollConfigurationModal.jsx",
+    "line": 228,
+    "tag": "button",
+    "label": "Resolved Effective Students ( )",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\admin\\RollConfigurationModal.jsx",
+    "line": 299,
+    "tag": "button",
+    "label": "(No Direct Text / Icon)",
+    "status": "FORM_SUBMIT",
+    "details": "Form submit button",
+    "disabled": true
+  },
+  {
+    "file": "pages\\admin\\RollConfigurationModal.jsx",
+    "line": 329,
+    "tag": "button",
+    "label": "×",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\admin\\RollConfigurationModal.jsx",
+    "line": 357,
+    "tag": "button",
+    "label": "+ Add Student",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\admin\\RollConfigurationModal.jsx",
+    "line": 386,
+    "tag": "button",
+    "label": "×",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\admin\\RollConfigurationModal.jsx",
+    "line": 414,
+    "tag": "button",
+    "label": "Exclude Roll",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\admin\\RollConfigurationModal.jsx",
+    "line": 473,
+    "tag": "button",
+    "label": "Done",
+    "status": "NAMED_HANDLER",
+    "details": "Handler function: onClose",
+    "disabled": false
+  },
+  {
+    "file": "pages\\admin\\Rooms.jsx",
+    "line": 232,
+    "tag": "button",
+    "label": "Bulk Add (Range)",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\admin\\Rooms.jsx",
+    "line": 235,
+    "tag": "button",
+    "label": "+ Add Room",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\admin\\Rooms.jsx",
+    "line": 241,
+    "tag": "button",
+    "label": "📍 Classroom Occupancy Matrix",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\admin\\Rooms.jsx",
+    "line": 251,
+    "tag": "button",
+    "label": "📋 Room Directory ( )",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\admin\\Rooms.jsx",
+    "line": 298,
+    "tag": "button",
+    "label": "DO",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\admin\\Rooms.jsx",
+    "line": 316,
+    "tag": "button",
+    "label": "Period",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\admin\\Rooms.jsx",
+    "line": 499,
+    "tag": "button",
+    "label": "Edit",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\admin\\Rooms.jsx",
+    "line": 500,
+    "tag": "button",
+    "label": "Remove",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\admin\\Rooms.jsx",
+    "line": 539,
+    "tag": "button",
+    "label": "Cancel",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\admin\\Rooms.jsx",
+    "line": 540,
+    "tag": "button",
+    "label": "(No Direct Text / Icon)",
+    "status": "FORM_SUBMIT",
+    "details": "Form submit button",
+    "disabled": true
+  },
+  {
+    "file": "pages\\admin\\Rooms.jsx",
+    "line": 610,
+    "tag": "button",
+    "label": "Cancel",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\admin\\Rooms.jsx",
+    "line": 611,
+    "tag": "button",
+    "label": "(No Direct Text / Icon)",
+    "status": "FORM_SUBMIT",
+    "details": "Form submit button",
+    "disabled": true
+  },
+  {
+    "file": "pages\\admin\\Rooms.jsx",
+    "line": 645,
+    "tag": "button",
+    "label": "Cancel",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\admin\\Rooms.jsx",
+    "line": 646,
+    "tag": "button",
+    "label": "(No Direct Text / Icon)",
+    "status": "FORM_SUBMIT",
+    "details": "Form submit button",
+    "disabled": true
+  },
+  {
+    "file": "pages\\admin\\Rooms.jsx",
+    "line": 660,
+    "tag": "button",
+    "label": "Cancel",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\admin\\Rooms.jsx",
+    "line": 661,
+    "tag": "button",
+    "label": "(No Direct Text / Icon)",
+    "status": "NAMED_HANDLER",
+    "details": "Handler function: handleDeleteConfirm",
+    "disabled": true
+  },
+  {
+    "file": "pages\\admin\\Settings.jsx",
+    "line": 85,
+    "tag": "button",
+    "label": "(No Direct Text / Icon)",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": true
+  },
+  {
+    "file": "pages\\admin\\Settings.jsx",
+    "line": 186,
+    "tag": "button",
+    "label": "(No Direct Text / Icon)",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": true
+  },
+  {
+    "file": "pages\\admin\\Settings.jsx",
+    "line": 229,
+    "tag": "button",
+    "label": "Cancel",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\admin\\Settings.jsx",
+    "line": 230,
+    "tag": "button",
+    "label": "(No Direct Text / Icon)",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": true
+  },
+  {
+    "file": "pages\\admin\\Settings.jsx",
+    "line": 288,
+    "tag": "button",
+    "label": "(No Direct Text / Icon)",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": true
+  },
+  {
+    "file": "pages\\admin\\Settings.jsx",
+    "line": 455,
+    "tag": "button",
+    "label": "Add Admin",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": true
+  },
+  {
+    "file": "pages\\admin\\Settings.jsx",
+    "line": 490,
+    "tag": "button",
+    "label": "(No Direct Text / Icon)",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\admin\\Settings.jsx",
+    "line": 519,
+    "tag": "button",
+    "label": "Cancel",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\admin\\Settings.jsx",
+    "line": 520,
+    "tag": "button",
+    "label": "(No Direct Text / Icon)",
+    "status": "FORM_SUBMIT",
+    "details": "Form submit button",
+    "disabled": true
+  },
+  {
+    "file": "pages\\admin\\Settings.jsx",
+    "line": 596,
+    "tag": "button",
+    "label": "(No Direct Text / Icon)",
+    "status": "NAMED_HANDLER",
+    "details": "Handler function: handleSelectAll",
+    "disabled": false
+  },
+  {
+    "file": "pages\\admin\\Settings.jsx",
+    "line": 649,
+    "tag": "button",
+    "label": "(No Direct Text / Icon)",
+    "status": "FORM_SUBMIT",
+    "details": "Form submit button",
+    "disabled": true
+  },
+  {
+    "file": "pages\\admin\\Settings.jsx",
+    "line": 740,
+    "tag": "button",
+    "label": "(No Direct Text / Icon)",
+    "status": "FORM_SUBMIT",
+    "details": "Form submit button",
+    "disabled": true
+  },
+  {
+    "file": "pages\\admin\\Settings.jsx",
+    "line": 946,
+    "tag": "button",
+    "label": "(No Direct Text / Icon)",
+    "status": "FORM_SUBMIT",
+    "details": "Form submit button",
+    "disabled": true
+  },
+  {
+    "file": "pages\\admin\\Settings.jsx",
+    "line": 1068,
+    "tag": "button",
+    "label": "(No Direct Text / Icon)",
+    "status": "FORM_SUBMIT",
+    "details": "Form submit button",
+    "disabled": true
+  },
+  {
+    "file": "pages\\admin\\Settings.jsx",
+    "line": 1169,
+    "tag": "button",
+    "label": "🌐 All Teachers",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\admin\\Settings.jsx",
+    "line": 1179,
+    "tag": "button",
+    "label": "🏢 By Department",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\admin\\Settings.jsx",
+    "line": 1188,
+    "tag": "button",
+    "label": "👨‍🏫 Specific Teacher(s)",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\admin\\Settings.jsx",
+    "line": 1251,
+    "tag": "button",
+    "label": "Select All Filtered",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\admin\\Settings.jsx",
+    "line": 1259,
+    "tag": "button",
+    "label": "Clear",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\admin\\Settings.jsx",
+    "line": 1328,
+    "tag": "button",
+    "label": "(No Direct Text / Icon)",
+    "status": "NAMED_HANDLER",
+    "details": "Handler function: handleReset",
+    "disabled": true
+  },
+  {
+    "file": "pages\\admin\\Settings.jsx",
+    "line": 1403,
+    "tag": "button",
+    "label": "(No Direct Text / Icon)",
+    "status": "NAMED_HANDLER",
+    "details": "Handler function: handleClearLeaves",
+    "disabled": true
+  },
+  {
+    "file": "pages\\admin\\Settings.jsx",
+    "line": 1410,
+    "tag": "button",
+    "label": "(No Direct Text / Icon)",
+    "status": "NAMED_HANDLER",
+    "details": "Handler function: handleClearCredits",
+    "disabled": true
+  },
+  {
+    "file": "pages\\admin\\Settings.jsx",
+    "line": 1422,
+    "tag": "button",
+    "label": "Open Data Retention & Purge Console →",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\admin\\Settings.jsx",
+    "line": 1524,
+    "tag": "button",
+    "label": "Download master export (.xlsx)",
+    "status": "NAMED_HANDLER",
+    "details": "Handler function: downloadMasterExport",
+    "disabled": false
+  },
+  {
+    "file": "pages\\admin\\SetupGuide.jsx",
+    "line": 228,
+    "tag": "Link",
+    "label": "→",
+    "status": "NAVIGATION",
+    "details": "Router navigation link",
+    "disabled": false
+  },
+  {
+    "file": "pages\\admin\\Subjects.jsx",
+    "line": 147,
+    "tag": "button",
+    "label": "+ Add Subject",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\admin\\Subjects.jsx",
+    "line": 182,
+    "tag": "button",
+    "label": "Edit",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\admin\\Subjects.jsx",
+    "line": 183,
+    "tag": "button",
+    "label": "(No Direct Text / Icon)",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\admin\\Subjects.jsx",
+    "line": 186,
+    "tag": "button",
+    "label": "Delete",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\admin\\Subjects.jsx",
+    "line": 242,
+    "tag": "button",
+    "label": "Cancel",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\admin\\Subjects.jsx",
+    "line": 243,
+    "tag": "button",
+    "label": "(No Direct Text / Icon)",
+    "status": "FORM_SUBMIT",
+    "details": "Form submit button",
+    "disabled": true
+  },
+  {
+    "file": "pages\\admin\\Subjects.jsx",
+    "line": 286,
+    "tag": "button",
+    "label": "Cancel",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\admin\\Subjects.jsx",
+    "line": 287,
+    "tag": "button",
+    "label": "(No Direct Text / Icon)",
+    "status": "FORM_SUBMIT",
+    "details": "Form submit button",
+    "disabled": true
+  },
+  {
+    "file": "pages\\admin\\Subjects.jsx",
+    "line": 303,
+    "tag": "button",
+    "label": "Cancel",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\admin\\Subjects.jsx",
+    "line": 304,
+    "tag": "button",
+    "label": "(No Direct Text / Icon)",
+    "status": "NAMED_HANDLER",
+    "details": "Handler function: handleDeleteConfirm",
+    "disabled": true
+  },
+  {
+    "file": "pages\\admin\\SystemMetrics.jsx",
+    "line": 130,
+    "tag": "button",
+    "label": "(No Direct Text / Icon)",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\admin\\SystemMetrics.jsx",
+    "line": 141,
+    "tag": "button",
+    "label": "(No Direct Text / Icon)",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": true
+  },
+  {
+    "file": "pages\\admin\\SystemMetrics.jsx",
+    "line": 150,
+    "tag": "button",
+    "label": "Clear Log Feed",
+    "status": "NAMED_HANDLER",
+    "details": "Handler function: handleClearLogs",
+    "disabled": false
+  },
+  {
+    "file": "pages\\admin\\Teachers.jsx",
+    "line": 65,
+    "tag": "button",
+    "label": "(No Direct Text / Icon)",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\admin\\Teachers.jsx",
+    "line": 472,
+    "tag": "button",
+    "label": "Bulk Import",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\admin\\Teachers.jsx",
+    "line": 483,
+    "tag": "button",
+    "label": "Add Teacher",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\admin\\Teachers.jsx",
+    "line": 493,
+    "tag": "button",
+    "label": "(No Direct Text / Icon)",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\admin\\Teachers.jsx",
+    "line": 518,
+    "tag": "button",
+    "label": "(No Direct Text / Icon)",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\admin\\Teachers.jsx",
+    "line": 532,
+    "tag": "button",
+    "label": "Export CSV",
+    "status": "NAMED_HANDLER",
+    "details": "Handler function: handleExportCsv",
+    "disabled": true
+  },
+  {
+    "file": "pages\\admin\\Teachers.jsx",
+    "line": 541,
+    "tag": "button",
+    "label": "Activate",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": true
+  },
+  {
+    "file": "pages\\admin\\Teachers.jsx",
+    "line": 542,
+    "tag": "button",
+    "label": "Disable",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": true
+  },
+  {
+    "file": "pages\\admin\\Teachers.jsx",
+    "line": 543,
+    "tag": "button",
+    "label": "Delete",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": true
+  },
+  {
+    "file": "pages\\admin\\Teachers.jsx",
+    "line": 544,
+    "tag": "button",
+    "label": "Clear selection",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\admin\\Teachers.jsx",
+    "line": 593,
+    "tag": "button",
+    "label": "(No Direct Text / Icon)",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\admin\\Teachers.jsx",
+    "line": 610,
+    "tag": "button",
+    "label": "Preferences",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\admin\\Teachers.jsx",
+    "line": 611,
+    "tag": "button",
+    "label": "Edit",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\admin\\Teachers.jsx",
+    "line": 612,
+    "tag": "button",
+    "label": "Remove",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\admin\\Teachers.jsx",
+    "line": 625,
+    "tag": "button",
+    "label": "Reset filters",
+    "status": "NAMED_HANDLER",
+    "details": "Handler function: resetFilters",
+    "disabled": false
+  },
+  {
+    "file": "pages\\admin\\Teachers.jsx",
+    "line": 643,
+    "tag": "button",
+    "label": "Prev",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": true
+  },
+  {
+    "file": "pages\\admin\\Teachers.jsx",
+    "line": 645,
+    "tag": "button",
+    "label": "Next",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": true
+  },
+  {
+    "file": "pages\\admin\\Teachers.jsx",
+    "line": 699,
+    "tag": "button",
+    "label": "(No Direct Text / Icon)",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\admin\\Teachers.jsx",
+    "line": 702,
+    "tag": "button",
+    "label": "(No Direct Text / Icon)",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\admin\\Teachers.jsx",
+    "line": 709,
+    "tag": "button",
+    "label": "Cancel",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\admin\\Teachers.jsx",
+    "line": 710,
+    "tag": "button",
+    "label": "(No Direct Text / Icon)",
+    "status": "FORM_SUBMIT",
+    "details": "Form submit button",
+    "disabled": true
+  },
+  {
+    "file": "pages\\admin\\Teachers.jsx",
+    "line": 753,
+    "tag": "button",
+    "label": "(No Direct Text / Icon)",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\admin\\Teachers.jsx",
+    "line": 764,
+    "tag": "button",
+    "label": "(No Direct Text / Icon)",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\admin\\Teachers.jsx",
+    "line": 778,
+    "tag": "button",
+    "label": "Cancel",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\admin\\Teachers.jsx",
+    "line": 779,
+    "tag": "button",
+    "label": "(No Direct Text / Icon)",
+    "status": "FORM_SUBMIT",
+    "details": "Form submit button",
+    "disabled": true
+  },
+  {
+    "file": "pages\\admin\\Teachers.jsx",
+    "line": 792,
+    "tag": "button",
+    "label": "Cancel",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\admin\\Teachers.jsx",
+    "line": 793,
+    "tag": "button",
+    "label": "(No Direct Text / Icon)",
+    "status": "NAMED_HANDLER",
+    "details": "Handler function: handleDeleteConfirm",
+    "disabled": true
+  },
+  {
+    "file": "pages\\admin\\Teachers.jsx",
+    "line": 805,
+    "tag": "button",
+    "label": "Cancel",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\admin\\Teachers.jsx",
+    "line": 806,
+    "tag": "button",
+    "label": "(No Direct Text / Icon)",
+    "status": "NAMED_HANDLER",
+    "details": "Handler function: handleBulkDelete",
+    "disabled": true
+  },
+  {
+    "file": "pages\\admin\\Teachers.jsx",
+    "line": 892,
+    "tag": "button",
+    "label": "Cancel",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\admin\\Teachers.jsx",
+    "line": 893,
+    "tag": "button",
+    "label": "(No Direct Text / Icon)",
+    "status": "FORM_SUBMIT",
+    "details": "Form submit button",
+    "disabled": true
+  },
+  {
+    "file": "pages\\admin\\Teachers.jsx",
+    "line": 949,
+    "tag": "button",
+    "label": "Cancel",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\admin\\Teachers.jsx",
+    "line": 952,
+    "tag": "button",
+    "label": "(No Direct Text / Icon)",
+    "status": "FORM_SUBMIT",
+    "details": "Form submit button",
+    "disabled": true
+  },
+  {
+    "file": "pages\\admin\\timetable\\ConflictDialog.jsx",
+    "line": 63,
+    "tag": "button",
+    "label": "I understand — adjust timetable",
+    "status": "NAMED_HANDLER",
+    "details": "Handler function: onClose",
+    "disabled": false
+  },
+  {
+    "file": "pages\\admin\\Timetable.jsx",
+    "line": 763,
+    "tag": "button",
+    "label": "Paint",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\admin\\Timetable.jsx",
+    "line": 773,
+    "tag": "button",
+    "label": "👥 Combine Class",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\admin\\Timetable.jsx",
+    "line": 795,
+    "tag": "button",
+    "label": "(No Direct Text / Icon)",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": true
+  },
+  {
+    "file": "pages\\admin\\Timetable.jsx",
+    "line": 801,
+    "tag": "button",
+    "label": "(No Direct Text / Icon)",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": true
+  },
+  {
+    "file": "pages\\admin\\Timetable.jsx",
+    "line": 809,
+    "tag": "button",
+    "label": "Reset Timetable",
+    "status": "NAMED_HANDLER",
+    "details": "Handler function: handleOpenResetModal",
+    "disabled": true
+  },
+  {
+    "file": "pages\\admin\\Timetable.jsx",
+    "line": 834,
+    "tag": "button",
+    "label": "Classes",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\admin\\Timetable.jsx",
+    "line": 842,
+    "tag": "button",
+    "label": "Subjects",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\admin\\Timetable.jsx",
+    "line": 1025,
+    "tag": "button",
+    "label": "Theory",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\admin\\Timetable.jsx",
+    "line": 1034,
+    "tag": "button",
+    "label": "(No Direct Text / Icon)",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\admin\\Timetable.jsx",
+    "line": 1417,
+    "tag": "button",
+    "label": "Remove this slot",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": true
+  },
+  {
+    "file": "pages\\admin\\Timetable.jsx",
+    "line": 1508,
+    "tag": "button",
+    "label": "(No Direct Text / Icon)",
+    "status": "NAMED_HANDLER",
+    "details": "Handler function: handleAssignFromPanel",
+    "disabled": true
+  },
+  {
+    "file": "pages\\admin\\Timetable.jsx",
+    "line": 1539,
+    "tag": "button",
+    "label": "Clear all",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\admin\\Timetable.jsx",
+    "line": 1552,
+    "tag": "button",
+    "label": "View details",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\admin\\Timetable.jsx",
+    "line": 1554,
+    "tag": "button",
+    "label": "×",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\admin\\Timetable.jsx",
+    "line": 1579,
+    "tag": "button",
+    "label": "🌐 All Teachers",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\admin\\Timetable.jsx",
+    "line": 1598,
+    "tag": "button",
+    "label": "🏢 By Department",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\admin\\Timetable.jsx",
+    "line": 1616,
+    "tag": "button",
+    "label": "👨‍🏫 Selected Teacher(s)",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\admin\\Timetable.jsx",
+    "line": 1691,
+    "tag": "button",
+    "label": "Select All",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\admin\\Timetable.jsx",
+    "line": 1702,
+    "tag": "button",
+    "label": "Clear",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\admin\\Timetable.jsx",
+    "line": 1785,
+    "tag": "button",
+    "label": "Cancel",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": true
+  },
+  {
+    "file": "pages\\admin\\Timetable.jsx",
+    "line": 1794,
+    "tag": "button",
+    "label": "(No Direct Text / Icon)",
+    "status": "NAMED_HANDLER",
+    "details": "Handler function: handleExecuteReset",
+    "disabled": true
+  },
+  {
+    "file": "pages\\admin\\Timetable.jsx",
+    "line": 1818,
+    "tag": "button",
+    "label": "Cancel",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\admin\\Timetable.jsx",
+    "line": 1826,
+    "tag": "button",
+    "label": "Clear All",
+    "status": "NAMED_HANDLER",
+    "details": "Handler function: clearAll",
+    "disabled": false
+  },
+  {
+    "file": "pages\\admin\\Timetable.jsx",
+    "line": 1886,
+    "tag": "button",
+    "label": "Close / Adjust",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\admin\\Timetable.jsx",
+    "line": 1895,
+    "tag": "button",
+    "label": "Turn ON Combine Class Mode",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\admin\\TimetableApprovals.jsx",
+    "line": 140,
+    "tag": "button",
+    "label": "✕",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\admin\\TimetableApprovals.jsx",
+    "line": 162,
+    "tag": "button",
+    "label": "Approve Selected ( )",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": true
+  },
+  {
+    "file": "pages\\admin\\TimetableApprovals.jsx",
+    "line": 170,
+    "tag": "button",
+    "label": "Reject Selected ( )",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": true
+  },
+  {
+    "file": "pages\\admin\\TimetableApprovals.jsx",
+    "line": 180,
+    "tag": "button",
+    "label": "(No Direct Text / Icon)",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": true
+  },
+  {
+    "file": "pages\\admin\\TimetableApprovals.jsx",
+    "line": 188,
+    "tag": "button",
+    "label": "Reject All",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": true
+  },
+  {
+    "file": "pages\\admin\\TimetableApprovals.jsx",
+    "line": 295,
+    "tag": "button",
+    "label": "One-Click Approve",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": true
+  },
+  {
+    "file": "pages\\admin\\TimetableApprovals.jsx",
+    "line": 302,
+    "tag": "button",
+    "label": "Reject",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": true
+  },
+  {
+    "file": "pages\\auth\\FirstLoginSetup.jsx",
+    "line": 135,
+    "tag": "button",
+    "label": "(No Direct Text / Icon)",
+    "status": "FORM_SUBMIT",
+    "details": "Form submit button",
+    "disabled": true
+  },
+  {
+    "file": "pages\\auth\\FirstLoginSetup.jsx",
+    "line": 139,
+    "tag": "button",
+    "label": "Sign out instead",
+    "status": "NAMED_HANDLER",
+    "details": "Handler function: logout",
+    "disabled": false
+  },
+  {
+    "file": "pages\\auth\\Login.jsx",
+    "line": 168,
+    "tag": "button",
+    "label": "(No Direct Text / Icon)",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\auth\\Login.jsx",
+    "line": 185,
+    "tag": "button",
+    "label": "(No Direct Text / Icon)",
+    "status": "FORM_SUBMIT",
+    "details": "Form submit button",
+    "disabled": true
+  },
+  {
+    "file": "pages\\auth\\Register.jsx",
+    "line": 122,
+    "tag": "Button",
+    "label": "Create account",
+    "status": "FORM_SUBMIT",
+    "details": "Form submit button",
+    "disabled": false
+  },
+  {
+    "file": "pages\\auth\\Register.jsx",
+    "line": 130,
+    "tag": "Link",
+    "label": "Sign in",
+    "status": "NAVIGATION",
+    "details": "Router navigation link",
+    "disabled": false
+  },
+  {
+    "file": "pages\\common\\ClassFacultyDirectory.jsx",
+    "line": 73,
+    "tag": "button",
+    "label": "(No Direct Text / Icon)",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\common\\ClasswiseTimetable.jsx",
+    "line": 184,
+    "tag": "button",
+    "label": "Print Timetable",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\common\\TodaySubstitutions.jsx",
+    "line": 56,
+    "tag": "button",
+    "label": "Assign",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": true
+  },
+  {
+    "file": "pages\\common\\TodaySubstitutions.jsx",
+    "line": 653,
+    "tag": "button",
+    "label": "(No Direct Text / Icon)",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\common\\TodaySubstitutions.jsx",
+    "line": 661,
+    "tag": "button",
+    "label": "(No Direct Text / Icon)",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\common\\TodaySubstitutions.jsx",
+    "line": 665,
+    "tag": "button",
+    "label": "Today",
+    "status": "NAMED_HANDLER",
+    "details": "Handler function: goToToday",
+    "disabled": false
+  },
+  {
+    "file": "pages\\common\\TodaySubstitutions.jsx",
+    "line": 667,
+    "tag": "button",
+    "label": "(No Direct Text / Icon)",
+    "status": "NAMED_HANDLER",
+    "details": "Handler function: handleRefresh",
+    "disabled": true
+  },
+  {
+    "file": "pages\\common\\TodaySubstitutions.jsx",
+    "line": 672,
+    "tag": "button",
+    "label": "Print / Save PDF",
+    "status": "NAMED_HANDLER",
+    "details": "Handler function: handlePrint",
+    "disabled": false
+  },
+  {
+    "file": "pages\\common\\TodaySubstitutions.jsx",
+    "line": 678,
+    "tag": "button",
+    "label": "Export Excel (CSV)",
+    "status": "NAMED_HANDLER",
+    "details": "Handler function: handleExportCSV",
+    "disabled": false
+  },
+  {
+    "file": "pages\\common\\TodaySubstitutions.jsx",
+    "line": 706,
+    "tag": "button",
+    "label": "✕",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\common\\TodaySubstitutions.jsx",
+    "line": 891,
+    "tag": "button",
+    "label": "Reset filters",
+    "status": "NAMED_HANDLER",
+    "details": "Handler function: resetFilters",
+    "disabled": false
+  },
+  {
+    "file": "pages\\common\\TodaySubstitutions.jsx",
+    "line": 909,
+    "tag": "button",
+    "label": "(No Direct Text / Icon)",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\common\\TodaySubstitutions.jsx",
+    "line": 936,
+    "tag": "button",
+    "label": "✕",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\common\\TodaySubstitutions.jsx",
+    "line": 942,
+    "tag": "button",
+    "label": "✕",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\common\\TodaySubstitutions.jsx",
+    "line": 948,
+    "tag": "button",
+    "label": "✕",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\common\\TodaySubstitutions.jsx",
+    "line": 954,
+    "tag": "button",
+    "label": "✕",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\common\\TodaySubstitutions.jsx",
+    "line": 960,
+    "tag": "button",
+    "label": "✕",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\common\\TodaySubstitutions.jsx",
+    "line": 963,
+    "tag": "button",
+    "label": "Clear all",
+    "status": "NAMED_HANDLER",
+    "details": "Handler function: resetFilters",
+    "disabled": false
+  },
+  {
+    "file": "pages\\common\\TodaySubstitutions.jsx",
+    "line": 987,
+    "tag": "button",
+    "label": "✕",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\common\\TodaySubstitutions.jsx",
+    "line": 1058,
+    "tag": "button",
+    "label": "Reset filters",
+    "status": "NAMED_HANDLER",
+    "details": "Handler function: resetFilters",
+    "disabled": true
+  },
+  {
+    "file": "pages\\common\\TodaySubstitutions.jsx",
+    "line": 1066,
+    "tag": "button",
+    "label": "Done",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\common\\TodaySubstitutions.jsx",
+    "line": 1081,
+    "tag": "button",
+    "label": "All ( )",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\common\\TodaySubstitutions.jsx",
+    "line": 1091,
+    "tag": "button",
+    "label": "Needs Cover ( )",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\common\\TodaySubstitutions.jsx",
+    "line": 1101,
+    "tag": "button",
+    "label": "Assigned Cover ( )",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\common\\TodaySubstitutions.jsx",
+    "line": 1111,
+    "tag": "button",
+    "label": "Completed / Past ( )",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\common\\TodaySubstitutions.jsx",
+    "line": 1130,
+    "tag": "button",
+    "label": "Auto-assign all ( )",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\common\\TodaySubstitutions.jsx",
+    "line": 1159,
+    "tag": "button",
+    "label": "Reset filters",
+    "status": "NAMED_HANDLER",
+    "details": "Handler function: resetFilters",
+    "disabled": false
+  },
+  {
+    "file": "pages\\common\\TodaySubstitutions.jsx",
+    "line": 1239,
+    "tag": "button",
+    "label": "(No Direct Text / Icon)",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": true
+  },
+  {
+    "file": "pages\\common\\TodaySubstitutions.jsx",
+    "line": 1248,
+    "tag": "button",
+    "label": "(No Direct Text / Icon)",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": true
+  },
+  {
+    "file": "pages\\common\\TodaySubstitutions.jsx",
+    "line": 1256,
+    "tag": "button",
+    "label": "(No Direct Text / Icon)",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": true
+  },
+  {
+    "file": "pages\\common\\TodaySubstitutions.jsx",
+    "line": 1350,
+    "tag": "button",
+    "label": "(No Direct Text / Icon)",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": true
+  },
+  {
+    "file": "pages\\common\\TodaySubstitutions.jsx",
+    "line": 1371,
+    "tag": "button",
+    "label": "(No Direct Text / Icon)",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": true
+  },
+  {
+    "file": "pages\\common\\TodaySubstitutions.jsx",
+    "line": 1435,
+    "tag": "button",
+    "label": "Assign",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": true
+  },
+  {
+    "file": "pages\\common\\TodaySubstitutions.jsx",
+    "line": 1529,
+    "tag": "button",
+    "label": "(No Direct Text / Icon)",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": true
+  },
+  {
+    "file": "pages\\common\\TodaySubstitutions.jsx",
+    "line": 1550,
+    "tag": "button",
+    "label": "(No Direct Text / Icon)",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": true
+  },
+  {
+    "file": "pages\\common\\TodaySubstitutions.jsx",
+    "line": 1614,
+    "tag": "button",
+    "label": "Assign",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": true
+  },
+  {
+    "file": "pages\\common\\TodaySubstitutions.jsx",
+    "line": 1646,
+    "tag": "button",
+    "label": "Cancel",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\common\\TodaySubstitutions.jsx",
+    "line": 1653,
+    "tag": "button",
+    "label": "Auto-assign",
+    "status": "NAMED_HANDLER",
+    "details": "Handler function: runAutoAssignAll",
+    "disabled": false
+  },
+  {
+    "file": "pages\\governance\\Dashboard.jsx",
+    "line": 44,
+    "tag": "button",
+    "label": "(No Direct Text / Icon)",
+    "status": "NAMED_HANDLER",
+    "details": "Handler function: onClick",
+    "disabled": false
+  },
+  {
+    "file": "pages\\governance\\Dashboard.jsx",
+    "line": 77,
+    "tag": "button",
+    "label": "(No Direct Text / Icon)",
+    "status": "NAMED_HANDLER",
+    "details": "Handler function: onClose",
+    "disabled": false
+  },
+  {
+    "file": "pages\\governance\\Dashboard.jsx",
+    "line": 99,
+    "tag": "button",
+    "label": "Cancel",
+    "status": "NAMED_HANDLER",
+    "details": "Handler function: onClose",
+    "disabled": false
+  },
+  {
+    "file": "pages\\governance\\Dashboard.jsx",
+    "line": 100,
+    "tag": "button",
+    "label": "(No Direct Text / Icon)",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": true
+  },
+  {
+    "file": "pages\\governance\\Dashboard.jsx",
+    "line": 152,
+    "tag": "button",
+    "label": "(No Direct Text / Icon)",
+    "status": "NAMED_HANDLER",
+    "details": "Handler function: onClose",
+    "disabled": false
+  },
+  {
+    "file": "pages\\governance\\Dashboard.jsx",
+    "line": 159,
+    "tag": "button",
+    "label": "👤 Individual Substitute",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\governance\\Dashboard.jsx",
+    "line": 169,
+    "tag": "button",
+    "label": "👥 Combine Class ( )",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\governance\\Dashboard.jsx",
+    "line": 200,
+    "tag": "button",
+    "label": "(No Direct Text / Icon)",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\governance\\Dashboard.jsx",
+    "line": 249,
+    "tag": "button",
+    "label": "(No Direct Text / Icon)",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\governance\\Dashboard.jsx",
+    "line": 307,
+    "tag": "button",
+    "label": "Cancel",
+    "status": "NAMED_HANDLER",
+    "details": "Handler function: onClose",
+    "disabled": false
+  },
+  {
+    "file": "pages\\governance\\Dashboard.jsx",
+    "line": 310,
+    "tag": "button",
+    "label": "(No Direct Text / Icon)",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": true
+  },
+  {
+    "file": "pages\\governance\\Dashboard.jsx",
+    "line": 358,
+    "tag": "button",
+    "label": "Close",
+    "status": "NAMED_HANDLER",
+    "details": "Handler function: onClose",
+    "disabled": false
+  },
+  {
+    "file": "pages\\governance\\Dashboard.jsx",
+    "line": 364,
+    "tag": "button",
+    "label": "(No Direct Text / Icon)",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\governance\\Dashboard.jsx",
+    "line": 379,
+    "tag": "button",
+    "label": "Sign Out",
+    "status": "NAMED_HANDLER",
+    "details": "Handler function: onLogout",
+    "disabled": false
+  },
+  {
+    "file": "pages\\governance\\Dashboard.jsx",
+    "line": 425,
+    "tag": "button",
+    "label": "View all →",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\governance\\Dashboard.jsx",
+    "line": 434,
+    "tag": "button",
+    "label": "Cover / Combine",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\governance\\Dashboard.jsx",
+    "line": 445,
+    "tag": "button",
+    "label": "(No Direct Text / Icon)",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\governance\\Dashboard.jsx",
+    "line": 459,
+    "tag": "button",
+    "label": "(No Direct Text / Icon)",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\governance\\Dashboard.jsx",
+    "line": 464,
+    "tag": "button",
+    "label": "(No Direct Text / Icon)",
+    "status": "NAMED_HANDLER",
+    "details": "Handler function: onOpenOverride",
+    "disabled": false
+  },
+  {
+    "file": "pages\\governance\\Dashboard.jsx",
+    "line": 586,
+    "tag": "button",
+    "label": "Assign Substitute or Combine Class",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\governance\\Dashboard.jsx",
+    "line": 720,
+    "tag": "button",
+    "label": "Retry",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\governance\\Dashboard.jsx",
+    "line": 738,
+    "tag": "button",
+    "label": "(No Direct Text / Icon)",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": true
+  },
+  {
+    "file": "pages\\governance\\Dashboard.jsx",
+    "line": 741,
+    "tag": "button",
+    "label": "Override",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\governance\\Dashboard.jsx",
+    "line": 744,
+    "tag": "button",
+    "label": "(No Direct Text / Icon)",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\governance\\Dashboard.jsx",
+    "line": 765,
+    "tag": "button",
+    "label": "(No Direct Text / Icon)",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\governance\\HodTimetable.jsx",
+    "line": 141,
+    "tag": "button",
+    "label": "×",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\governance\\HodTimetable.jsx",
+    "line": 505,
+    "tag": "button",
+    "label": "Retry",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\governance\\HodTimetable.jsx",
+    "line": 534,
+    "tag": "button",
+    "label": "‹",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\governance\\HodTimetable.jsx",
+    "line": 567,
+    "tag": "button",
+    "label": "↩ Undo",
+    "status": "NAMED_HANDLER",
+    "details": "Handler function: handleUndo",
+    "disabled": true
+  },
+  {
+    "file": "pages\\governance\\HodTimetable.jsx",
+    "line": 669,
+    "tag": "button",
+    "label": "(No Direct Text / Icon)",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\governance\\HodTimetable.jsx",
+    "line": 861,
+    "tag": "button",
+    "label": "(No Direct Text / Icon)",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\governance\\HodTimetable.jsx",
+    "line": 1031,
+    "tag": "button",
+    "label": "🗑 Remove",
+    "status": "NAMED_HANDLER",
+    "details": "Handler function: handleRemove",
+    "disabled": true
+  },
+  {
+    "file": "pages\\governance\\HodTimetable.jsx",
+    "line": 1050,
+    "tag": "button",
+    "label": "×",
+    "status": "NAMED_HANDLER",
+    "details": "Handler function: closeSheet",
+    "disabled": false
+  },
+  {
+    "file": "pages\\governance\\HodTimetable.jsx",
+    "line": 1084,
+    "tag": "button",
+    "label": "(No Direct Text / Icon)",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\governance\\HodTimetable.jsx",
+    "line": 1141,
+    "tag": "button",
+    "label": "General Duty / No Specific Subject",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\governance\\HodTimetable.jsx",
+    "line": 1169,
+    "tag": "button",
+    "label": "(No Direct Text / Icon)",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\governance\\HodTimetable.jsx",
+    "line": 1225,
+    "tag": "button",
+    "label": "(No Direct Text / Icon)",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\governance\\HodTimetable.jsx",
+    "line": 1265,
+    "tag": "button",
+    "label": "Change",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\governance\\HodTimetable.jsx",
+    "line": 1285,
+    "tag": "button",
+    "label": "Pick subject",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\governance\\HodTimetable.jsx",
+    "line": 1407,
+    "tag": "button",
+    "label": "(No Direct Text / Icon)",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\governance\\HodTimetable.jsx",
+    "line": 1494,
+    "tag": "button",
+    "label": "No room",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\governance\\HodTimetable.jsx",
+    "line": 1510,
+    "tag": "button",
+    "label": "(No Direct Text / Icon)",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\governance\\HodTimetable.jsx",
+    "line": 1534,
+    "tag": "button",
+    "label": "(No Direct Text / Icon)",
+    "status": "NAMED_HANDLER",
+    "details": "Handler function: handleSave",
+    "disabled": true
+  },
+  {
+    "file": "pages\\manager\\Dashboard.jsx",
+    "line": 107,
+    "tag": "Link",
+    "label": "(No Direct Text / Icon)",
+    "status": "NAVIGATION",
+    "details": "Router navigation link",
+    "disabled": false
+  },
+  {
+    "file": "pages\\manager\\Dashboard.jsx",
+    "line": 128,
+    "tag": "Link",
+    "label": "(No Direct Text / Icon)",
+    "status": "NAVIGATION",
+    "details": "Router navigation link",
+    "disabled": false
+  },
+  {
+    "file": "pages\\manager\\Dashboard.jsx",
+    "line": 149,
+    "tag": "Link",
+    "label": "(No Direct Text / Icon)",
+    "status": "NAVIGATION",
+    "details": "Router navigation link",
+    "disabled": false
+  },
+  {
+    "file": "pages\\manager\\LabStaff.jsx",
+    "line": 174,
+    "tag": "button",
+    "label": "(No Direct Text / Icon)",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\manager\\LabStaff.jsx",
+    "line": 194,
+    "tag": "button",
+    "label": "✕",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\manager\\LabStaff.jsx",
+    "line": 201,
+    "tag": "button",
+    "label": "✕",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\manager\\LabStaff.jsx",
+    "line": 314,
+    "tag": "button",
+    "label": "Edit",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\manager\\LabStaff.jsx",
+    "line": 321,
+    "tag": "button",
+    "label": "Delete",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\manager\\LabStaff.jsx",
+    "line": 393,
+    "tag": "button",
+    "label": "Edit",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\manager\\LabStaff.jsx",
+    "line": 400,
+    "tag": "button",
+    "label": "Delete",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\manager\\LabStaff.jsx",
+    "line": 468,
+    "tag": "button",
+    "label": "(No Direct Text / Icon)",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\manager\\LabStaff.jsx",
+    "line": 617,
+    "tag": "button",
+    "label": "Cancel",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\manager\\LabStaff.jsx",
+    "line": 624,
+    "tag": "button",
+    "label": "(No Direct Text / Icon)",
+    "status": "FORM_SUBMIT",
+    "details": "Form submit button",
+    "disabled": true
+  },
+  {
+    "file": "pages\\manager\\LabStaff.jsx",
+    "line": 644,
+    "tag": "button",
+    "label": "Cancel",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\manager\\LabStaff.jsx",
+    "line": 651,
+    "tag": "button",
+    "label": "(No Direct Text / Icon)",
+    "status": "NAMED_HANDLER",
+    "details": "Handler function: handleDelete",
+    "disabled": true
+  },
+  {
+    "file": "pages\\manager\\NonTeachingStaff.jsx",
+    "line": 160,
+    "tag": "button",
+    "label": "(No Direct Text / Icon)",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\manager\\NonTeachingStaff.jsx",
+    "line": 180,
+    "tag": "button",
+    "label": "✕",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\manager\\NonTeachingStaff.jsx",
+    "line": 187,
+    "tag": "button",
+    "label": "✕",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\manager\\NonTeachingStaff.jsx",
+    "line": 285,
+    "tag": "button",
+    "label": "Edit",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\manager\\NonTeachingStaff.jsx",
+    "line": 292,
+    "tag": "button",
+    "label": "Delete",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\manager\\NonTeachingStaff.jsx",
+    "line": 349,
+    "tag": "button",
+    "label": "Edit",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\manager\\NonTeachingStaff.jsx",
+    "line": 356,
+    "tag": "button",
+    "label": "Delete",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\manager\\NonTeachingStaff.jsx",
+    "line": 532,
+    "tag": "button",
+    "label": "Cancel",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\manager\\NonTeachingStaff.jsx",
+    "line": 539,
+    "tag": "button",
+    "label": "(No Direct Text / Icon)",
+    "status": "FORM_SUBMIT",
+    "details": "Form submit button",
+    "disabled": true
+  },
+  {
+    "file": "pages\\manager\\NonTeachingStaff.jsx",
+    "line": 559,
+    "tag": "button",
+    "label": "Cancel",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\manager\\NonTeachingStaff.jsx",
+    "line": 566,
+    "tag": "button",
+    "label": "(No Direct Text / Icon)",
+    "status": "NAMED_HANDLER",
+    "details": "Handler function: handleDelete",
+    "disabled": true
+  },
+  {
+    "file": "pages\\manager\\StaffDirectory.jsx",
+    "line": 54,
+    "tag": "button",
+    "label": "All Staff ( )",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\manager\\StaffDirectory.jsx",
+    "line": 65,
+    "tag": "button",
+    "label": "Laboratory ( )",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\manager\\StaffDirectory.jsx",
+    "line": 76,
+    "tag": "button",
+    "label": "Non-Teaching ( )",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\manager\\StaffLeaves.jsx",
+    "line": 231,
+    "tag": "button",
+    "label": "(No Direct Text / Icon)",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\manager\\StaffLeaves.jsx",
+    "line": 251,
+    "tag": "button",
+    "label": "(No Direct Text / Icon)",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\manager\\StaffLeaves.jsx",
+    "line": 268,
+    "tag": "button",
+    "label": "✕",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\manager\\StaffLeaves.jsx",
+    "line": 274,
+    "tag": "button",
+    "label": "✕",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\manager\\StaffLeaves.jsx",
+    "line": 280,
+    "tag": "button",
+    "label": "(No Direct Text / Icon)",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\manager\\StaffLeaves.jsx",
+    "line": 293,
+    "tag": "button",
+    "label": "(No Direct Text / Icon)",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\manager\\StaffLeaves.jsx",
+    "line": 306,
+    "tag": "button",
+    "label": "(No Direct Text / Icon)",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\manager\\StaffLeaves.jsx",
+    "line": 410,
+    "tag": "button",
+    "label": "Statement",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\manager\\StaffLeaves.jsx",
+    "line": 417,
+    "tag": "button",
+    "label": "Adjust",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\manager\\StaffLeaves.jsx",
+    "line": 427,
+    "tag": "button",
+    "label": "Set Limit",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\manager\\StaffLeaves.jsx",
+    "line": 477,
+    "tag": "button",
+    "label": "Statement",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\manager\\StaffLeaves.jsx",
+    "line": 484,
+    "tag": "button",
+    "label": "Adjust",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\manager\\StaffLeaves.jsx",
+    "line": 494,
+    "tag": "button",
+    "label": "Set Limit",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\manager\\StaffLeaves.jsx",
+    "line": 588,
+    "tag": "button",
+    "label": "Reject Request",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\manager\\StaffLeaves.jsx",
+    "line": 598,
+    "tag": "button",
+    "label": "(No Direct Text / Icon)",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\manager\\StaffLeaves.jsx",
+    "line": 625,
+    "tag": "button",
+    "label": "✕",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\manager\\StaffLeaves.jsx",
+    "line": 655,
+    "tag": "button",
+    "label": "Cancel",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\manager\\StaffLeaves.jsx",
+    "line": 662,
+    "tag": "button",
+    "label": "(No Direct Text / Icon)",
+    "status": "NAMED_HANDLER",
+    "details": "Handler function: handleApproveReject",
+    "disabled": true
+  },
+  {
+    "file": "pages\\manager\\StaffLeaves.jsx",
+    "line": 683,
+    "tag": "button",
+    "label": "✕",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\manager\\StaffLeaves.jsx",
+    "line": 745,
+    "tag": "button",
+    "label": "Cancel",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\manager\\StaffLeaves.jsx",
+    "line": 752,
+    "tag": "button",
+    "label": "(No Direct Text / Icon)",
+    "status": "FORM_SUBMIT",
+    "details": "Form submit button",
+    "disabled": true
+  },
+  {
+    "file": "pages\\manager\\StaffLeaves.jsx",
+    "line": 774,
+    "tag": "button",
+    "label": "✕",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\manager\\StaffLeaves.jsx",
+    "line": 852,
+    "tag": "button",
+    "label": "✕",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\manager\\StaffLeaves.jsx",
+    "line": 923,
+    "tag": "button",
+    "label": "Cancel",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\manager\\StaffLeaves.jsx",
+    "line": 930,
+    "tag": "button",
+    "label": "(No Direct Text / Icon)",
+    "status": "FORM_SUBMIT",
+    "details": "Form submit button",
+    "disabled": true
+  },
+  {
+    "file": "pages\\staff\\Dashboard.jsx",
+    "line": 100,
+    "tag": "Link",
+    "label": "(No Direct Text / Icon)",
+    "status": "NAVIGATION",
+    "details": "Router navigation link",
+    "disabled": false
+  },
+  {
+    "file": "pages\\staff\\Dashboard.jsx",
+    "line": 109,
+    "tag": "button",
+    "label": "(No Direct Text / Icon)",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\staff\\Dashboard.jsx",
+    "line": 144,
+    "tag": "button",
+    "label": "✕",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\staff\\Dashboard.jsx",
+    "line": 151,
+    "tag": "button",
+    "label": "✕",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\staff\\Dashboard.jsx",
+    "line": 182,
+    "tag": "button",
+    "label": "(No Direct Text / Icon)",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\staff\\Dashboard.jsx",
+    "line": 271,
+    "tag": "Link",
+    "label": "(No Direct Text / Icon)",
+    "status": "NAVIGATION",
+    "details": "Router navigation link",
+    "disabled": false
+  },
+  {
+    "file": "pages\\staff\\Dashboard.jsx",
+    "line": 367,
+    "tag": "button",
+    "label": "Day",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\staff\\Dashboard.jsx",
+    "line": 450,
+    "tag": "button",
+    "label": "✕",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\staff\\Dashboard.jsx",
+    "line": 501,
+    "tag": "button",
+    "label": "Cancel",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\staff\\Dashboard.jsx",
+    "line": 508,
+    "tag": "button",
+    "label": "(No Direct Text / Icon)",
+    "status": "FORM_SUBMIT",
+    "details": "Form submit button",
+    "disabled": true
+  },
+  {
+    "file": "pages\\staff\\Leaves.jsx",
+    "line": 133,
+    "tag": "button",
+    "label": "(No Direct Text / Icon)",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\staff\\Leaves.jsx",
+    "line": 148,
+    "tag": "button",
+    "label": "✕",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\staff\\Leaves.jsx",
+    "line": 154,
+    "tag": "button",
+    "label": "✕",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\staff\\Leaves.jsx",
+    "line": 195,
+    "tag": "button",
+    "label": "(No Direct Text / Icon)",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\staff\\Leaves.jsx",
+    "line": 208,
+    "tag": "button",
+    "label": "(No Direct Text / Icon)",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\staff\\Leaves.jsx",
+    "line": 282,
+    "tag": "button",
+    "label": "Cancel Application",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\staff\\Leaves.jsx",
+    "line": 343,
+    "tag": "button",
+    "label": "✕",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\staff\\Leaves.jsx",
+    "line": 439,
+    "tag": "button",
+    "label": "Cancel",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\staff\\Leaves.jsx",
+    "line": 446,
+    "tag": "button",
+    "label": "(No Direct Text / Icon)",
+    "status": "FORM_SUBMIT",
+    "details": "Form submit button",
+    "disabled": true
+  },
+  {
+    "file": "pages\\teacher\\ApplyLeave.jsx",
+    "line": 174,
+    "tag": "Link",
+    "label": "View Leave History",
+    "status": "NAVIGATION",
+    "details": "Router navigation link",
+    "disabled": false
+  },
+  {
+    "file": "pages\\teacher\\ApplyLeave.jsx",
+    "line": 212,
+    "tag": "Link",
+    "label": "(No Direct Text / Icon)",
+    "status": "NAVIGATION",
+    "details": "Router navigation link",
+    "disabled": false
+  },
+  {
+    "file": "pages\\teacher\\ApplyLeave.jsx",
+    "line": 262,
+    "tag": "button",
+    "label": "(No Direct Text / Icon)",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\teacher\\ApplyLeave.jsx",
+    "line": 296,
+    "tag": "button",
+    "label": "(No Direct Text / Icon)",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\teacher\\ApplyLeave.jsx",
+    "line": 309,
+    "tag": "button",
+    "label": "(No Direct Text / Icon)",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\teacher\\ApplyLeave.jsx",
+    "line": 329,
+    "tag": "button",
+    "label": "Morning (P1–P3)",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\teacher\\ApplyLeave.jsx",
+    "line": 336,
+    "tag": "button",
+    "label": "Afternoon (P4–P5)",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\teacher\\ApplyLeave.jsx",
+    "line": 343,
+    "tag": "button",
+    "label": "All (P1–P5)",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\teacher\\ApplyLeave.jsx",
+    "line": 357,
+    "tag": "button",
+    "label": "(No Direct Text / Icon)",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\teacher\\ApplyLeave.jsx",
+    "line": 394,
+    "tag": "button",
+    "label": "(No Direct Text / Icon)",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\teacher\\ApplyLeave.jsx",
+    "line": 441,
+    "tag": "Link",
+    "label": "Cancel",
+    "status": "NAVIGATION",
+    "details": "Router navigation link",
+    "disabled": false
+  },
+  {
+    "file": "pages\\teacher\\ApplyLeave.jsx",
+    "line": 448,
+    "tag": "button",
+    "label": "(No Direct Text / Icon)",
+    "status": "FORM_SUBMIT",
+    "details": "Form submit button",
+    "disabled": true
+  },
+  {
+    "file": "pages\\teacher\\Credits.jsx",
+    "line": 279,
+    "tag": "button",
+    "label": "(No Direct Text / Icon)",
+    "status": "NAMED_HANDLER",
+    "details": "Handler function: handlePrint",
+    "disabled": false
+  },
+  {
+    "file": "pages\\teacher\\Credits.jsx",
+    "line": 290,
+    "tag": "button",
+    "label": "(No Direct Text / Icon)",
+    "status": "NAMED_HANDLER",
+    "details": "Handler function: handleDownloadCsv",
+    "disabled": true
+  },
+  {
+    "file": "pages\\teacher\\Credits.jsx",
+    "line": 301,
+    "tag": "Link",
+    "label": "(No Direct Text / Icon)",
+    "status": "NAVIGATION",
+    "details": "Router navigation link",
+    "disabled": false
+  },
+  {
+    "file": "pages\\teacher\\Credits.jsx",
+    "line": 308,
+    "tag": "Link",
+    "label": "(No Direct Text / Icon)",
+    "status": "NAVIGATION",
+    "details": "Router navigation link",
+    "disabled": false
+  },
+  {
+    "file": "pages\\teacher\\Credits.jsx",
+    "line": 458,
+    "tag": "button",
+    "label": "✕",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\teacher\\Credits.jsx",
+    "line": 489,
+    "tag": "button",
+    "label": "(No Direct Text / Icon)",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\teacher\\Credits.jsx",
+    "line": 534,
+    "tag": "button",
+    "label": "Clear Dates",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\teacher\\Credits.jsx",
+    "line": 546,
+    "tag": "button",
+    "label": "This Month",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\teacher\\Credits.jsx",
+    "line": 559,
+    "tag": "button",
+    "label": "Last 30 Days",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\teacher\\Credits.jsx",
+    "line": 572,
+    "tag": "button",
+    "label": "All Time",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\teacher\\Credits.jsx",
+    "line": 592,
+    "tag": "button",
+    "label": "Clear filters",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\teacher\\Dashboard.jsx",
+    "line": 151,
+    "tag": "Link",
+    "label": "Take Attendance",
+    "status": "NAVIGATION",
+    "details": "Router navigation link",
+    "disabled": false
+  },
+  {
+    "file": "pages\\teacher\\Dashboard.jsx",
+    "line": 154,
+    "tag": "Link",
+    "label": "Full Timetable",
+    "status": "NAVIGATION",
+    "details": "Router navigation link",
+    "disabled": false
+  },
+  {
+    "file": "pages\\teacher\\Dashboard.jsx",
+    "line": 166,
+    "tag": "Link",
+    "label": "(No Direct Text / Icon)",
+    "status": "NAVIGATION",
+    "details": "Router navigation link",
+    "disabled": false
+  },
+  {
+    "file": "pages\\teacher\\Dashboard.jsx",
+    "line": 185,
+    "tag": "Link",
+    "label": "(No Direct Text / Icon)",
+    "status": "NAVIGATION",
+    "details": "Router navigation link",
+    "disabled": false
+  },
+  {
+    "file": "pages\\teacher\\Dashboard.jsx",
+    "line": 200,
+    "tag": "Link",
+    "label": "(No Direct Text / Icon)",
+    "status": "NAVIGATION",
+    "details": "Router navigation link",
+    "disabled": false
+  },
+  {
+    "file": "pages\\teacher\\Dashboard.jsx",
+    "line": 215,
+    "tag": "Link",
+    "label": "(No Direct Text / Icon)",
+    "status": "NAVIGATION",
+    "details": "Router navigation link",
+    "disabled": false
+  },
+  {
+    "file": "pages\\teacher\\Dashboard.jsx",
+    "line": 241,
+    "tag": "Link",
+    "label": "Full timetable →",
+    "status": "NAVIGATION",
+    "details": "Router navigation link",
+    "disabled": false
+  },
+  {
+    "file": "pages\\teacher\\Dashboard.jsx",
+    "line": 260,
+    "tag": "Link",
+    "label": "View all →",
+    "status": "NAVIGATION",
+    "details": "Router navigation link",
+    "disabled": false
+  },
+  {
+    "file": "pages\\teacher\\Dashboard.jsx",
+    "line": 289,
+    "tag": "Link",
+    "label": "Details →",
+    "status": "NAVIGATION",
+    "details": "Router navigation link",
+    "disabled": false
+  },
+  {
+    "file": "pages\\teacher\\LeaveHistory.jsx",
+    "line": 191,
+    "tag": "Link",
+    "label": "(No Direct Text / Icon)",
+    "status": "NAVIGATION",
+    "details": "Router navigation link",
+    "disabled": false
+  },
+  {
+    "file": "pages\\teacher\\LeaveHistory.jsx",
+    "line": 203,
+    "tag": "button",
+    "label": "✕",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\teacher\\LeaveHistory.jsx",
+    "line": 218,
+    "tag": "button",
+    "label": "(No Direct Text / Icon)",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\teacher\\LeaveHistory.jsx",
+    "line": 261,
+    "tag": "button",
+    "label": "✕",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\teacher\\LeaveHistory.jsx",
+    "line": 286,
+    "tag": "button",
+    "label": "Reset",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\teacher\\LeaveHistory.jsx",
+    "line": 296,
+    "tag": "button",
+    "label": "(No Direct Text / Icon)",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\teacher\\LeaveHistory.jsx",
+    "line": 361,
+    "tag": "button",
+    "label": "P",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\teacher\\LeaveHistory.jsx",
+    "line": 417,
+    "tag": "button",
+    "label": "Details",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\teacher\\LeaveHistory.jsx",
+    "line": 426,
+    "tag": "button",
+    "label": "Cancel",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": true
+  },
+  {
+    "file": "pages\\teacher\\LeaveHistory.jsx",
+    "line": 435,
+    "tag": "button",
+    "label": "Info",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\teacher\\LeaveHistory.jsx",
+    "line": 486,
+    "tag": "button",
+    "label": "P",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\teacher\\LeaveHistory.jsx",
+    "line": 520,
+    "tag": "button",
+    "label": "Details",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\teacher\\LeaveHistory.jsx",
+    "line": 529,
+    "tag": "button",
+    "label": "Cancel",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": true
+  },
+  {
+    "file": "pages\\teacher\\LeaveHistory.jsx",
+    "line": 538,
+    "tag": "button",
+    "label": "Info",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\teacher\\LeaveHistory.jsx",
+    "line": 573,
+    "tag": "button",
+    "label": "(No Direct Text / Icon)",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\teacher\\LeaveHistory.jsx",
+    "line": 591,
+    "tag": "button",
+    "label": "All Days",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\teacher\\LeaveHistory.jsx",
+    "line": 601,
+    "tag": "button",
+    "label": "Day Order",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\teacher\\LeaveHistory.jsx",
+    "line": 615,
+    "tag": "button",
+    "label": "Reset Filters",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\teacher\\LeaveHistory.jsx",
+    "line": 622,
+    "tag": "button",
+    "label": "Done",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\teacher\\LeaveHistory.jsx",
+    "line": 651,
+    "tag": "button",
+    "label": "Period",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\teacher\\LeaveHistory.jsx",
+    "line": 690,
+    "tag": "button",
+    "label": "Close",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\teacher\\LeaveHistory.jsx",
+    "line": 698,
+    "tag": "button",
+    "label": "Cancel Request",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\teacher\\LeaveHistory.jsx",
+    "line": 726,
+    "tag": "button",
+    "label": "Understood",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\teacher\\LeaveHistory.jsx",
+    "line": 767,
+    "tag": "button",
+    "label": "Keep Leave",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\teacher\\LeaveHistory.jsx",
+    "line": 773,
+    "tag": "button",
+    "label": "(No Direct Text / Icon)",
+    "status": "NAMED_HANDLER",
+    "details": "Handler function: handleCancel",
+    "disabled": true
+  },
+  {
+    "file": "pages\\teacher\\Preferences.jsx",
+    "line": 7,
+    "tag": "button",
+    "label": "(No Direct Text / Icon)",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": true
+  },
+  {
+    "file": "pages\\teacher\\Preferences.jsx",
+    "line": 148,
+    "tag": "button",
+    "label": "(No Direct Text / Icon)",
+    "status": "NAMED_HANDLER",
+    "details": "Handler function: saveCap",
+    "disabled": true
+  },
+  {
+    "file": "pages\\teacher\\StudentAttendance.jsx",
+    "line": 293,
+    "tag": "button",
+    "label": "(No Direct Text / Icon)",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\teacher\\StudentAttendance.jsx",
+    "line": 308,
+    "tag": "button",
+    "label": "×",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\teacher\\StudentAttendance.jsx",
+    "line": 316,
+    "tag": "button",
+    "label": "×",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\teacher\\StudentAttendance.jsx",
+    "line": 342,
+    "tag": "button",
+    "label": "Refresh",
+    "status": "NAMED_HANDLER",
+    "details": "Handler function: loadSchedule",
+    "disabled": false
+  },
+  {
+    "file": "pages\\teacher\\StudentAttendance.jsx",
+    "line": 569,
+    "tag": "button",
+    "label": "(No Direct Text / Icon)",
+    "status": "NAMED_HANDLER",
+    "details": "Handler function: handleSubmitAttendance",
+    "disabled": true
+  },
+  {
+    "file": "pages\\teacher\\StudentAttendance.jsx",
+    "line": 628,
+    "tag": "button",
+    "label": "Edit",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\teacher\\StudentAttendance.jsx",
+    "line": 660,
+    "tag": "button",
+    "label": "✕",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\teacher\\StudentAttendance.jsx",
+    "line": 695,
+    "tag": "button",
+    "label": "Cancel",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\teacher\\StudentAttendance.jsx",
+    "line": 719,
+    "tag": "button",
+    "label": "(No Direct Text / Icon)",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": true
+  },
+  {
+    "file": "pages\\teacher\\StudentAttendance.jsx",
+    "line": 731,
+    "tag": "button",
+    "label": "Close",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\teacher\\Substitution.jsx",
+    "line": 62,
+    "tag": "button",
+    "label": "(No Direct Text / Icon)",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": true
+  },
+  {
+    "file": "pages\\teacher\\Substitution.jsx",
+    "line": 377,
+    "tag": "button",
+    "label": "Reset Preferences",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\teacher\\Substitution.jsx",
+    "line": 384,
+    "tag": "button",
+    "label": "Clear All Assignments",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": true
+  },
+  {
+    "file": "pages\\teacher\\Substitution.jsx",
+    "line": 399,
+    "tag": "button",
+    "label": "Needs Cover ( )",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\teacher\\Substitution.jsx",
+    "line": 409,
+    "tag": "button",
+    "label": "Assigned Cover ( )",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\teacher\\Substitution.jsx",
+    "line": 419,
+    "tag": "button",
+    "label": "Completed / Past ( )",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\teacher\\Substitution.jsx",
+    "line": 460,
+    "tag": "button",
+    "label": "(No Direct Text / Icon)",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": true
+  },
+  {
+    "file": "pages\\teacher\\Substitution.jsx",
+    "line": 504,
+    "tag": "button",
+    "label": "(No Direct Text / Icon)",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": true
+  },
+  {
+    "file": "pages\\teacher\\Substitution.jsx",
+    "line": 544,
+    "tag": "button",
+    "label": "(No Direct Text / Icon)",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": true
+  },
+  {
+    "file": "pages\\teacher\\Substitution.jsx",
+    "line": 582,
+    "tag": "button",
+    "label": "(No Direct Text / Icon)",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": true
+  },
+  {
+    "file": "pages\\teacher\\Substitution.jsx",
+    "line": 744,
+    "tag": "button",
+    "label": "Clear All",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\teacher\\Substitution.jsx",
+    "line": 767,
+    "tag": "button",
+    "label": "(No Direct Text / Icon)",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\teacher\\Substitution.jsx",
+    "line": 795,
+    "tag": "button",
+    "label": "(No Direct Text / Icon)",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": true
+  },
+  {
+    "file": "pages\\teacher\\Substitution.jsx",
+    "line": 825,
+    "tag": "button",
+    "label": "(No Direct Text / Icon)",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": true
+  },
+  {
+    "file": "pages\\teacher\\Substitution.jsx",
+    "line": 904,
+    "tag": "button",
+    "label": "(No Direct Text / Icon)",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": true
+  },
+  {
+    "file": "pages\\teacher\\Substitution.jsx",
+    "line": 924,
+    "tag": "button",
+    "label": "Close",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\teacher\\Substitution.jsx",
+    "line": 955,
+    "tag": "button",
+    "label": "Cancel",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\teacher\\Substitution.jsx",
+    "line": 961,
+    "tag": "button",
+    "label": "(No Direct Text / Icon)",
+    "status": "NAMED_HANDLER",
+    "details": "Handler function: handleClearAllAssignments",
+    "disabled": true
+  },
+  {
+    "file": "pages\\teacher\\Substitution.jsx",
+    "line": 989,
+    "tag": "button",
+    "label": "Cancel",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\teacher\\Substitution.jsx",
+    "line": 995,
+    "tag": "button",
+    "label": "(No Direct Text / Icon)",
+    "status": "NAMED_HANDLER",
+    "details": "Handler function: handleResetPreferences",
+    "disabled": true
+  },
+  {
+    "file": "pages\\teacher\\Substitution.jsx",
+    "line": 1056,
+    "tag": "button",
+    "label": "Cancel",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": true
+  },
+  {
+    "file": "pages\\teacher\\Substitution.jsx",
+    "line": 1064,
+    "tag": "button",
+    "label": "(No Direct Text / Icon)",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": true
+  },
+  {
+    "file": "pages\\teacher\\Timetable.jsx",
+    "line": 647,
+    "tag": "button",
+    "label": "(No Direct Text / Icon)",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": true
+  },
+  {
+    "file": "pages\\teacher\\Timetable.jsx",
+    "line": 656,
+    "tag": "button",
+    "label": "(No Direct Text / Icon)",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": true
+  },
+  {
+    "file": "pages\\teacher\\Timetable.jsx",
+    "line": 673,
+    "tag": "button",
+    "label": "Clear all",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": true
+  },
+  {
+    "file": "pages\\teacher\\Timetable.jsx",
+    "line": 696,
+    "tag": "button",
+    "label": "(No Direct Text / Icon)",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\teacher\\Timetable.jsx",
+    "line": 732,
+    "tag": "button",
+    "label": "(No Direct Text / Icon)",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\teacher\\Timetable.jsx",
+    "line": 822,
+    "tag": "button",
+    "label": "Edit Slot",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\teacher\\Timetable.jsx",
+    "line": 834,
+    "tag": "button",
+    "label": "Remove",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": true
+  },
+  {
+    "file": "pages\\teacher\\Timetable.jsx",
+    "line": 849,
+    "tag": "button",
+    "label": "(No Direct Text / Icon)",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\teacher\\Timetable.jsx",
+    "line": 921,
+    "tag": "button",
+    "label": "Paint",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\teacher\\Timetable.jsx",
+    "line": 931,
+    "tag": "button",
+    "label": "👥 Combine Class",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\teacher\\Timetable.jsx",
+    "line": 953,
+    "tag": "button",
+    "label": "(No Direct Text / Icon)",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": true
+  },
+  {
+    "file": "pages\\teacher\\Timetable.jsx",
+    "line": 959,
+    "tag": "button",
+    "label": "(No Direct Text / Icon)",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": true
+  },
+  {
+    "file": "pages\\teacher\\Timetable.jsx",
+    "line": 968,
+    "tag": "button",
+    "label": "Clear all",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": true
+  },
+  {
+    "file": "pages\\teacher\\Timetable.jsx",
+    "line": 993,
+    "tag": "button",
+    "label": "Classes",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\teacher\\Timetable.jsx",
+    "line": 1001,
+    "tag": "button",
+    "label": "Subjects",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\teacher\\Timetable.jsx",
+    "line": 1183,
+    "tag": "button",
+    "label": "Theory",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\teacher\\Timetable.jsx",
+    "line": 1192,
+    "tag": "button",
+    "label": "(No Direct Text / Icon)",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\teacher\\Timetable.jsx",
+    "line": 1531,
+    "tag": "button",
+    "label": "Remove slot",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": true
+  },
+  {
+    "file": "pages\\teacher\\Timetable.jsx",
+    "line": 1581,
+    "tag": "button",
+    "label": "(No Direct Text / Icon)",
+    "status": "NAMED_HANDLER",
+    "details": "Handler function: handleAssignFromPanel",
+    "disabled": true
+  },
+  {
+    "file": "pages\\teacher\\Timetable.jsx",
+    "line": 1686,
+    "tag": "button",
+    "label": "Theory (No Room)",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\teacher\\Timetable.jsx",
+    "line": 1698,
+    "tag": "button",
+    "label": "(Lab)",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\teacher\\Timetable.jsx",
+    "line": 1747,
+    "tag": "button",
+    "label": "Cancel",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\teacher\\Timetable.jsx",
+    "line": 1754,
+    "tag": "button",
+    "label": "(No Direct Text / Icon)",
+    "status": "NAMED_HANDLER",
+    "details": "Handler function: handleMobileAssign",
+    "disabled": true
+  },
+  {
+    "file": "pages\\teacher\\Timetable.jsx",
+    "line": 1798,
+    "tag": "button",
+    "label": "Cancel",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\teacher\\Timetable.jsx",
+    "line": 1805,
+    "tag": "button",
+    "label": "(No Direct Text / Icon)",
+    "status": "NAMED_HANDLER",
+    "details": "Handler function: handleMobileUpdateRoom",
+    "disabled": true
+  },
+  {
+    "file": "pages\\teacher\\Timetable.jsx",
+    "line": 1826,
+    "tag": "button",
+    "label": "Cancel",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\teacher\\Timetable.jsx",
+    "line": 1829,
+    "tag": "button",
+    "label": "Yes, Clear All",
+    "status": "NAMED_HANDLER",
+    "details": "Handler function: clearAll",
+    "disabled": false
+  },
+  {
+    "file": "pages\\teacher\\Timetable.jsx",
+    "line": 1870,
+    "tag": "button",
+    "label": "Close / Adjust",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "pages\\teacher\\Timetable.jsx",
+    "line": 1878,
+    "tag": "button",
+    "label": "(No Direct Text / Icon)",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": true
+  },
+  {
+    "file": "components\\ErrorBoundary.jsx",
+    "line": 67,
+    "tag": "button",
+    "label": "Return to Dashboard",
+    "status": "MEMBER_HANDLER",
+    "details": "Method call",
+    "disabled": false
+  },
+  {
+    "file": "components\\geofence\\CampusMapEditor.jsx",
+    "line": 905,
+    "tag": "button",
+    "label": "✕",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "components\\geofence\\CampusMapEditor.jsx",
+    "line": 919,
+    "tag": "button",
+    "label": "(No Direct Text / Icon)",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "components\\geofence\\CampusMapEditor.jsx",
+    "line": 956,
+    "tag": "button",
+    "label": "(No Direct Text / Icon)",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "components\\geofence\\CampusMapEditor.jsx",
+    "line": 987,
+    "tag": "button",
+    "label": "(No Direct Text / Icon)",
+    "status": "NAMED_HANDLER",
+    "details": "Handler function: onLocateMeRequest",
+    "disabled": true
+  },
+  {
+    "file": "components\\geofence\\CampusMapEditor.jsx",
+    "line": 1009,
+    "tag": "button",
+    "label": "(No Direct Text / Icon)",
+    "status": "NAMED_HANDLER",
+    "details": "Handler function: handleFitAllGeofences",
+    "disabled": false
+  },
+  {
+    "file": "components\\geofence\\CampusMapEditor.jsx",
+    "line": 1027,
+    "tag": "button",
+    "label": "+",
+    "status": "NAMED_HANDLER",
+    "details": "Handler function: handleZoomIn",
+    "disabled": false
+  },
+  {
+    "file": "components\\geofence\\CampusMapEditor.jsx",
+    "line": 1035,
+    "tag": "button",
+    "label": "−",
+    "status": "NAMED_HANDLER",
+    "details": "Handler function: handleZoomOut",
+    "disabled": false
+  },
+  {
+    "file": "components\\geofence\\CampusMapEditor.jsx",
+    "line": 1046,
+    "tag": "button",
+    "label": "(No Direct Text / Icon)",
+    "status": "NAMED_HANDLER",
+    "details": "Handler function: handleToggleFullscreen",
+    "disabled": false
+  },
+  {
+    "file": "components\\layout\\BottomNav.jsx",
+    "line": 97,
+    "tag": "button",
+    "label": "More",
+    "status": "NAMED_HANDLER",
+    "details": "Handler function: onMoreClick",
+    "disabled": false
+  },
+  {
+    "file": "components\\layout\\MobileDrawer.jsx",
+    "line": 61,
+    "tag": "button",
+    "label": "(No Direct Text / Icon)",
+    "status": "NAMED_HANDLER",
+    "details": "Handler function: onClose",
+    "disabled": false
+  },
+  {
+    "file": "components\\layout\\MobileDrawer.jsx",
+    "line": 132,
+    "tag": "button",
+    "label": "Sign out",
+    "status": "NAMED_HANDLER",
+    "details": "Handler function: handleLogout",
+    "disabled": false
+  },
+  {
+    "file": "components\\layout\\NotificationBell.jsx",
+    "line": 142,
+    "tag": "button",
+    "label": "(No Direct Text / Icon)",
+    "status": "NAMED_HANDLER",
+    "details": "Handler function: handleToggle",
+    "disabled": false
+  },
+  {
+    "file": "components\\layout\\NotificationBell.jsx",
+    "line": 157,
+    "tag": "button",
+    "label": "Mark all read",
+    "status": "NAMED_HANDLER",
+    "details": "Handler function: handleMarkAll",
+    "disabled": false
+  },
+  {
+    "file": "components\\layout\\NotificationBell.jsx",
+    "line": 179,
+    "tag": "button",
+    "label": "Test",
+    "status": "NAMED_HANDLER",
+    "details": "Handler function: handleTestPush",
+    "disabled": true
+  },
+  {
+    "file": "components\\layout\\NotificationBell.jsx",
+    "line": 186,
+    "tag": "button",
+    "label": "Turn off",
+    "status": "NAMED_HANDLER",
+    "details": "Handler function: handleDisablePush",
+    "disabled": true
+  },
+  {
+    "file": "components\\layout\\NotificationBell.jsx",
+    "line": 197,
+    "tag": "button",
+    "label": "(No Direct Text / Icon)",
+    "status": "NAMED_HANDLER",
+    "details": "Handler function: handleEnablePush",
+    "disabled": true
+  },
+  {
+    "file": "components\\layout\\NotificationBell.jsx",
+    "line": 221,
+    "tag": "button",
+    "label": "(No Direct Text / Icon)",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "components\\layout\\QuickSearch.jsx",
+    "line": 106,
+    "tag": "button",
+    "label": "(No Direct Text / Icon)",
+    "status": "NAMED_HANDLER",
+    "details": "Handler function: onClose",
+    "disabled": false
+  },
+  {
+    "file": "components\\layout\\QuickSearch.jsx",
+    "line": 115,
+    "tag": "button",
+    "label": "(No Direct Text / Icon)",
+    "status": "NAMED_HANDLER",
+    "details": "Handler function: goToDate",
+    "disabled": false
+  },
+  {
+    "file": "components\\layout\\QuickSearch.jsx",
+    "line": 133,
+    "tag": "button",
+    "label": "(No Direct Text / Icon)",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "components\\layout\\QuickSearch.jsx",
+    "line": 155,
+    "tag": "button",
+    "label": "(No Direct Text / Icon)",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "components\\layout\\Sidebar.jsx",
+    "line": 93,
+    "tag": "button",
+    "label": "(No Direct Text / Icon)",
+    "status": "NAMED_HANDLER",
+    "details": "Handler function: toggleCollapse",
+    "disabled": false
+  },
+  {
+    "file": "components\\layout\\Sidebar.jsx",
+    "line": 108,
+    "tag": "button",
+    "label": "(No Direct Text / Icon)",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "components\\layout\\Sidebar.jsx",
+    "line": 127,
+    "tag": "button",
+    "label": "All Departments",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "components\\layout\\Sidebar.jsx",
+    "line": 138,
+    "tag": "button",
+    "label": "(No Direct Text / Icon)",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "components\\layout\\Sidebar.jsx",
+    "line": 178,
+    "tag": "button",
+    "label": "(No Direct Text / Icon)",
+    "status": "NAMED_HANDLER",
+    "details": "Handler function: toggleCollapse",
+    "disabled": false
+  },
+  {
+    "file": "components\\layout\\Sidebar.jsx",
+    "line": 246,
+    "tag": "button",
+    "label": "(No Direct Text / Icon)",
+    "status": "NAMED_HANDLER",
+    "details": "Handler function: handleLogout",
+    "disabled": false
+  },
+  {
+    "file": "components\\layout\\Sidebar.jsx",
+    "line": 256,
+    "tag": "button",
+    "label": "(No Direct Text / Icon)",
+    "status": "NAMED_HANDLER",
+    "details": "Handler function: handleLogout",
+    "disabled": false
+  },
+  {
+    "file": "components\\layout\\TopBar.jsx",
+    "line": 100,
+    "tag": "button",
+    "label": "(No Direct Text / Icon)",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "components\\ui\\index.jsx",
+    "line": 191,
+    "tag": "button",
+    "label": "(No Direct Text / Icon)",
+    "status": "NO_ACTION",
+    "details": "Button element without onClick, submit, or link",
+    "disabled": true
+  },
+  {
+    "file": "components\\ui\\index.jsx",
+    "line": 380,
+    "tag": "button",
+    "label": "(No Direct Text / Icon)",
+    "status": "NAMED_HANDLER",
+    "details": "Handler function: onClose",
+    "disabled": false
+  },
+  {
+    "file": "components\\ui\\index.jsx",
+    "line": 504,
+    "tag": "Button",
+    "label": "Export",
+    "status": "NAMED_HANDLER",
+    "details": "Handler function: exportToCSV",
+    "disabled": false
+  },
+  {
+    "file": "components\\ui\\index.jsx",
+    "line": 510,
+    "tag": "Button",
+    "label": "Columns",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "components\\ui\\index.jsx",
+    "line": 544,
+    "tag": "Button",
+    "label": "(No Direct Text / Icon)",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "components\\ui\\index.jsx",
+    "line": 625,
+    "tag": "Button",
+    "label": "← Prev",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": true
+  },
+  {
+    "file": "components\\ui\\index.jsx",
+    "line": 652,
+    "tag": "button",
+    "label": "(No Direct Text / Icon)",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "components\\ui\\index.jsx",
+    "line": 666,
+    "tag": "Button",
+    "label": "Next →",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": true
+  },
+  {
+    "file": "components\\ui\\index.jsx",
+    "line": 706,
+    "tag": "Link",
+    "label": "(No Direct Text / Icon)",
+    "status": "NAVIGATION",
+    "details": "Router navigation link",
+    "disabled": false
+  },
+  {
+    "file": "components\\ui\\index.jsx",
+    "line": 726,
+    "tag": "button",
+    "label": "(No Direct Text / Icon)",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  },
+  {
+    "file": "components\\ui\\index.jsx",
+    "line": 787,
+    "tag": "Button",
+    "label": "Cancel",
+    "status": "NAMED_HANDLER",
+    "details": "Handler function: onClose",
+    "disabled": true
+  },
+  {
+    "file": "components\\ui\\index.jsx",
+    "line": 790,
+    "tag": "Button",
+    "label": "(No Direct Text / Icon)",
+    "status": "NAMED_HANDLER",
+    "details": "Handler function: onConfirm",
+    "disabled": false
+  },
+  {
+    "file": "components\\ui\\index.jsx",
+    "line": 833,
+    "tag": "button",
+    "label": "(No Direct Text / Icon)",
+    "status": "NAMED_HANDLER",
+    "details": "Handler function: onDismiss",
+    "disabled": false
+  },
+  {
+    "file": "components\\ui\\Toast.jsx",
+    "line": 42,
+    "tag": "button",
+    "label": "(No Direct Text / Icon)",
+    "status": "FUNCTION_EXPRESSION",
+    "details": "Inline function body",
+    "disabled": false
+  }
+]

@@ -319,7 +319,7 @@ fun AttendanceCheckInOutScreen(
     // Auto-navigate or notify upon successful check-in/out
     LaunchedEffect(autoCaptureState) {
         if (autoCaptureState == AutoCaptureState.SUCCESS) {
-            delay(1400)
+            delay(2000)
             viewModel.loadTodaySummary()
             onAttendanceSuccess()
         }
@@ -334,40 +334,16 @@ fun AttendanceCheckInOutScreen(
 
     Scaffold(
         topBar = {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = FaflowSpacing.md, vertical = FaflowSpacing.sm),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                IconButton(onClick = {
+            com.governence.faflow.ui.components.AppTopBar(
+                title = "Attendance",
+                subtitle = "$todayDateFormatted • $currentTimeFormatted",
+                canNavigateBack = true,
+                onNavigateBack = {
                     viewModel.cancelVerification()
                     cameraController.stopCamera()
                     onNavigateBack()
-                }) {
-                    Icon(
-                        imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                        contentDescription = "Back",
-                        tint = MaterialTheme.colorScheme.onSurface
-                    )
-                }
-
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Text(
-                        text = "Attendance",
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onSurface
-                    )
-                    Text(
-                        text = "$todayDateFormatted • $currentTimeFormatted",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-
-                Row(verticalAlignment = Alignment.CenterVertically) {
+                },
+                actions = {
                     if (isSupervisor) {
                         IconButton(onClick = {
                             viewModel.loadSupervisorLiveStatus()
@@ -400,13 +376,14 @@ fun AttendanceCheckInOutScreen(
                         )
                     }
                 }
-            }
+            )
         },
-        containerColor = MaterialTheme.colorScheme.background
+        containerColor = com.governence.faflow.ui.theme.FaflowBg
     ) { innerPadding ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
+                .background(com.governence.faflow.ui.theme.FaflowBg)
                 .padding(innerPadding)
                 .padding(horizontal = FaflowSpacing.lg),
             horizontalAlignment = Alignment.CenterHorizontally
@@ -756,11 +733,18 @@ fun AttendanceCheckInOutScreen(
                                 textAlign = TextAlign.Center
                             )
                             Spacer(modifier = Modifier.height(FaflowSpacing.lg))
-                            FaflowPillButton(
-                                text = "Enable Camera",
-                                onClick = { cameraPermissionLauncher.launch(Manifest.permission.CAMERA) },
-                                isPrimary = true
-                            )
+                            Row(horizontalArrangement = Arrangement.spacedBy(FaflowSpacing.sm)) {
+                                FaflowPillButton(
+                                    text = "Enable Camera",
+                                    onClick = { cameraPermissionLauncher.launch(Manifest.permission.CAMERA) },
+                                    isPrimary = true
+                                )
+                                FaflowPillButton(
+                                    text = "App Settings",
+                                    onClick = { openAppSettings() },
+                                    isPrimary = false
+                                )
+                            }
                         }
                     }
 
@@ -835,6 +819,50 @@ fun AttendanceCheckInOutScreen(
                                             style = MaterialTheme.typography.bodySmall,
                                             fontWeight = FontWeight.Bold,
                                             color = Color.White
+                                        )
+                                    }
+                                }
+                            }
+
+                            // 4. Attendance Verified Tick Screen Overlay
+                            if (autoCaptureState == AutoCaptureState.SUCCESS || eligibilityState is AttendanceEligibilityState.ServerAccepted) {
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxSize()
+                                        .background(Color.Black.copy(alpha = 0.88f)),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Column(
+                                        horizontalAlignment = Alignment.CenterHorizontally,
+                                        verticalArrangement = Arrangement.Center,
+                                        modifier = Modifier.padding(24.dp)
+                                    ) {
+                                        Box(
+                                            modifier = Modifier
+                                                .size(88.dp)
+                                                .clip(CircleShape)
+                                                .background(StatusSuccess),
+                                            contentAlignment = Alignment.Center
+                                        ) {
+                                            Icon(
+                                                imageVector = Icons.Default.Check,
+                                                contentDescription = "Success Tick",
+                                                tint = Color.White,
+                                                modifier = Modifier.size(52.dp)
+                                            )
+                                        }
+                                        Spacer(modifier = Modifier.height(20.dp))
+                                        Text(
+                                            text = if (uiState.isShiftActive) "Check-In Confirmed!" else "Check-Out Confirmed!",
+                                            style = MaterialTheme.typography.titleLarge,
+                                            fontWeight = FontWeight.Bold,
+                                            color = Color.White
+                                        )
+                                        Spacer(modifier = Modifier.height(8.dp))
+                                        Text(
+                                            text = "Attendance verified & synchronized",
+                                            style = MaterialTheme.typography.bodyMedium,
+                                            color = Color.White.copy(alpha = 0.8f)
                                         )
                                     }
                                 }
@@ -1172,13 +1200,10 @@ private fun ShiftStateBanner(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(18.dp),
         colors = CardDefaults.cardColors(
-            containerColor = when (shiftState) {
-                ShiftState.ON_DUTY -> Color(0xFF065F46).copy(alpha = 0.08f)
-                ShiftState.COMPLETED -> PrimaryBlue.copy(alpha = 0.08f)
-                ShiftState.NOT_STARTED -> MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
-            }
+            containerColor = Color.White
         ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+        border = androidx.compose.foundation.BorderStroke(1.dp, com.governence.faflow.ui.theme.FaflowBorder),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.5.dp)
     ) {
         Row(
             modifier = Modifier
@@ -1389,7 +1414,8 @@ private fun AttendanceHistorySheetContent(
                     Card(
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(14.dp),
-                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.35f))
+                        colors = CardDefaults.cardColors(containerColor = Color.White),
+                        border = androidx.compose.foundation.BorderStroke(1.dp, com.governence.faflow.ui.theme.FaflowBorder)
                     ) {
                         Row(
                             modifier = Modifier
@@ -1581,7 +1607,8 @@ private fun SupervisorLiveStatusSheetContent(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .clip(RoundedCornerShape(10.dp))
-                                .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.35f))
+                                .background(Color.White)
+                                .border(1.dp, com.governence.faflow.ui.theme.FaflowBorder, RoundedCornerShape(10.dp))
                                 .padding(horizontal = 12.dp, vertical = 8.dp),
                             horizontalArrangement = Arrangement.SpaceBetween,
                             verticalAlignment = Alignment.CenterVertically

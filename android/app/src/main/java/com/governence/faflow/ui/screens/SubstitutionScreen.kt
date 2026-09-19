@@ -12,15 +12,18 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Groups
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.SwapHoriz
@@ -81,7 +84,8 @@ import com.governence.faflow.ui.viewmodels.SubstitutionViewModel
 @Composable
 fun SubstitutionScreen(
     viewModel: SubstitutionViewModel,
-    onNavigateBack: () -> Unit
+    onNavigateBack: () -> Unit,
+    onNavigateToStudentAttendance: (periodNumber: Int?, classId: Int?) -> Unit = { _, _ -> }
 ) {
     val state by viewModel.uiState.collectAsState()
     var includeCrossDept by remember { mutableStateOf(false) }
@@ -94,23 +98,45 @@ fun SubstitutionScreen(
                 onNavigateBack = onNavigateBack
             )
         },
-        containerColor = MaterialTheme.colorScheme.background
+        containerColor = com.governence.faflow.ui.theme.FaflowBg
     ) { innerPadding ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
+                .background(com.governence.faflow.ui.theme.FaflowBg)
                 .padding(innerPadding)
         ) {
-            // Segmented Tab Switcher
+            // 3-Segmented Native Tab Switcher
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = FaflowSpacing.lg, vertical = FaflowSpacing.sm)
                     .clip(FaflowShapes.pill)
-                    .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
+                    .background(com.governence.faflow.ui.theme.FaflowDivider)
                     .padding(4.dp)
             ) {
+                val isMyDuties = state.activeTab == "MY_DUTIES"
                 val isNeedsCover = state.activeTab == "NEEDS_COVER"
+                val isCovered = state.activeTab == "COVERED"
+
+                Box(
+                    modifier = Modifier
+                        .weight(1f)
+                        .clip(FaflowShapes.pill)
+                        .background(if (isMyDuties) MaterialTheme.colorScheme.primary else Color.Transparent)
+                        .clickable { viewModel.setActiveTab("MY_DUTIES") }
+                        .padding(vertical = 8.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = "Assigned (${state.myAssignedDuties.size})",
+                        style = MaterialTheme.typography.labelMedium,
+                        fontWeight = if (isMyDuties) FontWeight.Bold else FontWeight.Medium,
+                        color = if (isMyDuties) Color.White else MaterialTheme.colorScheme.onSurface,
+                        maxLines = 1
+                    )
+                }
+
                 Box(
                     modifier = Modifier
                         .weight(1f)
@@ -124,14 +150,16 @@ fun SubstitutionScreen(
                         text = "Needs Cover (${state.leavesNeedingCoverage.size})",
                         style = MaterialTheme.typography.labelMedium,
                         fontWeight = if (isNeedsCover) FontWeight.Bold else FontWeight.Medium,
-                        color = if (isNeedsCover) Color.White else MaterialTheme.colorScheme.onSurface
+                        color = if (isNeedsCover) Color.White else MaterialTheme.colorScheme.onSurface,
+                        maxLines = 1
                     )
                 }
+
                 Box(
                     modifier = Modifier
                         .weight(1f)
                         .clip(FaflowShapes.pill)
-                        .background(if (!isNeedsCover) MaterialTheme.colorScheme.primary else Color.Transparent)
+                        .background(if (isCovered) MaterialTheme.colorScheme.primary else Color.Transparent)
                         .clickable { viewModel.setActiveTab("COVERED") }
                         .padding(vertical = 8.dp),
                     contentAlignment = Alignment.Center
@@ -139,8 +167,9 @@ fun SubstitutionScreen(
                     Text(
                         text = "Covered (${state.coveredLeaves.size})",
                         style = MaterialTheme.typography.labelMedium,
-                        fontWeight = if (!isNeedsCover) FontWeight.Bold else FontWeight.Medium,
-                        color = if (!isNeedsCover) Color.White else MaterialTheme.colorScheme.onSurface
+                        fontWeight = if (isCovered) FontWeight.Bold else FontWeight.Medium,
+                        color = if (isCovered) Color.White else MaterialTheme.colorScheme.onSurface,
+                        maxLines = 1
                     )
                 }
             }
@@ -173,40 +202,69 @@ fun SubstitutionScreen(
                 }
             }
 
-            if (state.isLoading && state.leavesNeedingCoverage.isEmpty()) {
+            if (state.isLoading && state.leavesNeedingCoverage.isEmpty() && state.myAssignedDuties.isEmpty()) {
                 Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                     CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
                 }
-            } else if (state.errorMessage != null && state.leavesNeedingCoverage.isEmpty()) {
+            } else if (state.errorMessage != null && state.leavesNeedingCoverage.isEmpty() && state.myAssignedDuties.isEmpty()) {
                 ErrorRetryView(
                     message = state.errorMessage!!,
                     onRetry = { viewModel.loadData() }
                 )
             } else {
-                val currentItems = if (state.activeTab == "NEEDS_COVER") state.leavesNeedingCoverage else state.coveredLeaves
-
-                if (currentItems.isEmpty()) {
-                    EmptyStateView(
-                        title = if (state.activeTab == "NEEDS_COVER") "No Leaves Pending Cover" else "No Covered Leaves",
-                        description = if (state.activeTab == "NEEDS_COVER")
-                            "You have no active leave requests that still need a substitute."
-                        else
-                            "None of your current leaves have a substitute assigned yet.",
-                        icon = Icons.Default.SwapHoriz
-                    )
-                } else {
-                    LazyColumn(
-                        modifier = Modifier.fillMaxSize(),
-                        contentPadding = PaddingValues(horizontal = FaflowSpacing.lg, vertical = FaflowSpacing.md),
-                        verticalArrangement = Arrangement.spacedBy(FaflowSpacing.md)
-                    ) {
-                        items(currentItems) { leave ->
-                            SubstitutionLeaveCard(
-                                leave = leave,
-                                isNeedsCover = state.activeTab == "NEEDS_COVER",
-                                onFindSubstitute = { viewModel.selectLeaveForCandidates(leave, includeCrossDept) },
-                                onUndoAssignment = { viewModel.undoAssignment(leave.id) }
+                when (state.activeTab) {
+                    "MY_DUTIES" -> {
+                        if (state.myAssignedDuties.isEmpty()) {
+                            EmptyStateView(
+                                title = "No Substitution Duties",
+                                description = "You currently have no substitution duties assigned to cover for other faculty.",
+                                icon = Icons.Default.SwapHoriz
                             )
+                        } else {
+                            LazyColumn(
+                                modifier = Modifier.fillMaxSize(),
+                                contentPadding = PaddingValues(horizontal = FaflowSpacing.lg, vertical = FaflowSpacing.md),
+                                verticalArrangement = Arrangement.spacedBy(FaflowSpacing.md)
+                            ) {
+                                items(state.myAssignedDuties) { duty ->
+                                    AssignedDutyCard(
+                                        duty = duty,
+                                        onMarkAttendance = {
+                                            onNavigateToStudentAttendance(duty.periodNumber, null)
+                                        }
+                                    )
+                                }
+                            }
+                        }
+                    }
+
+                    else -> {
+                        val currentItems = if (state.activeTab == "NEEDS_COVER") state.leavesNeedingCoverage else state.coveredLeaves
+
+                        if (currentItems.isEmpty()) {
+                            EmptyStateView(
+                                title = if (state.activeTab == "NEEDS_COVER") "No Leaves Pending Cover" else "No Covered Leaves",
+                                description = if (state.activeTab == "NEEDS_COVER")
+                                    "You have no active leave requests that still need a substitute."
+                                else
+                                    "None of your current leaves have a substitute assigned yet.",
+                                icon = Icons.Default.SwapHoriz
+                            )
+                        } else {
+                            LazyColumn(
+                                modifier = Modifier.fillMaxSize(),
+                                contentPadding = PaddingValues(horizontal = FaflowSpacing.lg, vertical = FaflowSpacing.md),
+                                verticalArrangement = Arrangement.spacedBy(FaflowSpacing.md)
+                            ) {
+                                items(currentItems) { leave ->
+                                    SubstitutionLeaveCard(
+                                        leave = leave,
+                                        isNeedsCover = state.activeTab == "NEEDS_COVER",
+                                        onFindSubstitute = { viewModel.selectLeaveForCandidates(leave, includeCrossDept) },
+                                        onUndoAssignment = { viewModel.undoAssignment(leave.id) }
+                                    )
+                                }
+                            }
                         }
                     }
                 }
@@ -332,13 +390,14 @@ fun SubstitutionScreen(
                         LazyColumn(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .height(320.dp),
-                            verticalArrangement = Arrangement.spacedBy(FaflowSpacing.sm)
+                                .heightIn(max = 450.dp),
+                            verticalArrangement = Arrangement.spacedBy(FaflowSpacing.md)
                         ) {
-                            items(state.candidates) { candidate ->
+                            itemsIndexed(state.candidates) { index, candidate ->
                                 CandidateRecommendationRow(
                                     candidate = candidate,
                                     isAssigning = state.isAssignmentInProgress,
+                                    isTopRecommendation = (index == 0),
                                     onAssign = {
                                         viewModel.assignCandidate(selectedLeave.id, candidate.teacherId)
                                     }
@@ -362,8 +421,9 @@ fun SubstitutionLeaveCard(
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = FaflowShapes.large,
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+        colors = CardDefaults.cardColors(containerColor = Color.White),
+        border = androidx.compose.foundation.BorderStroke(1.dp, com.governence.faflow.ui.theme.FaflowBorder),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.5.dp)
     ) {
         Column(modifier = Modifier.padding(FaflowSpacing.md)) {
             Row(
@@ -475,26 +535,73 @@ fun SubstitutionLeaveCard(
 fun CandidateRecommendationRow(
     candidate: com.governence.faflow.core.network.RecommendationOutDto,
     isAssigning: Boolean,
+    isTopRecommendation: Boolean = false,
     onAssign: () -> Unit
 ) {
-    val score = (candidate.compatibilityScore * 100).toInt()
-    val progress = candidate.compatibilityScore.coerceIn(0f, 1f)
+    val score = candidate.normalizedScore
+    val progress = (score / 100f).coerceIn(0f, 1f)
+    val tier = candidate.suitabilityTier
     val todayLoad = candidate.todayWorkload
+    val projToday = candidate.projectedTodayWorkload ?: todayLoad?.let { it + 1 }
     val weekLoad = candidate.weekWorkload
+    val projWeek = candidate.projectedWeekWorkload ?: weekLoad?.let { it + 1 }
     val contLoad = candidate.longestContinuousPeriods
-    // Projected values after assignment
-    val projToday = todayLoad?.let { it + 1 }
-    val projWeek = weekLoad?.let { it + 1 }
-    val projCont = contLoad?.let { it + 1 }
+    val projCont = candidate.projectedLongestContinuousPeriods ?: contLoad?.let { it + 1 }
+
+    val tierColor = when (tier) {
+        "EXCELLENT" -> StatusSuccess
+        "GOOD" -> PrimaryBlue
+        "FAIR" -> StatusWarning
+        else -> MaterialTheme.colorScheme.onSurfaceVariant
+    }
+
+    val tierBgColor = when (tier) {
+        "EXCELLENT" -> StatusSuccess.copy(alpha = 0.12f)
+        "GOOD" -> PrimaryBlue.copy(alpha = 0.12f)
+        "FAIR" -> StatusWarning.copy(alpha = 0.12f)
+        else -> MaterialTheme.colorScheme.surfaceVariant
+    }
 
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = FaflowShapes.medium,
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.35f)),
-        border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.2f))
+        colors = CardDefaults.cardColors(
+            containerColor = Color.White
+        ),
+        border = androidx.compose.foundation.BorderStroke(
+            if (isTopRecommendation) 1.5.dp else 1.dp,
+            if (isTopRecommendation) PrimaryBlue.copy(alpha = 0.4f) else com.governence.faflow.ui.theme.FaflowBorder
+        )
     ) {
-        Column(modifier = Modifier.padding(FaflowSpacing.sm)) {
-            // Header: Avatar, Name, Dept, Match Score, Assign Button
+        Column(modifier = Modifier.padding(FaflowSpacing.md)) {
+            // Top Badge if #1 choice
+            if (isTopRecommendation) {
+                Row(
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(6.dp))
+                        .background(PrimaryBlue.copy(alpha = 0.15f))
+                        .padding(horizontal = 8.dp, vertical = 3.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.CheckCircle,
+                        contentDescription = null,
+                        tint = PrimaryBlue,
+                        modifier = Modifier.size(13.dp)
+                    )
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text(
+                        text = "BEST RECOMMENDATION",
+                        fontSize = 10.sp,
+                        fontWeight = FontWeight.Black,
+                        color = PrimaryBlue,
+                        letterSpacing = 0.5.sp
+                    )
+                }
+                Spacer(modifier = Modifier.height(FaflowSpacing.xs))
+            }
+
+            // Header: Avatar, Name, Dept, Tier Badge, Score
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -503,76 +610,83 @@ fun CandidateRecommendationRow(
                 Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
                     Box(
                         modifier = Modifier
-                            .size(38.dp)
+                            .size(42.dp)
                             .clip(FaflowShapes.pill)
-                            .background(PrimaryBlue.copy(alpha = 0.15f)),
+                            .background(tierColor.copy(alpha = 0.15f)),
                         contentAlignment = Alignment.Center
                     ) {
                         Text(
                             text = candidate.teacherName.take(1).uppercase(),
-                            fontWeight = FontWeight.Bold,
-                            color = PrimaryBlue,
-                            fontSize = 16.sp
+                            fontWeight = FontWeight.Black,
+                            color = tierColor,
+                            fontSize = 18.sp
                         )
                     }
-                    Spacer(modifier = Modifier.width(FaflowSpacing.xs))
+                    Spacer(modifier = Modifier.width(FaflowSpacing.sm))
                     Column(modifier = Modifier.weight(1f)) {
                         Text(
                             text = candidate.teacherName,
-                            style = MaterialTheme.typography.titleSmall,
-                            fontWeight = FontWeight.Bold
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onSurface
                         )
                         if (candidate.department != null) {
                             Text(
                                 text = candidate.department!!,
-                                fontSize = 10.sp,
+                                fontSize = 11.sp,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                         }
                     }
                 }
-                FaflowPillButton(
-                    text = if (isAssigning) "…" else "Assign",
-                    onClick = onAssign,
-                    enabled = !isAssigning,
-                    isPrimary = true,
-                    modifier = Modifier.height(32.dp)
-                )
+
+                // Calibrated Suitability Tier & Normalized Score (score/100, NEVER %)
+                Column(horizontalAlignment = Alignment.End) {
+                    Box(
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(6.dp))
+                            .background(tierBgColor)
+                            .padding(horizontal = 8.dp, vertical = 2.dp)
+                    ) {
+                        Text(
+                            text = tier,
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.Black,
+                            color = tierColor,
+                            letterSpacing = 0.5.sp
+                        )
+                    }
+                    Spacer(modifier = Modifier.height(2.dp))
+                    Text(
+                        text = "$score/100",
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.ExtraBold,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                }
             }
 
             Spacer(modifier = Modifier.height(FaflowSpacing.xs))
 
-            // Match Score Bar
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                LinearProgressIndicator(
-                    progress = { progress },
-                    modifier = Modifier
-                        .weight(1f)
-                        .height(6.dp)
-                        .clip(FaflowShapes.pill),
-                    color = if (score >= 75) StatusSuccess else if (score >= 45) StatusWarning else MaterialTheme.colorScheme.primary,
-                    trackColor = MaterialTheme.colorScheme.surfaceVariant
-                )
-                Spacer(modifier = Modifier.width(FaflowSpacing.xs))
-                Text(
-                    text = "$score% match",
-                    fontSize = 11.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = if (score >= 75) StatusSuccess else if (score >= 45) StatusWarning else MaterialTheme.colorScheme.primary
-                )
-            }
+            // Suitability Progress Bar (Bounded strictly 0.0 - 1.0)
+            LinearProgressIndicator(
+                progress = { progress },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(6.dp)
+                    .clip(FaflowShapes.pill),
+                color = tierColor,
+                trackColor = com.governence.faflow.ui.theme.FaflowDivider
+            )
 
-            // Workload Simulation Metrics Grid (matching web: Today / Back-to-Back / Weekly)
+            // Workload Simulation Metrics Grid (Today / Consecutive / Weekly)
             if (todayLoad != null || weekLoad != null || contLoad != null) {
                 Spacer(modifier = Modifier.height(FaflowSpacing.xs))
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
                         .clip(RoundedCornerShape(8.dp))
-                        .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
+                        .background(com.governence.faflow.ui.theme.FaflowDivider)
                         .padding(vertical = 6.dp),
                     horizontalArrangement = Arrangement.SpaceEvenly
                 ) {
@@ -581,63 +695,184 @@ fun CandidateRecommendationRow(
                         modifier = Modifier.weight(1f),
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
-                        Text("Today", fontSize = 9.sp, color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            fontWeight = FontWeight.SemiBold)
+                        Text(
+                            "Today",
+                            fontSize = 9.sp,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            fontWeight = FontWeight.SemiBold
+                        )
                         Text(
                             text = if (todayLoad == 0) "Free" else "${todayLoad}→${projToday}",
-                            fontSize = 11.sp, fontWeight = FontWeight.Bold,
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.Bold,
                             color = MaterialTheme.colorScheme.onSurface
                         )
                     }
                     // Vertical separator
-                    Box(modifier = Modifier.width(0.5.dp).height(28.dp)
-                        .background(MaterialTheme.colorScheme.outline.copy(alpha = 0.3f)))
-                    // Back-to-back
+                    Box(
+                        modifier = Modifier
+                            .width(0.5.dp)
+                            .height(26.dp)
+                            .background(MaterialTheme.colorScheme.outline.copy(alpha = 0.3f))
+                    )
+                    // Consecutive classes
                     Column(
                         modifier = Modifier.weight(1f),
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
-                        Text("B2B", fontSize = 9.sp, color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            fontWeight = FontWeight.SemiBold)
+                        Text(
+                            "Consecutive",
+                            fontSize = 9.sp,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            fontWeight = FontWeight.SemiBold
+                        )
                         val isFatigue = (projCont ?: 0) >= 4
                         Text(
                             text = if (contLoad == null) "—" else "${contLoad}→${projCont}",
-                            fontSize = 11.sp, fontWeight = FontWeight.Bold,
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.Bold,
                             color = if (isFatigue) StatusWarning else MaterialTheme.colorScheme.onSurface
                         )
-                        if (isFatigue) {
-                            Text("⚠ fatigue", fontSize = 9.sp, color = StatusWarning,
-                                fontWeight = FontWeight.Bold)
-                        }
                     }
                     // Vertical separator
-                    Box(modifier = Modifier.width(0.5.dp).height(28.dp)
-                        .background(MaterialTheme.colorScheme.outline.copy(alpha = 0.3f)))
-                    // Weekly
+                    Box(
+                        modifier = Modifier
+                            .width(0.5.dp)
+                            .height(26.dp)
+                            .background(MaterialTheme.colorScheme.outline.copy(alpha = 0.3f))
+                    )
+                    // Weekly load
                     Column(
                         modifier = Modifier.weight(1f),
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
-                        Text("Weekly", fontSize = 9.sp, color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            fontWeight = FontWeight.SemiBold)
+                        Text(
+                            "Weekly",
+                            fontSize = 9.sp,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            fontWeight = FontWeight.SemiBold
+                        )
                         Text(
                             text = if (weekLoad == null) "—" else "${weekLoad}→${projWeek}",
-                            fontSize = 11.sp, fontWeight = FontWeight.Bold,
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.Bold,
                             color = MaterialTheme.colorScheme.onSurface
                         )
                     }
                 }
             }
 
-            // Reason tags
+            // Structured Human-Readable Reasons
             val reasons = candidate.reasons
             if (reasons.isNotEmpty()) {
-                Spacer(modifier = Modifier.height(4.dp))
+                Spacer(modifier = Modifier.height(6.dp))
+                Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                    reasons.take(3).forEach { reasonText ->
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Text(
+                                text = if (reasonText.contains("⚠")) "⚠" else "✓",
+                                fontSize = 10.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = if (reasonText.contains("⚠")) StatusWarning else StatusSuccess
+                            )
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text(
+                                text = reasonText.replace("⚠", "").trim(),
+                                fontSize = 11.sp,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                maxLines = 1
+                            )
+                        }
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(FaflowSpacing.sm))
+
+            // One Clear Primary Assign Button
+            FaflowPillButton(
+                text = if (isAssigning) "Assigning Substitute…" else "Assign ${candidate.teacherName.split(" ").firstOrNull() ?: "Teacher"}",
+                onClick = onAssign,
+                enabled = !isAssigning,
+                isPrimary = true,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(38.dp)
+            )
+        }
+    }
+}
+
+@Composable
+fun AssignedDutyCard(
+    duty: LeaveRequest,
+    onMarkAttendance: () -> Unit
+) {
+    FaflowSurface(
+        modifier = Modifier.fillMaxWidth(),
+        backgroundColor = com.governence.faflow.ui.theme.FaflowSurface,
+        borderColor = com.governence.faflow.ui.theme.PrimaryBlue.copy(alpha = 0.3f),
+        contentPadding = PaddingValues(FaflowSpacing.lg)
+    ) {
+        Column(modifier = Modifier.fillMaxWidth()) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .clip(FaflowShapes.pill)
+                            .background(com.governence.faflow.ui.theme.PrimaryBlue)
+                            .padding(horizontal = 8.dp, vertical = 3.dp)
+                    ) {
+                        Text(
+                            text = "PERIOD ${duty.periodNumber}",
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color.White
+                        )
+                    }
+                    Text(
+                        text = duty.date,
+                        style = MaterialTheme.typography.bodySmall,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+                FaflowStatusBadge(
+                    text = duty.status.name,
+                    statusColor = com.governence.faflow.ui.theme.StatusSuccess
+                )
+            }
+            Spacer(modifier = Modifier.height(10.dp))
+            Text(
+                text = "Assigned Substitution Duty · Period ${duty.periodNumber}",
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onSurface
+            )
+            if (duty.reason.isNotBlank()) {
                 Text(
-                    text = reasons.take(2).joinToString(" · "),
-                    fontSize = 10.sp,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    maxLines = 1
+                    text = "Reason: ${duty.reason}",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+            Spacer(modifier = Modifier.height(14.dp))
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.End
+            ) {
+                FaflowPillButton(
+                    text = "Mark Class Attendance",
+                    onClick = onMarkAttendance,
+                    icon = Icons.Default.Groups,
+                    isPrimary = true
                 )
             }
         }

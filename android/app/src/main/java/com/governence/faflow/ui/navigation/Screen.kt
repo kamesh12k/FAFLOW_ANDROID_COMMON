@@ -37,6 +37,14 @@ sealed class Screen(val route: String) {
     data object Settings : Screen("settings")
     data object SyncStatus : Screen("sync_status")
     data object FaceEnrollment : Screen("face_enrollment")
+    data object StudentAttendance : Screen("student_attendance?period={period}&classId={classId}") {
+        fun createRoute(periodNumber: Int? = null, classId: Int? = null): String {
+            val p = periodNumber ?: -1
+            val c = classId ?: -1
+            return "student_attendance?period=$p&classId=$c"
+        }
+    }
+    data object HodStudentAttendance : Screen("hod_student_attendance")
 
     // HOD Dedicated Screens
     data object HodDashboard : Screen("hod_dashboard")

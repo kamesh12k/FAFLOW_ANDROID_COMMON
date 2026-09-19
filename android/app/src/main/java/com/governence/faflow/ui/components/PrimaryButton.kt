@@ -42,7 +42,7 @@ fun PrimaryGradientButton(
             .fillMaxWidth()
             .height(56.dp),
         enabled = enabled && !isLoading,
-        shape = RoundedCornerShape(16.dp),
+        shape = com.governence.faflow.ui.theme.FaflowShapes.button,
         colors = ButtonDefaults.buttonColors(
             containerColor = Color.Transparent,
             disabledContainerColor = MaterialTheme.colorScheme.surfaceVariant
@@ -50,7 +50,7 @@ fun PrimaryGradientButton(
         contentPadding = PaddingValues()
     ) {
         val brush = if (enabled && !isLoading) {
-            Brush.horizontalGradient(listOf(PrimaryBlue, SecondaryTeal))
+            Brush.horizontalGradient(listOf(com.governence.faflow.ui.theme.FaflowNavy, com.governence.faflow.ui.theme.FaflowNavyLight))
         } else {
             Brush.horizontalGradient(listOf(Color.Gray, Color.DarkGray))
         }
@@ -59,7 +59,7 @@ fun PrimaryGradientButton(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(56.dp)
-                .background(brush, RoundedCornerShape(16.dp)),
+                .background(brush, com.governence.faflow.ui.theme.FaflowShapes.button),
             contentAlignment = Alignment.Center
         ) {
             if (isLoading) {

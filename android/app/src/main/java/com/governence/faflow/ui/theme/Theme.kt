@@ -15,29 +15,10 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
 import androidx.core.view.WindowCompat
 
-private val DarkColorScheme = darkColorScheme(
-    primary = PrimaryBlueDark,
-    onPrimary = TextPrimaryDark,
-    primaryContainer = PrimaryBlue,
-    onPrimaryContainer = TextPrimaryDark,
-    secondary = SecondaryTeal,
-    onSecondary = DarkBackground,
-    tertiary = TertiaryEmerald,
-    background = DarkBackground,
-    onBackground = TextPrimaryDark,
-    surface = DarkSurface,
-    onSurface = TextPrimaryDark,
-    surfaceVariant = DarkSurfaceVariant,
-    onSurfaceVariant = TextSecondaryDark,
-    outline = DarkBorder,
-    error = StatusError,
-    onError = TextPrimaryDark
-)
-
-private val LightColorScheme = lightColorScheme(
+private val DarkColorScheme = lightColorScheme(
     primary = FaflowNavy,
     onPrimary = FaflowSurface,
-    primaryContainer = FaflowNavyTint,
+    primaryContainer = FaflowDivider,
     onPrimaryContainer = FaflowNavy,
     secondary = FaflowTeal,
     onSecondary = FaflowSurface,
@@ -46,7 +27,26 @@ private val LightColorScheme = lightColorScheme(
     onBackground = FaflowText1,
     surface = FaflowSurface,
     onSurface = FaflowText1,
-    surfaceVariant = FaflowNavyTint,
+    surfaceVariant = FaflowDivider,
+    onSurfaceVariant = FaflowText2,
+    outline = FaflowBorder,
+    error = FaflowDanger,
+    onError = FaflowSurface
+)
+
+private val LightColorScheme = lightColorScheme(
+    primary = FaflowNavy,
+    onPrimary = FaflowSurface,
+    primaryContainer = FaflowDivider,
+    onPrimaryContainer = FaflowNavy,
+    secondary = FaflowTeal,
+    onSecondary = FaflowSurface,
+    tertiary = FaflowViolet,
+    background = FaflowBg,
+    onBackground = FaflowText1,
+    surface = FaflowSurface,
+    onSurface = FaflowText1,
+    surfaceVariant = FaflowDivider,
     onSurfaceVariant = FaflowText2,
     outline = FaflowBorder,
     error = FaflowDanger,
@@ -55,17 +55,24 @@ private val LightColorScheme = lightColorScheme(
 
 @Composable
 fun FAFLOWTheme(
-    darkTheme: Boolean = isSystemInDarkTheme(),
+    darkTheme: Boolean = false,
     dynamicColor: Boolean = false,
     content: @Composable () -> Unit
 ) {
-    val colorScheme = when {
-        dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> {
-            val context = LocalContext.current
-            if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
+    val colorScheme = LightColorScheme
+
+    val view = LocalView.current
+    if (!view.isInEditMode) {
+        SideEffect {
+            val window = (view.context as? Activity)?.window
+            if (window != null) {
+                window.statusBarColor = androidx.compose.ui.graphics.Color.Transparent.toArgb()
+                window.navigationBarColor = androidx.compose.ui.graphics.Color.Transparent.toArgb()
+                val controller = WindowCompat.getInsetsController(window, view)
+                controller.isAppearanceLightStatusBars = !darkTheme
+                controller.isAppearanceLightNavigationBars = !darkTheme
+            }
         }
-        darkTheme -> DarkColorScheme
-        else -> LightColorScheme
     }
 
     MaterialTheme(

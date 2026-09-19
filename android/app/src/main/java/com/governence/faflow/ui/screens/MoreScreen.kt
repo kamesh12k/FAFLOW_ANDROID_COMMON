@@ -69,33 +69,18 @@ fun MoreScreen(
     onNavigateToGeofences: () -> Unit = {},
     onNavigateToLeaveApprovals: () -> Unit = {},
     onNavigateToLiveAttendance: () -> Unit = {},
-    onNavigateToFacultyDirectory: () -> Unit = {}
+    onNavigateToFacultyDirectory: () -> Unit = {},
+    onNavigateToStudentAttendance: () -> Unit = {}
 ) {
     val roleLower = userRole?.lowercase() ?: "teacher"
     val isManagement = roleLower == "admin" || roleLower == "hod" || roleLower == "principal" || roleLower == "governance" || roleLower == "manager"
 
     Scaffold(
         topBar = {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .background(com.governence.faflow.ui.theme.FaflowBg)
-                    .padding(horizontal = 18.dp, vertical = 12.dp)
-            ) {
-                Text(
-                    text = if (isManagement) "Operations hub" else "Faculty hub",
-                    fontSize = 19.sp,
-                    fontWeight = FontWeight.Bold,
-                    letterSpacing = (-0.01).sp,
-                    color = com.governence.faflow.ui.theme.FaflowText1
-                )
-                Spacer(modifier = Modifier.height(2.dp))
-                Text(
-                    text = if (isManagement) "Department administration & oversight" else "Services, preferences & management",
-                    fontSize = 12.sp,
-                    color = com.governence.faflow.ui.theme.FaflowText3
-                )
-            }
+            com.governence.faflow.ui.components.AppTopBar(
+                title = if (isManagement) "Operations Hub" else "Faculty Hub",
+                subtitle = if (isManagement) "Department administration & oversight" else "Services, preferences & management"
+            )
         },
         containerColor = com.governence.faflow.ui.theme.FaflowBg
     ) { innerPadding ->
@@ -159,6 +144,29 @@ fun MoreScreen(
                 }
             }
 
+            // Group 0: STUDENT ATTENDANCE
+            item {
+                Text(
+                    text = "ACADEMIC ATTENDANCE",
+                    fontSize = 10.5.sp,
+                    fontWeight = FontWeight.Bold,
+                    letterSpacing = 0.08.sp,
+                    color = com.governence.faflow.ui.theme.FaflowText3,
+                    modifier = Modifier.padding(start = 2.dp, top = if (isManagement) 20.dp else 8.dp, bottom = 8.dp)
+                )
+                com.governence.faflow.ui.components.FaflowListCard {
+                    com.governence.faflow.ui.components.FaflowListRow(
+                        icon = Icons.Default.Groups,
+                        iconBg = Color(0xFFEFF6FF),
+                        iconTint = com.governence.faflow.ui.theme.PrimaryBlue,
+                        title = "Student attendance",
+                        subtitle = "Per-hour marking, emergency classes & offline sync",
+                        showDivider = false,
+                        onClick = onNavigateToStudentAttendance
+                    )
+                }
+            }
+
             // Group 1: LEAVES & CREDITS
             item {
                 Text(
@@ -167,7 +175,7 @@ fun MoreScreen(
                     fontWeight = FontWeight.Bold,
                     letterSpacing = 0.08.sp,
                     color = com.governence.faflow.ui.theme.FaflowText3,
-                    modifier = Modifier.padding(start = 2.dp, top = if (isManagement) 20.dp else 8.dp, bottom = 8.dp)
+                    modifier = Modifier.padding(start = 2.dp, top = 20.dp, bottom = 8.dp)
                 )
                 com.governence.faflow.ui.components.FaflowListCard {
                     com.governence.faflow.ui.components.FaflowListRow(
