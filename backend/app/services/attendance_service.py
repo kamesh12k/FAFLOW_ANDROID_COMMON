@@ -261,15 +261,32 @@ class AttendanceService:
         return [AttendanceService._to_dto(r) for r in records]
 
     @staticmethod
-    def get_supervisor_live_status(db: Session, current_user: User) -> AttendanceSupervisorLiveStatusOut:
+    def get_supervisor_live_status(
+        db: Session,
+        current_user: User,
+        department_id: Optional[int] = None
+    ) -> AttendanceSupervisorLiveStatusOut:
         user_role = current_user.role.value if hasattr(current_user.role, "value") else str(current_user.role).lower()
         allowed_roles = [Role.admin.value, Role.system_admin.value, Role.principal.value, Role.manager.value, Role.governance.value]
         if user_role not in allowed_roles:
             raise DomainException("Access forbidden: Supervisor or Administrator privilege required", status_code=403)
 
+        # Department scoping: honor override for institution-wide admins; enforce current_user.department_id for HODs
+        if current_user.role in {Role.system_admin, Role.governance, Role.principal}:
+            dept_id = department_id
+        else:
+            dept_id = current_user.department_id
+
         today = date.today()
-        total_staff = db.query(User).filter(User.is_active == True).count()
-        today_records = db.query(StaffAttendanceRecord).filter(StaffAttendanceRecord.attendance_date == today).all()
+        staff_query = db.query(User).filter(User.is_active == True)
+        if dept_id is not None:
+            staff_query = staff_query.filter(User.department_id == dept_id)
+        total_staff = staff_query.count()
+
+        records_query = db.query(StaffAttendanceRecord).filter(StaffAttendanceRecord.attendance_date == today)
+        if dept_id is not None:
+            records_query = records_query.join(User, StaffAttendanceRecord.user_id == User.id).filter(User.department_id == dept_id)
+        today_records = records_query.all()
 
         checked_in = sum(1 for r in today_records if r.check_in_time is not None and r.check_out_time is None)
         checked_out = sum(1 for r in today_records if r.check_out_time is not None)

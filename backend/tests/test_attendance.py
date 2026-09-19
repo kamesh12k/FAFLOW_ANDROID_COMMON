@@ -220,3 +220,15 @@ def test_supervisor_live_status_unauthorized_teacher(db_session, test_teacher):
     with pytest.raises(DomainException) as exc:
         AttendanceService.get_supervisor_live_status(db_session, test_teacher)
     assert exc.value.status_code == 403
+
+
+def test_supervisor_live_status_endpoint_rbac_and_scoping(client, auth_headers_teacher, auth_headers_admin, db_session, test_admin, test_teacher, active_campus_geofence):
+    """Verifies that regular teachers cannot access supervisor live status (403), and admins receive 200 scoped."""
+    res_teacher = client.get("/attendance/admin/live-status", headers=auth_headers_teacher)
+    assert res_teacher.status_code == 403
+
+    res_admin = client.get("/attendance/admin/live-status", headers=auth_headers_admin)
+    assert res_admin.status_code == 200
+    data = res_admin.json()
+    assert "total_staff" in data
+    assert "active_shifts" in data

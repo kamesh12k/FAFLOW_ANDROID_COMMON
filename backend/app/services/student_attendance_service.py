@@ -867,18 +867,24 @@ class StudentAttendanceService:
     def get_hod_overview(
         db: Session,
         current_user: User,
-        target_date: date
+        target_date: date,
+        department_id: Optional[int] = None
     ) -> HodAttendanceOverviewOut:
-        # Department scoping
-        dept_id = current_user.department_id
+        # Department scoping: if department_id passed and caller is privileged, honor it; else use caller's dept_id
+        if department_id and current_user.role in {Role.system_admin, Role.governance, Role.principal}:
+            dept_id = department_id
+        else:
+            dept_id = current_user.department_id
 
         cal_day = db.query(CalendarDay).filter(CalendarDay.date == target_date).first()
         day_order = cal_day.day_order if cal_day else None
 
         # Classes in this department
         class_query = db.query(Class)
-        if dept_id and current_user.role not in {Role.system_admin, Role.governance, Role.principal}:
+        if dept_id:
             class_query = class_query.filter(Class.department_id == dept_id)
+        elif current_user.role not in {Role.system_admin, Role.governance, Role.principal}:
+            class_query = class_query.filter(Class.department_id == -1)
         classes = class_query.all()
         class_ids = [c.id for c in classes]
 

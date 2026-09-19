@@ -116,15 +116,25 @@ def process_offline_sync(
     return StudentAttendanceService.process_sync_batch(db, current_user, batch)
 
 
+def require_hod_or_principal(current_user: User = Depends(get_current_user)) -> User:
+    if current_user.role not in (Role.admin, Role.system_admin, Role.principal, Role.governance, Role.manager):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="HOD or administrative access required"
+        )
+    return current_user
+
+
 @router.get("/hod/overview", response_model=HodAttendanceOverviewOut, status_code=status.HTTP_200_OK)
 def get_hod_attendance_overview(
     target_date: Optional[date] = Query(None),
-    current_user: User = Depends(get_current_user),
+    department_id: Optional[int] = Query(None),
+    current_user: User = Depends(require_hod_or_principal),
     db: Session = Depends(get_db)
 ):
     """HOD consolidated operational view of department class attendance, percentages, late submissions, and exceptions."""
     t_date = target_date if target_date else date.today()
-    return StudentAttendanceService.get_hod_overview(db, current_user, t_date)
+    return StudentAttendanceService.get_hod_overview(db, current_user, t_date, department_id=department_id)
 
 
 # =========================================================================

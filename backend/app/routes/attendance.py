@@ -1,10 +1,10 @@
-from typing import List
-from fastapi import APIRouter, Depends, Query, status
+from typing import List, Optional
+from fastapi import APIRouter, Depends, Query, status, HTTPException
 from sqlalchemy.orm import Session
 
 from app.database import get_db
-from app.core.dependencies import get_current_user
-from app.models.user import User
+from app.core.dependencies import get_current_user, require_credentials_set
+from app.models.user import User, Role
 from app.schemas.attendance import (
     AttendanceCheckInRequest,
     AttendanceCheckOutRequest,
@@ -15,6 +15,12 @@ from app.schemas.attendance import (
 from app.services.attendance_service import AttendanceService
 
 router = APIRouter(prefix="/attendance", tags=["Staff Attendance"])
+
+
+def require_supervisor(current_user: User = Depends(require_credentials_set)) -> User:
+    if current_user.role not in (Role.admin, Role.system_admin, Role.principal, Role.manager, Role.governance):
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Supervisor or Administrator privilege required")
+    return current_user
 
 
 @router.post("/check-in", response_model=AttendanceRecordOut, status_code=status.HTTP_200_OK)
@@ -59,8 +65,9 @@ def get_my_attendance_history(
 
 @router.get("/admin/live-status", response_model=AttendanceSupervisorLiveStatusOut)
 def get_supervisor_live_status(
-    current_user: User = Depends(get_current_user),
+    department_id: Optional[int] = Query(None),
+    current_user: User = Depends(require_supervisor),
     db: Session = Depends(get_db)
 ):
     """Supervisor/HOD endpoint for real-time institutional staff shift and presence tracking."""
-    return AttendanceService.get_supervisor_live_status(db, current_user)
+    return AttendanceService.get_supervisor_live_status(db, current_user, department_id=department_id)

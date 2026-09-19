@@ -537,3 +537,17 @@ def test_api_routes_end_to_end(client: TestClient, db_session, test_teacher, aut
     assert updated_sess["absent_count"] == 1
     assert updated_sess["present_count"] == 9
 
+
+def test_hod_overview_rbac_and_isolation(client: TestClient, auth_headers_teacher, auth_headers_admin, setup_attendance_context):
+    """Verifies that teachers are forbidden (403) from accessing HOD overview and HOD can access (200)."""
+    # Teacher role attempt -> 403 Forbidden
+    res_teacher = client.get("/student-attendance/hod/overview", headers=auth_headers_teacher)
+    assert res_teacher.status_code == 403
+
+    # HOD role attempt -> 200 OK
+    res_hod = client.get("/student-attendance/hod/overview", headers=auth_headers_admin)
+    assert res_hod.status_code == 200
+    data = res_hod.json()
+    assert "classes" in data
+    assert "total_classes" in data
+
