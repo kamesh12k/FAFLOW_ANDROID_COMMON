@@ -118,8 +118,7 @@ fun LoginScreen(
     var password by remember { mutableStateOf("") }
     var passwordVisible by remember { mutableStateOf(false) }
     var isInputFocused by remember { mutableStateOf(false) }
-    var showServerConfigDialog by remember { mutableStateOf(false) }
-    var serverUrlInput by remember { mutableStateOf(FaflowApiClient.baseUrl) }
+
 
     // Adaptive height based on soft keyboard state
     val isImeOpen = WindowInsets.isImeVisible
@@ -424,96 +423,11 @@ fun LoginScreen(
                     }
                 }
 
-                Spacer(modifier = Modifier.height(24.dp))
+                Spacer(modifier = Modifier.height(32.dp))
 
-                // Demo links (Faculty demo, Admin demo, HOD demo)
+                // Static server status indicator (clean, non-clickable)
                 Row(
-                    horizontalArrangement = Arrangement.spacedBy(20.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    // Faculty demo
-                    Column(
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        modifier = Modifier.clickable {
-                            identifier = "rekha.devi@college.edu"
-                            password = "Password123"
-                            authViewModel.clearError()
-                        }
-                    ) {
-                        Text(
-                            text = "Faculty demo",
-                            fontSize = 12.sp,
-                            fontWeight = FontWeight.SemiBold,
-                            color = com.governence.faflow.ui.theme.FaflowText2
-                        )
-                        Spacer(modifier = Modifier.height(2.dp))
-                        Box(
-                            modifier = Modifier
-                                .width(70.dp)
-                                .height(1.5.dp)
-                                .background(com.governence.faflow.ui.theme.FaflowBorder)
-                        )
-                    }
-
-                    // Admin demo
-                    Column(
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        modifier = Modifier.clickable {
-                            identifier = "admin"
-                            password = "admin"
-                            authViewModel.clearError()
-                        }
-                    ) {
-                        Text(
-                            text = "Admin demo",
-                            fontSize = 12.sp,
-                            fontWeight = FontWeight.SemiBold,
-                            color = com.governence.faflow.ui.theme.FaflowText2
-                        )
-                        Spacer(modifier = Modifier.height(2.dp))
-                        Box(
-                            modifier = Modifier
-                                .width(65.dp)
-                                .height(1.5.dp)
-                                .background(com.governence.faflow.ui.theme.FaflowBorder)
-                        )
-                    }
-
-                    // HOD demo
-                    Column(
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        modifier = Modifier.clickable {
-                            identifier = "hod_ece"
-                            password = "Password123"
-                            authViewModel.clearError()
-                        }
-                    ) {
-                        Text(
-                            text = "HOD demo",
-                            fontSize = 12.sp,
-                            fontWeight = FontWeight.SemiBold,
-                            color = com.governence.faflow.ui.theme.FaflowText2
-                        )
-                        Spacer(modifier = Modifier.height(2.dp))
-                        Box(
-                            modifier = Modifier
-                                .width(56.dp)
-                                .height(1.5.dp)
-                                .background(com.governence.faflow.ui.theme.FaflowBorder)
-                        )
-                    }
-                }
-
-                Spacer(modifier = Modifier.height(36.dp))
-
-                // Server status indicator
-                Row(
-                    modifier = Modifier
-                        .clickable {
-                            serverUrlInput = FaflowApiClient.baseUrl
-                            showServerConfigDialog = true
-                        }
-                        .padding(vertical = 4.dp),
+                    modifier = Modifier.padding(vertical = 4.dp),
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.Center
                 ) {
@@ -535,69 +449,5 @@ fun LoginScreen(
                 Spacer(modifier = Modifier.height(28.dp))
             }
         }
-    }
-
-    // Backend Server URL Configuration Modal
-    if (showServerConfigDialog) {
-        AlertDialog(
-            onDismissRequest = { showServerConfigDialog = false },
-            title = {
-                Text(
-                    text = "Backend Server URL",
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold
-                )
-            },
-            text = {
-                Column {
-                    Text(
-                        text = "Configure your FAFLOW FastAPI backend endpoint. Default for Android Emulator is 10.0.2.2:8000.",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                    Spacer(modifier = Modifier.height(12.dp))
-                    OutlinedTextField(
-                        value = serverUrlInput,
-                        onValueChange = { serverUrlInput = it },
-                        label = { Text("Server URL") },
-                        singleLine = true,
-                        modifier = Modifier.fillMaxWidth()
-                    )
-                    Spacer(modifier = Modifier.height(10.dp))
-                    Row(
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        TextButton(onClick = { serverUrlInput = com.governence.faflow.core.network.ApiConfig.PRODUCTION_BASE_URL }) {
-                            Text("Render")
-                        }
-                        TextButton(onClick = { serverUrlInput = FaflowApiClient.DEFAULT_EMULATOR_URL }) {
-                            Text("10.0.2.2")
-                        }
-                        TextButton(onClick = { serverUrlInput = FaflowApiClient.DEFAULT_EMULATOR_LOOPBACK_URL }) {
-                            Text("127.0.0.1")
-                        }
-                        TextButton(onClick = { serverUrlInput = FaflowApiClient.DEFAULT_LAN_URL }) {
-                            Text("LAN")
-                        }
-                    }
-                }
-            },
-            confirmButton = {
-                TextButton(
-                    onClick = {
-                        FaflowApiClient.setAndPersistBaseUrl(context, serverUrlInput)
-                        Toast.makeText(context, "Server updated to: $serverUrlInput", Toast.LENGTH_SHORT).show()
-                        showServerConfigDialog = false
-                    }
-                ) {
-                    Text("Save & Apply", fontWeight = FontWeight.Bold)
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = { showServerConfigDialog = false }) {
-                    Text("Cancel")
-                }
-            }
-        )
     }
 }
