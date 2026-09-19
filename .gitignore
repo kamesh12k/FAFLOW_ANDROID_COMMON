@@ -62,11 +62,13 @@ android/**/*.iml
 .vscode/settings.json
 *.code-workspace
 
-# ── Database ──────────────────────────────────────────────────────────────────
+# ── Database & Storage ─────────────────────────────────────────────────────────
 *.sqlite
 *.sqlite3
 *.db-journal
 backend/backups/
+storage/
+backend/storage/
 
 
 # ── Deployment / Secrets ──────────────────────────────────────────────────────

@@ -32,5 +32,11 @@ from app.models.governance_control import (
 from app.models.academic_intelligence import (
     AcademicIntelligenceEvent, IntelligenceEventType, IntelligenceEventState, IntelligenceSeverity
 )
+from app.models.announcement import (
+    Announcement, AnnouncementTarget, AnnouncementAttachment,
+    AnnouncementRead, AnnouncementAcknowledgement, AnnouncementMessage,
+    MessageReaction, MessageMention,
+    AnnouncementType, AnnouncementPriority, AnnouncementStatus, TargetType
+)
 
 

@@ -2,12 +2,49 @@ import { createContext, useContext, useState, useCallback } from 'react'
 
 const ToastContext = createContext(null)
 
+/**
+ * Converts any value to a safe displayable string for toast messages.
+ * Handles Pydantic v2 validation errors (array of {type, loc, msg, input, ctx})
+ * and any other unexpected non-string API response shapes.
+ */
+function toSafeMessage(message) {
+  if (typeof message === 'string') return message
+  if (message == null) return 'An unexpected error occurred'
+
+  // Pydantic v2 / FastAPI validation error — array of error objects
+  if (Array.isArray(message)) {
+    return message
+      .map(e => {
+        if (typeof e === 'string') return e
+        if (e && typeof e === 'object') {
+          // e.msg is the human-readable message in Pydantic v2
+          const field = Array.isArray(e.loc) ? e.loc.filter(l => l !== 'body').join(' → ') : ''
+          const msg = e.msg || e.message || JSON.stringify(e)
+          return field ? `${field}: ${msg}` : msg
+        }
+        return String(e)
+      })
+      .join(' | ')
+  }
+
+  // Plain object (e.g. {detail: '...'})
+  if (typeof message === 'object') {
+    if (message.detail) return toSafeMessage(message.detail)
+    if (message.msg) return String(message.msg)
+    if (message.message) return String(message.message)
+    return 'An unexpected error occurred'
+  }
+
+  return String(message)
+}
+
 export function ToastProvider({ children }) {
   const [toasts, setToasts] = useState([])
 
   const addToast = useCallback((message, type = 'success') => {
+    const safeMessage = toSafeMessage(message)
     const id = Date.now() + Math.random()
-    setToasts(prev => [...prev, { id, message, type }])
+    setToasts(prev => [...prev, { id, message: safeMessage, type }])
     setTimeout(() => {
       setToasts(prev => prev.filter(t => t.id !== id))
     }, 4000)
@@ -18,7 +55,7 @@ export function ToastProvider({ children }) {
   }, [])
 
   return (
-    <ToastContext.Provider value={{ toast: addToast }}>
+    <ToastContext.Provider value={{ toast: addToast, showToast: addToast }}>
       {children}
       {/* Toast Render Portal Container */}
       <div className="fixed bottom-5 right-5 z-[9999] flex flex-col gap-2.5 max-w-sm w-full pointer-events-none">

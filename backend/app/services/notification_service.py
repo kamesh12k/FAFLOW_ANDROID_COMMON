@@ -16,7 +16,9 @@ _REMINDER_DATE_RE = re.compile(r"on (\d{4}-\d{2}-\d{2}) \(")
 
 
 def _get_target_url_for_event(event_type: str) -> str:
-    if "substitut" in event_type:
+    if "announcement" in event_type:
+        return "/announcements"
+    elif "substitut" in event_type:
         return "/today-substitutions"
     elif "leave" in event_type:
         return "/leaves"
@@ -146,4 +148,54 @@ def mark_all_read(db: Session, user_id: int) -> None:
 def generate_holiday_reminders(db: Session, user_id: int, today: date) -> None:
     """Disabled: Holiday and non-working day reminders are no longer generated."""
     return
+
+
+def batch_fanout_announcement_notifications(
+    announcement_id: int,
+    recipient_user_ids: list[int],
+    title: str,
+    body: str,
+    event_type: str = "announcement_new",
+) -> None:
+    """Asynchronously creates in-app notifications and sends web push notifications in batches
+    without blocking the publication request. Safe against worker failure and connection spikes."""
+    if not recipient_user_ids:
+        return
+
+    def _worker():
+        from app.database import SessionLocal
+        db = SessionLocal()
+        try:
+            # 1. Batch insert in-app notifications (100 per chunk)
+            chunk_size = 100
+            for i in range(0, len(recipient_user_ids), chunk_size):
+                chunk_ids = recipient_user_ids[i:i + chunk_size]
+                notes = [
+                    Notification(
+                        user_id=uid,
+                        title=title,
+                        body=body[:500],
+                        event_type=event_type,
+                    )
+                    for uid in chunk_ids
+                ]
+                db.add_all(notes)
+                db.commit()
+
+            # 2. Push notifications (if VAPID keys set) in controlled concurrency
+            if settings.VAPID_PUBLIC_KEY and settings.VAPID_PRIVATE_KEY:
+                for uid in recipient_user_ids:
+                    send_push_to_user_async(
+                        user_id=uid,
+                        title=title,
+                        body=body,
+                        event_type=event_type,
+                        url="/announcements",
+                    )
+        except Exception as e:
+            logger.error("Error in batch_fanout_announcement_notifications: %s", e)
+        finally:
+            db.close()
+
+    Thread(target=_worker, daemon=True).start()
 

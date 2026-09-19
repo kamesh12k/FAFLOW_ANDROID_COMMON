@@ -1,33 +1,48 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { NavLink, useNavigate } from 'react-router-dom'
 import FacultyFlowLogo from '../brand/FacultyFlowLogo'
 import { useAuth } from '../../context/AuthContext'
 import { useTheme } from '../../context/ThemeContext'
 import { useDepartment } from '../../context/DepartmentContext'
 import { BRAND_CONFIG } from '../../config/branding'
+import { announcementApi } from '../../api/announcements'
 import { SettingsIcon, LogoutIcon, ChevronDownIcon } from '../icons'
 import { ADMIN_NAV, TEACHER_NAV, SYSTEM_ADMIN_NAV, PRINCIPAL_NAV, MANAGER_NAV, STAFF_NAV, GOVERNANCE_NAV } from './navConfig'
 
-function NavItem({ to, icon, label, end, collapsed }) {
+function NavItem({ to, icon, label, end, collapsed, unreadCount }) {
+  const isAnnouncement = to === '/announcements'
   return (
     <NavLink
       to={to}
       end={end}
       className={({ isActive }) =>
-        `flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-semibold transition-all group relative ${
+        `flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-semibold transition-all group relative ${
           isActive
             ? 'bg-primary-600 text-white shadow-sm'
             : 'text-slate-400 hover:text-white hover:bg-slate-800/50'
         }`
       }
     >
-      <span className="w-5 h-5 shrink-0 transition-transform group-hover:scale-105">{icon}</span>
-      {!collapsed && <span className="truncate">{label}</span>}
+      <div className="flex items-center gap-3 min-w-0">
+        <span className="w-5 h-5 shrink-0 transition-transform group-hover:scale-105">{icon}</span>
+        {!collapsed && <span className="truncate">{label}</span>}
+      </div>
+
+      {isAnnouncement && unreadCount > 0 && (
+        <span className={`${collapsed ? 'absolute top-1 right-1' : ''} px-2 py-0.5 rounded-full text-[10px] font-black bg-rose-600 text-white shrink-0`}>
+          {unreadCount > 99 ? '99+' : unreadCount}
+        </span>
+      )}
 
       {/* Collapsed Tooltip */}
       {collapsed && (
-        <div className="absolute left-16 top-1/2 -translate-y-1/2 ml-2 px-3 py-1.5 bg-slate-900 text-white text-[11px] font-bold rounded-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 shadow-lg border border-slate-800 z-50 whitespace-nowrap">
-          {label}
+        <div className="absolute left-16 top-1/2 -translate-y-1/2 ml-2 px-3 py-1.5 bg-slate-900 text-white text-[11px] font-bold rounded-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 shadow-lg border border-slate-800 z-50 whitespace-nowrap flex items-center gap-2">
+          <span>{label}</span>
+          {isAnnouncement && unreadCount > 0 && (
+            <span className="px-1.5 py-0.2 rounded-full text-[9px] font-black bg-rose-600 text-white">
+              {unreadCount}
+            </span>
+          )}
         </div>
       )}
     </NavLink>
@@ -44,6 +59,19 @@ export default function Sidebar() {
     return localStorage.getItem('faflow_sidebar_collapsed') === 'true'
   })
   const [showWorkspaceMenu, setShowWorkspaceMenu] = useState(false)
+  const [unreadCount, setUnreadCount] = useState(0)
+
+  useEffect(() => {
+    if (!user) return
+    const fetchUnread = () => {
+      announcementApi.getUnreadCount()
+        .then((res) => setUnreadCount(res.data?.count || 0))
+        .catch(() => {})
+    }
+    fetchUnread()
+    const interval = setInterval(fetchUnread, 30000)
+    return () => clearInterval(interval)
+  }, [user])
 
   const toggleCollapse = () => {
     const nextVal = !collapsed
@@ -163,7 +191,7 @@ export default function Sidebar() {
             )}
             <div className="space-y-0.5">
               {group.items.map((item) => (
-                <NavItem key={item.to} {...item} collapsed={collapsed} />
+                <NavItem key={item.to} {...item} collapsed={collapsed} unreadCount={unreadCount} />
               ))}
             </div>
           </div>

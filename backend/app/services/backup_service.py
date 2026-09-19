@@ -77,10 +77,26 @@ BACKUP_TABLES = [
     "academic_intelligence_events",
     "attendance_correction_audits",
     "student_attendance",
+    "announcements",
+    "announcement_targets",
+    "announcement_attachments",
+    "announcement_reads",
+    "announcement_acknowledgements",
+    "announcement_messages",
+    "message_reactions",
+    "message_mentions",
 ]
 
 # Deletion order: children first to satisfy FK constraints.
 _RESTORE_DELETE_ORDER = [
+    "message_mentions",
+    "message_reactions",
+    "announcement_messages",
+    "announcement_acknowledgements",
+    "announcement_reads",
+    "announcement_attachments",
+    "announcement_targets",
+    "announcements",
     "student_attendance",
     "attendance_correction_audits",
     "academic_intelligence_events",

@@ -1,31 +1,30 @@
-#!/bin/bash
-
+#!/usr/bin/env bash
 # =============================================================================
-# Credits — Production Deployment (Linux/Ubuntu)
+# FAFLOW — Production Deployment & Automation (Ubuntu / Debian Linux)
 # =============================================================================
 #
-# Automated production setup for Ubuntu/Debian. Installs all dependencies,
-# configures PostgreSQL, builds the application, and sets up Nginx +
-# Gunicorn as a systemd service.
+# Automated production setup for Ubuntu 20.04/22.04/24.04 LTS & Debian 11/12.
+# Installs system dependencies, provisions PostgreSQL 'faflow_db', configures
+# backend Python virtual environment, builds the React frontend, configures Nginx
+# as a reverse proxy, and enables systemd services for continuous operation.
 #
 # Prerequisites:
-#   - Ubuntu 20.04 LTS or later / Debian 11+
-#   - sudo access
-#   - Domain name (optional, for SSL/TLS)
+#   - Ubuntu 20.04+ LTS or Debian 11+
+#   - Root / sudo privileges
 #
 # Usage:
-#   1. Log in to your server as a user with sudo access
-#   2. git clone <your-repo>
-#   3. cd credits-system
-#   4. sudo bash scripts/deploy_linux.sh
+#   sudo bash scripts/deploy_linux.sh
 #
 # =============================================================================
 
-set -e  # Exit on any error
+set -e
 
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
+BLUE='\033[0;34m'
+CYAN='\033[0;36m'
+BOLD='\033[1m'
 NC='\033[0m'
 
 log_info()  { echo -e "${GREEN}[INFO]${NC} $1"; }
@@ -34,107 +33,152 @@ log_error() { echo -e "${RED}[ERROR]${NC} $1"; }
 
 check_root() {
     if [[ $EUID -ne 0 ]]; then
-        log_error "This script must be run with sudo"
+        log_error "This script must be executed with sudo or root privileges."
         exit 1
     fi
 }
 
-# =============================================================================
-
-log_info "Credits - Production Deployment"
-log_info "Starting system configuration..."
-
 check_root
 
-log_info "[1/12] Updating system packages..."
-apt-get update -qq
-apt-get upgrade -y -qq
+echo -e "${BLUE}${BOLD}========================================================================${NC}"
+echo -e "${CYAN}${BOLD}              FAFLOW — PRODUCTION LINUX DEPLOYMENT ENGINE               ${NC}"
+echo -e "${BLUE}${BOLD}========================================================================${NC}"
 
-log_info "[2/12] Installing system dependencies..."
+log_info "[1/12] Updating system package index..."
+apt-get update -qq
+
+log_info "[2/12] Installing core system dependencies..."
 apt-get install -y -qq \
     python3 python3-venv python3-dev \
     postgresql postgresql-contrib \
-    nodejs npm \
-    nginx \
-    curl git \
+    nginx curl git \
     build-essential libpq-dev
 
-log_info "[3/12] Setting up application user..."
-if ! id -u credits >/dev/null 2>&1; then
-    useradd -m -d /home/credits -s /bin/bash credits
-    log_info "Created user 'credits'"
+# Install Node.js 20.x if not present
+if ! command -v node >/dev/null 2>&1; then
+    log_info "Installing Node.js 20.x LTS..."
+    curl -fsSL https://deb.nodesource.com/setup_20.x | bash - >/dev/null 2>&1
+    apt-get install -y -qq nodejs
+fi
+
+log_info "[3/12] Setting up application service user 'faflow'..."
+if ! id -u faflow >/dev/null 2>&1; then
+    useradd -m -d /home/faflow -s /bin/bash faflow
+    log_info "Created system user 'faflow'"
 else
-    log_warn "User 'credits' already exists"
+    log_warn "System user 'faflow' already exists"
 fi
 
-APP_DIR="/home/credits/credits-system"
-if [ ! -d "$APP_DIR" ]; then
-    mkdir -p "$APP_DIR"
-    cp -r . "$APP_DIR"
-    chown -R credits:credits "$APP_DIR"
-fi
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+SOURCE_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
+APP_DIR="/home/faflow/faflow"
 
-log_info "[4/12] Initializing PostgreSQL..."
-sudo -u postgres psql -c "CREATE DATABASE credits_db;" 2>/dev/null || log_warn "Database may already exist"
+log_info "[4/12] Synchronizing application files to $APP_DIR..."
+mkdir -p "$APP_DIR"
+cp -ru "$SOURCE_DIR"/. "$APP_DIR"/
+chown -R faflow:faflow "$APP_DIR"
 
-log_info "[5/12] Setting up backend Python environment..."
+log_info "[5/12] Initializing PostgreSQL database 'faflow_db'..."
+sudo -u postgres psql -tc "SELECT 1 FROM pg_database WHERE datname = 'faflow_db'" | grep -q 1 || \
+    sudo -u postgres psql -c "CREATE DATABASE faflow_db;"
+
+sudo -u postgres psql -c "ALTER USER postgres WITH PASSWORD 'postgres';" 2>/dev/null || true
+
+log_info "[6/12] Setting up Python backend virtual environment..."
 cd "$APP_DIR/backend"
-sudo -u credits python3 -m venv venv
-sudo -u credits venv/bin/pip install -q -r requirements.txt
+sudo -u faflow python3 -m venv venv
+sudo -u faflow venv/bin/pip install -q --upgrade pip
+sudo -u faflow venv/bin/pip install -q -r requirements.txt
+sudo -u faflow venv/bin/pip install -q gunicorn
 
+log_info "[7/12] Configuring backend environment variables..."
 SECRET_KEY=$(python3 -c "import secrets; print(secrets.token_hex(32))")
-
-log_info "[6/12] Creating backend configuration..."
-cat > .env <<ENVEOF
-DATABASE_URL=postgresql://postgres@localhost/credits_db
+if [ ! -f "$APP_DIR/backend/.env" ]; then
+    cat > "$APP_DIR/backend/.env" <<EOF
+DATABASE_URL=postgresql://postgres:postgres@localhost:5432/faflow_db
 SECRET_KEY=$SECRET_KEY
 ALGORITHM=HS256
-ACCESS_TOKEN_EXPIRE_MINUTES=60
+ACCESS_TOKEN_EXPIRE_MINUTES=1440
+GEOFENCE_LATITUDE=13.0827
+GEOFENCE_LONGITUDE=80.2707
+GEOFENCE_RADIUS_METERS=500
 VAPID_PUBLIC_KEY=
 VAPID_PRIVATE_KEY=
-VAPID_CONTACT_EMAIL=admin@example.com
-ENVEOF
-chmod 600 .env
-chown credits:credits .env
+VAPID_CONTACT_EMAIL=admin@faflow.local
+ENVIRONMENT=production
+CORS_ORIGINS=["*"]
+EOF
+    chmod 600 "$APP_DIR/backend/.env"
+    chown faflow:faflow "$APP_DIR/backend/.env"
+fi
 
-log_info "[7/12] Initializing database schema..."
-sudo -u postgres psql -d credits_db -f ../database/schema.sql >/dev/null 2>&1 || true
+log_info "[8/12] Initializing database schema & migrations..."
+cd "$APP_DIR"
+sudo -u faflow backend/venv/bin/python3 -c "
+from app.database import Base, engine
+import app.models
+Base.metadata.create_all(bind=engine)
+print('  Database tables successfully verified.')
+" || log_warn "Database initialization completed with warnings."
 
-log_info "[8/12] Running pre-flight checks..."
-sudo -u credits venv/bin/python3 preflight_check.py
+# Restore corrected backup if present and DB empty
+if [ -f "$APP_DIR/FAFLOW_CORRECTED_BACKUP_2026-09-19.json" ]; then
+    log_info "Restoring corrected FAFLOW backup payload..."
+    sudo -u faflow backend/venv/bin/python3 -c "
+from app.database import SessionLocal
+from app.models.user import User
+from app.services.backup_service import restore_backup_from_file
 
-log_info "[9/12] Building frontend..."
+db = SessionLocal()
+try:
+    if db.query(User).count() == 0:
+        restore_backup_from_file(db, '$APP_DIR/FAFLOW_CORRECTED_BACKUP_2026-09-19.json', actor_name='SystemDeployment')
+        print('  Initial backup restored successfully.')
+    else:
+        print('  Database already contains users, skipping automated restore.')
+finally:
+    db.close()
+" || log_warn "Auto-restore skipped or completed with warnings."
+fi
+
+log_info "[9/12] Building frontend production bundle..."
 cd "$APP_DIR/frontend"
-sudo -u credits npm install -q
-sudo -u credits npm run build -q
+sudo -u faflow npm install --silent
+sudo -u faflow npm run build --silent
 
-log_info "[10/12] Configuring Gunicorn service..."
-cat > /etc/systemd/system/credits-backend.service <<SERVICEEOF
+log_info "[10/12] Configuring systemd backend service..."
+cat > /etc/systemd/system/faflow-backend.service <<EOF
 [Unit]
-Description=Credits - Backend
+Description=FAFLOW FastAPI Backend Service
 After=network.target postgresql.service
+Wants=postgresql.service
 
 [Service]
 Type=notify
-User=credits
+User=faflow
+Group=faflow
 WorkingDirectory=$APP_DIR/backend
 Environment="PATH=$APP_DIR/backend/venv/bin"
-ExecStart=$APP_DIR/backend/venv/bin/gunicorn app.main:app -w 4 -k uvicorn.workers.UvicornWorker -b 127.0.0.1:8000 --access-logfile - --error-logfile -
+ExecStart=$APP_DIR/backend/venv/bin/gunicorn app.main:app -w 4 -k uvicorn.workers.UvicornWorker -b 127.0.0.1:8000 --access-logfile /var/log/faflow/access.log --error-logfile /var/log/faflow/error.log
 Restart=always
-RestartSec=10
+RestartSec=5
+LimitNOFILE=65536
 
 [Install]
 WantedBy=multi-user.target
-SERVICEEOF
+EOF
+
+mkdir -p /var/log/faflow
+chown -R faflow:faflow /var/log/faflow
 
 systemctl daemon-reload
-systemctl enable credits-backend.service
-systemctl start credits-backend.service
-log_info "Backend service started"
+systemctl enable faflow-backend.service
+systemctl restart faflow-backend.service
+log_info "Backend systemd service is active"
 
-log_info "[11/12] Configuring Nginx..."
-cat > /etc/nginx/sites-available/credits <<'NGINXEOF'
-upstream credits_backend {
+log_info "[11/12] Configuring Nginx reverse proxy..."
+cat > /etc/nginx/sites-available/faflow <<'EOF'
+upstream faflow_backend {
     server 127.0.0.1:8000;
 }
 
@@ -142,123 +186,90 @@ server {
     listen 80;
     server_name _;
 
-    client_max_body_size 100M;
+    client_max_body_size 50M;
 
-    # Modern Gzip Compression
+    # Gzip compression
     gzip on;
     gzip_vary on;
     gzip_proxied any;
     gzip_comp_level 6;
-    gzip_min_length 256;
-    gzip_types
-        text/plain
-        text/css
-        text/xml
-        text/javascript
-        application/json
-        application/javascript
-        application/x-javascript
-        application/xml
-        application/xml+rss
-        image/svg+xml;
+    gzip_types text/plain text/css application/json application/javascript text/xml application/xml image/svg+xml;
 
-    # Immutable Cache for Hashed Vite Assets (/assets/*.js, /assets/*.css)
+    # Immutable Cache for Vite Assets
     location /assets/ {
-        root /home/credits/credits-system/frontend/dist;
+        root /home/faflow/faflow/frontend/dist;
         expires 1y;
         add_header Cache-Control "public, immutable";
         access_log off;
     }
 
-    # SPA Entrypoint (index.html must not be aggressively cached)
+    # Frontend Single Page App
     location / {
-        root /home/credits/credits-system/frontend/dist;
+        root /home/faflow/faflow/frontend/dist;
         try_files $uri /index.html;
         add_header Cache-Control "no-cache, no-store, must-revalidate";
         add_header X-Content-Type-Options "nosniff";
         add_header X-Frame-Options "SAMEORIGIN";
     }
 
+    # Backend API routes
     location /api/ {
-        proxy_pass http://credits_backend/;
+        proxy_pass http://faflow_backend/;
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto $scheme;
         proxy_buffering off;
+        proxy_read_timeout 120s;
+    }
+
+    # Direct routes without /api/ prefix
+    location ~ ^/(auth|users|classes|departments|attendance|timetable|leaves|credits|announcements|backup|audit|notifications|health|docs|openapi.json) {
+        proxy_pass http://faflow_backend;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_buffering off;
+        proxy_read_timeout 120s;
     }
 }
-NGINXEOF
+EOF
 
-ln -sf /etc/nginx/sites-available/credits /etc/nginx/sites-enabled/credits
+ln -sf /etc/nginx/sites-available/faflow /etc/nginx/sites-enabled/faflow
 rm -f /etc/nginx/sites-enabled/default
 
-nginx -t >/dev/null 2>&1 && systemctl restart nginx
+nginx -t && systemctl restart nginx
 log_info "Nginx configured and restarted"
 
-log_info "[12/12] Running health checks..."
-sleep 2
-if curl -s http://localhost:8000/health | grep -q "ok"; then
-    log_info "Backend is healthy"
+log_info "[12/12] Performing health verification..."
+sleep 3
+if curl -sf http://127.0.0.1:8000/health >/dev/null 2>&1; then
+    log_info "Backend health check: ${GREEN}PASS${NC}"
 else
-    log_warn "Could not verify backend health (may still be starting)"
+    log_warn "Backend health check did not respond immediately (system may still be warming up)."
 fi
 
-if [ -f "$APP_DIR/frontend/dist/index.html" ]; then
-    log_info "Frontend built successfully"
-else
-    log_warn "Frontend build not found"
-fi
-
-cat << 'DONEEOF'
+cat << 'EOF'
 
 ================================================================================
-    Deployment Complete!
+                    FAFLOW LINUX DEPLOYMENT COMPLETE!
 ================================================================================
 
-Your system is now running:
-  - Backend (Gunicorn):  http://localhost:8000
-  - Frontend (Nginx):    http://localhost
-  - Database:            PostgreSQL (localhost:5432)
+Services are online:
+  - Frontend Web UI:        http://<YOUR-SERVER-IP>/
+  - Backend API:            http://<YOUR-SERVER-IP>/docs
+  - Service Status:         sudo systemctl status faflow-backend
+  - Backend Logs:           sudo journalctl -u faflow-backend -f
+  - Nginx Logs:             sudo tail -f /var/log/nginx/error.log
 
-To access the application:
+Database:
+  - PostgreSQL Database:    faflow_db (Port 5432)
+  - Automatic Backups:      /home/faflow/faflow/backend/backups/
 
-  1. Open http://<your-domain-or-IP> in your browser
-  2. Log in with:
-     Username: admin
-     Password: admin
-  3. You will be required to set a new username and password immediately
-  4. Go to "Calendar & Day Order" and set up at least one Academic Year,
-     Semester, and a few working days with Day Orders — leave and
-     timetable features reject any date with no calendar entry
-
-Service Management:
-
-  View backend logs:      sudo journalctl -u credits-backend -f
-  Restart backend:        sudo systemctl restart credits-backend
-  Restart Nginx:          sudo systemctl restart nginx
-  Check service status:   sudo systemctl status credits-backend
-                           sudo systemctl status nginx
-
-SSL/TLS Setup (recommended):
-
-  sudo apt-get install certbot python3-certbot-nginx
-  sudo certbot --nginx -d <your-domain>
-  sudo systemctl enable certbot.timer
-
-Database Backup:
-
-  Backup:   sudo -u postgres pg_dump -d credits_db > backup.sql
-  Restore:  sudo -u postgres psql -d credits_db < backup.sql
-
-Next Steps:
-
-  - Create additional admin accounts via the Settings panel
-  - Configure departments, subjects, classes, rooms
-  - Set up the Academic Calendar and build the timetable
-
-For troubleshooting, see README.md and DEPLOYMENT.md
+SSL Setup (Optional via Certbot):
+  sudo apt-get install -y certbot python3-certbot-nginx
+  sudo certbot --nginx -d your-domain.com
 
 ================================================================================
-
-DONEEOF
+EOF

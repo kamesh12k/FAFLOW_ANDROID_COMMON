@@ -34,12 +34,17 @@ BACKUP_TABLES = [
     "staff_leave_requests", "class_roll_exceptions", "student_enrollments",
     "attendance_sessions", "staff_credit_transactions",
     "academic_intelligence_events", "attendance_correction_audits",
-    "student_attendance",
+    "student_attendance", "announcements", "announcement_targets",
+    "announcement_attachments", "announcement_reads", "announcement_acknowledgements",
+    "announcement_messages", "message_reactions", "message_mentions",
 ]
 
 # Deletion order matters: children before parents, to satisfy FK
 # constraints regardless of each table's ON DELETE behavior.
 _DELETE_ORDER = [
+    "message_mentions", "message_reactions", "announcement_messages",
+    "announcement_acknowledgements", "announcement_reads", "announcement_attachments",
+    "announcement_targets", "announcements",
     "student_attendance", "attendance_correction_audits",
     "academic_intelligence_events", "staff_credit_transactions",
     "attendance_sessions", "student_enrollments", "class_roll_exceptions",

@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { notificationsApi } from '../../api/services'
 import {
   isPushSupported,
@@ -7,7 +8,7 @@ import {
   unsubscribeFromPush,
   getCurrentSubscription
 } from '../../utils/pushNotifications'
-import { BellIcon, CheckCircleIcon, SwapIcon, CalIcon, XCircleIcon } from '../icons'
+import { BellIcon, CheckCircleIcon, SwapIcon, CalIcon, XCircleIcon, MegaphoneIcon } from '../icons'
 
 const EVENT_ICON = {
   leave_approved: CheckCircleIcon,
@@ -22,6 +23,12 @@ const EVENT_ICON = {
   substitute_assigned: SwapIcon,
   holiday_reminder: CalIcon,
   system_test: BellIcon,
+  new_announcement: MegaphoneIcon,
+  mention: MegaphoneIcon,
+  reply: MegaphoneIcon,
+  reply_to_my_message: MegaphoneIcon,
+  acknowledgement_required: MegaphoneIcon,
+  announcement_updated: MegaphoneIcon,
 }
 
 function timeAgo(iso) {
@@ -41,6 +48,7 @@ export default function NotificationBell() {
   const [pushLoading, setPushLoading] = useState(false)
   const [pushMessage, setPushMessage] = useState('')
   const ref = useRef(null)
+  const navigate = useNavigate()
 
   const supported = isPushSupported()
   const permission = getNotificationPermission()
@@ -87,6 +95,10 @@ export default function NotificationBell() {
       await notificationsApi.markRead(item.id)
       setItems(items.map(i => i.id === item.id ? { ...i, is_read: true } : i))
       setUnread(u => Math.max(0, u - 1))
+    }
+    if (item.event_type && (item.event_type.startsWith('announcement') || ['new_announcement', 'mention', 'reply', 'reply_to_my_message', 'acknowledgement_required', 'announcement_updated'].includes(item.event_type))) {
+      setOpen(false)
+      navigate('/announcements')
     }
   }
 

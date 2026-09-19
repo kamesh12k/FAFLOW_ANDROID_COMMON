@@ -66,6 +66,18 @@ class Settings(BaseSettings):
     VAPID_PRIVATE_KEY: str = ""
     VAPID_CLAIM_EMAIL: str = "mailto:admin@faflow.local"
 
+    # ---------- Storage & Announcements ----------
+    STORAGE_BACKEND: str = "local"  # "local" or "s3"
+    STORAGE_LOCAL_PATH: str = "./storage/announcements"
+    STORAGE_S3_BUCKET: str = ""
+    STORAGE_S3_REGION: str = "us-east-1"
+    STORAGE_S3_ENDPOINT_URL: str = ""
+    STORAGE_S3_ACCESS_KEY: str = ""
+    STORAGE_S3_SECRET_KEY: str = ""
+    STORAGE_SIGNED_URL_EXPIRE_SECONDS: int = 900
+    ANNOUNCEMENT_MAX_ATTACHMENT_SIZE_MB: int = 25
+    ANNOUNCEMENT_MAX_ATTACHMENTS_PER_POST: int = 5
+
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
 

@@ -1,13 +1,21 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { NavLink, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 import { ADMIN_NAV, TEACHER_NAV, SYSTEM_ADMIN_NAV, PRINCIPAL_NAV, MANAGER_NAV, STAFF_NAV, GOVERNANCE_NAV } from './navConfig'
+import { announcementApi } from '../../api/announcements'
 import { SettingsIcon, LogoutIcon, CloseIcon } from '../icons'
 
 export default function MobileDrawer({ open, onClose }) {
   const { user, isAdmin, isSystemAdmin, isPrincipal, isGovernance, isManager, isStaff, logout } = useAuth()
   const navigate = useNavigate()
+  const [unreadCount, setUnreadCount] = useState(0)
 
+  useEffect(() => {
+    if (!open || !user) return
+    announcementApi.getUnreadCount()
+      .then((res) => setUnreadCount(res.data?.count || 0))
+      .catch(() => {})
+  }, [open, user])
   
   let nav = TEACHER_NAV
   if (isGovernance) {
@@ -84,13 +92,20 @@ export default function MobileDrawer({ open, onClose }) {
                     end={item.end}
                     onClick={onClose}
                     className={({ isActive }) =>
-                      `flex items-center gap-3 px-3 py-3 rounded-xl text-sm font-medium transition-colors ${
+                      `flex items-center justify-between px-3 py-3 rounded-xl text-sm font-medium transition-colors ${
                         isActive ? 'bg-primary-600 text-white' : 'text-gray-300 hover:text-white hover:bg-white/10'
                       }`
                     }
                   >
-                    <span className="w-5 h-5 shrink-0">{item.icon}</span>
-                    <span className="truncate">{item.label}</span>
+                    <div className="flex items-center gap-3 min-w-0">
+                      <span className="w-5 h-5 shrink-0">{item.icon}</span>
+                      <span className="truncate">{item.label}</span>
+                    </div>
+                    {item.to === '/announcements' && unreadCount > 0 && (
+                      <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-rose-600 text-white shrink-0">
+                        {unreadCount > 99 ? '99+' : unreadCount}
+                      </span>
+                    )}
                   </NavLink>
                 ))}
               </div>

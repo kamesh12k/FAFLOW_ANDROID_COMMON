@@ -1,6 +1,6 @@
 import {
   GridIcon, UsersIcon, CalIcon, BookIcon, DoorIcon, DocIcon, ChartIcon,
-  PlusIcon, SwapIcon,
+  PlusIcon, SwapIcon, MegaphoneIcon,
   DatabaseIcon, TrashNavIcon, GeofenceIcon, BiometricIcon, AttendanceNavIcon,
 } from '../icons'
 
@@ -9,6 +9,7 @@ export const ADMIN_NAV = [
     section: null,
     items: [
       { to: '/admin/dashboard', label: 'Home', icon: <GridIcon />, end: true },
+      { to: '/announcements', label: 'Announcements', icon: <MegaphoneIcon /> },
       { to: '/admin/attendance', label: 'Staff Attendance', icon: <AttendanceNavIcon /> },
       { to: '/admin/student-attendance', label: 'Student Attendance', icon: <UsersIcon /> },
     ],
@@ -50,6 +51,7 @@ export const TEACHER_NAV = [
     section: 'My Work',
     items: [
       { to: '/teacher/dashboard', label: 'Home', icon: <GridIcon />, end: true },
+      { to: '/announcements', label: 'Announcements', icon: <MegaphoneIcon /> },
       { to: '/teacher/student-attendance', label: 'Student Attendance', icon: <AttendanceNavIcon /> },
       { to: '/teacher/timetable', label: 'My Timetable', icon: <CalIcon /> },
       { to: '/teacher/class-timetable', label: 'Classwise Timetable', icon: <CalIcon /> },
@@ -74,6 +76,7 @@ export const SYSTEM_ADMIN_NAV = [
     section: null,
     items: [
       { to: '/admin/dashboard', label: 'Home', icon: <GridIcon />, end: true },
+      { to: '/announcements', label: 'Announcements', icon: <MegaphoneIcon /> },
     ],
   },
   {
@@ -126,6 +129,7 @@ export const MANAGER_NAV = [
     section: null,
     items: [
       { to: '/manager/dashboard', label: 'Home', icon: <GridIcon />, end: true },
+      { to: '/announcements', label: 'Announcements', icon: <MegaphoneIcon /> },
     ],
   },
   {
@@ -144,6 +148,7 @@ export const PRINCIPAL_NAV = [
     section: null,
     items: [
       { to: '/principal/dashboard', label: 'Home', icon: <GridIcon />, end: true },
+      { to: '/announcements', label: 'Announcements', icon: <MegaphoneIcon /> },
       { to: '/principal/student-attendance', label: 'Student Attendance', icon: <UsersIcon /> },
       { to: '/principal/attendance', label: 'Faculty Attendance', icon: <AttendanceNavIcon /> },
       { to: '/principal/class-timetable', label: 'Classwise Timetable', icon: <CalIcon /> },
@@ -156,6 +161,7 @@ export const STAFF_NAV = [
     section: 'Workspace',
     items: [
       { to: '/staff/dashboard', label: 'Lab & Duty Workspace', icon: <GridIcon />, end: true },
+      { to: '/announcements', label: 'Announcements', icon: <MegaphoneIcon /> },
     ],
   },
   {
@@ -171,6 +177,7 @@ export const GOVERNANCE_NAV = [
     section: 'Governance',
     items: [
       { to: '/governance', label: 'Command Center', icon: <GridIcon />, end: true },
+      { to: '/announcements', label: 'Announcements', icon: <MegaphoneIcon /> },
       { to: '/governance/student-attendance', label: 'Student Attendance', icon: <UsersIcon /> },
       { to: '/governance/attendance', label: 'Live Attendance', icon: <AttendanceNavIcon /> },
     ],

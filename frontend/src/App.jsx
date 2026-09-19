@@ -74,6 +74,10 @@ const TeacherSubstitution = lazy(() => import('./pages/teacher/Substitution'))
 const StudentAttendance = lazy(() => import('./pages/teacher/StudentAttendance'))
 const HodStudentAttendance = lazy(() => import('./pages/admin/HodStudentAttendance'))
 
+// Announcement pages (lazy loaded)
+const Announcements = lazy(() => import('./pages/announcements/index'))
+const AnnouncementDetail = lazy(() => import('./pages/announcements/AnnouncementDetail'))
+
 export default function App() {
   useEffect(() => {
     registerServiceWorker();
@@ -199,6 +203,16 @@ export default function App() {
                 <Route path="/teacher/today-coverage" element={<TodaySubstitutions />} />
                 <Route path="/teacher/credits" element={<MyCredits />} />
                 <Route path="/teacher/preferences" element={<SubstitutionPreferences />} />
+              </Route>
+            </Route>
+          </Route>
+
+          {/* Universal Authenticated routes — Announcements & Circulars */}
+          <Route element={<ProtectedRoute />}>
+            <Route element={<RequireCredentialsSet />}>
+              <Route element={<AppShell />}>
+                <Route path="/announcements" element={<Announcements />} />
+                <Route path="/announcements/:id" element={<AnnouncementDetail />} />
               </Route>
             </Route>
           </Route>
