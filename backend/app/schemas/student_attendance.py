@@ -401,6 +401,7 @@ class StudentSubjectAttendanceOut(BaseModel):
 class StudentSessionHistoryItemOut(BaseModel):
     session_id: int
     date: date
+    attendance_date: Optional[date] = None
     period_number: int
     subject_name: Optional[str] = None
     teacher_name: str

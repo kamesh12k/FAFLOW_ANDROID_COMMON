@@ -1782,6 +1782,7 @@ class StudentAttendanceService:
                 StudentSessionHistoryItemOut(
                     session_id=sess.id,
                     date=sess.attendance_date,
+                    attendance_date=sess.attendance_date,
                     period_number=sess.period_number,
                     subject_name=sess.subject.name if sess.subject else "Class Subject",
                     teacher_name=sess.actual_teacher.name if sess.actual_teacher else "Faculty",

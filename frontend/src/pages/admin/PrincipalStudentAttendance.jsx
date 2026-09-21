@@ -51,6 +51,7 @@ export default function PrincipalStudentAttendance() {
   const [profileStudentId, setProfileStudentId] = useState(null)
   const [studentProfile, setStudentProfile] = useState(null)
   const [loadingProfile, setLoadingProfile] = useState(false)
+  const [profileFilterDate, setProfileFilterDate] = useState(null)
 
   // Live Academic Intelligence State
   const [liveIntelligence, setLiveIntelligence] = useState(null)
@@ -166,11 +167,13 @@ export default function PrincipalStudentAttendance() {
   }
 
   // 6. Load Student Profile
-  const openStudentProfile = async (studentId) => {
+  const openStudentProfile = async (studentId, filterDate = null) => {
     try {
       setProfileStudentId(studentId)
+      setProfileFilterDate(filterDate)
       setLoadingProfile(true)
-      const res = await studentAttendanceApi.getStudentProfile(studentId)
+      const params = filterDate ? { start_date: filterDate, end_date: filterDate } : {}
+      const res = await studentAttendanceApi.getStudentProfile(studentId, params)
       setStudentProfile(res.data)
     } catch (err) {
       console.error('Failed to load student profile', err)
@@ -1461,29 +1464,58 @@ export default function PrincipalStudentAttendance() {
 
                 {/* Session Timeline History */}
                 <div className="space-y-2">
-                  <h5 className="text-xs font-bold text-slate-500 uppercase tracking-wider">Attendance Session History</h5>
-                  <div className="max-h-52 overflow-y-auto space-y-1.5 pr-1">
-                    {studentProfile.history.map((h, hIdx) => (
-                      <div key={hIdx} className="p-2.5 bg-slate-50 rounded-xl flex items-center justify-between text-xs">
-                        <div>
-                          <span className="font-bold text-slate-900">{h.attendance_date}</span>
-                          <span className="text-slate-400 mx-1.5">•</span>
-                          <span className="font-semibold text-indigo-700">Period {h.period_number}</span>
-                          <span className="text-slate-400 mx-1.5">•</span>
-                          <span className="text-slate-700">{h.subject_name}</span>
-                          <span className="text-slate-400 text-[10px] ml-2">({h.teacher_name})</span>
-                        </div>
-                        <span className={`px-2 py-0.5 rounded-full font-black text-[10px] uppercase ${
-                          h.status === 'present' ? 'bg-emerald-100 text-emerald-800' :
-                          h.status === 'absent' ? 'bg-rose-100 text-rose-800' :
-                          h.status === 'late' ? 'bg-amber-100 text-amber-800' :
-                          h.status === 'on_duty' ? 'bg-blue-100 text-blue-800' :
-                          'bg-purple-100 text-purple-800'
-                        }`}>
-                          {h.status.replace('_', ' ')}
-                        </span>
+                  <div className="flex items-center justify-between">
+                    <h5 className="text-xs font-bold text-slate-500 uppercase tracking-wider">Attendance Session History</h5>
+                    <div className="flex items-center gap-1.5">
+                      <button
+                        type="button"
+                        onClick={() => openStudentProfile(profileStudentId, null)}
+                        className={`px-2 py-0.5 rounded text-[10px] font-bold transition-colors ${
+                          !profileFilterDate ? 'bg-indigo-600 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                        }`}
+                      >
+                        All History
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => openStudentProfile(profileStudentId, selectedDate)}
+                        className={`px-2 py-0.5 rounded text-[10px] font-bold transition-colors ${
+                          profileFilterDate === selectedDate ? 'bg-indigo-600 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                        }`}
+                      >
+                        Date: {selectedDate}
+                      </button>
+                    </div>
+                  </div>
+                  <div className="max-h-56 overflow-y-auto space-y-1.5 pr-1">
+                    {studentProfile.history.length === 0 ? (
+                      <div className="text-center py-4 text-xs text-slate-400">
+                        No sessions recorded for this filter.
                       </div>
-                    ))}
+                    ) : (
+                      studentProfile.history.map((h, hIdx) => (
+                        <div key={hIdx} className="p-2.5 bg-slate-50 rounded-xl flex items-center justify-between text-xs hover:bg-slate-100/70 transition-colors">
+                          <div className="flex items-center flex-wrap gap-1.5">
+                            <span className="px-2 py-0.5 bg-indigo-50 text-indigo-700 rounded font-mono font-bold text-[10px] border border-indigo-100">
+                              {h.attendance_date || h.date}
+                            </span>
+                            <span className="font-semibold text-slate-800">Period {h.period_number}</span>
+                            <span className="text-slate-300">•</span>
+                            <span className="text-slate-700">{h.subject_name}</span>
+                            <span className="text-slate-400 text-[10px]">({h.teacher_name})</span>
+                          </div>
+                          <span className={`px-2 py-0.5 rounded-full font-black text-[10px] uppercase ${
+                            h.status === 'present' ? 'bg-emerald-100 text-emerald-800' :
+                            h.status === 'absent' ? 'bg-rose-100 text-rose-800' :
+                            h.status === 'late' ? 'bg-amber-100 text-amber-800' :
+                            h.status === 'on_duty' ? 'bg-blue-100 text-blue-800' :
+                            'bg-purple-100 text-purple-800'
+                          }`}>
+                            {h.status.replace('_', ' ')}
+                          </span>
+                        </div>
+                      ))
+                    )}
                   </div>
                 </div>
               </div>
