@@ -88,9 +88,14 @@ class StudentAttendanceService:
         if period_number in PERIOD_SCHEDULE:
             start_t, end_t, _ = PERIOD_SCHEDULE[period_number]
         else:
-            start_t, end_t = time(8, 0), time(9, 0)
-        start_dt = datetime.combine(attendance_date, start_t).replace(tzinfo=timezone.utc)
-        end_dt = datetime.combine(attendance_date, end_t).replace(tzinfo=timezone.utc)
+            start_t, end_t = time(9, 20), time(10, 20)
+        try:
+            from zoneinfo import ZoneInfo
+            tz = ZoneInfo("Asia/Kolkata")
+        except Exception:
+            tz = timezone(timedelta(hours=5, minutes=30))
+        start_dt = datetime.combine(attendance_date, start_t, tzinfo=tz).astimezone(timezone.utc)
+        end_dt = datetime.combine(attendance_date, end_t, tzinfo=tz).astimezone(timezone.utc)
         return start_dt, end_dt
 
     @staticmethod
