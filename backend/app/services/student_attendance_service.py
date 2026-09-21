@@ -82,7 +82,8 @@ class StudentAttendanceService:
 
     @staticmethod
     def get_correction_window_hours(db: Session) -> int:
-        """Reads student_attendance_correction_window_hours from the governance rule service."""
+        """DEPRECATED: Reads student_attendance_correction_window_hours for backwards compatibility.
+        Active business logic now authoritatively enforces teacher correction deadline = period.end_datetime."""
         from app.services import governance_rule_service
         try:
             return governance_rule_service.get_rule_int(db, "student_attendance_correction_window_hours")
@@ -576,7 +577,7 @@ class StudentAttendanceService:
                         pass
 
         # 7. Evaluate 15-Minute Submission Timing Rule
-        start_time, end_time = StudentAttendanceService.get_scheduled_times(att_date, data.period_number)
+        start_time, end_time = StudentAttendanceService.get_scheduled_times(att_date, data.period_number, db)
         now_utc = datetime.now(timezone.utc)
         sub_time = data.client_timestamp if data.client_timestamp else now_utc
         if sub_time.tzinfo is None:
@@ -592,8 +593,8 @@ class StudentAttendanceService:
         else:
             session_status = SessionStatus.submitted
 
-        correction_hours = StudentAttendanceService.get_correction_window_hours(db)
-        correction_deadline = now_utc + timedelta(hours=correction_hours)
+        # Authoritative rule: Teacher correction deadline is strictly the configured end time of the attendance period
+        correction_deadline = end_time
 
         # 8. Create or Update AttendanceSession
         session = existing_session if existing_session else AttendanceSession(
@@ -716,6 +717,21 @@ class StudentAttendanceService:
                 )
             )
 
+        # Resolve authoritative period end deadline from dynamic schedule
+        now_utc = datetime.now(timezone.utc)
+        try:
+            _, period_end_dt = StudentAttendanceService.get_scheduled_times(session.attendance_date, session.period_number, db)
+        except Exception:
+            period_end_dt = session.scheduled_end_time or session.correction_deadline
+
+        deadline = session.correction_deadline or period_end_dt
+        if deadline and deadline.tzinfo is None:
+            deadline = deadline.replace(tzinfo=timezone.utc)
+
+        is_locked = (session.status == SessionStatus.locked)
+        # Boundary condition: now < deadline -> allowed; now >= deadline -> locked
+        correction_allowed = bool(not is_locked and deadline and (now_utc < deadline))
+
         return AttendanceSessionOut(
             id=session.id,
             attendance_date=session.attendance_date,
@@ -735,7 +751,9 @@ class StudentAttendanceService:
             scheduled_start_time=session.scheduled_start_time,
             scheduled_end_time=session.scheduled_end_time,
             submitted_at=session.submitted_at,
-            correction_deadline=session.correction_deadline,
+            correction_deadline=deadline,
+            correction_allowed=correction_allowed,
+            can_edit=correction_allowed,
             total_students=len(records),
             present_count=counts[StudentAttendanceStatus.present],
             absent_count=counts[StudentAttendanceStatus.absent],
@@ -752,7 +770,8 @@ class StudentAttendanceService:
         session_id: int,
         student_id: int,
         current_user: User,
-        data: AttendanceCorrectionRequest
+        data: AttendanceCorrectionRequest,
+        as_of: Optional[datetime] = None
     ) -> AttendanceSessionOut:
         session = db.query(AttendanceSession).filter(AttendanceSession.id == session_id).first()
         if not session:
@@ -764,16 +783,28 @@ class StudentAttendanceService:
             raise HTTPException(status_code=403, detail="You are not authorized to correct this attendance session.")
 
         # Check correction window (unless admin)
-        now_utc = datetime.now(timezone.utc)
+        now_utc = as_of or datetime.now(timezone.utc)
+        if now_utc.tzinfo is None:
+            now_utc = now_utc.replace(tzinfo=timezone.utc)
         if not is_admin:
             if session.status == SessionStatus.locked:
                 raise HTTPException(status_code=400, detail="This session is locked and cannot be edited.")
-            if session.correction_deadline:
-                deadline = session.correction_deadline
+            
+            # Authoritative dynamic period end deadline
+            try:
+                _, period_end_dt = StudentAttendanceService.get_scheduled_times(session.attendance_date, session.period_number, db)
+            except Exception:
+                period_end_dt = session.scheduled_end_time or session.correction_deadline
+
+            deadline = session.correction_deadline or period_end_dt
+            if deadline:
                 if deadline.tzinfo is None:
                     deadline = deadline.replace(tzinfo=timezone.utc)
-                if now_utc > deadline:
-                    raise HTTPException(status_code=400, detail="The correction window for this session has expired.")
+                if now_utc >= deadline:
+                    raise HTTPException(
+                        status_code=400,
+                        detail="Student attendance correction window has closed for this period."
+                    )
 
         record = (
             db.query(StudentAttendance)
@@ -2078,7 +2109,11 @@ class StudentAttendanceService:
             session.status = SessionStatus.locked
         else:
             session.status = SessionStatus.submitted
-            session.correction_deadline = datetime.now(timezone.utc) + timedelta(hours=24)
+            try:
+                _, period_end_dt = StudentAttendanceService.get_scheduled_times(session.attendance_date, session.period_number, db)
+                session.correction_deadline = period_end_dt
+            except Exception:
+                pass
 
         audit = AttendanceCorrectionAudit(
             attendance_session_id=session.id,

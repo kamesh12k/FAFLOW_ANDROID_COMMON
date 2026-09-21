@@ -274,8 +274,8 @@ flowchart TD
   6. `medical`
 
 #### 8. Whether attendance can be edited
-* **Teacher In-Window Correction**: Yes. The submitting teacher can call `PATCH /student-attendance/sessions/{id}/students/{student_id}` to change an individual student's status without administrator intervention, **provided the correction window has not expired** ([student_attendance_service.py:L704-L768](file:///b:/FAFLOW_UNIFIED/backend/app/services/student_attendance_service.py#L704-L768)).
-* **Window Duration**: Configured via `SystemSetting` key `student_attendance_correction_window_hours` (default is **24 hours** from submission).
+* **Teacher In-Window Correction**: Yes. The submitting teacher can call `PATCH /student-attendance/sessions/{id}/students/{student_id}` to change an individual student's status without administrator intervention, **provided the correction window has not expired** (authoritatively evaluated at server-side current time against the period end datetime).
+* **Window Duration**: **Period End Time**. Teachers can correct student attendance only until the end time of the attendance period (e.g. for a 09:20–10:20 period, corrections strictly lock at 10:20:00). The old 24-hour fixed duration is fully deprecated.
 * **Audit Trail**: Every change creates an immutable audit row in `attendance_correction_audits` tracking `old_status`, `new_status`, `changed_by_id`, `reason`, and timestamp.
 * **Administrative Override**: Admins and Principals can override attendance at any time via `POST /student-attendance/principal/sessions/{id}/students/{student_id}/override`.
 

@@ -92,7 +92,7 @@ INSERT INTO business_rules (
 
     -- Student Attendance
     ('student_attendance_submission_window_minutes', 'student_attendance', 'On-Time Submission Window', 'Window from period start to submit attendance before it is flagged as late.', '15', 'integer', 'minutes', 5, 60, '15', '["Student Attendance", "Teacher Compliance", "Attendance Sessions"]', 'high', false),
-    ('student_attendance_correction_window_hours', 'student_attendance', 'Correction Window Limit', 'Hours after session creation during which teachers can submit attendance corrections.', '24', 'integer', 'hours', 1, 168, '24', '["Attendance Correction", "Session Management"]', 'high', false),
+    ('student_attendance_correction_window_hours', 'student_attendance', 'Correction Window Limit (Legacy)', 'Legacy 24h setting. Note: Teacher corrections now authoritatively close at period end.', '24', 'integer', 'hours', 1, 168, '24', '["Attendance Correction", "Session Management"]', 'low', false),
     ('intelligence_student_shortage_threshold', 'student_attendance', 'Attendance Shortage Threshold', 'Institutional minimum required attendance percentage before shortage flags are raised.', '75.0', 'percentage', '%', 50.0, 90.0, '75.0', '["Principal Dossier", "HOD Overview", "Student Profile"]', 'critical', false),
 
     -- Faculty Attendance & Biometrics

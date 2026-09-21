@@ -245,7 +245,12 @@ export default function StudentAttendance() {
       setSubmitSuccess(`Updated student ${correctingStudent.roll_number} to ${newStatus}`)
     } catch (err) {
       console.error('Correction failed', err)
-      setError(err.response?.data?.detail || 'Correction failed')
+      const detail = err.response?.data?.detail || 'Correction failed'
+      setError(detail)
+      // If server rejected because window closed, refresh session to lock controls
+      if (detail.toLowerCase().includes('closed') || detail.toLowerCase().includes('expired') || detail.toLowerCase().includes('locked')) {
+        studentAttendanceApi.getSession(activeSession.id).then(r => setActiveSession(r.data)).catch(() => {})
+      }
     } finally {
       setCorrectingLoading(false)
     }
@@ -472,35 +477,61 @@ export default function StudentAttendance() {
                     </div>
                   </div>
 
-                  {/* Submission Status Banner if session exists */}
-                  {activeSession && activeSession.status !== 'OPEN' && activeSession.status !== 'NOT_OPEN' && (
-                    <div className={`mt-4 p-3.5 rounded-xl border text-xs flex items-center justify-between ${
-                      activeSession.status === 'SUBMITTED' ? 'bg-emerald-50 border-emerald-200 text-emerald-900' :
-                      activeSession.status === 'SUBMITTED_LATE' ? 'bg-amber-50 border-amber-200 text-amber-900' :
-                      'bg-slate-100 border-slate-200 text-slate-800'
-                    }`}>
-                      <div className="flex items-center gap-2 font-medium">
-                        <ClockIcon className="w-4 h-4" />
-                        <span>Status: <strong>{activeSession.status}</strong></span>
-                        {activeSession.submitted_at && (
-                          <span className="text-slate-500">
-                            • Submitted at {new Date(activeSession.submitted_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                          </span>
+                  {/* Submission Status Banner with Period-End Correction State */}
+                  {activeSession && activeSession.status !== 'OPEN' && activeSession.status !== 'NOT_OPEN' && (() => {
+                    const isEditable = Boolean(activeSession.can_edit || activeSession.correction_allowed)
+                    const formatTime = (isoOrTime) => {
+                      if (!isoOrTime) return activeClassInfo?.endTime || 'Period End'
+                      try {
+                        const d = new Date(isoOrTime)
+                        if (!isNaN(d.getTime())) {
+                          return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+                        }
+                      } catch (_) {}
+                      return isoOrTime
+                    }
+                    const deadlineText = formatTime(activeSession.correction_deadline || activeClassInfo?.endTime)
+                    const diffMinutes = activeSession.correction_deadline
+                      ? Math.max(0, Math.ceil((new Date(activeSession.correction_deadline).getTime() - Date.now()) / 60000))
+                      : null
+
+                    return (
+                      <div className={`mt-4 p-4 rounded-xl border text-xs space-y-2 ${
+                        isEditable
+                          ? 'bg-emerald-50/90 border-emerald-300 text-emerald-950'
+                          : 'bg-slate-100 border-slate-300 text-slate-800'
+                      }`}>
+                        <div className="flex items-center justify-between flex-wrap gap-2">
+                          <div className="flex items-center gap-2 font-bold">
+                            <ClockIcon className="w-4 h-4" />
+                            <span>Attendance Submitted ({activeSession.status})</span>
+                            {activeSession.submitted_at && (
+                              <span className="text-slate-600 font-normal">
+                                • Submitted at {new Date(activeSession.submitted_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                              </span>
+                            )}
+                          </div>
+                          <div>
+                            {isEditable ? (
+                              <span className="text-emerald-900 font-extrabold bg-emerald-100/90 border border-emerald-300 px-3 py-1 rounded-full text-[11px] shadow-sm">
+                                ⏱️ Corrections open until {deadlineText} {diffMinutes !== null && diffMinutes > 0 ? `(${diffMinutes}m left)` : ''}
+                              </span>
+                            ) : (
+                              <span className="text-slate-700 font-extrabold bg-slate-200 border border-slate-300 px-3 py-1 rounded-full text-[11px]">
+                                🔒 Correction Window Closed
+                              </span>
+                            )}
+                          </div>
+                        </div>
+
+                        {!isEditable && (
+                          <div className="text-[11px] text-slate-600 font-medium pt-1 border-t border-slate-200">
+                            This period ended at <strong>{deadlineText}</strong>. Student attendance can no longer be edited.
+                          </div>
                         )}
                       </div>
-                      <div>
-                        {activeSession.can_edit ? (
-                          <span className="text-emerald-700 font-bold bg-emerald-100/60 px-2 py-0.5 rounded">
-                            In Correction Window
-                          </span>
-                        ) : (
-                          <span className="text-slate-600 font-bold bg-slate-200 px-2 py-0.5 rounded">
-                            Session Locked
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                  )}
+                    )
+                  })()}
 
                   {/* Live Counters */}
                   <div className="grid grid-cols-3 gap-3 mt-4 text-center">
@@ -645,10 +676,10 @@ export default function StudentAttendance() {
                               {statusBadge.label}
                             </span>
 
-                            {activeSession?.can_edit && (
+                            {(activeSession?.can_edit || activeSession?.correction_allowed) && (
                               <button
                                 onClick={() => setCorrectingStudent(student)}
-                                className="px-2 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold rounded text-[10px]"
+                                className="px-2.5 py-1 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold rounded text-[11px] border border-indigo-200 transition-colors"
                               >
                                 Edit
                               </button>

@@ -282,8 +282,9 @@ def test_submission_15_minute_rule(db_session, test_teacher, setup_attendance_co
     today = ctx["today"]
     cls_a = ctx["class_a"]
 
-    # Period 3 start time is 11:40 (15-min window ends at 11:55)
-    on_time = datetime.combine(today, time(11, 45)).replace(tzinfo=timezone.utc)
+    # Period 3 start time dynamically computed
+    start_t, _ = StudentAttendanceService.get_scheduled_times(today, 3, db_session)
+    on_time = start_t + timedelta(minutes=5)
     req1 = SubmitAttendanceRequest(
         class_id=cls_a.id,
         period_number=3,
@@ -298,7 +299,7 @@ def test_submission_15_minute_rule(db_session, test_teacher, setup_attendance_co
     db_session.query(AttendanceSession).delete()
     db_session.commit()
 
-    late_time = datetime.combine(today, time(12, 0)).replace(tzinfo=timezone.utc)
+    late_time = start_t + timedelta(minutes=20)
     req2 = SubmitAttendanceRequest(
         class_id=cls_a.id,
         period_number=3,
@@ -328,13 +329,14 @@ def test_frictionless_in_window_correction_with_audit(db_session, test_teacher, 
     student_004 = next(r for r in res.records if r.student_suffix == "004")
     assert student_004.status == StudentAttendanceStatus.absent
 
-    # Correct to PRESENT
+    # Correct to PRESENT within window (before period end)
     corr_req = AttendanceCorrectionRequest(
         new_status=StudentAttendanceStatus.present,
         reason="Student arrived with pass"
     )
+    in_window_time = res.scheduled_start_time + timedelta(minutes=10)
     updated = StudentAttendanceService.correct_student_attendance(
-        db_session, res.id, student_004.student_id, test_teacher, corr_req
+        db_session, res.id, student_004.student_id, test_teacher, corr_req, as_of=in_window_time
     )
 
     assert updated.absent_count == 0
@@ -521,7 +523,11 @@ def test_api_routes_end_to_end(client: TestClient, db_session, test_teacher, aut
     assert res_get.status_code == 200
     assert res_get.json()["id"] == sess_id
 
-    # 4. PATCH Correction
+    # 4. PATCH Correction (in-window)
+    sess_obj = db_session.query(AttendanceSession).filter(AttendanceSession.id == sess_id).first()
+    sess_obj.correction_deadline = datetime.now(timezone.utc) + timedelta(minutes=30)
+    db_session.commit()
+
     student_001 = next(s for s in sess_data["records"] if s["student_suffix"] == "001")
     corr_body = {
         "new_status": "present",
@@ -536,6 +542,19 @@ def test_api_routes_end_to_end(client: TestClient, db_session, test_teacher, aut
     updated_sess = res_corr.json()
     assert updated_sess["absent_count"] == 1
     assert updated_sess["present_count"] == 9
+    assert updated_sess["correction_allowed"] is True
+
+    # 5. Verify correction rejected after deadline has passed
+    sess_obj.correction_deadline = datetime.now(timezone.utc) - timedelta(seconds=5)
+    db_session.commit()
+
+    res_expired = client.patch(
+        f"/student-attendance/sessions/{sess_id}/students/{student_001['student_id']}",
+        json=corr_body,
+        headers=auth_headers_teacher
+    )
+    assert res_expired.status_code == 400
+    assert "correction window has closed" in res_expired.json()["detail"].lower()
 
 
 def test_hod_overview_rbac_and_isolation(client: TestClient, auth_headers_teacher, auth_headers_admin, setup_attendance_context):

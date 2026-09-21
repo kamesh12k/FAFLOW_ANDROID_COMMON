@@ -63,6 +63,8 @@ class AttendanceSessionOut(BaseModel):
     scheduled_end_time: Optional[datetime] = None
     submitted_at: Optional[datetime] = None
     correction_deadline: Optional[datetime] = None
+    correction_allowed: bool = False
+    can_edit: bool = False
     total_students: int
     present_count: int
     absent_count: int
