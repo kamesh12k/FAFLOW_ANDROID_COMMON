@@ -49,8 +49,20 @@ export default function AdminAttendance() {
     return () => clearInterval(interval)
   }, [autoRefresh, loadData])
 
+  const formatTime = (isoString) => {
+    if (!isoString) return '—'
+    try {
+      const d = new Date(isoString)
+      if (isNaN(d.getTime())) return isoString
+      return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+    } catch {
+      return isoString
+    }
+  }
+
   const records = useMemo(() => {
-    return liveData?.all_shifts || liveData?.active_shifts || []
+    const list = liveData?.all_shifts || liveData?.active_shifts || []
+    return Array.isArray(list) ? list : []
   }, [liveData])
 
   const filteredRecords = useMemo(() => {
@@ -261,13 +273,15 @@ export default function AdminAttendance() {
                         <div className="text-[11px] text-gray-400">ID: {rec.user_id}</div>
                       </td>
                       <td className="px-5 py-3.5 text-gray-800 font-mono">
-                        {rec.check_in_time || '—'}
+                        {formatTime(rec.check_in_time)}
                       </td>
                       <td className="px-5 py-3.5 text-gray-800 font-mono">
-                        {rec.check_out_time || '—'}
+                        {formatTime(rec.check_out_time)}
                       </td>
                       <td className="px-5 py-3.5 text-gray-700">
-                        {rec.working_hours ? `${rec.working_hours.toFixed(1)} hrs` : isPresent ? 'In Progress' : '—'}
+                        {typeof rec.working_hours === 'number'
+                          ? `${rec.working_hours.toFixed(1)} hrs`
+                          : (rec.working_hours || (isPresent ? 'In Progress' : '—'))}
                       </td>
                       <td className="px-5 py-3.5">
                         <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
@@ -278,7 +292,7 @@ export default function AdminAttendance() {
                       <td className="px-5 py-3.5">
                         <div className="flex items-center gap-2">
                           <span className="text-[11px] font-bold text-gray-800">
-                            {(rec.face_similarity_score * 100).toFixed(0)}%
+                            {Number(rec.face_similarity_score != null ? rec.face_similarity_score * 100 : 0).toFixed(0)}%
                           </span>
                           {rec.liveness_verified && (
                             <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-purple-50 text-purple-700 border border-purple-200">

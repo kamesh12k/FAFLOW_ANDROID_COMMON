@@ -8,6 +8,20 @@ const PERIOD_TIMES = {
   3: '10:15–11:15 AM',
   4: '11:15–12:15 PM',
   5: '1:00–2:00 PM',
+  6: '2:00–3:00 PM',
+  7: '3:00–4:00 PM',
+  8: '4:00–5:00 PM',
+}
+
+const formatDateTime = (dateStr) => {
+  if (!dateStr) return 'Today'
+  try {
+    const d = new Date(dateStr)
+    if (isNaN(d.getTime())) return 'Today'
+    return d.toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })
+  } catch {
+    return 'Today'
+  }
 }
 
 export default function TimetableApprovals() {
@@ -37,12 +51,17 @@ export default function TimetableApprovals() {
         classesApi.list(),
         subjectsApi.list(true)
       ])
-      setItems(pending.data)
+      const pendingList = Array.isArray(pending?.data) ? pending.data : []
+      const teachersList = Array.isArray(teachers?.data) ? teachers.data : []
+      const classesList = Array.isArray(classes?.data) ? classes.data : []
+      const subjectsList = Array.isArray(subjects?.data) ? subjects.data : []
+
+      setItems(pendingList)
       setSelectedIds(new Set())
       setMaps({
-        teachers: Object.fromEntries(teachers.data.map(x => [x.id, x])),
-        classes: Object.fromEntries(classes.data.map(x => [x.id, x])),
-        subjects: Object.fromEntries(subjects.data.map(x => [x.id, x]))
+        teachers: Object.fromEntries(teachersList.filter(x => x && x.id != null).map(x => [x.id, x])),
+        classes: Object.fromEntries(classesList.filter(x => x && x.id != null).map(x => [x.id, x])),
+        subjects: Object.fromEntries(subjectsList.filter(x => x && x.id != null).map(x => [x.id, x]))
       })
     } catch (err) {
       setError(err.response?.data?.detail || 'Could not load timetable submissions.')
@@ -260,7 +279,7 @@ export default function TimetableApprovals() {
                       <td className="px-4 py-3.5">
                         <div className="flex items-center gap-2.5">
                           <div className="w-8 h-8 rounded-full bg-indigo-100 text-indigo-700 font-bold text-xs flex items-center justify-center shrink-0">
-                            {t?.name ? t.name.charAt(0) : 'T'}
+                            {(t?.name || '').trim().charAt(0) || 'T'}
                           </div>
                           <div>
                             <p className="font-semibold text-gray-900">{t?.name || `Teacher #${item.teacher_id}`}</p>
@@ -288,7 +307,7 @@ export default function TimetableApprovals() {
                         </p>
                       </td>
                       <td className="px-4 py-3.5 text-xs text-gray-400">
-                        {item.created_at ? new Date(item.created_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : 'Today'}
+                        {formatDateTime(item.created_at)}
                       </td>
                       <td className="px-4 py-3.5">
                         <div className="flex items-center gap-2">
