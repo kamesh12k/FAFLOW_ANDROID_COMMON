@@ -550,4 +550,95 @@ def test_hod_overview_rbac_and_isolation(client: TestClient, auth_headers_teache
     data = res_hod.json()
     assert "classes" in data
     assert "total_classes" in data
+    assert "sessions" in data
+    assert "emergency_count" in data
+
+
+def test_hod_overview_emergency_attendance_lifecycle_and_filters(client: TestClient, db_session, test_teacher, test_teacher2, auth_headers_admin, setup_attendance_context):
+    """Tests that submitting emergency attendance reflects in HOD overview emergency_count,
+
+    populates the sessions array with canonical EMERGENCY type, valid subject/teacher names,
+    and correctly resolves under the Emergency filter tab.
+    """
+    ctx = setup_attendance_context
+    cls_a = ctx["class_a"]
+    today = ctx["today"]
+
+    # 1. Submit Emergency Attendance for Class A, Period 3
+    req = EmergencyAttendanceRequest(
+        class_id=cls_a.id,
+        period_number=3,
+        attendance_date=today,
+        absent_roll_suffixes=["003", "007"]
+    )
+    res_sub = StudentAttendanceService.emergency_attendance(db_session, test_teacher2, req)
+    assert res_sub.attendance_type == AttendanceType.emergency
+
+    # 2. Fetch HOD Overview via Service
+    overview = StudentAttendanceService.get_hod_overview(db_session, test_teacher, today)
+
+    # 3. Assert Counters
+    assert overview.emergency_count == 1
+    assert overview.total_scheduled_sessions == overview.total_classes
+
+    # 4. Assert Sessions Array contains the Emergency Session
+    emerg_sessions = [s for s in overview.sessions if s.is_emergency or s.attendance_type == "EMERGENCY"]
+    assert len(emerg_sessions) == 1
+    emerg_sess = emerg_sessions[0]
+
+    assert emerg_sess.class_name == cls_a.name
+    assert emerg_sess.period_number == 3
+    assert emerg_sess.attendance_type == "EMERGENCY"
+    assert emerg_sess.is_emergency is True
+    assert emerg_sess.status in {"SUBMITTED", "SUBMITTED_LATE"}
+    assert emerg_sess.actual_teacher_name == test_teacher2.name
+    assert emerg_sess.subject_name is not None
+    assert emerg_sess.absent_count == 2
+    assert emerg_sess.present_count == 8
+    assert len(emerg_sess.absent_rolls) == 2
+
+    # 5. Assert API HTTP endpoint returns matching structure
+    res_api = client.get(f"/student-attendance/hod/overview?target_date={today}", headers=auth_headers_admin)
+    assert res_api.status_code == 200
+    api_data = res_api.json()
+    assert api_data["emergency_count"] == 1
+    assert len(api_data["sessions"]) >= 1
+
+    api_emerg_sessions = [s for s in api_data["sessions"] if s["is_emergency"] or s["attendance_type"] == "EMERGENCY"]
+    assert len(api_emerg_sessions) == 1
+    assert api_emerg_sessions[0]["class_name"] == cls_a.name
+    assert api_emerg_sessions[0]["attendance_type"] == "EMERGENCY"
+    assert api_emerg_sessions[0]["actual_teacher_name"] == test_teacher2.name
+    assert api_emerg_sessions[0]["present_count"] == 8
+    assert api_emerg_sessions[0]["absent_count"] == 2
+
+
+def test_hod_overview_emergency_session_outside_timetable(db_session, test_teacher, test_teacher2, setup_attendance_context):
+    """Verifies that an emergency session conducted for a period without any timetable slot
+
+    is still fully present in the HOD overview sessions array.
+    """
+    ctx = setup_attendance_context
+    cls_a = ctx["class_a"]
+    today = ctx["today"]
+
+    # Period 5 has no TimetableSlot in setup_attendance_context
+    req = EmergencyAttendanceRequest(
+        class_id=cls_a.id,
+        period_number=5,
+        attendance_date=today,
+        absent_roll_suffixes=["001"]
+    )
+    res_sub = StudentAttendanceService.emergency_attendance(db_session, test_teacher2, req)
+    assert res_sub.period_number == 5
+
+    overview = StudentAttendanceService.get_hod_overview(db_session, test_teacher, today)
+
+    # Session for period 5 MUST appear in sessions
+    p5_sessions = [s for s in overview.sessions if s.period_number == 5]
+    assert len(p5_sessions) == 1
+    assert p5_sessions[0].attendance_type == "EMERGENCY"
+    assert p5_sessions[0].subject_name is not None
+    assert p5_sessions[0].actual_teacher_name == test_teacher2.name
+
 

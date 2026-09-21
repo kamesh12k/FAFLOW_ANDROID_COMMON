@@ -32,7 +32,7 @@ services:
       - DATABASE_URL=postgresql://postgres:postgrespassword@postgres:5432/faflow_db
       - SECRET_KEY=linux_docker_generated_secret_key_faflow_2026
       - ALGORITHM=HS256
-      - ACCESS_TOKEN_EXPIRE_MINUTES=1440
+      - ACCESS_TOKEN_EXPIRE_MINUTES=259200
       - ENVIRONMENT=production
       - CORS_ORIGINS=["*"]
     ports:

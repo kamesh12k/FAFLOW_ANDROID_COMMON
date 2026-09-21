@@ -169,7 +169,7 @@ if [ ! -f "$ENV_FILE" ]; then
 DATABASE_URL=postgresql://postgres:postgres@localhost:5432/faflow_db
 SECRET_KEY=$SECRET_KEY
 ALGORITHM=HS256
-ACCESS_TOKEN_EXPIRE_MINUTES=1440
+ACCESS_TOKEN_EXPIRE_MINUTES=259200
 
 # Biometric & Mobile Geofence
 GEOFENCE_LATITUDE=13.0827

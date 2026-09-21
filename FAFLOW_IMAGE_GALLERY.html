@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FAFLOW Experience Gallery</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-primary: #0a0e1a;
+            --bg-secondary: #121829;
+            --bg-card: rgba(26, 34, 56, 0.7);
+            --border-card: rgba(255, 255, 255, 0.08);
+            --accent-blue: #3b82f6;
+            --accent-cyan: #06b6d4;
+            --accent-indigo: #6366f1;
+            --text-primary: #f8fafc;
+            --text-secondary: #94a3b8;
+            --text-muted: #64748b;
+        }
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            background: radial-gradient(circle at 10% 20%, rgba(99, 102, 241, 0.15), transparent 40%),
+                        radial-gradient(circle at 90% 80%, rgba(6, 182, 212, 0.15), transparent 40%),
+                        var(--bg-primary);
+            color: var(--text-primary);
+            font-family: 'Outfit', sans-serif;
+            min-height: 100vh;
+            padding-bottom: 80px;
+        }
+        header {
+            position: sticky;
+            top: 0;
+            z-index: 50;
+            backdrop-filter: blur(20px);
+            background: rgba(10, 14, 26, 0.85);
+            border-bottom: 1px solid var(--border-card);
+            padding: 18px 36px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+        .brand-logo {
+            width: 42px;
+            height: 42px;
+            background: linear-gradient(135deg, var(--accent-blue), var(--accent-indigo));
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 800;
+            font-size: 20px;
+            box-shadow: 0 4px 20px rgba(99, 102, 241, 0.4);
+        }
+        .brand-title {
+            font-size: 22px;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+            background: linear-gradient(to right, #ffffff, #cbd5e1);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .brand-badge {
+            background: rgba(59, 130, 246, 0.2);
+            color: var(--accent-cyan);
+            border: 1px solid rgba(6, 182, 212, 0.3);
+            font-size: 11px;
+            font-weight: 700;
+            padding: 4px 10px;
+            border-radius: 999px;
+            text-transform: uppercase;
+        }
+        .controls {
+            display: flex;
+            gap: 16px;
+            align-items: center;
+        }
+        .search-box {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-card);
+            border-radius: 12px;
+            padding: 10px 18px;
+            color: white;
+            font-size: 14px;
+            width: 260px;
+            outline: none;
+            transition: all 0.2s;
+        }
+        .search-box:focus {
+            border-color: var(--accent-blue);
+            box-shadow: 0 0 15px rgba(59, 130, 246, 0.3);
+            width: 320px;
+        }
+        .nav-tabs {
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            padding: 24px 36px;
+            flex-wrap: wrap;
+        }
+        .tab-btn {
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid var(--border-card);
+            color: var(--text-secondary);
+            padding: 9px 18px;
+            border-radius: 12px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .tab-btn:hover {
+            background: rgba(255, 255, 255, 0.08);
+            color: white;
+            transform: translateY(-2px);
+        }
+        .tab-btn.active {
+            background: linear-gradient(135deg, var(--accent-blue), var(--accent-indigo));
+            color: white;
+            border-color: transparent;
+            box-shadow: 0 4px 20px rgba(99, 102, 241, 0.35);
+        }
+        .tab-count {
+            background: rgba(0, 0, 0, 0.25);
+            padding: 2px 7px;
+            border-radius: 999px;
+            font-size: 11px;
+        }
+        .gallery-container {
+            max-width: 1600px;
+            margin: 0 auto;
+            padding: 0 36px;
+        }
+        .gallery-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+            gap: 24px;
+        }
+        .mobile-grid {
+            grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+        }
+        .card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-card);
+            border-radius: 18px;
+            overflow: hidden;
+            backdrop-filter: blur(16px);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+        }
+        .card:hover {
+            transform: translateY(-6px);
+            border-color: rgba(99, 102, 241, 0.4);
+            box-shadow: 0 16px 36px rgba(0, 0, 0, 0.45), 0 0 20px rgba(99, 102, 241, 0.2);
+        }
+        .card-img-wrapper {
+            width: 100%;
+            height: 220px;
+            background: #05070d;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+        .card.mobile-card .card-img-wrapper {
+            height: 380px;
+        }
+        .card-img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            object-position: top;
+            transition: transform 0.4s ease;
+        }
+        .card.mobile-card .card-img {
+            object-fit: contain;
+            padding: 10px;
+        }
+        .card:hover .card-img {
+            transform: scale(1.04);
+        }
+        .card-info {
+            padding: 18px;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+        .card-group {
+            font-size: 11px;
+            font-weight: 700;
+            color: var(--accent-cyan);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .card-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--text-primary);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        /* Lightbox */
+        .lightbox {
+            position: fixed;
+            inset: 0;
+            background: rgba(5, 7, 13, 0.95);
+            backdrop-filter: blur(25px);
+            z-index: 100;
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 24px;
+        }
+        .lightbox.active {
+            display: flex;
+        }
+        .lightbox-close {
+            position: absolute;
+            top: 24px;
+            right: 32px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: white;
+            font-size: 24px;
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .lightbox-close:hover {
+            background: rgba(239, 68, 68, 0.4);
+            border-color: #ef4444;
+            transform: rotate(90deg);
+        }
+        .lightbox-content {
+            max-width: 90vw;
+            max-height: 80vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+        .lightbox-img {
+            max-width: 90vw;
+            max-height: 80vh;
+            object-fit: contain;
+            border-radius: 14px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.8), 0 0 40px rgba(99, 102, 241, 0.3);
+            border: 1px solid var(--border-card);
+        }
+        .lightbox-title {
+            margin-top: 18px;
+            font-size: 20px;
+            font-weight: 600;
+            color: white;
+            text-align: center;
+        }
+        .lightbox-nav {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: white;
+            font-size: 24px;
+            width: 52px;
+            height: 52px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .lightbox-nav:hover {
+            background: rgba(59, 130, 246, 0.4);
+            border-color: var(--accent-blue);
+            transform: translateY(-50%) scale(1.1);
+        }
+        .lightbox-prev { left: 32px; }
+        .lightbox-next { right: 32px; }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="brand">
+            <div class="brand-logo">F</div>
+            <div>
+                <div class="brand-title">FAFLOW Gallery</div>
+            </div>
+            <div class="brand-badge">71 Artifacts</div>
+        </div>
+        <div class="controls">
+            <input type="text" class="search-box" placeholder="Search screens (e.g. attendance, timetable)..." id="searchInput" oninput="filterItems()">
+        </div>
+    </header>
+
+    <div class="nav-tabs" id="tabContainer">
+        <button class="tab-btn active" onclick="selectTab('ALL')">All Screens <span class="tab-count">71</span></button>
+        <button class="tab-btn" onclick="selectTab('Android Mobile')">📱 Android Mobile <span class="tab-count">17</span></button>
+        <button class="tab-btn" onclick="selectTab('Admin Portal')">⚙️ Admin Portal <span class="tab-count">27</span></button>
+        <button class="tab-btn" onclick="selectTab('Principal & Governance')">🏛️ Principal & Gov <span class="tab-count">6</span></button>
+        <button class="tab-btn" onclick="selectTab('Teacher Portal')">👨‍🏫 Teacher Portal <span class="tab-count">10</span></button>
+        <button class="tab-btn" onclick="selectTab('Staff & Operations')">💼 Staff & Ops <span class="tab-count">9</span></button>
+    </div>
+
+    <main class="gallery-container">
+        <div class="gallery-grid" id="galleryGrid">
+        </div>
+    </main>
+
+    <!-- Lightbox -->
+    <div class="lightbox" id="lightbox" onclick="closeLightbox(event)">
+        <button class="lightbox-close" onclick="closeLightboxDirect()">&times;</button>
+        <button class="lightbox-nav lightbox-prev" onclick="navLightbox(-1, event)">&#10094;</button>
+        <button class="lightbox-nav lightbox-next" onclick="navLightbox(1, event)">&#10095;</button>
+        <div class="lightbox-content">
+            <img src="" class="lightbox-img" id="lightboxImg">
+        </div>
+        <div class="lightbox-title" id="lightboxTitle"></div>
+    </div>
+
+    <script>
+        const allItems = [{"name": "01_home_dashboard.png", "title": "01 Home Dashboard", "path": "file:///C:/Users/kames/.gemini/antigravity-ide/brain/f21d8419-137f-439e-9255-b6c1feff5448/screenshots/android/01_home_dashboard.png", "category": "Mobile", "group": "Android Mobile"}, {"name": "01_login.png", "title": "01 Login", "path": "file:///C:/Users/kames/.gemini/antigravity-ide/brain/f21d8419-137f-439e-9255-b6c1feff5448/screenshots/android/01_login.png", "category": "Mobile", "group": "Android Mobile"}, {"name": "02_timetable.png", "title": "02 Timetable", "path": "file:///C:/Users/kames/.gemini/antigravity-ide/brain/f21d8419-137f-439e-9255-b6c1feff5448/screenshots/android/02_timetable.png", "category": "Mobile", "group": "Android Mobile"}, {"name": "03_staff_attendance.png", "title": "03 Staff Attendance", "path": "file:///C:/Users/kames/.gemini/antigravity-ide/brain/f21d8419-137f-439e-9255-b6c1feff5448/screenshots/android/03_staff_attendance.png", "category": "Mobile", "group": "Staff & Operations"}, {"name": "04_attendance_camera_flow.png", "title": "04 Attendance Camera Flow", "path": "file:///C:/Users/kames/.gemini/antigravity-ide/brain/f21d8419-137f-439e-9255-b6c1feff5448/screenshots/android/04_attendance_camera_flow.png", "category": "Mobile", "group": "Android Mobile"}, {"name": "04_more.png", "title": "04 More", "path": "file:///C:/Users/kames/.gemini/antigravity-ide/brain/f21d8419-137f-439e-9255-b6c1feff5448/screenshots/android/04_more.png", "category": "Mobile", "group": "Android Mobile"}, {"name": "05_attendance_history.png", "title": "05 Attendance History", "path": "file:///C:/Users/kames/.gemini/antigravity-ide/brain/f21d8419-137f-439e-9255-b6c1feff5448/screenshots/android/05_attendance_history.png", "category": "Mobile", "group": "Android Mobile"}, {"name": "06_more_hub.png", "title": "06 More Hub", "path": "file:///C:/Users/kames/.gemini/antigravity-ide/brain/f21d8419-137f-439e-9255-b6c1feff5448/screenshots/android/06_more_hub.png", "category": "Mobile", "group": "Android Mobile"}, {"name": "07_student_attendance.png", "title": "07 Student Attendance", "path": "file:///C:/Users/kames/.gemini/antigravity-ide/brain/f21d8419-137f-439e-9255-b6c1feff5448/screenshots/android/07_student_attendance.png", "category": "Mobile", "group": "Android Mobile"}, {"name": "08_apply_leave.png", "title": "08 Apply Leave", "path": "file:///C:/Users/kames/.gemini/antigravity-ide/brain/f21d8419-137f-439e-9255-b6c1feff5448/screenshots/android/08_apply_leave.png", "category": "Mobile", "group": "Android Mobile"}, {"name": "09_leave_history.png", "title": "09 Leave History", "path": "file:///C:/Users/kames/.gemini/antigravity-ide/brain/f21d8419-137f-439e-9255-b6c1feff5448/screenshots/android/09_leave_history.png", "category": "Mobile", "group": "Android Mobile"}, {"name": "10_credits_ledger.png", "title": "10 Credits Ledger", "path": "file:///C:/Users/kames/.gemini/antigravity-ide/brain/f21d8419-137f-439e-9255-b6c1feff5448/screenshots/android/10_credits_ledger.png", "category": "Mobile", "group": "Android Mobile"}, {"name": "11_face_enrollment.png", "title": "11 Face Enrollment", "path": "file:///C:/Users/kames/.gemini/antigravity-ide/brain/f21d8419-137f-439e-9255-b6c1feff5448/screenshots/android/11_face_enrollment.png", "category": "Mobile", "group": "Android Mobile"}, {"name": "12_substitution_preferences.png", "title": "12 Substitution Preferences", "path": "file:///C:/Users/kames/.gemini/antigravity-ide/brain/f21d8419-137f-439e-9255-b6c1feff5448/screenshots/android/12_substitution_preferences.png", "category": "Mobile", "group": "Android Mobile"}, {"name": "13_staff_profile.png", "title": "13 Staff Profile", "path": "file:///C:/Users/kames/.gemini/antigravity-ide/brain/f21d8419-137f-439e-9255-b6c1feff5448/screenshots/android/13_staff_profile.png", "category": "Mobile", "group": "Staff & Operations"}, {"name": "14_notifications.png", "title": "14 Notifications", "path": "file:///C:/Users/kames/.gemini/antigravity-ide/brain/f21d8419-137f-439e-9255-b6c1feff5448/screenshots/android/14_notifications.png", "category": "Mobile", "group": "Android Mobile"}, {"name": "15_settings_diagnostics.png", "title": "15 Settings Diagnostics", "path": "file:///C:/Users/kames/.gemini/antigravity-ide/brain/f21d8419-137f-439e-9255-b6c1feff5448/screenshots/android/15_settings_diagnostics.png", "category": "Mobile", "group": "Android Mobile"}, {"name": "16_substitution_duties.png", "title": "16 Substitution Duties", "path": "file:///C:/Users/kames/.gemini/antigravity-ide/brain/f21d8419-137f-439e-9255-b6c1feff5448/screenshots/android/16_substitution_duties.png", "category": "Mobile", "group": "Android Mobile"}, {"name": "17_today_coverage_schedule.png", "title": "17 Today Coverage Schedule", "path": "file:///C:/Users/kames/.gemini/antigravity-ide/brain/f21d8419-137f-439e-9255-b6c1feff5448/screenshots/android/17_today_coverage_schedule.png", "category": "Mobile", "group": "Android Mobile"}, {"name": "01_login.png", "title": "01 Login", "path": "file:///C:/Users/kames/.gemini/antigravity-ide/brain/f21d8419-137f-439e-9255-b6c1feff5448/screenshots/web/01_login.png", "category": "Web", "group": "Public"}, {"name": "02_register.png", "title": "02 Register", "path": "file:///C:/Users/kames/.gemini/antigravity-ide/brain/f21d8419-137f-439e-9255-b6c1feff5448/screenshots/web/02_register.png", "category": "Web", "group": "Public"}, {"name": "03_admin_dashboard.png", "title": "03 Admin Dashboard", "path": "file:///C:/Users/kames/.gemini/antigravity-ide/brain/f21d8419-137f-439e-9255-b6c1feff5448/screenshots/web/03_admin_dashboard.png", "category": "Web", "group": "Admin Portal"}, {"name": "04_admin_staff_attendance.png", "title": "04 Admin Staff Attendance", "path": "file:///C:/Users/kames/.gemini/antigravity-ide/brain/f21d8419-137f-439e-9255-b6c1feff5448/screenshots/web/04_admin_staff_attendance.png", "category": "Web", "group": "Admin Portal"}, {"name": "05_admin_student_attendance.png", "title": "05 Admin Student Attendance", "path": "file:///C:/Users/kames/.gemini/antigravity-ide/brain/f21d8419-137f-439e-9255-b6c1feff5448/screenshots/web/05_admin_student_attendance.png", "category": "Web", "group": "Admin Portal"}, {"name": "06_admin_teachers.png", "title": "06 Admin Teachers", "path": "file:///C:/Users/kames/.gemini/antigravity-ide/brain/f21d8419-137f-439e-9255-b6c1feff5448/screenshots/web/06_admin_teachers.png", "category": "Web", "group": "Admin Portal"}, {"name": "07_admin_timetable.png", "title": "07 Admin Timetable", "path": "file:///C:/Users/kames/.gemini/antigravity-ide/brain/f21d8419-137f-439e-9255-b6c1feff5448/screenshots/web/07_admin_timetable.png", "category": "Web", "group": "Admin Portal"}, {"name": "08_admin_timetable_approvals.png", "title": "08 Admin Timetable Approvals", "path": "file:///C:/Users/kames/.gemini/antigravity-ide/brain/f21d8419-137f-439e-9255-b6c1feff5448/screenshots/web/08_admin_timetable_approvals.png", "category": "Web", "group": "Admin Portal"}, {"name": "09_admin_leaves.png", "title": "09 Admin Leaves", "path": "file:///C:/Users/kames/.gemini/antigravity-ide/brain/f21d8419-137f-439e-9255-b6c1feff5448/screenshots/web/09_admin_leaves.png", "category": "Web", "group": "Admin Portal"}, {"name": "10_admin_leave_entry.png", "title": "10 Admin Leave Entry", "path": "file:///C:/Users/kames/.gemini/antigravity-ide/brain/f21d8419-137f-439e-9255-b6c1feff5448/screenshots/web/10_admin_leave_entry.png", "category": "Web", "group": "Admin Portal"}, {"name": "11_admin_credits.png", "title": "11 Admin Credits", "path": "file:///C:/Users/kames/.gemini/antigravity-ide/brain/f21d8419-137f-439e-9255-b6c1feff5448/screenshots/web/11_admin_credits.png", "category": "Web", "group": "Admin Portal"}, {"name": "12_admin_subjects.png", "title": "12 Admin Subjects", "path": "file:///C:/Users/kames/.gemini/antigravity-ide/brain/f21d8419-137f-439e-9255-b6c1feff5448/screenshots/web/12_admin_subjects.png", "category": "Web", "group": "Admin Portal"}, {"name": "13_admin_classes.png", "title": "13 Admin Classes", "path": "file:///C:/Users/kames/.gemini/antigravity-ide/brain/f21d8419-137f-439e-9255-b6c1feff5448/screenshots/web/13_admin_classes.png", "category": "Web", "group": "Admin Portal"}, {"name": "14_admin_class_directory.png", "title": "14 Admin Class Directory", "path": "file:///C:/Users/kames/.gemini/antigravity-ide/brain/f21d8419-137f-439e-9255-b6c1feff5448/screenshots/web/14_admin_class_directory.png", "category": "Web", "group": "Admin Portal"}, {"name": "15_admin_class_timetable.png", "title": "15 Admin Class Timetable", "path": "file:///C:/Users/kames/.gemini/antigravity-ide/brain/f21d8419-137f-439e-9255-b6c1feff5448/screenshots/web/15_admin_class_timetable.png", "category": "Web", "group": "Admin Portal"}, {"name": "16_admin_departments.png", "title": "16 Admin Departments", "path": "file:///C:/Users/kames/.gemini/antigravity-ide/brain/f21d8419-137f-439e-9255-b6c1feff5448/screenshots/web/16_admin_departments.png", "category": "Web", "group": "Admin Portal"}, {"name": "17_admin_rooms.png", "title": "17 Admin Rooms", "path": "file:///C:/Users/kames/.gemini/antigravity-ide/brain/f21d8419-137f-439e-9255-b6c1feff5448/screenshots/web/17_admin_rooms.png", "category": "Web", "group": "Admin Portal"}, {"name": "18_admin_resource_availability.png", "title": "18 Admin Resource Availability", "path": "file:///C:/Users/kames/.gemini/antigravity-ide/brain/f21d8419-137f-439e-9255-b6c1feff5448/screenshots/web/18_admin_resource_availability.png", "category": "Web", "group": "Admin Portal"}, {"name": "19_admin_today_substitutions.png", "title": "19 Admin Today Substitutions", "path": "file:///C:/Users/kames/.gemini/antigravity-ide/brain/f21d8419-137f-439e-9255-b6c1feff5448/screenshots/web/19_admin_today_substitutions.png", "category": "Web", "group": "Admin Portal"}, {"name": "20_admin_academic_calendar.png", "title": "20 Admin Academic Calendar", "path": "file:///C:/Users/kames/.gemini/antigravity-ide/brain/f21d8419-137f-439e-9255-b6c1feff5448/screenshots/web/20_admin_academic_calendar.png", "category": "Web", "group": "Admin Portal"}, {"name": "21_admin_academic_reports.png", "title": "21 Admin Academic Reports", "path": "file:///C:/Users/kames/.gemini/antigravity-ide/brain/f21d8419-137f-439e-9255-b6c1feff5448/screenshots/web/21_admin_academic_reports.png", "category": "Web", "group": "Admin Portal"}, {"name": "22_admin_settings.png", "title": "22 Admin Settings", "path": "file:///C:/Users/kames/.gemini/antigravity-ide/brain/f21d8419-137f-439e-9255-b6c1feff5448/screenshots/web/22_admin_settings.png", "category": "Web", "group": "Admin Portal"}, {"name": "23_admin_backup.png", "title": "23 Admin Backup", "path": "file:///C:/Users/kames/.gemini/antigravity-ide/brain/f21d8419-137f-439e-9255-b6c1feff5448/screenshots/web/23_admin_backup.png", "category": "Web", "group": "Admin Portal"}, {"name": "24_admin_geofences.png", "title": "24 Admin Geofences", "path": "file:///C:/Users/kames/.gemini/antigravity-ide/brain/f21d8419-137f-439e-9255-b6c1feff5448/screenshots/web/24_admin_geofences.png", "category": "Web", "group": "Admin Portal"}, {"name": "25_admin_biometrics.png", "title": "25 Admin Biometrics", "path": "file:///C:/Users/kames/.gemini/antigravity-ide/brain/f21d8419-137f-439e-9255-b6c1feff5448/screenshots/web/25_admin_biometrics.png", "category": "Web", "group": "Admin Portal"}, {"name": "26_admin_managers.png", "title": "26 Admin Managers", "path": "file:///C:/Users/kames/.gemini/antigravity-ide/brain/f21d8419-137f-439e-9255-b6c1feff5448/screenshots/web/26_admin_managers.png", "category": "Web", "group": "Admin Portal"}, {"name": "27_admin_system_metrics.png", "title": "27 Admin System Metrics", "path": "file:///C:/Users/kames/.gemini/antigravity-ide/brain/f21d8419-137f-439e-9255-b6c1feff5448/screenshots/web/27_admin_system_metrics.png", "category": "Web", "group": "Admin Portal"}, {"name": "28_admin_data_retention.png", "title": "28 Admin Data Retention", "path": "file:///C:/Users/kames/.gemini/antigravity-ide/brain/f21d8419-137f-439e-9255-b6c1feff5448/screenshots/web/28_admin_data_retention.png", "category": "Web", "group": "Admin Portal"}, {"name": "29_admin_setup_guide.png", "title": "29 Admin Setup Guide", "path": "file:///C:/Users/kames/.gemini/antigravity-ide/brain/f21d8419-137f-439e-9255-b6c1feff5448/screenshots/web/29_admin_setup_guide.png", "category": "Web", "group": "Admin Portal"}, {"name": "30_principal_dashboard.png", "title": "30 Principal Dashboard", "path": "file:///C:/Users/kames/.gemini/antigravity-ide/brain/f21d8419-137f-439e-9255-b6c1feff5448/screenshots/web/30_principal_dashboard.png", "category": "Web", "group": "Principal & Governance"}, {"name": "31_principal_student_attendance.png", "title": "31 Principal Student Attendance", "path": "file:///C:/Users/kames/.gemini/antigravity-ide/brain/f21d8419-137f-439e-9255-b6c1feff5448/screenshots/web/31_principal_student_attendance.png", "category": "Web", "group": "Principal & Governance"}, {"name": "32_principal_staff_attendance.png", "title": "32 Principal Staff Attendance", "path": "file:///C:/Users/kames/.gemini/antigravity-ide/brain/f21d8419-137f-439e-9255-b6c1feff5448/screenshots/web/32_principal_staff_attendance.png", "category": "Web", "group": "Principal & Governance"}, {"name": "33_principal_class_timetable.png", "title": "33 Principal Class Timetable", "path": "file:///C:/Users/kames/.gemini/antigravity-ide/brain/f21d8419-137f-439e-9255-b6c1feff5448/screenshots/web/33_principal_class_timetable.png", "category": "Web", "group": "Principal & Governance"}, {"name": "34_governance_dashboard.png", "title": "34 Governance Dashboard", "path": "file:///C:/Users/kames/.gemini/antigravity-ide/brain/f21d8419-137f-439e-9255-b6c1feff5448/screenshots/web/34_governance_dashboard.png", "category": "Web", "group": "Principal & Governance"}, {"name": "35_governance_timetable.png", "title": "35 Governance Timetable", "path": "file:///C:/Users/kames/.gemini/antigravity-ide/brain/f21d8419-137f-439e-9255-b6c1feff5448/screenshots/web/35_governance_timetable.png", "category": "Web", "group": "Principal & Governance"}, {"name": "36_teacher_dashboard.png", "title": "36 Teacher Dashboard", "path": "file:///C:/Users/kames/.gemini/antigravity-ide/brain/f21d8419-137f-439e-9255-b6c1feff5448/screenshots/web/36_teacher_dashboard.png", "category": "Web", "group": "Teacher Portal"}, {"name": "37_teacher_student_attendance.png", "title": "37 Teacher Student Attendance", "path": "file:///C:/Users/kames/.gemini/antigravity-ide/brain/f21d8419-137f-439e-9255-b6c1feff5448/screenshots/web/37_teacher_student_attendance.png", "category": "Web", "group": "Teacher Portal"}, {"name": "38_teacher_timetable.png", "title": "38 Teacher Timetable", "path": "file:///C:/Users/kames/.gemini/antigravity-ide/brain/f21d8419-137f-439e-9255-b6c1feff5448/screenshots/web/38_teacher_timetable.png", "category": "Web", "group": "Teacher Portal"}, {"name": "39_teacher_class_timetable.png", "title": "39 Teacher Class Timetable", "path": "file:///C:/Users/kames/.gemini/antigravity-ide/brain/f21d8419-137f-439e-9255-b6c1feff5448/screenshots/web/39_teacher_class_timetable.png", "category": "Web", "group": "Teacher Portal"}, {"name": "40_teacher_apply_leave.png", "title": "40 Teacher Apply Leave", "path": "file:///C:/Users/kames/.gemini/antigravity-ide/brain/f21d8419-137f-439e-9255-b6c1feff5448/screenshots/web/40_teacher_apply_leave.png", "category": "Web", "group": "Teacher Portal"}, {"name": "41_teacher_leave_history.png", "title": "41 Teacher Leave History", "path": "file:///C:/Users/kames/.gemini/antigravity-ide/brain/f21d8419-137f-439e-9255-b6c1feff5448/screenshots/web/41_teacher_leave_history.png", "category": "Web", "group": "Teacher Portal"}, {"name": "42_teacher_substitution.png", "title": "42 Teacher Substitution", "path": "file:///C:/Users/kames/.gemini/antigravity-ide/brain/f21d8419-137f-439e-9255-b6c1feff5448/screenshots/web/42_teacher_substitution.png", "category": "Web", "group": "Teacher Portal"}, {"name": "43_teacher_today_coverage.png", "title": "43 Teacher Today Coverage", "path": "file:///C:/Users/kames/.gemini/antigravity-ide/brain/f21d8419-137f-439e-9255-b6c1feff5448/screenshots/web/43_teacher_today_coverage.png", "category": "Web", "group": "Teacher Portal"}, {"name": "44_teacher_credits.png", "title": "44 Teacher Credits", "path": "file:///C:/Users/kames/.gemini/antigravity-ide/brain/f21d8419-137f-439e-9255-b6c1feff5448/screenshots/web/44_teacher_credits.png", "category": "Web", "group": "Teacher Portal"}, {"name": "45_teacher_preferences.png", "title": "45 Teacher Preferences", "path": "file:///C:/Users/kames/.gemini/antigravity-ide/brain/f21d8419-137f-439e-9255-b6c1feff5448/screenshots/web/45_teacher_preferences.png", "category": "Web", "group": "Teacher Portal"}, {"name": "46_manager_dashboard.png", "title": "46 Manager Dashboard", "path": "file:///C:/Users/kames/.gemini/antigravity-ide/brain/f21d8419-137f-439e-9255-b6c1feff5448/screenshots/web/46_manager_dashboard.png", "category": "Web", "group": "Staff & Operations"}, {"name": "47_manager_lab_staff.png", "title": "47 Manager Lab Staff", "path": "file:///C:/Users/kames/.gemini/antigravity-ide/brain/f21d8419-137f-439e-9255-b6c1feff5448/screenshots/web/47_manager_lab_staff.png", "category": "Web", "group": "Staff & Operations"}, {"name": "48_manager_non_teaching_staff.png", "title": "48 Manager Non Teaching Staff", "path": "file:///C:/Users/kames/.gemini/antigravity-ide/brain/f21d8419-137f-439e-9255-b6c1feff5448/screenshots/web/48_manager_non_teaching_staff.png", "category": "Web", "group": "Staff & Operations"}, {"name": "49_manager_leaves.png", "title": "49 Manager Leaves", "path": "file:///C:/Users/kames/.gemini/antigravity-ide/brain/f21d8419-137f-439e-9255-b6c1feff5448/screenshots/web/49_manager_leaves.png", "category": "Web", "group": "Staff & Operations"}, {"name": "50_manager_directory.png", "title": "50 Manager Directory", "path": "file:///C:/Users/kames/.gemini/antigravity-ide/brain/f21d8419-137f-439e-9255-b6c1feff5448/screenshots/web/50_manager_directory.png", "category": "Web", "group": "Staff & Operations"}, {"name": "51_staff_dashboard.png", "title": "51 Staff Dashboard", "path": "file:///C:/Users/kames/.gemini/antigravity-ide/brain/f21d8419-137f-439e-9255-b6c1feff5448/screenshots/web/51_staff_dashboard.png", "category": "Web", "group": "Staff & Operations"}, {"name": "52_staff_leaves.png", "title": "52 Staff Leaves", "path": "file:///C:/Users/kames/.gemini/antigravity-ide/brain/f21d8419-137f-439e-9255-b6c1feff5448/screenshots/web/52_staff_leaves.png", "category": "Web", "group": "Staff & Operations"}];
+        let activeTab = 'ALL';
+        let searchQuery = '';
+        let currentFiltered = [];
+        let currentIndex = 0;
+
+        function renderGallery() {
+            const grid = document.getElementById('galleryGrid');
+            grid.innerHTML = '';
+            
+            currentFiltered = allItems.filter(item => {
+                const matchesTab = activeTab === 'ALL' || item.group === activeTab || (activeTab === 'Mobile' && item.category === 'Mobile');
+                const matchesSearch = item.title.toLowerCase().includes(searchQuery.toLowerCase()) || item.group.toLowerCase().includes(searchQuery.toLowerCase());
+                return matchesTab && matchesSearch;
+            });
+
+            if (activeTab === 'Android Mobile') {
+                grid.classList.add('mobile-grid');
+            } else {
+                grid.classList.remove('mobile-grid');
+            }
+
+            currentFiltered.forEach((item, index) => {
+                const card = document.createElement('div');
+                card.className = 'card' + (item.category === 'Mobile' ? ' mobile-card' : '');
+                card.onclick = () => openLightbox(index);
+                card.innerHTML = `
+                    <div class="card-img-wrapper">
+                        <img src="${item.path}" class="card-img" loading="lazy" alt="${item.title}">
+                    </div>
+                    <div class="card-info">
+                        <div class="card-group">${item.group}</div>
+                        <div class="card-title">${item.title}</div>
+                    </div>
+                `;
+                grid.appendChild(card);
+            });
+        }
+
+        function selectTab(tab) {
+            activeTab = tab;
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.toggle('active', btn.innerText.includes(tab) || (tab === 'ALL' && btn.innerText.includes('All')));
+            });
+            renderGallery();
+        }
+
+        function filterItems() {
+            searchQuery = document.getElementById('searchInput').value;
+            renderGallery();
+        }
+
+        function openLightbox(index) {
+            currentIndex = index;
+            const item = currentFiltered[index];
+            if (!item) return;
+            document.getElementById('lightboxImg').src = item.path;
+            document.getElementById('lightboxTitle').innerText = item.title + ' (' + item.group + ')';
+            document.getElementById('lightbox').classList.add('active');
+        }
+
+        function closeLightboxDirect() {
+            document.getElementById('lightbox').classList.remove('active');
+        }
+
+        function closeLightbox(e) {
+            if (e.target.id === 'lightbox') {
+                closeLightboxDirect();
+            }
+        }
+
+        function navLightbox(direction, e) {
+            if (e) e.stopPropagation();
+            currentIndex = (currentIndex + direction + currentFiltered.length) % currentFiltered.length;
+            openLightbox(currentIndex);
+        }
+
+        document.addEventListener('keydown', (e) => {
+            const lb = document.getElementById('lightbox');
+            if (lb.classList.contains('active')) {
+                if (e.key === 'Escape') closeLightboxDirect();
+                if (e.key === 'ArrowLeft') navLightbox(-1);
+                if (e.key === 'ArrowRight') navLightbox(1);
+            }}
+        );
+
+        renderGallery();
+    </script>
+</body>
+</html>

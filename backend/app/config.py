@@ -27,7 +27,7 @@ class Settings(BaseSettings):
     DATABASE_URL: str
     SECRET_KEY: str
     ALGORITHM: str = "HS256"
-    ACCESS_TOKEN_EXPIRE_MINUTES: int = 60
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = 259200  # 180 days (avoids daily re-login on mobile & web)
 
     # ---------- Customization: schedule shape ----------
     PERIODS_PER_DAY: int = 5

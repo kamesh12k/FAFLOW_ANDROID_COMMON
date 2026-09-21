@@ -24,7 +24,7 @@ from app.schemas.student_attendance import (
     CreateAttendanceSessionRequest, SubmitAttendanceRequest, EmergencyAttendanceRequest, AttendanceCorrectionRequest,
     StudentOut, ClassRosterOut, StudentAttendanceRecordOut, AttendanceSessionOut,
     TeacherClassSlotOut, TeacherTodayAttendanceOut, HodAttendanceOverviewOut,
-    HodClassAttendanceSummaryOut, HodAttendanceExceptionOut, OfflineSyncBatchRequest,
+    HodClassAttendanceSummaryOut, HodAttendanceExceptionOut, HodSessionItemOut, OfflineSyncBatchRequest,
     OfflineSyncBatchResponse, SyncOperationResult, StudentStatusException,
     PrincipalDepartmentSummaryOut, PrincipalAttendanceOverviewOut, PrincipalSessionItemOut,
     ClassPeriodSlotInfo, ClassStudentMatrixRowOut, ClassPeriodMatrixOut,
@@ -912,17 +912,75 @@ class StudentAttendanceService:
         emergency_count = sum(1 for s in sessions if s.attendance_type == AttendanceType.emergency)
         pending_count = max(0, total_classes - submitted_count)
 
-        # Build class summaries
+        # Build combined pairs of (class_id, period_number)
+        combined_pairs: Dict[Tuple[int, int], Dict[str, Any]] = {}
+        for slot in expected_slots:
+            pair = (slot.class_id, slot.period_number)
+            combined_pairs[pair] = {
+                "slot": slot,
+                "session": session_map.get(pair)
+            }
+
+        for sess in sessions:
+            pair = (sess.class_id, sess.period_number)
+            if pair not in combined_pairs:
+                combined_pairs[pair] = {
+                    "slot": None,
+                    "session": sess
+                }
+
+        class_student_counts = {}
+        if class_ids:
+            class_student_counts = dict(
+                db.query(Student.class_id, func.count(Student.id))
+                .filter(Student.class_id.in_(class_ids), Student.is_active == True)
+                .group_by(Student.class_id)
+                .all()
+            )
+
         summaries: List[HodClassAttendanceSummaryOut] = []
+        hod_sessions: List[HodSessionItemOut] = []
         total_present = 0
         total_marked = 0
 
-        for slot in expected_slots:
-            sess = session_map.get((slot.class_id, slot.period_number))
+        # Sort pairs by period_number, then class_id
+        for (c_id, p_num), info in sorted(combined_pairs.items(), key=lambda item: (item[0][1], item[0][0])):
+            slot = info["slot"]
+            sess = info["session"]
+
+            cls = (sess.class_ if sess else None) or (slot.class_ if slot else None)
+            if not cls:
+                continue
+
+            dept_name = cls.department.name if cls.department else ""
+            subj = (sess.subject if sess else None) or (slot.subject if slot else None)
+            subj_name = subj.name if subj else ("Emergency Session" if (sess and sess.attendance_type == AttendanceType.emergency) else None)
+            p_time = PERIOD_SCHEDULE.get(p_num, (time(8, 0), time(9, 0), f"P{p_num}"))[2]
+
+            sched_teacher_name = (
+                (sess.scheduled_teacher.name if sess and sess.scheduled_teacher else None) or
+                (slot.teacher.name if slot and slot.teacher else None)
+            )
+            sched_teacher_id = (
+                (sess.scheduled_teacher_id if sess else None) or
+                (slot.teacher_id if slot else None)
+            )
+            act_teacher_name = sess.actual_teacher.name if sess and sess.actual_teacher else (
+                "Emergency Faculty" if (sess and sess.attendance_type == AttendanceType.emergency) else None
+            )
+            act_teacher_id = sess.actual_teacher_id if sess else None
+
+            is_emerg = bool(sess and sess.attendance_type == AttendanceType.emergency)
+            is_late_sub = bool(sess and sess.status == SessionStatus.submitted_late)
+
+            att_type_str = sess.attendance_type.value.upper() if (sess and sess.attendance_type) else ("EMERGENCY" if is_emerg else "NORMAL")
+            status_str = sess.status.value.upper() if (sess and sess.status) else "NOT_OPEN"
+
             p_count = 0
             a_count = 0
             tot = 0
             pct = 0.0
+            absent_rolls: List[str] = []
 
             if sess:
                 recs = sess.records
@@ -930,27 +988,78 @@ class StudentAttendanceService:
                 p_count = sum(1 for r in recs if r.status in {StudentAttendanceStatus.present, StudentAttendanceStatus.on_duty, StudentAttendanceStatus.late})
                 a_count = tot - p_count
                 pct = round((p_count / tot * 100), 1) if tot > 0 else 0.0
+                absent_rolls = [
+                    (r.student.roll_number or r.student.roll_suffix or str(r.student_id))
+                    for r in recs if r.status == StudentAttendanceStatus.absent and r.student
+                ]
                 total_present += p_count
                 total_marked += tot
+            elif cls.id in class_student_counts:
+                tot = class_student_counts[cls.id]
 
             summaries.append(
                 HodClassAttendanceSummaryOut(
-                    class_id=slot.class_id,
-                    class_name=slot.class_.name if slot.class_ else "",
-                    section=slot.class_.section if slot.class_ else "",
-                    department_name=slot.class_.department.name if slot.class_ and slot.class_.department else "",
-                    period_number=slot.period_number,
+                    class_id=cls.id,
+                    class_name=cls.name or "",
+                    section=cls.section or "",
+                    department_name=dept_name,
+                    period_number=p_num,
+                    id=sess.id if sess else None,
                     session_id=sess.id if sess else None,
                     session_status=sess.status if sess else SessionStatus.not_open,
+                    status=status_str,
                     attendance_type=sess.attendance_type if sess else None,
-                    scheduled_teacher=slot.teacher.name if slot.teacher else None,
-                    actual_teacher=sess.actual_teacher.name if sess and sess.actual_teacher else None,
+                    scheduled_teacher=sched_teacher_name,
+                    scheduled_teacher_name=sched_teacher_name,
+                    actual_teacher=act_teacher_name,
+                    actual_teacher_name=act_teacher_name,
+                    subject_name=subj_name,
+                    submitted_at=sess.submitted_at if sess else None,
                     present_count=p_count,
                     absent_count=a_count,
                     total_students=tot,
                     percentage=pct,
-                    is_late_submission=(sess.status == SessionStatus.submitted_late) if sess else False,
-                    is_emergency=(sess.attendance_type == AttendanceType.emergency) if sess else False
+                    is_late_submission=is_late_sub,
+                    is_emergency=is_emerg,
+                    absent_rolls=absent_rolls
+                )
+            )
+
+            hod_sessions.append(
+                HodSessionItemOut(
+                    id=sess.id if sess else None,
+                    session_id=sess.id if sess else None,
+                    attendance_date=target_date,
+                    period_number=p_num,
+                    period_time=p_time,
+                    day_order=day_order,
+                    class_id=cls.id,
+                    class_name=cls.name or "",
+                    section=cls.section or "",
+                    department_id=cls.department_id,
+                    department_name=dept_name,
+                    subject_id=subj.id if subj else None,
+                    subject_name=subj_name,
+                    scheduled_teacher_id=sched_teacher_id,
+                    scheduled_teacher_name=sched_teacher_name,
+                    actual_teacher_id=act_teacher_id,
+                    actual_teacher_name=act_teacher_name,
+                    attendance_type=att_type_str,
+                    status=status_str,
+                    scheduled_start_time=sess.scheduled_start_time if sess else None,
+                    scheduled_end_time=sess.scheduled_end_time if sess else None,
+                    submitted_at=sess.submitted_at if sess else None,
+                    is_late_submission=is_late_sub,
+                    is_emergency=is_emerg,
+                    total_students=tot,
+                    present_count=p_count,
+                    absent_count=a_count,
+                    late_count=sum(1 for r in sess.records if r.status == StudentAttendanceStatus.late) if sess else 0,
+                    on_duty_count=sum(1 for r in sess.records if r.status == StudentAttendanceStatus.on_duty) if sess else 0,
+                    leave_count=sum(1 for r in sess.records if r.status == StudentAttendanceStatus.leave) if sess else 0,
+                    medical_count=sum(1 for r in sess.records if r.status == StudentAttendanceStatus.medical) if sess else 0,
+                    attendance_percentage=pct,
+                    absent_rolls=absent_rolls
                 )
             )
 
@@ -994,12 +1103,16 @@ class StudentAttendanceService:
             date=target_date,
             day_order=day_order,
             total_classes=total_classes,
+            total_scheduled_sessions=total_classes,
             submitted_count=submitted_count,
             pending_count=pending_count,
             late_count=late_count,
+            late_submission_count=late_count,
             emergency_count=emergency_count,
             student_attendance_percentage=overall_pct,
+            overall_attendance_percentage=overall_pct,
             classes=summaries,
+            sessions=hod_sessions,
             exceptions=exceptions
         )
 

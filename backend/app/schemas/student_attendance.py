@@ -175,23 +175,66 @@ class OfflineSyncBatchResponse(BaseModel):
     results: List[SyncOperationResult]
 
 
+class HodSessionItemOut(BaseModel):
+    id: Optional[int] = None
+    session_id: Optional[int] = None
+    attendance_date: Optional[date] = None
+    period_number: int
+    period_time: Optional[str] = None
+    day_order: Optional[int] = None
+    class_id: int
+    class_name: str
+    section: str
+    department_id: Optional[int] = None
+    department_name: Optional[str] = None
+    subject_id: Optional[int] = None
+    subject_name: Optional[str] = None
+    scheduled_teacher_id: Optional[int] = None
+    scheduled_teacher_name: Optional[str] = None
+    actual_teacher_id: Optional[int] = None
+    actual_teacher_name: Optional[str] = None
+    attendance_type: str = "NORMAL"
+    status: str = "NOT_OPEN"
+    scheduled_start_time: Optional[datetime] = None
+    scheduled_end_time: Optional[datetime] = None
+    submitted_at: Optional[datetime] = None
+    is_late_submission: bool = False
+    is_emergency: bool = False
+    total_students: int = 0
+    present_count: int = 0
+    absent_count: int = 0
+    late_count: int = 0
+    on_duty_count: int = 0
+    leave_count: int = 0
+    medical_count: int = 0
+    attendance_percentage: float = 0.0
+    absent_rolls: List[str] = []
+
+
 class HodClassAttendanceSummaryOut(BaseModel):
     class_id: int
     class_name: str
     section: str
     department_name: str
     period_number: int
+    id: Optional[int] = None
     session_id: Optional[int] = None
     session_status: Optional[SessionStatus] = None
+    status: Optional[str] = None
     attendance_type: Optional[AttendanceType] = None
     scheduled_teacher: Optional[str] = None
+    scheduled_teacher_name: Optional[str] = None
     actual_teacher: Optional[str] = None
+    actual_teacher_name: Optional[str] = None
+    subject_name: Optional[str] = None
+    submitted_at: Optional[datetime] = None
     present_count: int = 0
     absent_count: int = 0
     total_students: int = 0
     percentage: float = 0.0
     is_late_submission: bool = False
     is_emergency: bool = False
+    absent_rolls: List[str] = []
 
 
 class HodAttendanceExceptionOut(BaseModel):
@@ -211,12 +254,16 @@ class HodAttendanceOverviewOut(BaseModel):
     date: date
     day_order: Optional[int] = None
     total_classes: int
+    total_scheduled_sessions: Optional[int] = None
     submitted_count: int
     pending_count: int
     late_count: int
+    late_submission_count: Optional[int] = None
     emergency_count: int
     student_attendance_percentage: float
+    overall_attendance_percentage: Optional[float] = None
     classes: List[HodClassAttendanceSummaryOut]
+    sessions: List[HodSessionItemOut] = []
     exceptions: List[HodAttendanceExceptionOut]
 
 

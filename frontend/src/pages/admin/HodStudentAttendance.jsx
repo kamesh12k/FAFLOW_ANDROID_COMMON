@@ -6,9 +6,17 @@ import {
   RefreshIcon, CheckCircleIcon
 } from '../../components/icons'
 
+const getTodayString = () => {
+  const d = new Date()
+  const year = d.getFullYear()
+  const month = String(d.getMonth() + 1).padStart(2, '0')
+  const day = String(d.getDate()).padStart(2, '0')
+  return `${year}-${month}-${day}`
+}
+
 export default function HodStudentAttendance() {
   const [overview, setOverview] = useState(null)
-  const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0])
+  const [selectedDate, setSelectedDate] = useState(getTodayString())
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [successMsg, setSuccessMsg] = useState('')
@@ -101,12 +109,21 @@ export default function HodStudentAttendance() {
     return () => clearInterval(tick)
   }, [lastPollTime])
 
-  const sessionsToDisplay = (overview?.sessions || []).filter((s) => {
+  const rawSessions = (overview?.sessions && overview.sessions.length > 0)
+    ? overview.sessions
+    : (overview?.classes || [])
+
+  const sessionsToDisplay = rawSessions.filter((s) => {
+    const statusUpper = (s.status || s.session_status || '').toUpperCase()
+    const typeUpper = (s.attendance_type || '').toUpperCase()
+    const isEmerg = Boolean(s.is_emergency === true || typeUpper === 'EMERGENCY' || statusUpper === 'EMERGENCY')
+    const isLateSub = Boolean(s.is_late_submission === true || statusUpper === 'SUBMITTED_LATE' || statusUpper === 'LATE')
+
     if (filterTab === 'EXCEPTIONS') {
-      return s.status === 'MISSED' || s.status === 'SUBMITTED_LATE' || s.attendance_type === 'EMERGENCY'
+      return statusUpper === 'MISSED' || isLateSub || isEmerg
     }
-    if (filterTab === 'EMERGENCY') return s.attendance_type === 'EMERGENCY'
-    if (filterTab === 'LATE') return s.status === 'SUBMITTED_LATE'
+    if (filterTab === 'EMERGENCY') return isEmerg
+    if (filterTab === 'LATE') return isLateSub
     return true
   })
 
@@ -230,31 +247,31 @@ export default function HodStudentAttendance() {
           <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
             <div className="p-4 bg-white rounded-2xl border border-slate-200 shadow-sm">
               <div className="text-xs font-bold text-slate-500 uppercase tracking-wider">Scheduled</div>
-              <div className="text-2xl font-black text-slate-900 mt-1">{overview.total_scheduled_sessions}</div>
+              <div className="text-2xl font-black text-slate-900 mt-1">{overview.total_scheduled_sessions ?? overview.total_classes ?? 0}</div>
               <div className="text-[11px] text-slate-400 mt-0.5">Total class hours</div>
             </div>
 
             <div className="p-4 bg-emerald-50 rounded-2xl border border-emerald-200 shadow-sm">
               <div className="text-xs font-bold text-emerald-800 uppercase tracking-wider">Submitted</div>
-              <div className="text-2xl font-black text-emerald-700 mt-1">{overview.submitted_count}</div>
+              <div className="text-2xl font-black text-emerald-700 mt-1">{overview.submitted_count ?? 0}</div>
               <div className="text-[11px] text-emerald-600 mt-0.5">Recorded on time</div>
             </div>
 
             <div className="p-4 bg-amber-50 rounded-2xl border border-amber-200 shadow-sm">
               <div className="text-xs font-bold text-amber-800 uppercase tracking-wider">Late Submissions</div>
-              <div className="text-2xl font-black text-amber-700 mt-1">{overview.late_submission_count}</div>
+              <div className="text-2xl font-black text-amber-700 mt-1">{overview.late_submission_count ?? overview.late_count ?? 0}</div>
               <div className="text-[11px] text-amber-600 mt-0.5">&gt; 15 min threshold</div>
             </div>
 
             <div className="p-4 bg-purple-50 rounded-2xl border border-purple-200 shadow-sm">
               <div className="text-xs font-bold text-purple-800 uppercase tracking-wider">Emergency Coverage</div>
-              <div className="text-2xl font-black text-purple-700 mt-1">{overview.emergency_count}</div>
+              <div className="text-2xl font-black text-purple-700 mt-1">{overview.emergency_count ?? 0}</div>
               <div className="text-[11px] text-purple-600 mt-0.5">Unregistered subs</div>
             </div>
 
             <div className="p-4 bg-indigo-50 rounded-2xl border border-indigo-200 shadow-sm col-span-2 md:col-span-1">
               <div className="text-xs font-bold text-indigo-800 uppercase tracking-wider">Student Attendance</div>
-              <div className="text-2xl font-black text-indigo-700 mt-1">{overview.overall_attendance_percentage}%</div>
+              <div className="text-2xl font-black text-indigo-700 mt-1">{overview.overall_attendance_percentage ?? overview.student_attendance_percentage ?? 0}%</div>
               <div className="text-[11px] text-indigo-600 mt-0.5">Present across dept</div>
             </div>
           </div>
@@ -265,8 +282,8 @@ export default function HodStudentAttendance() {
               { id: 'ALL', label: 'All Sessions' },
               { id: 'INTELLIGENCE', label: `⚡ Department Alerts (${intelligenceEvents.length})` },
               { id: 'EXCEPTIONS', label: `Exceptions (${overview.exceptions?.length || 0})` },
-              { id: 'LATE', label: `Late (${overview.late_submission_count})` },
-              { id: 'EMERGENCY', label: `Emergency (${overview.emergency_count})` },
+              { id: 'LATE', label: `Late (${overview.late_submission_count ?? overview.late_count ?? 0})` },
+              { id: 'EMERGENCY', label: `Emergency (${overview.emergency_count ?? 0})` },
             ].map((tab) => (
               <button
                 key={tab.id}
@@ -390,27 +407,32 @@ export default function HodStudentAttendance() {
                       </tr>
                     ) : (
                       sessionsToDisplay.map((s) => {
-                        const isLate = s.status === 'SUBMITTED_LATE'
-                        const isEmergency = s.attendance_type === 'EMERGENCY'
-                        const isSubst = s.attendance_type === 'REGISTERED_SUBSTITUTION'
-                        const pct = s.total_students > 0 ? Math.round((s.present_count / s.total_students) * 100) : 0
+                        const statusUpper = (s.status || s.session_status || '').toUpperCase()
+                        const typeUpper = (s.attendance_type || '').toUpperCase()
+                        const isLate = s.is_late_submission || statusUpper === 'SUBMITTED_LATE'
+                        const isEmergency = s.is_emergency || typeUpper === 'EMERGENCY'
+                        const isSubst = typeUpper === 'REGISTERED_SUBSTITUTION'
+                        const pct = s.total_students > 0 ? Math.round((s.present_count / s.total_students) * 100) : (s.percentage || 0)
+                        const sessionId = s.id || s.session_id
+                        const actualTeacher = s.actual_teacher_name || s.actual_teacher || (isEmergency ? 'Emergency Faculty' : 'Unassigned')
+                        const schedTeacher = s.scheduled_teacher_name || s.scheduled_teacher
 
                         return (
-                          <tr key={s.id} className="hover:bg-slate-50/70 transition-colors">
+                          <tr key={sessionId ? `sess_${sessionId}` : `slot_${s.class_id}_${s.period_number}`} className="hover:bg-slate-50/70 transition-colors">
                             <td className="py-3.5 px-4 font-black text-slate-900">
                               P{s.period_number}
                             </td>
                             <td className="py-3.5 px-4 font-bold text-slate-800">
-                              {s.class_name}
+                              {s.class_name} {s.section ? `(${s.section})` : ''}
                             </td>
                             <td className="py-3.5 px-4 text-slate-600 font-medium">
-                              {s.subject_name || 'N/A'}
+                              {s.subject_name || (isEmergency ? 'Emergency Session' : 'N/A')}
                             </td>
                             <td className="py-3.5 px-4 text-slate-700">
-                              <div className="font-semibold">{s.actual_teacher_name}</div>
-                              {s.scheduled_teacher_name && s.scheduled_teacher_name !== s.actual_teacher_name && (
+                              <div className="font-semibold">{actualTeacher}</div>
+                              {schedTeacher && schedTeacher !== actualTeacher && (
                                 <div className="text-[10px] text-slate-400">
-                                  Sched: {s.scheduled_teacher_name}
+                                  Sched: {schedTeacher}
                                 </div>
                               )}
                             </td>
@@ -424,22 +446,24 @@ export default function HodStudentAttendance() {
                                     : 'bg-slate-50 text-slate-700 border-slate-200'
                                 }`}
                               >
-                                {s.attendance_type.replace('_', ' ')}
+                                {isEmergency ? 'EMERGENCY' : typeUpper.replace('_', ' ') || 'NORMAL'}
                               </span>
                             </td>
                             <td className="py-3.5 px-4">
                               <span
                                 className={`text-[10px] font-black uppercase px-2 py-0.5 rounded-full border ${
-                                  s.status === 'SUBMITTED'
+                                  statusUpper === 'SUBMITTED'
                                     ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
                                     : isLate
                                     ? 'bg-amber-50 text-amber-700 border-amber-200'
-                                    : s.status === 'LOCKED'
+                                    : statusUpper === 'LOCKED'
                                     ? 'bg-indigo-50 text-indigo-700 border-indigo-200'
-                                    : 'bg-rose-50 text-rose-700 border-rose-200'
+                                    : statusUpper === 'MISSED'
+                                    ? 'bg-rose-50 text-rose-700 border-rose-200'
+                                    : 'bg-slate-100 text-slate-600 border-slate-200'
                                 }`}
                               >
-                                {s.status.replace('_', ' ')}
+                                {statusUpper.replace('_', ' ') || 'NOT OPEN'}
                               </span>
                             </td>
                             <td className="py-3.5 px-4 font-semibold text-slate-700">
@@ -452,16 +476,20 @@ export default function HodStudentAttendance() {
                               {s.submitted_at ? new Date(s.submitted_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '-'}
                             </td>
                             <td className="py-3.5 px-4 text-right">
-                              <button
-                                onClick={() => handleViewSessionAbsentees(s.id)}
-                                className={`px-2.5 py-1 rounded-xl text-xs font-bold transition-all shadow-sm ${
-                                  s.absent_count > 0
-                                    ? 'bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200'
-                                    : 'bg-slate-100 text-slate-500 hover:bg-slate-200'
-                                }`}
-                              >
-                                {s.absent_count > 0 ? `View ${s.absent_count} Absentees` : '100% Present'}
-                              </button>
+                              {sessionId ? (
+                                <button
+                                  onClick={() => handleViewSessionAbsentees(sessionId)}
+                                  className={`px-2.5 py-1 rounded-xl text-xs font-bold transition-all shadow-sm ${
+                                    s.absent_count > 0
+                                      ? 'bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200'
+                                      : 'bg-slate-100 text-slate-500 hover:bg-slate-200'
+                                  }`}
+                                >
+                                  {s.absent_count > 0 ? `View ${s.absent_count} Absentees` : '100% Present'}
+                                </button>
+                              ) : (
+                                <span className="text-slate-400 text-[11px] italic">Not Conducted</span>
+                              )}
                             </td>
                           </tr>
                         )

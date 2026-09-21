@@ -292,6 +292,7 @@ class AttendanceService:
         checked_out = sum(1 for r in today_records if r.check_out_time is not None)
         absent = max(0, total_staff - (checked_in + checked_out))
 
+        all_shifts = [AttendanceService._to_dto(r) for r in today_records]
         active_shifts = [AttendanceService._to_dto(r) for r in today_records if r.check_in_time is not None and r.check_out_time is None]
 
         return AttendanceSupervisorLiveStatusOut(
@@ -300,6 +301,7 @@ class AttendanceService:
             checked_out_count=checked_out,
             absent_count=absent,
             active_shifts=active_shifts,
+            all_shifts=all_shifts,
             anomalies_count=0
         )
 

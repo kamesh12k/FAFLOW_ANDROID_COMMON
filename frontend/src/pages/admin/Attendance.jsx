@@ -50,7 +50,7 @@ export default function AdminAttendance() {
   }, [autoRefresh, loadData])
 
   const records = useMemo(() => {
-    return liveData?.active_shifts || []
+    return liveData?.all_shifts || liveData?.active_shifts || []
   }, [liveData])
 
   const filteredRecords = useMemo(() => {

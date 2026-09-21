@@ -82,7 +82,7 @@ if not exist "!ROOT_DIR!\backend\.env" (
         echo DATABASE_URL=postgresql://postgres@localhost:5432/credits_db
         echo SECRET_KEY=!SECRET_KEY!
         echo ALGORITHM=HS256
-        echo ACCESS_TOKEN_EXPIRE_MINUTES=60
+        echo ACCESS_TOKEN_EXPIRE_MINUTES=259200
         echo VAPID_PUBLIC_KEY=
         echo VAPID_PRIVATE_KEY=
         echo VAPID_CONTACT_EMAIL=admin@faflow.com

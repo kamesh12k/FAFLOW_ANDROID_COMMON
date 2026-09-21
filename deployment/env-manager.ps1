@@ -51,7 +51,7 @@ function Ensure-FaflowEnvironment {
     }
     
     if (-not $envMap.Contains("ALGORITHM")) { $envMap["ALGORITHM"] = "HS256" }
-    if (-not $envMap.Contains("ACCESS_TOKEN_EXPIRE_MINUTES")) { $envMap["ACCESS_TOKEN_EXPIRE_MINUTES"] = "60" }
+    if (-not $envMap.Contains("ACCESS_TOKEN_EXPIRE_MINUTES")) { $envMap["ACCESS_TOKEN_EXPIRE_MINUTES"] = "259200" }
     if (-not $envMap.Contains("PERIODS_PER_DAY")) { $envMap["PERIODS_PER_DAY"] = "5" }
     if (-not $envMap.Contains("DAY_ORDER_MAX")) { $envMap["DAY_ORDER_MAX"] = "6" }
     if (-not $envMap.Contains("APP_NAME")) { $envMap["APP_NAME"] = "FAFLOW" }

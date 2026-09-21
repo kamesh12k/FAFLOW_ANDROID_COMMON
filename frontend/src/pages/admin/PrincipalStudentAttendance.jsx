@@ -71,7 +71,7 @@ export default function PrincipalStudentAttendance() {
       setError('')
       const [ovRes, deptRes] = await Promise.all([
         studentAttendanceApi.getPrincipalOverview(targetDate),
-        departmentApi.list().catch(() => ({ data: [] }))
+        departmentsApi.list().catch(() => ({ data: [] }))
       ])
       setOverview(ovRes.data)
       setDepartments(deptRes.data || [])

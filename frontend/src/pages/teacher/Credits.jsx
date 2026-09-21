@@ -56,23 +56,30 @@ export default function MyCredits() {
   // Process transaction stats
   const stats = useMemo(() => {
     let earned = 0
+    let earnedCount = 0
     let deducted = 0
+    let deductedCount = 0
     let adjustments = 0
 
     transactions.forEach(t => {
       const ch = Number(t.change) || 0
       if (ch > 0) {
         earned += ch
+        earnedCount += 1
       } else if (ch < 0) {
         deducted += Math.abs(ch)
-      } else {
+        deductedCount += 1
+      }
+      if (t.category === 'manual_adjustment' || t.category === 'quota_adjustment' || ch === 0) {
         adjustments += 1
       }
     })
 
     return {
       earned,
+      earnedCount,
       deducted,
+      deductedCount,
       adjustments,
       totalCount: transactions.length,
     }
@@ -482,8 +489,8 @@ export default function MyCredits() {
           <div className="flex flex-wrap items-center gap-1.5">
             {[
               { key: 'all', label: `All (${transactions.length})` },
-              { key: 'earned', label: `Earned (+${stats.earned})` },
-              { key: 'deducted', label: `Deducted (-${stats.deducted})` },
+              { key: 'earned', label: `Earned (${stats.earnedCount} · +${stats.earned} pts)` },
+              { key: 'deducted', label: `Deducted (${stats.deductedCount} · -${stats.deducted} pts)` },
               { key: 'adjustments', label: `Adjustments (${stats.adjustments})` },
             ].map(tab => (
               <button

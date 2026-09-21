@@ -62,4 +62,5 @@ class AttendanceSupervisorLiveStatusOut(BaseModel):
     checked_out_count: int
     absent_count: int
     active_shifts: List[AttendanceRecordOut]
+    all_shifts: List[AttendanceRecordOut] = []
     anomalies_count: int = 0
