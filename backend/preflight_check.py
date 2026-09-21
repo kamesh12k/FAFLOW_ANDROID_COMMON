@@ -194,6 +194,33 @@ def main():
             
     all_ok &= check("Verifying multi-department schema (Migration 006)", check_multi_department_schema)
 
+    # 11. Does Governance Business Rules & Period Config schema exist? (Migration 011)
+    def check_governance_schema():
+        from app.database import engine
+        from sqlalchemy import inspect, text
+        import os
+        inspector = inspect(engine)
+        table_names = set(inspector.get_table_names())
+        missing_tables = {"business_rules", "period_configs", "business_rule_history"} - table_names
+        if missing_tables:
+            candidates = [
+                os.path.join(os.path.dirname(__file__), "..", "database", "migrations", "011_governance_business_rules_and_period_config.sql"),
+                os.path.join(os.path.dirname(__file__), "database", "migrations", "011_governance_business_rules_and_period_config.sql"),
+            ]
+            applied = False
+            for path in candidates:
+                if os.path.exists(path):
+                    with open(path, "r", encoding="utf-8") as f:
+                        sql = f.read().replace("BEGIN;", "").replace("COMMIT;", "")
+                    with engine.connect() as conn:
+                        conn.execute(text(sql))
+                        conn.commit()
+                    applied = True
+                    break
+            if not applied:
+                raise RuntimeError(f"Missing governance tables: {sorted(missing_tables)} — run migration 011")
+    all_ok &= check("Verifying Governance Business Rules schema (Migration 011)", check_governance_schema)
+
     print()
     if all_ok:
         print("All checks passed. Safe to start the backend:")

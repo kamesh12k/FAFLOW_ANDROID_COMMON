@@ -35,7 +35,8 @@ from app.schemas.student_attendance import (
 
 logger = logging.getLogger(__name__)
 
-# Standard institutional period schedule times (IST)
+# ── DEPRECATED: kept only as last-resort fallback if DB and cache both fail ──
+# The authoritative source of truth is now period_configs via governance_rule_service.
 PERIOD_SCHEDULE = {
     1: (time(9, 20), time(10, 20), "09:20–10:20"),
     2: (time(10, 20), time(11, 15), "10:20–11:15"),
@@ -45,48 +46,74 @@ PERIOD_SCHEDULE = {
 }
 
 
+def _build_period_map(db: Session) -> dict:
+    """Builds {period_number: (time_start, time_end, label)} from governance rule service.
+    Falls back to module-level PERIOD_SCHEDULE if the service is unavailable."""
+    from app.services import governance_rule_service
+    try:
+        raw = governance_rule_service.get_period_schedule(db)  # {pn: ("HH:MM", "HH:MM")}
+        result = {}
+        for pn, (st, et) in raw.items():
+            sh, sm = int(st.split(":")[0]), int(st.split(":")[1])
+            eh, em = int(et.split(":")[0]), int(et.split(":")[1])
+            label = f"{st}–{et}"
+            result[pn] = (time(sh, sm), time(eh, em), label)
+        return result
+    except Exception:
+        return PERIOD_SCHEDULE.copy()
+
+
 class StudentAttendanceService:
 
     @staticmethod
     def get_setting(db: Session, key: str, default: str) -> str:
+        """Legacy SystemSetting reader — use governance_rule_service for new callers."""
         s = db.query(SystemSetting).filter(SystemSetting.key == key).first()
         return s.value if s else default
 
     @staticmethod
     def get_submission_window_minutes(db: Session) -> int:
+        """Reads student_attendance_submission_window_minutes from the governance rule service."""
+        from app.services import governance_rule_service
         try:
-            return int(StudentAttendanceService.get_setting(db, "student_attendance_submission_window_minutes", "15"))
-        except ValueError:
+            return governance_rule_service.get_rule_int(db, "student_attendance_submission_window_minutes")
+        except Exception:
             return 15
 
     @staticmethod
     def get_correction_window_hours(db: Session) -> int:
+        """Reads student_attendance_correction_window_hours from the governance rule service."""
+        from app.services import governance_rule_service
         try:
-            return int(StudentAttendanceService.get_setting(db, "student_attendance_correction_window_hours", "24"))
-        except ValueError:
+            return governance_rule_service.get_rule_int(db, "student_attendance_correction_window_hours")
+        except Exception:
             return 24
 
     @staticmethod
-    def determine_current_period(now_time: time) -> Optional[int]:
-        for period, (start_t, end_t, _) in PERIOD_SCHEDULE.items():
+    def determine_current_period(now_time: time, db: Optional[Session] = None) -> Optional[int]:
+        """Determines the current period using the dynamic period schedule from the governance rule service."""
+        schedule = _build_period_map(db) if db is not None else PERIOD_SCHEDULE
+        for period, (start_t, end_t, _) in schedule.items():
             if start_t <= now_time <= end_t:
                 return period
+        # Outside all period windows — find nearest upcoming period
         minutes = now_time.hour * 60 + now_time.minute
-        if minutes < 10 * 60 + 20:
+        sorted_periods = sorted(schedule.items(), key=lambda x: x[0])
+        if not sorted_periods:
             return 1
-        elif minutes < 11 * 60 + 40:
-            return 2
-        elif minutes < 13 * 60 + 35:
-            return 3
-        elif minutes < 14 * 60 + 55:
-            return 4
-        else:
-            return 5
+        for pn, (start_t, _, _) in sorted_periods:
+            start_m = start_t.hour * 60 + start_t.minute
+            if minutes < start_m:
+                return pn
+        # After all periods — return the last one
+        return sorted_periods[-1][0]
 
     @staticmethod
-    def get_scheduled_times(attendance_date: date, period_number: int) -> Tuple[datetime, datetime]:
-        if period_number in PERIOD_SCHEDULE:
-            start_t, end_t, _ = PERIOD_SCHEDULE[period_number]
+    def get_scheduled_times(attendance_date: date, period_number: int, db: Optional[Session] = None) -> Tuple[datetime, datetime]:
+        """Returns UTC start/end datetimes for a period, reading times from the governance rule service."""
+        schedule = _build_period_map(db) if db is not None else PERIOD_SCHEDULE
+        if period_number in schedule:
+            start_t, end_t, _ = schedule[period_number]
         else:
             start_t, end_t = time(9, 20), time(10, 20)
         try:

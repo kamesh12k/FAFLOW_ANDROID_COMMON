@@ -42,5 +42,8 @@ from app.models.campus_duty import (
     CampusArea, DutyBreakPeriod, CampusDuty, DutyAssignment, DutyAssignmentRun,
     DutyType, DutyStatus, AssignmentStatus
 )
+from app.models.governance_rule import (
+    PeriodConfig, BusinessRule, BusinessRuleHistory
+)
 
 

@@ -44,6 +44,7 @@ const AdminGeofences = lazy(() => import('./pages/admin/Geofences'))
 const AdminBiometrics = lazy(() => import('./pages/admin/Biometrics'))
 const AdminAttendance = lazy(() => import('./pages/admin/Attendance'))
 const DutyManagement = lazy(() => import('./pages/admin/DutyManagement'))
+const GovernanceRules = lazy(() => import('./pages/admin/GovernanceRules'))
 
 // Principal pages (lazy loaded)
 const PrincipalDashboard = lazy(() => import('./pages/admin/PrincipalDashboard'))
@@ -151,6 +152,7 @@ export default function App() {
                   <Route path="/admin/managers" element={<AdminManagers />} />
                   <Route path="/admin/system-metrics" element={<SystemMetrics />} />
                   <Route path="/admin/data-retention" element={<DataRetention />} />
+                  <Route path="/admin/governance-rules" element={<GovernanceRules />} />
                 </Route>
               </Route>
             </Route>
@@ -165,6 +167,7 @@ export default function App() {
                 <Route path="/governance/student-attendance" element={<PrincipalStudentAttendance />} />
                 <Route path="/governance/timetable" element={<HodTimetable />} />
                 <Route path="/governance/duties" element={<DutyManagement />} />
+                <Route path="/governance/rules" element={<GovernanceRules />} />
               </Route>
             </Route>
           </Route>

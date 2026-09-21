@@ -17,7 +17,17 @@ from app.services.system_setting_service import get_setting
 logger = logging.getLogger(__name__)
 
 # ── Cancellation cutoff ────────────────────────────────────────────────
+# DEPRECATED constant — kept as fallback. The dynamic value is loaded from governance_rule_service.
 SAME_DAY_CANCEL_CUTOFF_HOUR = 10  # 10:00 AM local time
+
+
+def _get_same_day_cancel_cutoff_hour(db: Session) -> int:
+    """Returns the configured same-day leave cancellation cutoff hour (default: 10 = 10:00 AM)."""
+    try:
+        from app.services import governance_rule_service
+        return governance_rule_service.get_rule_int(db, "leave_same_day_cancellation_cutoff_hour")
+    except Exception:
+        return SAME_DAY_CANCEL_CUTOFF_HOUR
 
 
 def should_auto_approve_leave(db: Session, department_id: int | None = None) -> bool:

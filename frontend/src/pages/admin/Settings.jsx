@@ -1892,8 +1892,8 @@ function ClearHistoryPanel() {
   )
 }
 
-/* ── Page ─────────────────────────────────────────────────────────────── */
 export default function AdminSettings() {
+  const navigate = useNavigate()
   const { isSuperAdmin, isSystemAdmin } = useAuth()
   const { activeDepartmentId } = useDepartment()
   
@@ -1955,6 +1955,52 @@ export default function AdminSettings() {
         <h1 className="text-[32px] font-bold text-gray-900 tracking-tight">Settings</h1>
         <p className="text-sm text-gray-500 mt-1">Admin accounts, audit history, and system reset</p>
       </div>
+
+      {/* ── Institutional Business Rules & Period Schedule Control Plane ── */}
+      <SettingsSection
+        icon={ShieldIcon}
+        tint="bg-violet-50 text-violet-600"
+        title="Institutional Business Rules & Period Schedule"
+        description="Configure period timings (09:20–10:20, etc.), class suggestion lead times, attendance submission windows, and operational thresholds."
+        action={
+          <button
+            type="button"
+            onClick={() => navigate('/admin/governance-rules')}
+            className="inline-flex items-center gap-1.5 rounded-full bg-violet-600 px-4 py-1.5 text-xs font-semibold text-white shadow-sm hover:bg-violet-700 active:scale-[0.98] transition"
+          >
+            Open Control Center &rarr;
+          </button>
+        }
+      >
+        <div className="px-6 pb-6 border-t border-gray-100 pt-4 space-y-3">
+          <p className="text-sm text-gray-600 leading-relaxed">
+            FAFLOW features a centralized Master Governance Control Plane. You can adjust teaching period start/end boundaries, class suggestion lead times, attendance grace periods, and biometric sensitivity in real-time without modifying code.
+          </p>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-1">
+            <div className="p-3 rounded-2xl bg-gray-50 border border-gray-100 text-xs">
+              <span className="font-semibold text-gray-800 block">Period Timetable</span>
+              <span className="text-gray-500 mt-0.5 block">Periods 1–5 (09:20 to 15:50)</span>
+            </div>
+            <div className="p-3 rounded-2xl bg-gray-50 border border-gray-100 text-xs">
+              <span className="font-semibold text-gray-800 block">Class Suggestions</span>
+              <span className="text-gray-500 mt-0.5 block">15-min lead time & active window</span>
+            </div>
+            <div className="p-3 rounded-2xl bg-gray-50 border border-gray-100 text-xs">
+              <span className="font-semibold text-gray-800 block">Attendance Thresholds</span>
+              <span className="text-gray-500 mt-0.5 block">15-min submission, 75% shortage</span>
+            </div>
+          </div>
+          <div className="pt-2">
+            <button
+              type="button"
+              onClick={() => navigate('/admin/governance-rules')}
+              className={btnPrimary}
+            >
+              Configure Business Rules & Period Timetable
+            </button>
+          </div>
+        </div>
+      </SettingsSection>
 
       <CampusOperationsModePanel 
         isSuperAdmin={isSuperAdmin || isSystemAdmin} 

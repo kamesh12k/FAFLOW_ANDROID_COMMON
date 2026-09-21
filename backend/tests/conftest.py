@@ -53,6 +53,7 @@ from app.models.student_attendance import (
     AttendanceSession, StudentAttendance, AttendanceCorrectionAudit,
     AttendanceType, SessionStatus, StudentAttendanceStatus
 )
+from app.models.governance_rule import PeriodConfig, BusinessRule, BusinessRuleHistory
 
 # ── In-memory SQLite engine ──
 SQLALCHEMY_TEST_URL = "sqlite://"

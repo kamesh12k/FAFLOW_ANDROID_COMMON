@@ -269,6 +269,13 @@ def set_mode(db: Session, mode: str, actor: User, tenant_department_id: int | No
 
 
 def get_emergency_window_hours(db: Session, tenant_department_id: int | None = None) -> int:
+    """Returns the emergency window in hours from governance rules (default: 2).
+    Falls back to SystemSetting then to hardcoded 2 if both unavailable."""
+    try:
+        from app.services import governance_rule_service
+        return governance_rule_service.get_rule_int(db, "emergency_window_hours")
+    except Exception:
+        pass
     val = get_setting(db, "emergency_window_hours", "2", tenant_department_id)
     try:
         return int(val)
@@ -1179,15 +1186,23 @@ def create_assignment(
     )
     db.add(assignment)
 
+    # Read credit values dynamically from governance rules (default: -1 penalty, +1 award)
+    try:
+        from app.services import governance_rule_service
+        penalty = governance_rule_service.get_rule_int(db, "credit_penalty_on_leave")  # typically -1
+        award = governance_rule_service.get_rule_int(db, "credit_award_on_substitution")  # typically +1
+    except Exception:
+        penalty, award = -1, 1
+
     apply_credit_change(
-        teacher_id=leave.teacher_id, change=-1,
+        teacher_id=leave.teacher_id, change=penalty,
         reason=f"Leave on {leave.date} (Day Order {leave.day_order}) period {leave.period_number}",
         leave_id=leave.id, db=db, category="penalty",
     )
     teacher = leave.teacher or db.query(User).filter(User.id == leave.teacher_id).first()
     teacher_name = teacher.name if (teacher and teacher.name) else f"teacher #{leave.teacher_id}"
     apply_credit_change(
-        teacher_id=substitute.id, change=+1,
+        teacher_id=substitute.id, change=award,
         reason=f"Substitute for {teacher_name} on {leave.date} (Day Order {leave.day_order}) period {leave.period_number}",
         leave_id=leave.id, db=db, category="substitute_class",
     )

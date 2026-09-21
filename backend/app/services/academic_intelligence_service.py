@@ -32,6 +32,7 @@ logger = logging.getLogger(__name__)
 class AcademicIntelligenceService:
     @staticmethod
     def get_setting(db: Session, key: str, default: Any = None) -> Any:
+        """Legacy SystemSetting reader — used as inner fallback. Prefer get_threshold for numeric rules."""
         try:
             row = db.query(SystemSetting).filter(SystemSetting.key == key).first()
             if row and row.value is not None:
@@ -42,9 +43,19 @@ class AcademicIntelligenceService:
 
     @staticmethod
     def get_threshold(db: Session, key: str, default_val: float) -> float:
-        val = AcademicIntelligenceService.get_setting(db, key, str(default_val))
+        """Returns a float threshold, reading first from governance_rule_service (TTL-cached),
+        then SystemSetting, then the supplied default_val."""
         try:
-            return float(val)
+            from app.services import governance_rule_service
+            val = governance_rule_service.get_rule_value(db, key)
+            if val:
+                return float(val)
+        except Exception as e:
+            logger.debug(f"governance_rule_service miss for '{key}': {e}")
+        # Fallback: legacy SystemSetting
+        raw = AcademicIntelligenceService.get_setting(db, key, str(default_val))
+        try:
+            return float(raw)
         except (ValueError, TypeError):
             return default_val
 

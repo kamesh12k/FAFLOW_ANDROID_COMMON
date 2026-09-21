@@ -20,6 +20,24 @@ from app.schemas.attendance import (
 from app.services.geofence_service import GeofenceService
 
 
+def _get_face_threshold(db: Session) -> float:
+    """Returns the configured biometric face similarity threshold (default: 0.60)."""
+    try:
+        from app.services import governance_rule_service
+        return governance_rule_service.get_rule_float(db, "staff_biometric_face_similarity_threshold")
+    except Exception:
+        return 0.60
+
+
+def _get_gps_threshold(db: Session) -> float:
+    """Returns the configured GPS accuracy threshold in meters (default: 50.0)."""
+    try:
+        from app.services import governance_rule_service
+        return governance_rule_service.get_rule_float(db, "staff_geofence_gps_accuracy_threshold")
+    except Exception:
+        return 50.0
+
+
 class AttendanceService:
 
     @staticmethod
@@ -55,8 +73,9 @@ class AttendanceService:
             active_geofences = GeofenceService.list_geofences(db, is_active_only=True)
             return True, active_geofences[0] if active_geofences else None
 
-        if accuracy > 50.0:
-            raise DomainException(f"GPS accuracy ({accuracy:.1f}m) exceeds allowable threshold (50.0m)", status_code=400)
+        if accuracy > _get_gps_threshold(db):
+            threshold = _get_gps_threshold(db)
+            raise DomainException(f"GPS accuracy ({accuracy:.1f}m) exceeds allowable threshold ({threshold:.1f}m)", status_code=400)
 
         active_geofences = GeofenceService.list_geofences(db, is_active_only=True)
         if not active_geofences:
@@ -84,9 +103,10 @@ class AttendanceService:
             return AttendanceService._to_dto(existing_idempotent)
 
         # 2. Biometric Verification Gate
-        if data.face_similarity_score < 0.60:
+        face_threshold = _get_face_threshold(db)
+        if data.face_similarity_score < face_threshold:
             AttendanceService._log_audit(db, user.id, "FACE_VERIFICATION_FAILURE", {"similarity": data.face_similarity_score})
-            raise DomainException(f"Biometric face similarity score ({data.face_similarity_score:.2f}) below threshold 0.60", status_code=400)
+            raise DomainException(f"Biometric face similarity score ({data.face_similarity_score:.2f}) below threshold {face_threshold:.2f}", status_code=400)
         bypass_liveness = os.getenv("BYPASS_LIVENESS_FOR_TESTING", "false").lower() in ("true", "1", "yes")
         if not bypass_liveness and not data.liveness_verified:
             AttendanceService._log_audit(db, user.id, "LIVENESS_FAILURE", {"liveness_verified": False})
@@ -164,10 +184,11 @@ class AttendanceService:
         # 2. Biometric Verification Gate (Check-Out requires face re-verification)
         # SECURITY: The same biometric standard applied at check-in MUST apply at check-out.
         # An authenticated session alone is insufficient — the physical person must re-verify.
-        if data.face_similarity_score < 0.60:
+        face_threshold = _get_face_threshold(db)
+        if data.face_similarity_score < face_threshold:
             AttendanceService._log_audit(db, user.id, "FACE_VERIFICATION_FAILURE_CHECKOUT", {"similarity": data.face_similarity_score})
             raise DomainException(
-                f"Biometric face similarity score ({data.face_similarity_score:.2f}) below threshold 0.60",
+                f"Biometric face similarity score ({data.face_similarity_score:.2f}) below threshold {face_threshold:.2f}",
                 status_code=400
             )
         bypass_liveness = os.getenv("BYPASS_LIVENESS_FOR_TESTING", "false").lower() in ("true", "1", "yes")

@@ -2,6 +2,7 @@ import {
   GridIcon, UsersIcon, CalIcon, BookIcon, DoorIcon, DocIcon, ChartIcon,
   PlusIcon, SwapIcon, MegaphoneIcon,
   DatabaseIcon, TrashNavIcon, GeofenceIcon, BiometricIcon, AttendanceNavIcon,
+  ShieldIcon,
 } from '../icons'
 
 export const ADMIN_NAV = [
@@ -116,6 +117,7 @@ export const SYSTEM_ADMIN_NAV = [
     items: [
       { to: '/admin/system-metrics', label: 'Real-time Traffic', icon: <ChartIcon /> },
       { to: '/admin/settings', label: 'Settings & History', icon: <DocIcon /> },
+      { to: '/admin/governance-rules', label: 'Business Rules', icon: <ShieldIcon /> },
     ],
   },
   {
@@ -196,6 +198,7 @@ export const GOVERNANCE_NAV = [
       { to: '/admin/leaves', label: 'Leave Oversight', icon: <DocIcon /> },
       { to: '/admin/backup', label: 'Emergency Backups', icon: <DatabaseIcon /> },
       { to: '/admin/settings', label: 'Governance Audits', icon: <DocIcon /> },
+      { to: '/governance/rules', label: 'Business Rules', icon: <ShieldIcon /> },
     ],
   },
 ]
