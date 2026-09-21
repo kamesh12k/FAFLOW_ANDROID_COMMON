@@ -319,8 +319,19 @@ def approve_leave(
     db: Session,
     tenant_department_id: int | None = None,
     actor_id: int | None = None,
+    allow_already_approved: bool = False,
 ) -> tuple[LeaveRequest, list[FreeTeacherOut]]:
     leave = _get_leave_or_404(leave_id, db, tenant_department_id, for_update=True)
+
+    if leave.status == LeaveStatus.approved:
+        if allow_already_approved:
+            dept_id = leave.teacher.department_id if leave.teacher else None
+            free_teachers = detect_free_teachers(
+                leave.day_order, leave.period_number, leave.teacher_id, db,
+                tenant_department_id=dept_id
+            )
+            return leave, free_teachers
+        raise HTTPException(status_code=400, detail="Only pending requests can be approved")
 
     if leave.status != LeaveStatus.pending:
         raise HTTPException(status_code=400, detail="Only pending requests can be approved")
@@ -454,20 +465,40 @@ def bulk_approve(
     actor_id: int | None = None,
 ) -> list[LeaveRequest]:
     results = []
-    sp = db.begin_nested()
-    try:
-        for leave_id in leave_ids:
-            leave, _ = approve_leave(leave_id, db, tenant_department_id, actor_id=actor_id)
+    unique_ids = list(dict.fromkeys(leave_ids))
+    for leave_id in unique_ids:
+        leave = _get_leave_or_404(leave_id, db, tenant_department_id, for_update=True)
+        if leave.status == LeaveStatus.approved:
             results.append(leave)
-        sp.commit()
-        return results
-    except Exception:
-        sp.rollback()
-        raise
+            continue
+        if leave.status != LeaveStatus.pending:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Leave request #{leave_id} cannot be approved because its status is '{leave.status.value}' (only pending requests can be approved)",
+            )
+        approved_leave, _ = approve_leave(
+            leave_id,
+            db,
+            tenant_department_id,
+            actor_id=actor_id,
+            allow_already_approved=True,
+        )
+        results.append(approved_leave)
+    return results
 
 
-def reject_leave(leave_id: int, db: Session, tenant_department_id: int | None = None) -> LeaveRequest:
+def reject_leave(
+    leave_id: int,
+    db: Session,
+    tenant_department_id: int | None = None,
+    allow_already_rejected: bool = False,
+) -> LeaveRequest:
     leave = _get_leave_or_404(leave_id, db, tenant_department_id, for_update=True)
+
+    if leave.status == LeaveStatus.rejected:
+        if allow_already_rejected:
+            return leave
+        raise HTTPException(status_code=400, detail="Only pending requests can be rejected")
 
     if leave.status != LeaveStatus.pending:
         raise HTTPException(status_code=400, detail="Only pending requests can be rejected")
@@ -487,8 +518,31 @@ def reject_leave(leave_id: int, db: Session, tenant_department_id: int | None = 
     return leave
 
 
-def bulk_reject(leave_ids: list[int], db: Session, tenant_department_id: int | None = None) -> list[LeaveRequest]:
-    return [reject_leave(leave_id, db, tenant_department_id) for leave_id in leave_ids]
+def bulk_reject(
+    leave_ids: list[int],
+    db: Session,
+    tenant_department_id: int | None = None,
+) -> list[LeaveRequest]:
+    results = []
+    unique_ids = list(dict.fromkeys(leave_ids))
+    for leave_id in unique_ids:
+        leave = _get_leave_or_404(leave_id, db, tenant_department_id, for_update=True)
+        if leave.status == LeaveStatus.rejected:
+            results.append(leave)
+            continue
+        if leave.status != LeaveStatus.pending:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Leave request #{leave_id} cannot be rejected because its status is '{leave.status.value}' (only pending requests can be rejected)",
+            )
+        rejected_leave = reject_leave(
+            leave_id,
+            db,
+            tenant_department_id,
+            allow_already_rejected=True,
+        )
+        results.append(rejected_leave)
+    return results
 
 
 

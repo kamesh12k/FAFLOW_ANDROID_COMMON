@@ -313,6 +313,7 @@ export default function AdminLeaves() {
   }
 
   const handleApproveGroup = async (group) => {
+    if (actionLoading) return
     setActionLoading(group.key + '_approve')
     const prevLeaves = leaves
     // Optimistic UI update
@@ -324,10 +325,10 @@ export default function AdminLeaves() {
       let results
       if (pendingReqs.length > 1) {
         const res = await leavesApi.bulkApprove(pendingReqs.map(r => r.id))
-        results = res.data.leaves || []
+        results = Array.isArray(res.data) ? res.data : (res.data?.leaves || [])
       } else if (pendingReqs.length === 1) {
         const res = await leavesApi.approve(pendingReqs[0].id)
-        results = [res.data.leave]
+        results = [res.data?.leave || res.data]
       } else {
         results = []
       }
@@ -337,7 +338,11 @@ export default function AdminLeaves() {
         type: 'success',
         message: `Approved leave for ${group.teacher?.name || 'teacher'} (${group.date})`,
         undo: async () => {
-          await Promise.all(pendingReqs.map(r => leavesApi.reject(r.id)))
+          if (pendingReqs.length > 1) {
+            await leavesApi.bulkReject(pendingReqs.map(r => r.id))
+          } else {
+            await Promise.all(pendingReqs.map(r => leavesApi.reject(r.id)))
+          }
           load()
         }
       })
@@ -350,7 +355,7 @@ export default function AdminLeaves() {
         }
       }
     } catch (err) {
-      setLeaves(prevLeaves)
+      await load().catch(() => setLeaves(prevLeaves))
       setToast({ type: 'error', message: err.response?.data?.detail || 'Failed to approve leave.' })
     } finally {
       setActionLoading(null)
@@ -358,6 +363,7 @@ export default function AdminLeaves() {
   }
 
   const handleRejectGroup = async (group) => {
+    if (actionLoading) return
     setActionLoading(group.key + '_reject')
     const prevLeaves = leaves
     const pendingReqs = group.requests.filter(r => r.status === 'pending')
@@ -366,18 +372,26 @@ export default function AdminLeaves() {
     setLeaves(prev => prev.map(l => pendingIds.has(l.id) ? { ...l, status: 'rejected' } : l))
 
     try {
-      await Promise.all(pendingReqs.map(r => leavesApi.reject(r.id)))
-      load()
+      if (pendingReqs.length > 1) {
+        await leavesApi.bulkReject(pendingReqs.map(r => r.id))
+      } else if (pendingReqs.length === 1) {
+        await leavesApi.reject(pendingReqs[0].id)
+      }
+      await load()
       setToast({
         type: 'success',
         message: `Rejected leave for ${group.teacher?.name || 'teacher'} (${group.date})`,
         undo: async () => {
-          await Promise.all(pendingReqs.map(r => leavesApi.approve(r.id)))
+          if (pendingReqs.length > 1) {
+            await leavesApi.bulkApprove(pendingReqs.map(r => r.id))
+          } else {
+            await Promise.all(pendingReqs.map(r => leavesApi.approve(r.id)))
+          }
           load()
         }
       })
     } catch (err) {
-      setLeaves(prevLeaves)
+      await load().catch(() => setLeaves(prevLeaves))
       setToast({ type: 'error', message: err.response?.data?.detail || 'Failed to reject leave.' })
     } finally {
       setActionLoading(null)
@@ -385,6 +399,7 @@ export default function AdminLeaves() {
   }
 
   const handleBulkApprove = async () => {
+    if (actionLoading) return
     setActionLoading('bulk')
     try {
       const ids = []
@@ -399,15 +414,17 @@ export default function AdminLeaves() {
       if (ids.length === 0) return
       await leavesApi.bulkApprove(ids)
       setSelected(new Set())
-      load()
+      await load()
     } catch (err) {
-      alert('Failed to bulk approve.')
+      await load()
+      setToast({ type: 'error', message: err.response?.data?.detail || 'Failed to bulk approve.' })
     } finally {
       setActionLoading(null)
     }
   }
 
   const handleBulkReject = async () => {
+    if (actionLoading) return
     setActionLoading('bulk')
     try {
       const ids = []
@@ -422,9 +439,10 @@ export default function AdminLeaves() {
       if (ids.length === 0) return
       await leavesApi.bulkReject(ids)
       setSelected(new Set())
-      load()
+      await load()
     } catch (err) {
-      alert('Failed to bulk reject.')
+      await load()
+      setToast({ type: 'error', message: err.response?.data?.detail || 'Failed to bulk reject.' })
     } finally {
       setActionLoading(null)
     }

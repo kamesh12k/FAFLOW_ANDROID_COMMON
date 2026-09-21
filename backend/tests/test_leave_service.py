@@ -8,9 +8,9 @@ from app.core.timezone import get_institution_today
 
 from app.services.leave_service import (
     submit_leave, get_all_leaves, get_teacher_leaves,
-    approve_leave, reject_leave, detect_free_teachers,
-    assign_substitute, override_substitute, undo_assignment,
-    set_assignment_lock, submit_leave_by_admin,
+    approve_leave, reject_leave, bulk_approve, bulk_reject,
+    detect_free_teachers, assign_substitute, override_substitute,
+    undo_assignment, set_assignment_lock, submit_leave_by_admin,
 )
 from app.schemas.leave import LeaveCreate, AdminLeaveCreate
 from app.models.leave import LeaveRequest, LeaveStatus, AlterAssignment, AssignmentType
@@ -222,3 +222,44 @@ class TestSubmitLeaveByAdmin:
         with pytest.raises(HTTPException) as exc:
             submit_leave_by_admin(data, admin, db_session)
         assert exc.value.status_code == 400
+
+
+class TestBulkApproveAndReject:
+    def test_bulk_approve_idempotent_with_already_approved(self, db_session, test_teacher):
+        create_calendar_day(db_session, date(2026, 7, 1), DayType.working, day_order=1)
+        l1 = create_leave_request(db_session, test_teacher.id, date(2026, 7, 1), day_order=1, period_number=1)
+        l2 = create_leave_request(db_session, test_teacher.id, date(2026, 7, 1), day_order=1, period_number=2)
+        l3 = create_leave_request(db_session, test_teacher.id, date(2026, 7, 1), day_order=1, period_number=3)
+
+        # Pre-approve l1
+        approve_leave(l1.id, db_session)
+        assert l1.status == LeaveStatus.approved
+
+        # Bulk approve l1, l2, l3 (and duplicate l2)
+        results = bulk_approve([l1.id, l2.id, l3.id, l2.id], db_session)
+        assert len(results) == 3
+        statuses = [r.status for r in results]
+        assert statuses == [LeaveStatus.approved, LeaveStatus.approved, LeaveStatus.approved]
+
+    def test_bulk_approve_rejected_raises_400(self, db_session, test_teacher):
+        create_calendar_day(db_session, date(2026, 7, 1), DayType.working, day_order=1)
+        l1 = create_leave_request(db_session, test_teacher.id, date(2026, 7, 1), day_order=1, period_number=1)
+        l2 = create_leave_request(db_session, test_teacher.id, date(2026, 7, 1), day_order=1, period_number=2)
+
+        reject_leave(l1.id, db_session)
+
+        with pytest.raises(HTTPException) as exc:
+            bulk_approve([l1.id, l2.id], db_session)
+        assert exc.value.status_code == 400
+        assert "cannot be approved because its status is 'rejected'" in exc.value.detail
+
+    def test_bulk_reject_idempotent_with_already_rejected(self, db_session, test_teacher):
+        create_calendar_day(db_session, date(2026, 7, 1), DayType.working, day_order=1)
+        l1 = create_leave_request(db_session, test_teacher.id, date(2026, 7, 1), day_order=1, period_number=1)
+        l2 = create_leave_request(db_session, test_teacher.id, date(2026, 7, 1), day_order=1, period_number=2)
+
+        reject_leave(l1.id, db_session)
+
+        results = bulk_reject([l1.id, l2.id, l1.id], db_session)
+        assert len(results) == 2
+        assert all(r.status == LeaveStatus.rejected for r in results)
