@@ -24,6 +24,30 @@ class TimetableSlotCreate(BaseModel):
         return validate_period_number(v)
 
 
+class TimetableSlotUpdate(BaseModel):
+    teacher_id: int | None = None
+    subject_id: int | None = None
+    class_id: int | None = None
+    room_id: int | None = None
+    day_order: int | None = None
+    period_number: int | None = None
+    allow_combined_class: bool = False
+
+    @field_validator("day_order")
+    @classmethod
+    def validate_day_order_field(cls, v: int | None) -> int | None:
+        if v is not None:
+            return validate_day_order(v)
+        return v
+
+    @field_validator("period_number")
+    @classmethod
+    def validate_period_field(cls, v: int | None) -> int | None:
+        if v is not None:
+            return validate_period_number(v)
+        return v
+
+
 class TimetableSlotOut(BaseModel):
     id: int
     teacher_id: int

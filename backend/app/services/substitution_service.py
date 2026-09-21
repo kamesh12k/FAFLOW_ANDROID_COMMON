@@ -228,7 +228,7 @@ VALID_MODES = CAMPUS_OPERATIONS_MODES
 def get_mode(db: Session, tenant_department_id: int | None = None) -> str:
     # 1. Check global override first
     override = get_setting(db, "campus_operations_mode_override", "none", None)
-    if override in {"manual", "assisted", "autonomous"}:
+    if override in VALID_MODES:
         return override
     # 2. Otherwise fall back to department or global setting
     val = get_setting(db, "campus_operations_mode", "manual", tenant_department_id)
@@ -242,13 +242,16 @@ def get_configured_mode(db: Session, tenant_department_id: int | None = None) ->
 
 def get_global_override(db: Session) -> str:
     val = get_setting(db, "campus_operations_mode_override", "none", None)
-    return val if val in {"none", "manual", "assisted", "autonomous"} else "none"
+    return val if val in (VALID_MODES | {"none"}) else "none"
 
 
 def set_global_override(db: Session, override: str, actor: User) -> str:
-    if override not in {"none", "manual", "assisted", "autonomous"}:
-        raise HTTPException(status_code=400, detail="override must be one of none, manual, assisted, autonomous")
+    valid_overrides = VALID_MODES | {"none"}
+    if override not in valid_overrides:
+        raise HTTPException(status_code=400, detail=f"override must be one of {sorted(valid_overrides)}")
     set_setting(db, "campus_operations_mode_override", override, None)
+    if override == "flexible":
+        set_setting(db, "teacher_self_management_enabled", "true", None)
     log_audit_event(db, actor.id, "campus_operations.override_change", "system_setting", None, {"override": override})
     db.commit()
     return override
@@ -258,6 +261,8 @@ def set_mode(db: Session, mode: str, actor: User, tenant_department_id: int | No
     if mode not in VALID_MODES:
         raise HTTPException(status_code=400, detail=f"mode must be one of {sorted(VALID_MODES)}")
     set_setting(db, "campus_operations_mode", mode, tenant_department_id)
+    if mode == "flexible":
+        set_setting(db, "teacher_self_management_enabled", "true", tenant_department_id)
     log_audit_event(db, actor.id, "campus_operations.mode_change", "system_setting", None, {"mode": mode})
     db.commit()
     return mode
@@ -1054,6 +1059,67 @@ def get_ranked_recommendations(
         eligible = [teacher for teacher in eligible if teacher.id in experienced_ids]
 
     scored = [score_candidate(db, c, leave, subject, dept_name, in_memory_assignments) for c in eligible]
+    scored.sort(key=recommendation_sort_key)
+    for idx, cand in enumerate(scored, start=1):
+        cand.rank = idx
+    return scored[:limit]
+
+
+def get_slot_candidates(
+    db: Session,
+    teacher_id: int,
+    leave_date: date,
+    period_number: int,
+    day_order: int | None = None,
+    limit: int = 100,
+    tenant_department_id: int | None = None,
+    include_cross_department: bool = False,
+    only_handles_class: bool = False,
+) -> list[Candidate]:
+    """Retrieve ranked substitute candidates for an prospective or proposed
+    leave slot (used by teachers in Flexible mode during leave application,
+    or by administrators evaluating prospective slots)."""
+    teacher = db.query(User).filter(User.id == teacher_id).first()
+    if not teacher:
+        raise HTTPException(status_code=404, detail="Teacher not found")
+
+    dept_id = tenant_department_id or teacher.department_id
+    if day_order is None:
+        from app.services import day_order_service
+        cal_day = day_order_service.assert_working_day_or_400(db, leave_date)
+        day_order = cal_day.day_order
+
+    if include_cross_department and not cross_department_substitutions_enabled(db, teacher.department_id):
+        raise HTTPException(status_code=403, detail="Cross-department substitutions are disabled for this department")
+
+    ephemeral_leave = LeaveRequest(
+        teacher_id=teacher_id,
+        date=leave_date,
+        day_order=day_order,
+        period_number=period_number,
+    )
+
+    subject, dept_name = _subject_and_department_for_leave(db, ephemeral_leave)
+    eligible = list_eligible_candidates(
+        db, ephemeral_leave, require_auto_opt_in=False,
+        tenant_department_id=None if include_cross_department else dept_id,
+    )
+
+    if only_handles_class:
+        affected_slot = db.query(TimetableSlot).filter(
+            TimetableSlot.teacher_id == teacher_id,
+            TimetableSlot.day_order == day_order,
+            TimetableSlot.period_number == period_number,
+        ).first()
+        if not affected_slot:
+            return []
+        experienced_ids = {
+            row[0] for row in db.query(TimetableSlot.teacher_id)
+            .filter(TimetableSlot.class_id == affected_slot.class_id).all()
+        }
+        eligible = [t for t in eligible if t.id in experienced_ids]
+
+    scored = [score_candidate(db, c, ephemeral_leave, subject, dept_name) for c in eligible]
     scored.sort(key=recommendation_sort_key)
     for idx, cand in enumerate(scored, start=1):
         cand.rank = idx

@@ -38,5 +38,9 @@ from app.models.announcement import (
     MessageReaction, MessageMention,
     AnnouncementType, AnnouncementPriority, AnnouncementStatus, TargetType
 )
+from app.models.campus_duty import (
+    CampusArea, DutyBreakPeriod, CampusDuty, DutyAssignment, DutyAssignmentRun,
+    DutyType, DutyStatus, AssignmentStatus
+)
 
 

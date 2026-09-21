@@ -54,6 +54,16 @@ def submit_leave(teacher_id: int, data: LeaveCreate, db: Session) -> LeaveReques
     auto_approve = should_auto_approve_leave(db, teacher_dept_id)
     status = LeaveStatus.approved if auto_approve else LeaveStatus.pending
 
+    proposed_sub_id = data.proposed_substitute_id
+    proposed_sub_name = None
+    if proposed_sub_id is not None:
+        if proposed_sub_id == teacher_id:
+            raise HTTPException(status_code=400, detail="A teacher cannot be their own substitute")
+        proposed_sub_teacher = db.query(User).filter(User.id == proposed_sub_id, User.role == Role.teacher, User.is_active == True).first()
+        if not proposed_sub_teacher:
+            raise HTTPException(status_code=404, detail="Proposed substitute teacher not found or inactive")
+        proposed_sub_name = proposed_sub_teacher.name
+
     leave = LeaveRequest(
         teacher_id=teacher_id,
         date=data.date,
@@ -61,6 +71,7 @@ def submit_leave(teacher_id: int, data: LeaveCreate, db: Session) -> LeaveReques
         period_number=data.period_number,
         reason=data.reason,
         status=status,
+        proposed_substitute_id=proposed_sub_id,
     )
     substitution_service.mark_emergency_if_applicable(db, leave)
     db.add(leave)
@@ -89,18 +100,19 @@ def submit_leave(teacher_id: int, data: LeaveCreate, db: Session) -> LeaveReques
             (User.department_id == teacher_dept_id) | (User.role == Role.system_admin),
             User.is_active == True,
         ).all()
+        sub_info = f" Proposed Substitute: {proposed_sub_name}." if proposed_sub_name else ""
         for adm in admins:
             notification_service.create_notification(
                 db, adm.id,
                 title=f"New Leave Request: {teacher_name}",
-                body=f"{teacher_name} requested leave on {leave.date} (Day Order {leave.day_order}, period {leave.period_number}). Reason: {leave.reason or 'Not specified'}",
+                body=f"{teacher_name} requested leave on {leave.date} (Day Order {leave.day_order}, period {leave.period_number}).{sub_info} Reason: {leave.reason or 'Not specified'}",
                 event_type="leave_submitted",
                 related_leave_id=leave.id,
             )
         notification_service.create_notification(
             db, leave.teacher_id,
             title="Leave Request Submitted",
-            body=f"Your leave request for {leave.date} (Period {leave.period_number}) was submitted for approval.",
+            body=f"Your leave request for {leave.date} (Period {leave.period_number}) was submitted for approval.{sub_info}",
             event_type="leave_submitted",
             related_leave_id=leave.id,
         )
@@ -184,6 +196,20 @@ def submit_leave_batch(teacher_id: int, data: LeaveBatchCreate, db: Session) -> 
                     detail=f"Leave already exists for Period {period} on {data.date}",
                 )
 
+            # Determine proposed substitute for this period
+            period_sub_id = None
+            if data.period_substitutes and (period in data.period_substitutes or str(period) in data.period_substitutes):
+                period_sub_id = data.period_substitutes.get(period) or data.period_substitutes.get(str(period))
+            elif data.proposed_substitute_id is not None:
+                period_sub_id = data.proposed_substitute_id
+
+            if period_sub_id is not None:
+                if period_sub_id == teacher_id:
+                    raise HTTPException(status_code=400, detail=f"Period {period}: A teacher cannot be their own substitute")
+                sub_user = db.query(User).filter(User.id == period_sub_id, User.role == Role.teacher, User.is_active == True).first()
+                if not sub_user:
+                    raise HTTPException(status_code=404, detail=f"Period {period}: Proposed substitute teacher not found or inactive")
+
             leave = LeaveRequest(
                 teacher_id=teacher_id,
                 date=data.date,
@@ -192,6 +218,7 @@ def submit_leave_batch(teacher_id: int, data: LeaveBatchCreate, db: Session) -> 
                 reason=data.reason,
                 status=status,
                 batch_id=batch_id,
+                proposed_substitute_id=period_sub_id,
             )
             substitution_service.mark_emergency_if_applicable(db, leave)
             db.add(leave)
@@ -277,7 +304,12 @@ def get_teacher_leaves(teacher_id: int, db: Session) -> list[LeaveRequest]:
     )
 
 
-def approve_leave(leave_id: int, db: Session, tenant_department_id: int | None = None) -> tuple[LeaveRequest, list[FreeTeacherOut]]:
+def approve_leave(
+    leave_id: int,
+    db: Session,
+    tenant_department_id: int | None = None,
+    actor_id: int | None = None,
+) -> tuple[LeaveRequest, list[FreeTeacherOut]]:
     leave = _get_leave_or_404(leave_id, db, tenant_department_id, for_update=True)
 
     if leave.status != LeaveStatus.pending:
@@ -287,9 +319,106 @@ def approve_leave(leave_id: int, db: Session, tenant_department_id: int | None =
     # marked a holiday) between submission and approval.
     day_order_service.assert_working_day_or_400(db, leave.date)
 
-    leave.status = LeaveStatus.approved
-    db.commit()
-    db.refresh(leave)
+    if leave.proposed_substitute_id:
+        substitute = db.query(User).filter(
+            User.id == leave.proposed_substitute_id,
+            User.role == Role.teacher,
+            User.is_active == True,
+        ).first()
+        if not substitute:
+            raise HTTPException(
+                status_code=409,
+                detail=f"Period {leave.period_number}: Proposed substitute teacher not found or is no longer active",
+            )
+
+        if substitute.id == leave.teacher_id:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Period {leave.period_number}: A teacher cannot be their own substitute",
+            )
+
+        # Hard conflict checks
+        busy = (
+            db.query(TimetableSlot)
+            .filter(
+                TimetableSlot.teacher_id == substitute.id,
+                TimetableSlot.day_order == leave.day_order,
+                TimetableSlot.period_number == leave.period_number,
+            )
+            .first()
+        )
+        if busy:
+            raise HTTPException(
+                status_code=409,
+                detail=f"Period {leave.period_number}: Proposed substitute {substitute.name} is already teaching during this period",
+            )
+
+        own_leave = (
+            db.query(LeaveRequest)
+            .filter(
+                LeaveRequest.teacher_id == substitute.id,
+                LeaveRequest.date == leave.date,
+                LeaveRequest.period_number == leave.period_number,
+                LeaveRequest.status == LeaveStatus.approved,
+            )
+            .first()
+        )
+        if own_leave:
+            raise HTTPException(
+                status_code=409,
+                detail=f"Period {leave.period_number}: Proposed substitute {substitute.name} is on approved leave for this period",
+            )
+
+        already_subbing = (
+            db.query(AlterAssignment)
+            .join(LeaveRequest, AlterAssignment.leave_request_id == LeaveRequest.id)
+            .filter(
+                AlterAssignment.substitute_teacher_id == substitute.id,
+                LeaveRequest.date == leave.date,
+                LeaveRequest.period_number == leave.period_number,
+            )
+            .first()
+        )
+        if already_subbing:
+            raise HTTPException(
+                status_code=409,
+                detail=f"Period {leave.period_number}: Proposed substitute {substitute.name} is already substituting another class during this period",
+            )
+
+        leave_dept_id = leave.teacher.department_id if leave.teacher else None
+        if substitute.department_id != leave_dept_id:
+            if not substitution_service.cross_department_substitutions_enabled(db, leave_dept_id):
+                raise HTTPException(
+                    status_code=409,
+                    detail=f"Period {leave.period_number}: Proposed substitute {substitute.name} is from another department and cross-department substitution is disabled",
+                )
+
+        leave.status = LeaveStatus.approved
+        
+        # Calculate compatibility score snapshot
+        subject, dept_name = substitution_service._subject_and_department_for_leave(db, leave)
+        scored_cand = substitution_service.score_candidate(db, substitute, leave, subject, dept_name)
+        comp_score = float(scored_cand.score) if scored_cand else None
+
+        # Create official AlterAssignment, which handles credits, audit logs, and notifications
+        substitution_service.create_assignment(
+            db=db,
+            leave=leave,
+            substitute=substitute,
+            assignment_type=AssignmentType.teacher_assigned,
+            score=comp_score,
+            actor_id=actor_id,
+        )
+        db.commit()
+        db.refresh(leave)
+    else:
+        leave.status = LeaveStatus.approved
+        db.commit()
+        db.refresh(leave)
+
+        # Campus Operations Mode: in "autonomous" mode this immediately picks and assigns
+        substitution_service.auto_process_approved_leave(db, leave)
+        db.refresh(leave)
 
     notification_service.create_notification(
         db, leave.teacher_id,
@@ -300,14 +429,6 @@ def approve_leave(leave_id: int, db: Session, tenant_department_id: int | None =
     )
     db.commit()
 
-    # Campus Operations Mode: in "autonomous" mode this immediately picks
-    # and assigns a substitute with no further admin action. In "manual"
-    # or "assisted" mode it's a no-op — the admin assigns via the normal
-    # flow, optionally consulting get_ranked_recommendations for a
-    # ranked, scored list instead of a flat one.
-    substitution_service.auto_process_approved_leave(db, leave)
-    db.refresh(leave)
-
     free_teachers = detect_free_teachers(
         leave.day_order, leave.period_number, leave.teacher_id, db,
         tenant_department_id=leave.teacher.department_id
@@ -316,12 +437,23 @@ def approve_leave(leave_id: int, db: Session, tenant_department_id: int | None =
 
 
 
-def bulk_approve(leave_ids: list[int], db: Session, tenant_department_id: int | None = None) -> list[LeaveRequest]:
+def bulk_approve(
+    leave_ids: list[int],
+    db: Session,
+    tenant_department_id: int | None = None,
+    actor_id: int | None = None,
+) -> list[LeaveRequest]:
     results = []
-    for leave_id in leave_ids:
-        leave, _ = approve_leave(leave_id, db, tenant_department_id)
-        results.append(leave)
-    return results
+    sp = db.begin_nested()
+    try:
+        for leave_id in leave_ids:
+            leave, _ = approve_leave(leave_id, db, tenant_department_id, actor_id=actor_id)
+            results.append(leave)
+        sp.commit()
+        return results
+    except Exception:
+        sp.rollback()
+        raise
 
 
 def reject_leave(leave_id: int, db: Session, tenant_department_id: int | None = None) -> LeaveRequest:

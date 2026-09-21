@@ -5,11 +5,11 @@ import { Spinner, StatusBadge, EmptyState, Modal } from '../../components/ui'
 import { PlusIcon, SearchIcon, FilterIcon, XCircleIcon, AlertTriangleIcon } from '../../components/icons'
 
 const PERIOD_TIMES = {
-  1: '8:00–9:00',
-  2: '9:00–10:00',
-  3: '10:15–11:15',
-  4: '11:15–12:15',
-  5: '1:00–2:00',
+  1: '09:20–10:20',
+  2: '10:20–11:15',
+  3: '11:40–12:35',
+  4: '13:35–14:30',
+  5: '14:55–15:50',
 }
 
 function formatDate(isoStr) {
@@ -398,13 +398,23 @@ export default function LeaveHistory() {
                                 </div>
                               ))}
                             </div>
+                          ) : dayGroup.status === 'pending' && dayGroup.leaves.some(l => l.proposed_substitute) ? (
+                            <div className="space-y-1">
+                              {dayGroup.leaves.filter(l => l.proposed_substitute).map(l => (
+                                <div key={l.id} className="text-xs">
+                                  <span className="font-bold text-slate-600">P{l.period_number}:</span>{' '}
+                                  <span className="font-semibold text-indigo-700">{l.proposed_substitute.name}</span>
+                                </div>
+                              ))}
+                              <span className="inline-block text-[10px] font-semibold text-indigo-700 bg-indigo-50 border border-indigo-200/80 px-1.5 py-0.5 rounded">Proposed · Awaiting HOD</span>
+                            </div>
                           ) : dayGroup.status === 'approved' ? (
                             <div className="flex items-center gap-1 text-amber-500 font-medium text-xs">
                               <AlertTriangleIcon className="w-3.5 h-3.5 shrink-0" />
                               <span>Needs Coverage</span>
                             </div>
                           ) : (
-                            <span className="text-gray-400 text-xs italic">No substitute</span>
+                            <span className="text-gray-400 text-xs italic">—</span>
                           )}
                         </td>
 
@@ -507,10 +517,21 @@ export default function LeaveHistory() {
 
                     {coveredLeaves.length > 0 && (
                       <div className="p-2 bg-indigo-50/70 border border-indigo-100 rounded-lg text-xs space-y-0.5">
-                        <span className="text-[9px] font-bold text-indigo-800 uppercase tracking-wider block">Assigned Substitute</span>
+                        <span className="text-[9px] font-bold text-indigo-800 uppercase tracking-wider block">Officially Assigned Substitute</span>
                         {coveredLeaves.map(l => (
                           <div key={l.id} className="text-xs text-indigo-950 font-medium">
                             <span>Period {l.period_number}: <strong>{l.alter_assignment.substitute.name}</strong></span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
+                    {coveredLeaves.length === 0 && dayGroup.status === 'pending' && dayGroup.leaves.some(l => l.proposed_substitute) && (
+                      <div className="p-2 bg-indigo-50/40 border border-indigo-200/60 rounded-lg text-xs space-y-0.5">
+                        <span className="text-[9px] font-bold text-indigo-700 uppercase tracking-wider block">Proposed · Awaiting HOD Approval</span>
+                        {dayGroup.leaves.filter(l => l.proposed_substitute).map(l => (
+                          <div key={l.id} className="text-xs text-indigo-900 font-medium">
+                            <span>Period {l.period_number}: <strong>{l.proposed_substitute.name}</strong></span>
                           </div>
                         ))}
                       </div>
@@ -671,7 +692,7 @@ export default function LeaveHistory() {
             </div>
             {viewDetailTarget.alter_assignment && (
               <div className="p-3 bg-indigo-50/80 border border-indigo-100 rounded-xl space-y-1">
-                <span className="text-[10px] font-bold text-indigo-900 uppercase tracking-wider block">Assigned Substitute</span>
+                <span className="text-[10px] font-bold text-indigo-900 uppercase tracking-wider block">Officially Assigned Substitute</span>
                 <p className="text-xs font-bold text-indigo-950">
                   {viewDetailTarget.alter_assignment.substitute?.name || 'Substitute Teacher'}
                 </p>
@@ -680,6 +701,28 @@ export default function LeaveHistory() {
                     Department of {viewDetailTarget.alter_assignment.substitute.department}
                   </p>
                 )}
+              </div>
+            )}
+
+            {!viewDetailTarget.alter_assignment && viewDetailTarget.proposed_substitute && (
+              <div className="p-3 bg-indigo-50/40 border border-indigo-200/80 rounded-xl space-y-1">
+                <div className="flex items-center gap-2">
+                  <span className="text-[10px] font-bold text-indigo-800 uppercase tracking-wider block">Proposed Substitute</span>
+                  <span className="text-[10px] font-semibold text-amber-700 bg-amber-50 border border-amber-200 px-1.5 py-0.5 rounded">
+                    Awaiting HOD Approval
+                  </span>
+                </div>
+                <p className="text-xs font-bold text-indigo-950">
+                  {viewDetailTarget.proposed_substitute.name}
+                </p>
+                {viewDetailTarget.proposed_substitute.department_name && (
+                  <p className="text-[11px] text-indigo-700">
+                    Department of {viewDetailTarget.proposed_substitute.department_name}
+                  </p>
+                )}
+                <p className="text-[11px] text-slate-500 italic mt-1">
+                  You proposed this teacher during your leave application. They will be officially assigned once your HOD approves.
+                </p>
               </div>
             )}
             <div className="text-xs text-slate-500 space-y-1">

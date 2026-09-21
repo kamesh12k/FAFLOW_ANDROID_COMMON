@@ -232,3 +232,47 @@ def test_supervisor_live_status_endpoint_rbac_and_scoping(client, auth_headers_t
     data = res_admin.json()
     assert "total_staff" in data
     assert "active_shifts" in data
+
+
+def test_check_in_after_checkout_rejected(db_session, test_teacher, active_campus_geofence):
+    """Verifies that attempting check-in after checkout is strictly rejected and today's summary remains checked_out."""
+    # 1. Check in
+    check_in_req = AttendanceCheckInRequest(
+        idempotency_key=str(uuid.uuid4()),
+        latitude=11.016844,
+        longitude=76.955833,
+        accuracy_meters=5.0,
+        face_similarity_score=0.88,
+        liveness_verified=True
+    )
+    AttendanceService.check_in(db_session, test_teacher, check_in_req)
+
+    # 2. Check out
+    check_out_req = AttendanceCheckOutRequest(
+        idempotency_key=str(uuid.uuid4()),
+        latitude=11.016844,
+        longitude=76.955833,
+        accuracy_meters=5.0,
+        face_similarity_score=0.88,
+        liveness_verified=True
+    )
+    AttendanceService.check_out(db_session, test_teacher, check_out_req)
+
+    # 3. Attempt second check-in -> MUST be rejected
+    second_check_in = AttendanceCheckInRequest(
+        idempotency_key=str(uuid.uuid4()),
+        latitude=11.016844,
+        longitude=76.955833,
+        accuracy_meters=5.0,
+        face_similarity_score=0.88,
+        liveness_verified=True
+    )
+    with pytest.raises(DomainException) as exc:
+        AttendanceService.check_in(db_session, test_teacher, second_check_in)
+    assert "already checked out" in str(exc.value.detail).lower()
+
+    # 4. GET today's summary must return checked_out=True
+    summary = AttendanceService.get_today_summary(db_session, test_teacher.id)
+    assert summary.is_checked_in is True
+    assert summary.is_checked_out is True
+

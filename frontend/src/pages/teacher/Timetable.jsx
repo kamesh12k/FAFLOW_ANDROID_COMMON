@@ -11,11 +11,11 @@ const PERIODS = [1, 2, 3, 4, 5]
 const DAY_SHORT = { 1: 'DO1', 2: 'DO2', 3: 'DO3', 4: 'DO4', 5: 'DO5', 6: 'DO6' }
 const DAY_FULL = { 1: 'Day Order 1', 2: 'Day Order 2', 3: 'Day Order 3', 4: 'Day Order 4', 5: 'Day Order 5', 6: 'Day Order 6' }
 const PERIOD_TIMES = {
-  1: '8:00–9:00',
-  2: '9:00–10:00',
-  3: '10:15–11:15',
-  4: '11:15–12:15',
-  5: '1:00–2:00',
+  1: '09:20–10:20',
+  2: '10:20–11:15',
+  3: '11:40–12:35',
+  4: '13:35–14:30',
+  5: '14:55–15:50',
 }
 
 const SUBJECT_COLORS = [

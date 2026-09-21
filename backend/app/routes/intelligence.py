@@ -23,16 +23,7 @@ def require_hod_or_principal(current_user: User = Depends(get_current_user)) -> 
 
 
 def resolve_department_scope(current_user: User, requested_dept_id: Optional[int]) -> Optional[int]:
-    """Enforces strict department scoping for HODs while allowing Principal/Governance to filter or view all."""
-    if current_user.role == Role.admin and current_user.department_id is not None:
-        # HOD is strictly confined to their own department
-        if requested_dept_id is not None and requested_dept_id != current_user.department_id:
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail="Access denied: HOD cannot access intelligence for other departments."
-            )
-        return current_user.department_id
-
+    """Resolves department filter; allows Principal, Governance, and HODs to filter by department or view institutional campus-wide."""
     return requested_dept_id
 
 

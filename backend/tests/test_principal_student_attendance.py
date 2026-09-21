@@ -261,14 +261,20 @@ def test_export_attendance_report_csv(db_session: Session, setup_principal_conte
     assert "TEACHER ATTENDANCE SUBMISSION COMPLIANCE REPORT" in csv_compliance
 
 
-def test_principal_rbac_security(setup_principal_context: dict, test_teacher: User, test_principal: User, client: TestClient):
+def test_principal_rbac_security(setup_principal_context: dict, test_teacher: User, test_principal: User, test_admin: User, client: TestClient):
     # 1. Teacher access -> 403 Forbidden
     app.dependency_overrides[get_current_user] = lambda: test_teacher
     res = client.get("/student-attendance/principal/overview")
     assert res.status_code == 403
-    assert "Principal or institutional governance access required" in res.json()["detail"]
+    assert "Principal, HOD, or administrative access required" in res.json()["detail"]
 
-    # 2. Principal access -> 200 OK
+    # 2. HOD / Admin access -> 200 OK
+    app.dependency_overrides[get_current_user] = lambda: test_admin
+    res_hod = client.get("/student-attendance/principal/overview")
+    assert res_hod.status_code == 200
+    assert "total_scheduled_sessions" in res_hod.json()
+
+    # 3. Principal access -> 200 OK
     app.dependency_overrides[get_current_user] = lambda: test_principal
     res_ok = client.get("/student-attendance/principal/overview")
     assert res_ok.status_code == 200

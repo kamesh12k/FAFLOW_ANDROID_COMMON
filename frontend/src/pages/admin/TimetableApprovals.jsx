@@ -3,14 +3,11 @@ import { timetableApi, teachersApi, classesApi, subjectsApi } from '../../api/se
 import { Spinner, EmptyState, ErrorAlert } from '../../components/ui'
 
 const PERIOD_TIMES = {
-  1: '8:00–9:00 AM',
-  2: '9:00–10:00 AM',
-  3: '10:15–11:15 AM',
-  4: '11:15–12:15 PM',
-  5: '1:00–2:00 PM',
-  6: '2:00–3:00 PM',
-  7: '3:00–4:00 PM',
-  8: '4:00–5:00 PM',
+  1: '09:20–10:20 AM',
+  2: '10:20–11:15 AM',
+  3: '11:40 AM–12:35 PM',
+  4: '01:35–02:30 PM',
+  5: '02:55–03:50 PM',
 }
 
 const formatDateTime = (dateStr) => {

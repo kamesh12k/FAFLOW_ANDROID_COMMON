@@ -1,4 +1,4 @@
-from pydantic import BaseModel, field_validator
+from pydantic import BaseModel, field_validator, computed_field
 from app.schemas.user import UserOut
 from app.models.system_setting import CAMPUS_OPERATIONS_MODES as VALID_MODES
 
@@ -53,6 +53,26 @@ class RecommendationOut(BaseModel):
     leave_recovery_reason: str | None = None
     compatibility_score: float | None = None
 
+    @computed_field
+    @property
+    def id(self) -> int:
+        return self.teacher.id
+
+    @computed_field
+    @property
+    def name(self) -> str:
+        return self.teacher.name
+
+    @computed_field
+    @property
+    def teacher_name(self) -> str:
+        return self.teacher.name
+
+    @computed_field
+    @property
+    def department_name(self) -> str | None:
+        return getattr(self.teacher, "department_name", None)
+
     model_config = {"from_attributes": True}
 
 
@@ -89,8 +109,9 @@ class CampusOperationsModeSet(BaseModel):
     @field_validator("global_override")
     @classmethod
     def validate_override(cls, v: str | None) -> str | None:
-        if v is not None and v not in {"none", "manual", "assisted", "autonomous"}:
-            raise ValueError("global_override must be one of ['none', 'manual', 'assisted', 'autonomous']")
+        valid_overrides = VALID_MODES | {"none"}
+        if v is not None and v not in valid_overrides:
+            raise ValueError(f"global_override must be one of {sorted(valid_overrides)}")
         return v
 
 
@@ -181,6 +202,6 @@ class BulkConfigSet(BaseModel):
     @field_validator("mode")
     @classmethod
     def validate_mode(cls, v: str | None) -> str | None:
-        if v is not None and v not in {"manual", "assisted", "autonomous"}:
-            raise ValueError("mode must be one of ['manual', 'assisted', 'autonomous']")
+        if v is not None and v not in VALID_MODES:
+            raise ValueError(f"mode must be one of {sorted(VALID_MODES)}")
         return v

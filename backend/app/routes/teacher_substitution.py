@@ -8,6 +8,7 @@ from app.models.user import User
 from app.schemas.leave import LeaveOut, AlterAssignmentOut, FreeTeacherOut, LockAssignmentRequest
 from app.schemas.substitution import RecommendationOut
 from app.services import teacher_substitution_service as service
+from app.services import substitution_service
 from app.services.system_setting_service import get_setting, set_setting
 from app.services.admin_service import log_audit_event
 
@@ -132,7 +133,8 @@ def get_config(
     db: Session = Depends(get_db)
 ):
     dept_id = _admin.department_id
-    enabled = get_setting(db, "teacher_self_management_enabled", "false", dept_id) == "true"
+    campus_mode = substitution_service.get_mode(db, dept_id)
+    enabled = (campus_mode == "flexible") or (get_setting(db, "teacher_self_management_enabled", "false", dept_id) == "true")
     return TeacherSubstitutionConfigOut(
         teacher_self_management_enabled=enabled
     )
@@ -143,8 +145,14 @@ def update_config(
     _admin: User = Depends(require_admin),
     db: Session = Depends(get_db)
 ):
-    val = "true" if data.teacher_self_management_enabled else "false"
     dept_id = _admin.department_id
+    campus_mode = substitution_service.get_mode(db, dept_id)
+    if campus_mode == "flexible" and not data.teacher_self_management_enabled:
+        raise HTTPException(
+            status_code=400,
+            detail="Teacher Self-Management is mandatory in Flexible Mode"
+        )
+    val = "true" if data.teacher_self_management_enabled else "false"
     set_setting(db, "teacher_self_management_enabled", val, dept_id)
     
     log_audit_event(

@@ -5,7 +5,7 @@ from fastapi import HTTPException
 from app.models.timetable import TimetableSlot
 from app.models.user import User, Role
 from app.models.class_ import Class
-from app.schemas.timetable import TimetableSlotCreate, TimetableResetRequest
+from app.schemas.timetable import TimetableSlotCreate, TimetableSlotUpdate, TimetableResetRequest
 
 
 def _slot_summary(slot: TimetableSlot) -> dict:
@@ -111,6 +111,61 @@ def create_slot(data: TimetableSlotCreate, db: Session, tenant_department_id: in
     except IntegrityError:
         db.rollback()
         raise HTTPException(status_code=409, detail="Conflicting timetable slot (teacher already booked)")
+    db.refresh(slot)
+    return slot
+
+
+def update_slot(
+    slot_id: int,
+    data: TimetableSlotUpdate,
+    db: Session,
+    tenant_department_id: int | None = None
+) -> TimetableSlot:
+    slot = db.query(TimetableSlot).filter(TimetableSlot.id == slot_id).first()
+    if not slot:
+        raise HTTPException(status_code=404, detail="Timetable slot not found")
+
+    if tenant_department_id is not None:
+        if slot.teacher and slot.teacher.department_id != tenant_department_id:
+            raise HTTPException(status_code=403, detail="Access denied: slot belongs to another department")
+
+    target_teacher_id = data.teacher_id if data.teacher_id is not None else slot.teacher_id
+    target_class_id = data.class_id if data.class_id is not None else slot.class_id
+    target_subject_id = data.subject_id if data.subject_id is not None else slot.subject_id
+    target_room_id = data.room_id if data.room_id is not None else slot.room_id
+    target_day = data.day_order if data.day_order is not None else slot.day_order
+    target_period = data.period_number if data.period_number is not None else slot.period_number
+
+    teacher = db.query(User).filter(User.id == target_teacher_id, User.role == "teacher", User.is_active == True).first()
+    if not teacher:
+        raise HTTPException(status_code=404, detail="Active teacher not found")
+    if not db.query(Class).filter(Class.id == target_class_id).first():
+        raise HTTPException(status_code=404, detail="Class not found")
+
+    effective = TimetableSlotCreate(
+        teacher_id=target_teacher_id,
+        class_id=target_class_id,
+        subject_id=target_subject_id,
+        room_id=target_room_id,
+        day_order=target_day,
+        period_number=target_period,
+        allow_combined_class=data.allow_combined_class
+    )
+    _check_conflicts(db, effective, exclude_id=slot_id)
+
+    slot.teacher_id = target_teacher_id
+    slot.class_id = target_class_id
+    slot.subject_id = target_subject_id
+    slot.room_id = target_room_id
+    slot.day_order = target_day
+    slot.period_number = target_period
+
+    try:
+        db.commit()
+    except IntegrityError:
+        db.rollback()
+        raise HTTPException(status_code=409, detail="Conflicting timetable slot")
+
     db.refresh(slot)
     return slot
 

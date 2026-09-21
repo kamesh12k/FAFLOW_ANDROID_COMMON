@@ -17,7 +17,20 @@ export default function PrincipalStudentAttendance() {
   const [overview, setOverview] = useState(null)
   const [sessions, setSessions] = useState([])
   const [departments, setDepartments] = useState([])
-  const [selectedDeptId, setSelectedDeptId] = useState('')
+  const [selectedDeptId, setSelectedDeptId] = useState(() => {
+    if (user?.role === 'admin' && user?.department_id) {
+      return String(user.department_id)
+    }
+    return ''
+  })
+  const [deptInitialized, setDeptInitialized] = useState(false)
+
+  useEffect(() => {
+    if (!deptInitialized && user?.role === 'admin' && user?.department_id) {
+      setSelectedDeptId(String(user.department_id))
+      setDeptInitialized(true)
+    }
+  }, [user, deptInitialized])
   const [selectedClassId, setSelectedClassId] = useState('')
   const [classesList, setClassesList] = useState([])
   
@@ -336,7 +349,7 @@ export default function PrincipalStudentAttendance() {
             <div className="flex items-center gap-2">
               <h1 className="text-2xl font-black tracking-tight">Institutional Student Attendance</h1>
               <Badge variant="primary" className="bg-indigo-500/30 text-indigo-200 border-indigo-400/40 text-[10px] uppercase font-bold">
-                Principal Controller
+                {user?.role === 'principal' ? 'Principal Controller' : user?.role === 'governance' ? 'Governance Controller' : 'HOD / Academic Controller'}
               </Badge>
             </div>
             <p className="text-xs text-slate-400 mt-0.5">

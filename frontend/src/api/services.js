@@ -218,6 +218,7 @@ export const leavesApi = {
   adminCancel: (id, reason) => api.post(`/leaves/${id}/admin-cancel`, { reason }),
   cancelImpact: (id) => api.get(`/leaves/${id}/cancel-impact`),
   adminCreate: (data) => api.post('/leaves/admin-create', data),
+  slotCandidates: (params) => api.get('/leaves/slot-candidates', { params }),
 }
 
 export const campusOperationsApi = {
@@ -375,6 +376,28 @@ export const intelligenceApi = {
   getEvents: (params) => api.get('/intelligence/events', { params }),
   getEventDetail: (id) => api.get(`/intelligence/events/${id}`),
   acknowledgeEvent: (id) => api.patch(`/intelligence/events/${id}/acknowledge`),
+}
+
+export const campusDutiesApi = {
+  getMyDuties: (params) => api.get('/campus-duties/my', { params }),
+  listDuties: (params) => api.get('/campus-duties', { params }),
+  getDuty: (id) => api.get(`/campus-duties/${id}`),
+  createDuty: (data) => api.post('/campus-duties', data),
+  generateDiscipline: (data) => api.post('/campus-duties/generate-discipline', data),
+  getCandidates: (dutyId) => api.get(`/campus-duties/${dutyId}/candidates`),
+  autoAssign: (dutyId) => api.post(`/campus-duties/${dutyId}/auto-assign`),
+  autoAssignAll: (data) => api.post('/campus-duties/auto-assign-all', data),
+  manualAssign: (dutyId, data) => api.post(`/campus-duties/${dutyId}/assign`, data),
+  overrideAssignment: (assignmentId, data) => api.post(`/campus-duties/assignments/${assignmentId}/override`, data),
+  setLock: (dutyId, data) => api.post(`/campus-duties/${dutyId}/lock`, data),
+  replaceTeacher: (assignmentId, data) => api.post(`/campus-duties/assignments/${assignmentId}/replace`, data),
+  getMetrics: (params) => api.get('/campus-duties/metrics', { params }),
+  getAreas: () => api.get('/campus-duties/areas'),
+  createArea: (data) => api.post('/campus-duties/areas', data),
+  getBreakPeriods: () => api.get('/campus-duties/break-periods'),
+  createBreakPeriod: (data) => api.post('/campus-duties/break-periods', data),
+  getRules: () => api.get('/campus-duties/rules'),
+  updateRules: (data) => api.put('/campus-duties/rules', data),
 }
 
 

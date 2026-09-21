@@ -282,8 +282,8 @@ def test_submission_15_minute_rule(db_session, test_teacher, setup_attendance_co
     today = ctx["today"]
     cls_a = ctx["class_a"]
 
-    # Period 3 start time is 10:15
-    on_time = datetime.combine(today, time(10, 20)).replace(tzinfo=timezone.utc)
+    # Period 3 start time is 11:40 (15-min window ends at 11:55)
+    on_time = datetime.combine(today, time(11, 45)).replace(tzinfo=timezone.utc)
     req1 = SubmitAttendanceRequest(
         class_id=cls_a.id,
         period_number=3,
@@ -298,7 +298,7 @@ def test_submission_15_minute_rule(db_session, test_teacher, setup_attendance_co
     db_session.query(AttendanceSession).delete()
     db_session.commit()
 
-    late_time = datetime.combine(today, time(10, 35)).replace(tzinfo=timezone.utc)
+    late_time = datetime.combine(today, time(12, 0)).replace(tzinfo=timezone.utc)
     req2 = SubmitAttendanceRequest(
         class_id=cls_a.id,
         period_number=3,
@@ -640,5 +640,121 @@ def test_hod_overview_emergency_session_outside_timetable(db_session, test_teach
     assert p5_sessions[0].attendance_type == "EMERGENCY"
     assert p5_sessions[0].subject_name is not None
     assert p5_sessions[0].actual_teacher_name == test_teacher2.name
+
+
+def test_process_sync_batch_submit_alias_and_idempotency(db_session, test_teacher, setup_attendance_context):
+    """Verifies that process_sync_batch correctly accepts operation_type='SUBMIT' and 'EMERGENCY',
+
+    executes submission via session_id, and safely handles duplicate sync with the same idempotency key.
+    """
+    ctx = setup_attendance_context
+    cls_a = ctx["class_a"]
+    today = ctx["today"]
+    slot1 = ctx["slot_p3"]
+
+    # 1. First create an open attendance session in DB
+    sess = AttendanceSession(
+        timetable_slot_id=slot1.id,
+        class_id=cls_a.id,
+        scheduled_teacher_id=test_teacher.id,
+        actual_teacher_id=test_teacher.id,
+        attendance_date=today,
+        day_order=1,
+        period_number=slot1.period_number,
+        attendance_type=AttendanceType.normal,
+        status=SessionStatus.open,
+        created_at=datetime.now(timezone.utc)
+    )
+    db_session.add(sess)
+    db_session.commit()
+    db_session.refresh(sess)
+
+    # 2. Build OfflineSyncBatchRequest matching Android outbox structure
+    idempotency_key = f"student-attendance-test-{sess.id}-uuid"
+    batch_req = OfflineSyncBatchRequest(
+        device_id="ANDROID_TEST_DEVICE_01",
+        operations=[
+            OfflineSyncOperation(
+                operation_id="op-1",
+                idempotency_key=idempotency_key,
+                operation_type="SUBMIT",
+                payload={
+                    "session_id": sess.id,
+                    "class_id": cls_a.id,
+                    "absent_roll_suffixes": ["001", "002"],
+                    "client_timestamp": datetime.now(timezone.utc).isoformat()
+                }
+            )
+        ]
+    )
+
+    # 3. Process batch
+    result = StudentAttendanceService.process_sync_batch(db_session, test_teacher, batch_req)
+    assert result.synced_count == 1
+    assert result.failed_count == 0
+    assert len(result.results) == 1
+    assert result.results[0].success is True
+    assert result.results[0].status in {"submitted", "submitted_late", "SYNCED"}
+    assert result.results[0].idempotency_key == idempotency_key
+
+    # Verify DB state
+    db_session.refresh(sess)
+    assert sess.status in {SessionStatus.submitted, SessionStatus.submitted_late}
+    absent_c = db_session.query(StudentAttendance).filter(
+        StudentAttendance.attendance_session_id == sess.id,
+        StudentAttendance.status == StudentAttendanceStatus.absent
+    ).count()
+    assert absent_c == 2
+
+    # 4. Duplicate sync test: Re-send the exact same batch with the same idempotency key
+    result_retry = StudentAttendanceService.process_sync_batch(db_session, test_teacher, batch_req)
+    # Should safely return success without duplicating records or throwing an error
+    assert result_retry.synced_count == 1
+    assert result_retry.failed_count == 0
+    assert result_retry.results[0].success is True
+    assert result_retry.results[0].status in {"submitted", "submitted_late", "SYNCED"}
+
+    # Verify still exactly one session and 10 student records
+    records_count = db_session.query(StudentAttendance).filter(StudentAttendance.attendance_session_id == sess.id).count()
+    assert records_count == 10
+
+
+def test_offline_sync_with_negative_session_id(setup_attendance_context, test_teacher, db_session):
+    """
+    Verifies that client-side offline temporary negative session IDs (e.g. -406)
+    are successfully synced by process_sync_batch without raising 'session not found'.
+    """
+    ctx = setup_attendance_context
+    cls_b = ctx["class_b"]
+    slot2 = ctx["slot_p3"]
+    today = ctx["today"]
+
+    batch_req = OfflineSyncBatchRequest(
+        device_id="ANDROID_TEST_DEVICE_02",
+        operations=[
+            OfflineSyncOperation(
+                operation_id="op-neg-406",
+                idempotency_key=f"student-attendance-neg-test-{slot2.id}-uuid",
+                operation_type="SUBMIT_ATTENDANCE",
+                payload={
+                    "session_id": -slot2.id,  # e.g. -406
+                    "class_id": cls_b.id,
+                    "period_number": 4,
+                    "absent_roll_suffixes": ["101"],
+                    "client_timestamp": datetime.now(timezone.utc).isoformat()
+                }
+            )
+        ]
+    )
+
+    result = StudentAttendanceService.process_sync_batch(db_session, test_teacher, batch_req)
+    assert result.synced_count == 1
+    assert result.failed_count == 0
+    assert len(result.results) == 1
+    assert result.results[0].success is True
+    assert result.results[0].session_id > 0
+    assert "Attendance session" not in (result.results[0].message or "")
+
+
 
 

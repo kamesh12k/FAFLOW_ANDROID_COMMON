@@ -35,13 +35,13 @@ from app.schemas.student_attendance import (
 
 logger = logging.getLogger(__name__)
 
-# Standard institutional period schedule times
+# Standard institutional period schedule times (IST)
 PERIOD_SCHEDULE = {
-    1: (time(8, 0), time(9, 0), "8:00–9:00"),
-    2: (time(9, 0), time(10, 0), "9:00–10:00"),
-    3: (time(10, 15), time(11, 15), "10:15–11:15"),
-    4: (time(11, 15), time(12, 15), "11:15–12:15"),
-    5: (time(13, 0), time(14, 0), "1:00–2:00"),
+    1: (time(9, 20), time(10, 20), "09:20–10:20"),
+    2: (time(10, 20), time(11, 15), "10:20–11:15"),
+    3: (time(11, 40), time(12, 35), "11:40–12:35"),
+    4: (time(13, 35), time(14, 30), "13:35–14:30"),
+    5: (time(14, 55), time(15, 50), "14:55–15:50"),
 }
 
 
@@ -71,7 +71,17 @@ class StudentAttendanceService:
         for period, (start_t, end_t, _) in PERIOD_SCHEDULE.items():
             if start_t <= now_time <= end_t:
                 return period
-        return None
+        minutes = now_time.hour * 60 + now_time.minute
+        if minutes < 10 * 60 + 20:
+            return 1
+        elif minutes < 11 * 60 + 40:
+            return 2
+        elif minutes < 13 * 60 + 35:
+            return 3
+        elif minutes < 14 * 60 + 55:
+            return 4
+        else:
+            return 5
 
     @staticmethod
     def get_scheduled_times(attendance_date: date, period_number: int) -> Tuple[datetime, datetime]:
@@ -141,8 +151,12 @@ class StudentAttendanceService:
         block_reason = cal_day.day_type.value if is_blocked and cal_day else None
         day_order = cal_day.day_order if cal_day and not is_blocked else None
 
-        now_utc = datetime.now(timezone.utc)
-        current_period = StudentAttendanceService.determine_current_period(now_utc.time())
+        try:
+            from zoneinfo import ZoneInfo
+            now_local = datetime.now(ZoneInfo("Asia/Kolkata"))
+        except Exception:
+            now_local = datetime.now(timezone.utc) + timedelta(hours=5, minutes=30)
+        current_period = StudentAttendanceService.determine_current_period(now_local.time())
 
         scheduled_slots: List[TeacherClassSlotOut] = []
         if day_order:
@@ -779,11 +793,92 @@ class StudentAttendanceService:
 
         for op in batch.operations:
             try:
-                if op.operation_type == "SUBMIT_ATTENDANCE":
-                    req = SubmitAttendanceRequest(**op.payload)
+                op_type = op.operation_type.upper() if op.operation_type else ""
+                if op_type in ("SUBMIT_ATTENDANCE", "SUBMIT"):
+                    raw_sess_id = op.payload.get("session_id")
+                    session_id = None
+                    if raw_sess_id is not None:
+                        try:
+                            s_int = int(raw_sess_id)
+                            if s_int > 0:
+                                session_id = s_int
+                        except (ValueError, TypeError):
+                            session_id = None
+
+                    payload_clean = {k: v for k, v in op.payload.items() if k != "session_id"}
+                    req = SubmitAttendanceRequest(**payload_clean)
                     req.idempotency_key = op.idempotency_key
                     req.device_id = op.device_id
-                    session_out = StudentAttendanceService.submit_attendance(db, current_user, req)
+                    if op.client_timestamp:
+                        req.client_timestamp = op.client_timestamp
+
+                    # If session_id was negative (e.g. -406), it was synthesized offline from -slotId or -classId
+                    if not req.timetable_slot_id and raw_sess_id is not None:
+                        try:
+                            neg_val = int(raw_sess_id)
+                            if neg_val < 0:
+                                cand_slot_id = abs(neg_val)
+                                slot_check = db.query(TimetableSlot).filter(TimetableSlot.id == cand_slot_id).first()
+                                if slot_check:
+                                    req.timetable_slot_id = slot_check.id
+                                    if not req.class_id:
+                                        req.class_id = slot_check.class_id
+                                    if not req.period_number:
+                                        req.period_number = slot_check.period_number
+                        except Exception:
+                            pass
+
+                    session_out = None
+                    if session_id:
+                        try:
+                            session_out = StudentAttendanceService.submit_attendance_by_session_id(
+                                db=db,
+                                session_id=session_id,
+                                current_user=current_user,
+                                data=req
+                            )
+                        except HTTPException as he:
+                            if he.status_code == 404:
+                                session_out = StudentAttendanceService.submit_attendance(
+                                    db=db,
+                                    current_user=current_user,
+                                    data=req
+                                )
+                            elif he.status_code == 409:
+                                existing_sess = db.query(AttendanceSession).filter(AttendanceSession.id == session_id).first()
+                                if existing_sess:
+                                    session_out = StudentAttendanceService.get_session_details(db, existing_sess.id)
+                                else:
+                                    raise he
+                            else:
+                                raise he
+                    else:
+                        try:
+                            session_out = StudentAttendanceService.submit_attendance(
+                                db=db,
+                                current_user=current_user,
+                                data=req
+                            )
+                        except HTTPException as he:
+                            if he.status_code == 409:
+                                att_d = req.attendance_date or date.today()
+                                p_num = req.period_number or 1
+                                existing_sess = (
+                                    db.query(AttendanceSession)
+                                    .filter(
+                                        AttendanceSession.attendance_date == att_d,
+                                        AttendanceSession.class_id == req.class_id,
+                                        AttendanceSession.period_number == p_num
+                                    )
+                                    .first()
+                                )
+                                if existing_sess:
+                                    session_out = StudentAttendanceService.get_session_details(db, existing_sess.id)
+                                else:
+                                    raise he
+                            else:
+                                raise he
+
                     results.append(
                         SyncOperationResult(
                             operation_id=op.operation_id,
@@ -791,16 +886,36 @@ class StudentAttendanceService:
                             success=True,
                             session_id=session_out.id,
                             message="Attendance synced successfully",
-                            status=session_out.status.value
+                            status=session_out.status.value if hasattr(session_out.status, "value") else str(session_out.status)
                         )
                     )
                     synced += 1
 
-                elif op.operation_type == "EMERGENCY_ATTENDANCE":
+                elif op_type in ("EMERGENCY_ATTENDANCE", "EMERGENCY"):
                     req = EmergencyAttendanceRequest(**op.payload)
                     req.idempotency_key = op.idempotency_key
                     req.device_id = op.device_id
-                    session_out = StudentAttendanceService.emergency_attendance(db, current_user, req)
+                    session_out = None
+                    try:
+                        session_out = StudentAttendanceService.emergency_attendance(db, current_user, req)
+                    except HTTPException as he:
+                        if he.status_code == 409:
+                            existing_sess = (
+                                db.query(AttendanceSession)
+                                .filter(
+                                    AttendanceSession.attendance_date == (req.attendance_date or date.today()),
+                                    AttendanceSession.class_id == req.class_id,
+                                    AttendanceSession.period_number == req.period_number
+                                )
+                                .first()
+                            )
+                            if existing_sess:
+                                session_out = StudentAttendanceService.get_session_details(db, existing_sess.id)
+                            else:
+                                raise he
+                        else:
+                            raise he
+
                     results.append(
                         SyncOperationResult(
                             operation_id=op.operation_id,
@@ -808,12 +923,12 @@ class StudentAttendanceService:
                             success=True,
                             session_id=session_out.id,
                             message="Emergency attendance synced successfully",
-                            status=session_out.status.value
+                            status=session_out.status.value if hasattr(session_out.status, "value") else str(session_out.status)
                         )
                     )
                     synced += 1
 
-                elif op.operation_type == "CORRECTION":
+                elif op_type == "CORRECTION":
                     session_id = op.payload.get("session_id")
                     student_id = op.payload.get("student_id")
                     corr_req = AttendanceCorrectionRequest(
@@ -846,13 +961,15 @@ class StudentAttendanceService:
                     )
                     failed += 1
             except Exception as e:
+                db.rollback()
                 logger.error("Error processing sync operation %s: %s", op.operation_id, e)
+                error_msg = getattr(e, "detail", str(e))
                 results.append(
                     SyncOperationResult(
                         operation_id=op.operation_id,
                         idempotency_key=op.idempotency_key,
                         success=False,
-                        message=str(e)
+                        message=str(error_msg)
                     )
                 )
                 failed += 1

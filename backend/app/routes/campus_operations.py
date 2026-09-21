@@ -46,7 +46,7 @@ def get_mode(
     effective_mode = substitution_service.get_mode(db, tenant_department_id)
     configured_mode = substitution_service.get_configured_mode(db, tenant_department_id)
     global_override = substitution_service.get_global_override(db)
-    is_overridden = global_override in {"manual", "assisted", "autonomous"}
+    is_overridden = global_override in substitution_service.VALID_MODES
     
     return CampusOperationsModeOut(
         mode=effective_mode,
@@ -79,7 +79,7 @@ def set_mode(
     effective_mode = substitution_service.get_mode(db, tenant_department_id)
     configured_mode = substitution_service.get_configured_mode(db, tenant_department_id)
     global_override = substitution_service.get_global_override(db)
-    is_overridden = global_override in {"manual", "assisted", "autonomous"}
+    is_overridden = global_override in substitution_service.VALID_MODES
     
     return CampusOperationsModeOut(
         mode=effective_mode,
@@ -257,9 +257,14 @@ def bulk_config(
             
         if data.mode is not None:
             set_setting(db, "campus_operations_mode", data.mode, dept_id)
+            if data.mode == "flexible":
+                set_setting(db, "teacher_self_management_enabled", "true", dept_id)
             log_audit_event(db, super_admin.id, "campus_operations.mode_change", "system_setting", None, {"mode": data.mode, "department_id": dept_id})
             
         if data.teacher_self_management_enabled is not None:
+            effective_dept_mode = data.mode or substitution_service.get_mode(db, dept_id)
+            if effective_dept_mode == "flexible" and not data.teacher_self_management_enabled:
+                raise HTTPException(status_code=400, detail="Teacher Self-Management is mandatory in Flexible Mode")
             val_str = "true" if data.teacher_self_management_enabled else "false"
             set_setting(db, "teacher_self_management_enabled", val_str, dept_id)
             log_audit_event(db, super_admin.id, "campus_operations.teacher_self_mgmt_change", "system_setting", None, {"enabled": val_str, "department_id": dept_id})

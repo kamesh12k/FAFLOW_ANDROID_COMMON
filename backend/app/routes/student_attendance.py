@@ -142,10 +142,10 @@ def get_hod_attendance_overview(
 # =========================================================================
 
 def require_principal_or_governance(current_user: User = Depends(get_current_user)) -> User:
-    if current_user.role not in (Role.principal, Role.system_admin, Role.governance):
+    if current_user.role not in (Role.principal, Role.system_admin, Role.governance, Role.admin, Role.manager):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="Principal or institutional governance access required"
+            detail="Principal, HOD, or administrative access required"
         )
     return current_user
 

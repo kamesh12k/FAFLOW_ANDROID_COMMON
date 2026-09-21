@@ -30,6 +30,8 @@ def is_teacher_self_management_allowed(db: Session, teacher_id: int | None = Non
     campus_mode = get_campus_mode(db, dept_id)
     if campus_mode == "autonomous":
         return False
+    if campus_mode == "flexible":
+        return True
     return get_setting(db, "teacher_self_management_enabled", "false", dept_id) == "true"
 
 def check_teacher_self_management_allowed(db: Session, teacher_id: int | None = None) -> None:

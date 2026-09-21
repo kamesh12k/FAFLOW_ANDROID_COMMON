@@ -1,9 +1,27 @@
 import { useEffect, useState, useMemo } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
-import { leavesApi, timetableApi, academicCalendarApi, creditsApi, teachersApi } from '../../api/services'
+import { leavesApi, timetableApi, academicCalendarApi, creditsApi, teachersApi, attendanceApi } from '../../api/services'
 import { DayTypeBadge, CreditChip, Card, Timeline } from '../../components/ui'
 import { PlusIcon, CalIcon, DocIcon } from '../../components/icons'
+
+// ── Period time labels ────────────────────────────────────────────────────────
+const PERIOD_TIMES = {
+  1: '9:20 – 10:20',
+  2: '10:20 – 11:15',
+  3: '11:40 – 12:35',
+  4: '13:35 – 14:30',
+  5: '14:55 – 15:50',
+}
+
+function formatShiftTime(isoString) {
+  if (!isoString) return '--:--'
+  try {
+    return new Date(isoString).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+  } catch {
+    return '--:--'
+  }
+}
 
 // ── Skeleton primitives ───────────────────────────────────────────────────────
 function SkeletonLine({ w = 'w-full', h = 'h-4' }) {
@@ -37,15 +55,6 @@ function SkeletonHero() {
   )
 }
 
-// ── Period time labels ────────────────────────────────────────────────────────
-const PERIOD_TIMES = {
-  1: '9:20 – 10:20',
-  2: '10:20 – 11:15',
-  3: '11:40 – 12:35',
-  4: '13:35 – 14:30',
-  5: '14:55 – 15:50',
-}
-
 export default function TeacherDashboard() {
   const { user } = useAuth()
 
@@ -62,6 +71,17 @@ export default function TeacherDashboard() {
   const [creditBalance, setCreditBalance] = useState(null)
   const [transactions, setTransactions] = useState([])
   const [creditsLoading, setCreditsLoading] = useState(true)
+
+  const [todayAttendance, setTodayAttendance] = useState(null)
+  const [attendanceLoading, setAttendanceLoading] = useState(true)
+
+  // Stage 0: Staff Attendance (today shift status)
+  useEffect(() => {
+    attendanceApi.getToday()
+      .then(res => setTodayAttendance(res?.data || null))
+      .catch(() => setTodayAttendance(null))
+      .finally(() => setAttendanceLoading(false))
+  }, [])
 
   // Stage 1: Academic summary (fast — determines day order for hero card)
   useEffect(() => {
@@ -325,6 +345,57 @@ export default function TeacherDashboard() {
           </div>
 
           <div className="space-y-6">
+            {/* Staff Attendance Status Card */}
+            {attendanceLoading ? (
+              <SkeletonCard rows={2} />
+            ) : (
+              <Card title="Today's Attendance">
+                <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+                  <div className="flex items-center gap-2.5">
+                    <span className={`w-3 h-3 rounded-full ${todayAttendance?.is_checked_out ? 'bg-slate-400' : todayAttendance?.is_checked_in ? 'bg-emerald-500 animate-pulse' : 'bg-amber-400'}`} />
+                    <div>
+                      <p className="text-xs font-bold text-slate-850">
+                        {todayAttendance?.is_checked_out
+                          ? 'Shift Completed'
+                          : todayAttendance?.is_checked_in
+                          ? 'Checked In (Active)'
+                          : 'Not Checked In'}
+                      </p>
+                      <p className="text-[10px] text-slate-400 font-medium">
+                        {todayAttendance?.is_checked_out
+                          ? `Out at ${formatShiftTime(todayAttendance.check_out_time)}`
+                          : todayAttendance?.is_checked_in
+                          ? `In at ${formatShiftTime(todayAttendance.check_in_time)}`
+                          : 'Mobile biometrics required'}
+                      </p>
+                    </div>
+                  </div>
+                  {todayAttendance?.record?.verification_mode && (
+                    <span className="text-[10px] font-bold text-indigo-700 bg-indigo-50 border border-indigo-100 px-2 py-0.5 rounded-md capitalize">
+                      {todayAttendance.record.verification_mode.replace('_', ' ')}
+                    </span>
+                  )}
+                </div>
+
+                <div className="pt-3 grid grid-cols-2 gap-2 text-center text-xs">
+                  <div className="p-2 rounded-lg bg-slate-50 border border-slate-100">
+                    <span className="block text-[9px] font-bold text-slate-400 uppercase tracking-wider">Check In</span>
+                    <span className="font-extrabold text-slate-700">{formatShiftTime(todayAttendance?.check_in_time)}</span>
+                  </div>
+                  <div className="p-2 rounded-lg bg-slate-50 border border-slate-100">
+                    <span className="block text-[9px] font-bold text-slate-400 uppercase tracking-wider">Check Out</span>
+                    <span className="font-extrabold text-slate-700">{formatShiftTime(todayAttendance?.check_out_time)}</span>
+                  </div>
+                </div>
+
+                {todayAttendance?.working_duration && (
+                  <p className="text-[10px] text-center text-slate-500 font-semibold mt-2.5">
+                    Shift Duration: <span className="font-bold text-slate-700">{todayAttendance.working_duration}</span>
+                  </p>
+                )}
+              </Card>
+            )}
+
             {/* Credits Card */}
             {creditsLoading ? (
               <SkeletonCard rows={5} />

@@ -7,6 +7,7 @@ from app.core.dependencies import require_admin, require_teacher, get_current_us
 from app.models.user import User
 from app.schemas.timetable import (
     TimetableSlotCreate,
+    TimetableSlotUpdate,
     TimetableSlotOut,
     BulkTimetableCreate,
     TimetableSubmissionCreate,
@@ -67,6 +68,18 @@ def create_slot(
     tenant_department_id: int | None = Depends(get_tenant_department_id),
 ):
     return timetable_service.create_slot(data, db, tenant_department_id)
+
+
+@router.patch("/slot/{slot_id}", response_model=TimetableSlotOut)
+def update_slot(
+    slot_id: int,
+    data: TimetableSlotUpdate,
+    _admin: User = Depends(require_admin),
+    db: Session = Depends(get_db),
+    tenant_department_id: int | None = Depends(get_tenant_department_id),
+):
+    slot = timetable_service.update_slot(slot_id, data, db, tenant_department_id)
+    return TimetableSlotOut.from_orm_slot(slot)
 
 
 @router.post("/", response_model=list[TimetableSlotOut], status_code=201)

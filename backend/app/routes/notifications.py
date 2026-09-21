@@ -32,15 +32,15 @@ def get_unread_count(current_user: User = Depends(get_current_user), db: Session
     return {"count": notification_service.unread_count(db, current_user.id)}
 
 
-@router.patch("/{notification_id}/read")
-def mark_read(notification_id: int, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
-    notification_service.mark_read(db, current_user.id, notification_id)
-    return {"ok": True}
-
-
 @router.patch("/read-all")
 def mark_all_read(current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
     notification_service.mark_all_read(db, current_user.id)
+    return {"ok": True}
+
+
+@router.patch("/{notification_id}/read")
+def mark_read(notification_id: int, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    notification_service.mark_read(db, current_user.id, notification_id)
     return {"ok": True}
 
 

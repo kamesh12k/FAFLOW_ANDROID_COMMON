@@ -10,6 +10,7 @@ class LeaveCreate(BaseModel):
     date: date
     period_number: int
     reason: str
+    proposed_substitute_id: int | None = None
 
     @field_validator("period_number")
     @classmethod
@@ -20,11 +21,15 @@ class LeaveCreate(BaseModel):
 class LeaveBatchCreate(BaseModel):
     """Apply for leave across multiple periods (same date) or a whole day
     in one submission. period_numbers=None + whole_day=True expands to all
-    periods scheduled for the teacher that day."""
+    periods scheduled for the teacher that day.
+    In Flexible mode, proposed_substitute_id sets a single substitute across
+    all periods, or period_substitutes maps specific period numbers to substitutes."""
     date: date
     whole_day: bool = False
     period_numbers: list[int] | None = None
     reason: str
+    proposed_substitute_id: int | None = None
+    period_substitutes: dict[int, int] | None = None
 
     @field_validator("period_numbers")
     @classmethod
@@ -64,6 +69,8 @@ class LeaveOut(BaseModel):
     created_at: datetime
     batch_id: UUID | None
     is_emergency: bool
+    proposed_substitute_id: int | None = None
+    proposed_substitute: UserOut | None = None
     teacher: UserOut
     alter_assignment: AlterAssignmentOut | None = None
 

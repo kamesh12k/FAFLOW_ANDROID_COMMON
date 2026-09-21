@@ -6,7 +6,7 @@ from app.database import Base
 # app/services/substitution_service.py and app/schemas/substitution.py
 # import this rather than each declaring their own copy, so the two can
 # never drift out of sync.
-CAMPUS_OPERATIONS_MODES = {"manual", "assisted", "autonomous"}
+CAMPUS_OPERATIONS_MODES = {"manual", "assisted", "autonomous", "flexible"}
 
 
 class SystemSetting(Base):

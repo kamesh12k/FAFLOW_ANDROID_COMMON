@@ -1,4 +1,5 @@
 import logging
+from datetime import date
 
 from pydantic import BaseModel
 from fastapi import APIRouter, Depends, HTTPException
@@ -80,7 +81,7 @@ def approve_leave(
     db: Session = Depends(get_db),
     tenant_department_id: int | None = Depends(get_tenant_department_id),
 ):
-    leave, free_teachers = leave_service.approve_leave(leave_id, db, tenant_department_id)
+    leave, free_teachers = leave_service.approve_leave(leave_id, db, tenant_department_id, actor_id=_admin.id)
     return {
         "leave": LeaveOut.model_validate(leave),
         "free_teachers": free_teachers,
@@ -111,7 +112,7 @@ def update_leave_status(
     tenant_department_id: int | None = Depends(get_tenant_department_id),
 ):
     if data.status == "approved":
-        leave, free_teachers = leave_service.approve_leave(leave_id, db, tenant_department_id)
+        leave, free_teachers = leave_service.approve_leave(leave_id, db, tenant_department_id, actor_id=_admin.id)
         return {
             "leave": LeaveOut.model_validate(leave),
             "free_teachers": free_teachers,
@@ -134,7 +135,7 @@ def bulk_approve(
     db: Session = Depends(get_db),
     tenant_department_id: int | None = Depends(get_tenant_department_id),
 ):
-    return leave_service.bulk_approve(data.leave_ids, db, tenant_department_id)
+    return leave_service.bulk_approve(data.leave_ids, db, tenant_department_id, actor_id=_admin.id)
 
 
 @router.post("/bulk-reject", response_model=list[LeaveOut])
@@ -167,6 +168,47 @@ def assign_substitute(
         tenant_department_id=tenant_department_id,
         include_cross_department=include_cross_department,
         override_substitution_limit=data.override_substitution_limit,
+    )
+
+
+@router.get("/slot-candidates", response_model=list[RecommendationOut])
+def get_slot_candidates(
+    date: date,
+    period_number: int,
+    day_order: int | None = None,
+    limit: int = 100,
+    include_cross_department: bool = False,
+    only_handles_class: bool = False,
+    teacher_id: int | None = None,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+    tenant_department_id: int | None = Depends(get_tenant_department_id),
+):
+    """Ranked substitute candidate recommendations for a prospective leave slot.
+    Allows teachers (for their own leave in Flexible mode) or admins to discover
+    eligible substitutes before submitting or approving."""
+    from app.core.timezone import is_substitution_expired
+    from app.models.user import Role
+    if is_substitution_expired(date):
+        raise HTTPException(status_code=400, detail="Cannot find candidates for an expired substitution date")
+    
+    target_teacher_id = current_user.id
+    if current_user.role != Role.teacher:
+        if teacher_id is not None:
+            target_teacher_id = teacher_id
+    elif teacher_id is not None and teacher_id != current_user.id:
+        raise HTTPException(status_code=403, detail="Teachers can only query substitute candidates for their own slots")
+
+    return substitution_service.get_slot_candidates(
+        db=db,
+        teacher_id=target_teacher_id,
+        leave_date=date,
+        period_number=period_number,
+        day_order=day_order,
+        limit=limit,
+        tenant_department_id=tenant_department_id,
+        include_cross_department=include_cross_department,
+        only_handles_class=only_handles_class,
     )
 
 

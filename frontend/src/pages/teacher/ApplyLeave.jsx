@@ -1,6 +1,7 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useMemo } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
-import { leavesApi, academicCalendarApi } from '../../api/services'
+import { leavesApi, academicCalendarApi, campusOperationsApi, timetableApi } from '../../api/services'
+import { useAuth } from '../../context/AuthContext'
 import { ErrorAlert, Spinner } from '../../components/ui'
 import { CheckCircleIcon } from '../../components/icons'
 
@@ -12,12 +13,184 @@ function ArrowLeftIcon(props) {
   )
 }
 
+function ClockIcon(props) {
+  return (
+    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" {...props}>
+      <circle cx="12" cy="12" r="9" strokeWidth="2" />
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 7v5l3 2" />
+    </svg>
+  )
+}
+
+function ChevronDownIcon(props) {
+  return (
+    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" {...props}>
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+    </svg>
+  )
+}
+
+function SparklesIcon(props) {
+  return (
+    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" {...props}>
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.8" d="M9.813 15.904 9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09zM18.259 8.715 18 9.75l-.259-1.035a3.375 3.375 0 00-2.456-2.456L14.25 6l1.035-.259a3.375 3.375 0 002.456-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.456 2.456L21.75 6l-1.035.259a3.375 3.375 0 00-2.456 2.456z" />
+    </svg>
+  )
+}
+
+function ScoreBar({ score }) {
+  const color = score >= 75 ? 'bg-emerald-500' : score >= 45 ? 'bg-amber-500' : 'bg-slate-400'
+  return (
+    <div className="w-16 h-1.5 rounded-full bg-slate-100 overflow-hidden shrink-0">
+      <div className={`h-full ${color} rounded-full transition-all duration-300`} style={{ width: `${Math.min(score, 100)}%` }} />
+    </div>
+  )
+}
+
+function RecommendationCard({ rec, isSelected, onSelect, periodNumber }) {
+  const teacher = rec.teacher || {}
+  const teacherName = teacher.name || rec.name || 'Faculty Member'
+  const deptName = teacher.department || rec.department_name || teacher.department_name
+  const initial = (teacherName || 'T')[0].toUpperCase()
+
+  const todayLoad = rec.today_workload !== undefined ? rec.today_workload : (teacher.today_workload ?? 0)
+  const projToday = rec.projected_today_workload !== undefined ? rec.projected_today_workload : (todayLoad !== undefined ? todayLoad + 1 : undefined)
+  const weekLoad = rec.week_workload !== undefined ? rec.week_workload : (teacher.week_workload ?? 0)
+  const projWeek = rec.projected_week_workload !== undefined ? rec.projected_week_workload : (weekLoad !== undefined ? weekLoad + 1 : undefined)
+  const contLoad = rec.longest_continuous_periods
+  const projCont = rec.projected_longest_continuous_periods
+  const todayPeriods = rec.today_periods || teacher.today_periods || []
+  const score = rec.compatibility_score ?? rec.score ?? 50
+  const tier = rec.tier || (score >= 75 ? 'EXCELLENT' : score >= 45 ? 'GOOD' : 'FAIR')
+
+  return (
+    <div className={`p-3.5 bg-white hover:bg-slate-50/90 border rounded-2xl transition shadow-xs space-y-3 ${
+      isSelected ? 'border-emerald-400 ring-2 ring-emerald-500/20 bg-emerald-50/20' : 'border-slate-200/90'
+    }`}>
+      {/* Top Header: Avatar, Name, Dept, Match %, Assign Button */}
+      <div className="flex items-center justify-between gap-3">
+        <div className="flex items-center gap-3 min-w-0 flex-1">
+          <div className={`w-10 h-10 rounded-xl text-white font-black text-sm flex items-center justify-center shrink-0 shadow-xs ${
+            isSelected ? 'bg-emerald-600' : 'bg-gradient-to-br from-indigo-600 to-indigo-800'
+          }`}>
+            {initial}
+          </div>
+          <div className="min-w-0 flex-1">
+            <div className="flex items-center gap-2 flex-wrap">
+              <h4 className="text-sm font-bold text-slate-900 truncate">{teacherName}</h4>
+              {deptName && (
+                <span className="text-[10px] px-2 py-0.5 bg-slate-100 text-slate-700 rounded-md font-semibold shrink-0 border border-slate-200/70">
+                  {deptName}
+                </span>
+              )}
+            </div>
+            <div className="flex items-center gap-2 mt-1 flex-wrap">
+              <ScoreBar score={score} />
+              {tier && (
+                <span className={`text-[10px] font-extrabold px-2 py-0.5 rounded-md uppercase tracking-wider ${
+                  tier === 'EXCELLENT' ? 'bg-emerald-100 text-emerald-800 border border-emerald-300' :
+                  tier === 'GOOD' ? 'bg-blue-100 text-blue-800 border border-blue-300' :
+                  tier === 'FAIR' ? 'bg-amber-100 text-amber-800 border border-amber-300' :
+                  'bg-slate-100 text-slate-700 border border-slate-300'
+                }`}>
+                  {tier}
+                </span>
+              )}
+              <span className="text-[11px] font-bold text-slate-700 bg-slate-50 border border-slate-200 px-2 py-0.5 rounded-full">
+                Suitability: {Math.max(0, Math.min(100, Math.round(Number(score) || 0)))}/100
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <button
+          type="button"
+          onClick={onSelect}
+          className={`text-xs font-bold px-4 py-2 rounded-xl transition shadow-xs disabled:opacity-40 disabled:cursor-not-allowed shrink-0 cursor-pointer ${
+            isSelected
+              ? 'bg-emerald-600 hover:bg-emerald-700 text-white'
+              : 'bg-primary-600 hover:bg-primary-700 active:bg-primary-800 text-white'
+          }`}
+        >
+          {isSelected ? '✓ Nominated' : 'Assign'}
+        </button>
+      </div>
+
+      {/* Workload Simulation Metrics Grid */}
+      <div className="grid grid-cols-3 gap-2 bg-slate-50/90 border border-slate-200/80 rounded-xl p-2.5 text-center">
+        <div className="flex flex-col items-center justify-center">
+          <span className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider">Total Today</span>
+          <span className="text-xs font-black text-slate-800 mt-0.5">
+            {todayLoad === 0 ? 'Free (0 classes)' : `${todayLoad} → ${projToday} classes`}
+          </span>
+          {todayPeriods.length > 0 ? (
+            <span className="text-[9px] text-slate-500 font-medium mt-0.5 truncate max-w-full">
+              Periods: P{todayPeriods.sort((a, b) => a - b).join(', P')}
+            </span>
+          ) : todayLoad > 0 ? (
+            <span className="text-[9px] text-slate-400 mt-0.5">{todayLoad} periods total</span>
+          ) : (
+            <span className="text-[9px] text-emerald-600 font-medium mt-0.5">Free all day</span>
+          )}
+        </div>
+
+        <div className="flex flex-col items-center justify-center border-x border-slate-200/80 px-1">
+          <span className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider">Back-to-Back</span>
+          <span className={`text-xs font-black mt-0.5 ${projCont >= 4 ? 'text-amber-700 font-extrabold' : 'text-slate-800'}`}>
+            {contLoad === undefined ? '-' : `${contLoad} → ${projCont} in a row`}
+          </span>
+          <span className={`text-[9px] mt-0.5 ${projCont >= 4 ? 'text-amber-700 font-bold' : 'text-slate-400'}`}>
+            {projCont >= 4 ? `⚠️ ${projCont} in a row (no break)` : projCont > 1 ? 'Classes in a row' : 'No consecutive'}
+          </span>
+        </div>
+
+        <div className="flex flex-col items-center justify-center">
+          <span className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider">Weekly Total</span>
+          <span className="text-xs font-black text-slate-800 mt-0.5">
+            {weekLoad !== undefined ? `${weekLoad} → ${projWeek} classes` : '-'}
+          </span>
+          <span className="text-[9px] text-slate-400 mt-0.5">
+            {rec.substitutions_week !== undefined ? `${rec.substitutions_week} sub(s) this week` : 'Weekly total'}
+          </span>
+        </div>
+      </div>
+
+      {/* Distinct Context Badges / Reasons */}
+      {rec.reasons?.length > 0 && (
+        <div className="flex items-center gap-1.5 flex-wrap pt-0.5">
+          {rec.reasons.map((r, i) => {
+            const isWarn = r.includes('⚠') || r.includes('Fatigue') || r.includes('break')
+            const isSubject = r.includes('subject')
+            const isDept = r.includes('department')
+            return (
+              <span
+                key={i}
+                className={`text-[10px] px-2 py-0.5 rounded-md font-semibold tracking-tight ${
+                  isWarn
+                    ? 'bg-amber-50 text-amber-800 border border-amber-200 font-bold'
+                    : isSubject
+                    ? 'bg-blue-50 text-blue-700 border border-blue-200'
+                    : isDept
+                    ? 'bg-indigo-50 text-indigo-700 border border-indigo-200'
+                    : 'bg-slate-100 text-slate-600 border border-slate-200/80'
+                }`}
+              >
+                {r}
+              </span>
+            )
+          })}
+        </div>
+      )}
+    </div>
+  )
+}
+
 const PERIOD_TIMES = {
-  1: '8:00–9:00',
-  2: '9:00–10:00',
-  3: '10:15–11:15',
-  4: '11:15–12:15',
-  5: '1:00–2:00',
+  1: '09:20–10:20',
+  2: '10:20–11:15',
+  3: '11:40–12:35',
+  4: '13:35–14:30',
+  5: '14:55–15:50',
 }
 
 function pad(n) { return String(n).padStart(2, '0') }
@@ -47,6 +220,7 @@ const REASON_PRESETS = [
 ]
 
 export default function ApplyLeave() {
+  const { user } = useAuth()
   const [form, setForm] = useState({
     date: isoFor(1),
     mode: 'whole_day', // 'whole_day' | 'custom'
@@ -58,7 +232,33 @@ export default function ApplyLeave() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [successData, setSuccessData] = useState(null)
+  const [campusMode, setCampusMode] = useState('assisted')
+  const [candidatesMap, setCandidatesMap] = useState({})
+  const [selectedSubstitutes, setSelectedSubstitutes] = useState({})
+  const [loadingCandidates, setLoadingCandidates] = useState(false)
+  const [teacherSlots, setTeacherSlots] = useState([])
+  const [loadingSlots, setLoadingSlots] = useState(false)
+  const [expandedPeriod, setExpandedPeriod] = useState(null)
   const navigate = useNavigate()
+
+  useEffect(() => {
+    campusOperationsApi.getMode()
+      .then(r => setCampusMode(r.data?.mode || 'assisted'))
+      .catch(() => setCampusMode('assisted'))
+  }, [])
+
+  // Fetch teacher's timetable slots once
+  useEffect(() => {
+    if (!user?.id) return
+    setLoadingSlots(true)
+    timetableApi.getByTeacher(user.id)
+      .then(res => setTeacherSlots(res.data || []))
+      .catch(err => {
+        console.error('Failed to load teacher timetable slots:', err)
+        setTeacherSlots([])
+      })
+      .finally(() => setLoadingSlots(false))
+  }, [user?.id])
 
   useEffect(() => {
     if (!form.date) {
@@ -73,6 +273,119 @@ export default function ApplyLeave() {
   }, [form.date])
 
   const isBlocked = Boolean(calendarInfo?.blocks_operations)
+  const dayOrder = calendarInfo?.day_order
+
+  // Scheduled timetable slots for the selected day order
+  const scheduledSlotsForDayOrder = useMemo(() => {
+    if (!dayOrder || !teacherSlots.length) return []
+    return teacherSlots
+      .filter(s => s.day_order === dayOrder)
+      .sort((a, b) => a.period_number - b.period_number)
+  }, [dayOrder, teacherSlots])
+
+  // Derive active period numbers and affected classes list
+  const { activePeriodNumbers, affectedClasses } = useMemo(() => {
+    if (form.mode === 'whole_day') {
+      if (scheduledSlotsForDayOrder.length > 0) {
+        return {
+          activePeriodNumbers: scheduledSlotsForDayOrder.map(s => s.period_number),
+          affectedClasses: scheduledSlotsForDayOrder.map(s => ({
+            period: s.period_number,
+            className: s.class_name ? `${s.class_name}${s.class_section ? ' · ' + s.class_section : ''}` : `Class P${s.period_number}`,
+            subject: s.subject_name || s.subject_code || 'Scheduled Class',
+            subjectCode: s.subject_code,
+            time: PERIOD_TIMES[s.period_number] || '—',
+            room: s.room_number,
+            isScheduled: true,
+          }))
+        }
+      }
+      // If calendar is resolved and working day, but teacher has no timetable slots on this day order:
+      if (calendarInfo && !isBlocked) {
+        if (teacherSlots.length > 0) {
+          // Teacher has timetable configured, but 0 classes on this day order
+          return { activePeriodNumbers: [], affectedClasses: [] }
+        } else {
+          // Teacher has no timetable at all in system, fallback to periods 1..5
+          const defaultPeriods = [1, 2, 3, 4, 5]
+          return {
+            activePeriodNumbers: defaultPeriods,
+            affectedClasses: defaultPeriods.map(p => ({
+              period: p,
+              className: `Period P${p}`,
+              subject: 'Class Lecture',
+              subjectCode: null,
+              time: PERIOD_TIMES[p] || '—',
+              room: null,
+              isScheduled: false,
+            }))
+          }
+        }
+      }
+      return { activePeriodNumbers: [], affectedClasses: [] }
+    } else {
+      // Custom mode: user-selected periods
+      const periods = form.period_numbers
+      return {
+        activePeriodNumbers: periods,
+        affectedClasses: periods.map(p => {
+          const s = scheduledSlotsForDayOrder.find(slot => slot.period_number === p)
+          if (s) {
+            return {
+              period: p,
+              className: s.class_name ? `${s.class_name}${s.class_section ? ' · ' + s.class_section : ''}` : `Class P${p}`,
+              subject: s.subject_name || s.subject_code || 'Scheduled Class',
+              subjectCode: s.subject_code,
+              time: PERIOD_TIMES[p] || '—',
+              room: s.room_number,
+              isScheduled: true,
+            }
+          }
+          return {
+            period: p,
+            className: `Period P${p}`,
+            subject: 'Class Lecture',
+            subjectCode: null,
+            time: PERIOD_TIMES[p] || '—',
+            room: null,
+            isScheduled: false,
+          }
+        })
+      }
+    }
+  }, [form.mode, form.period_numbers, scheduledSlotsForDayOrder, calendarInfo, isBlocked, teacherSlots.length])
+
+  // Fetch slot candidates only for the active periods requiring substitutes
+  useEffect(() => {
+    if (campusMode !== 'flexible' || !form.date || isBlocked || activePeriodNumbers.length === 0) {
+      setCandidatesMap({})
+      return
+    }
+
+    let isMounted = true
+    setLoadingCandidates(true)
+
+    const promises = activePeriodNumbers.map(p =>
+      leavesApi.slotCandidates({ date: form.date, period_number: p })
+        .then(res => ({ period: p, candidates: res.data || [] }))
+        .catch(err => {
+          console.error(`Failed to load candidates for period ${p}:`, err)
+          return { period: p, candidates: [] }
+        })
+    )
+
+    Promise.all(promises).then(results => {
+      if (!isMounted) return
+      const map = {}
+      results.forEach(r => {
+        map[r.period] = r.candidates
+      })
+      setCandidatesMap(map)
+      setLoadingCandidates(false)
+    })
+
+    return () => { isMounted = false }
+  }, [campusMode, form.date, isBlocked, activePeriodNumbers.join(',')])
 
   const togglePeriod = (p) => {
     setForm(f => {
@@ -106,21 +419,57 @@ export default function ApplyLeave() {
       return
     }
 
+    if (campusMode === 'flexible' && activePeriodNumbers.length > 0) {
+      const missingSubstitutes = activePeriodNumbers.filter(p => !selectedSubstitutes[p])
+      if (missingSubstitutes.length > 0) {
+        setError(`Please select a proposed substitute for Period ${missingSubstitutes.map(p => `P${p}`).join(', ')}. In Flexible Mode, proposing substitutes is mandatory for scheduled classes.`)
+        return
+      }
+    }
+
     setLoading(true)
     try {
       if (form.mode === 'whole_day') {
-        await leavesApi.applyBatch({ date: form.date, whole_day: true, reason: form.reason.trim() })
+        const payload = {
+          date: form.date,
+          whole_day: true,
+          reason: form.reason.trim(),
+        }
+        if (campusMode === 'flexible' && activePeriodNumbers.length > 0) {
+          payload.period_substitutes = selectedSubstitutes
+        }
+        await leavesApi.applyBatch(payload)
       } else if (form.period_numbers.length === 1) {
-        await leavesApi.apply({ date: form.date, period_number: form.period_numbers[0], reason: form.reason.trim() })
+        const p = form.period_numbers[0]
+        const payload = {
+          date: form.date,
+          period_number: p,
+          reason: form.reason.trim(),
+        }
+        if (campusMode === 'flexible') {
+          payload.proposed_substitute_id = selectedSubstitutes[p]
+        }
+        await leavesApi.apply(payload)
       } else {
-        await leavesApi.applyBatch({ date: form.date, period_numbers: form.period_numbers, reason: form.reason.trim() })
+        const payload = {
+          date: form.date,
+          period_numbers: form.period_numbers,
+          reason: form.reason.trim(),
+        }
+        if (campusMode === 'flexible') {
+          payload.period_substitutes = selectedSubstitutes
+        }
+        await leavesApi.applyBatch(payload)
       }
 
       setSuccessData({
         date: form.date,
         day_order: calendarInfo?.day_order,
-        duration: form.mode === 'whole_day' ? 'Whole Day (All Periods)' : `Periods P${form.period_numbers.join(', P')}`,
+        duration: form.mode === 'whole_day'
+          ? (activePeriodNumbers.length > 0 ? `Whole Day (${activePeriodNumbers.length} Scheduled Class${activePeriodNumbers.length > 1 ? 'es' : ''})` : 'Whole Day (No Scheduled Classes)')
+          : `Periods P${form.period_numbers.join(', P')}`,
         reason: form.reason.trim(),
+        isFlexible: campusMode === 'flexible',
       })
 
       setTimeout(() => navigate('/teacher/leaves'), 2200)
@@ -143,7 +492,9 @@ export default function ApplyLeave() {
             <div className="space-y-0.5">
               <h2 className="text-base font-bold text-slate-900">Leave Request Submitted</h2>
               <p className="text-xs text-slate-500">
-                Your leave request has been recorded successfully and routed for administration.
+                {successData.isFlexible
+                  ? 'Your leave request and proposed substitutes have been submitted. They will be officially assigned once your HOD approves.'
+                  : 'Your leave request has been recorded successfully and routed for administration.'}
               </p>
             </div>
           </div>
@@ -167,6 +518,14 @@ export default function ApplyLeave() {
               <span className="text-slate-500 font-semibold uppercase tracking-wider text-[10px]">Reason</span>
               <span className="font-semibold text-slate-800 text-right max-w-xs">{successData.reason}</span>
             </div>
+            {successData.isFlexible && (
+              <div className="flex justify-between items-center py-1 border-t border-slate-200/60">
+                <span className="text-slate-500 font-semibold uppercase tracking-wider text-[10px]">Proposed Substitutes</span>
+                <span className="inline-flex items-center gap-1 text-[10px] font-bold text-amber-700 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded-full">
+                  Pending HOD Approval
+                </span>
+              </div>
+            )}
           </div>
 
           <div className="flex items-center justify-between pt-2 text-xs">
@@ -191,10 +550,12 @@ export default function ApplyLeave() {
   ]
 
   const formattedPeriodString = form.mode === 'whole_day'
-    ? 'Whole Day'
+    ? (activePeriodNumbers.length > 0 ? `Whole Day (${activePeriodNumbers.length} Classes)` : 'Whole Day')
     : form.period_numbers.length > 0
     ? `Periods ${form.period_numbers.join(', ')}`
     : 'None selected'
+
+  const assignedCount = activePeriodNumbers.filter(p => selectedSubstitutes[p]).length
 
   return (
     <div className="max-w-6xl mx-auto space-y-6 pb-16">
@@ -217,6 +578,23 @@ export default function ApplyLeave() {
           <span>Back to Leave History</span>
         </Link>
       </div>
+
+      {/* ── Flexible Mode Active Banner ── */}
+      {campusMode === 'flexible' && (
+        <div className="flex items-start gap-3 p-3.5 bg-indigo-50 border border-indigo-200 rounded-xl">
+          <div className="w-7 h-7 rounded-lg bg-indigo-100 border border-indigo-300 text-indigo-700 flex items-center justify-center shrink-0 mt-0.5">
+            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+            </svg>
+          </div>
+          <div className="min-w-0">
+            <p className="text-xs font-bold text-indigo-900">Flexible Mode is Active</p>
+            <p className="text-[11px] text-indigo-700 mt-0.5 leading-snug">
+              You must propose an eligible substitute teacher for each affected class. They will be officially assigned once your HOD approves the request.
+            </p>
+          </div>
+        </div>
+      )}
 
       {error && <ErrorAlert message={error} />}
 
@@ -243,7 +621,7 @@ export default function ApplyLeave() {
                 )}
               </div>
 
-              {/* Date Input with Icon */}
+              {/* Date Input */}
               <div className="relative">
                 <input
                   type="date"
@@ -303,7 +681,11 @@ export default function ApplyLeave() {
                   }`}
                 >
                   <span className="text-xs block">Whole Day</span>
-                  <span className="text-[11px] text-slate-500 font-normal block mt-0.5">All scheduled periods</span>
+                  <span className="text-[11px] text-slate-500 font-normal block mt-0.5">
+                    {scheduledSlotsForDayOrder.length > 0
+                      ? `${scheduledSlotsForDayOrder.length} scheduled class${scheduledSlotsForDayOrder.length > 1 ? 'es' : ''}`
+                      : 'All scheduled periods'}
+                  </span>
                 </button>
 
                 <button
@@ -353,18 +735,27 @@ export default function ApplyLeave() {
                   <div className="grid grid-cols-5 gap-2">
                     {[1, 2, 3, 4, 5].map(p => {
                       const selected = form.period_numbers.includes(p)
+                      const isScheduled = scheduledSlotsForDayOrder.some(s => s.period_number === p)
                       return (
                         <button
                           key={p}
                           type="button"
                           onClick={() => togglePeriod(p)}
-                          className={`py-2 px-1 rounded-md border text-center transition flex flex-col items-center justify-center ${
+                          className={`py-2 px-1 rounded-md border text-center transition flex flex-col items-center justify-center relative ${
                             selected
                               ? 'bg-primary-600 border-primary-600 text-white font-bold'
                               : 'bg-white border-slate-200 text-slate-700 hover:border-slate-300 font-semibold'
                           }`}
                         >
-                          <span className="text-xs">P{p}</span>
+                          <span className="text-xs flex items-center gap-1">
+                            P{p}
+                            {isScheduled && (
+                              <span
+                                className={`w-1.5 h-1.5 rounded-full ${selected ? 'bg-white' : 'bg-emerald-500'}`}
+                                title="Teaching class scheduled"
+                              />
+                            )}
+                          </span>
                           <span className={`text-[9px] ${selected ? 'text-primary-100' : 'text-slate-400'}`}>
                             {PERIOD_TIMES[p]}
                           </span>
@@ -377,8 +768,242 @@ export default function ApplyLeave() {
 
               {form.mode === 'whole_day' && (
                 <p className="text-[11px] text-slate-500 pt-0.5">
-                  All applicable teaching periods for the selected working day will be included.
+                  {dayOrder ? (
+                    scheduledSlotsForDayOrder.length > 0
+                      ? `Day Order ${dayOrder}: You have ${scheduledSlotsForDayOrder.length} scheduled class${scheduledSlotsForDayOrder.length > 1 ? 'es' : ''} on this day.`
+                      : `Day Order ${dayOrder}: You have no scheduled classes on this day.`
+                  ) : (
+                    'All scheduled teaching periods for the selected working day will be included.'
+                  )}
                 </p>
+              )}
+            </div>
+
+            {/* ── 2.5 AFFECTED CLASSES & COMPACT SUBSTITUTION ROWS ── */}
+            {/* Dense Horizontal Rows (44–56px height per row, Teams / Scheduling software look) */}
+            <div className="p-5 sm:p-6 space-y-3 bg-slate-50/40 border-t border-slate-100">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                <div>
+                  <div className="flex items-center gap-2">
+                    <label className="text-xs font-bold uppercase tracking-wider text-slate-800 block">
+                      Affected Classes ({affectedClasses.length})
+                    </label>
+                    {campusMode === 'flexible' && (
+                      <span className="text-[10px] font-bold text-indigo-700 bg-indigo-100 px-2 py-0.5 rounded-full">
+                        Substitute Required
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-[11px] text-slate-500 mt-0.5">
+                    {campusMode === 'flexible'
+                      ? 'Click any class row to view ranked candidates with full workload simulations, back-to-back checks, and reason signals.'
+                      : 'Scheduled teaching slots recorded for your leave.'}
+                  </p>
+                </div>
+
+                {campusMode === 'flexible' && affectedClasses.length > 0 && (
+                  <div className="flex items-center gap-2 shrink-0">
+                    <span className={`text-[11px] font-bold px-2.5 py-0.5 rounded-full border ${
+                      assignedCount === affectedClasses.length
+                        ? 'text-emerald-700 bg-emerald-50 border-emerald-200'
+                        : 'text-amber-700 bg-amber-50 border-amber-200'
+                    }`}>
+                      {assignedCount}/{affectedClasses.length} covered
+                    </span>
+                    {loadingCandidates && (
+                      <span className="inline-flex items-center gap-1 text-[11px] text-indigo-600 font-medium">
+                        <Spinner size="xs" /> Finding faculty…
+                      </span>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              {loadingSlots ? (
+                <div className="py-4 text-center text-xs text-slate-400 flex items-center justify-center gap-2">
+                  <Spinner size="xs" /> Loading scheduled classes…
+                </div>
+              ) : affectedClasses.length === 0 ? (
+                <div className="p-4 rounded-[12px] bg-white border border-slate-200/80 text-center text-xs text-slate-500">
+                  {dayOrder ? (
+                    <span>No teaching classes scheduled for you on Day Order {dayOrder}. Whole-day leave will be recorded without requiring substitutions.</span>
+                  ) : (
+                    <span>Select a date and leave duration above to see affected classes.</span>
+                  )}
+                </div>
+              ) : (
+                /* Dense Horizontal List (Container) */
+                <div className="space-y-2">
+                  {affectedClasses.map(cls => {
+                    const p = cls.period
+                    const candidates = candidatesMap[p] || []
+                    const selectedId = selectedSubstitutes[p]
+                    const selectedCand = candidates.find(c => (c.teacher?.id || c.id) === selectedId)
+                    const selectedName = selectedCand?.teacher?.name || selectedCand?.name
+                    const isExpanded = expandedPeriod === p
+
+                    return (
+                      <div
+                        key={p}
+                        className={`border rounded-[14px] transition-all bg-white overflow-hidden ${
+                          isExpanded
+                            ? 'border-indigo-300 ring-2 ring-indigo-500/20 shadow-xs'
+                            : 'border-slate-200/90 hover:border-slate-300 shadow-[0_1px_2px_rgba(0,0,0,0.02)]'
+                        }`}
+                      >
+                        {/* ── Compact Pill / Dense Horizontal Row (approx 44–56px height on desktop) ── */}
+                        {/* Structure: [ PERIOD ] [ CLASS ] [ SUBJECT ] [ TIME ] [ SUBSTITUTE STATUS ] [ > ] */}
+                        <div
+                          onClick={() => {
+                            if (campusMode === 'flexible') {
+                              setExpandedPeriod(prev => prev === p ? null : p)
+                            }
+                          }}
+                          className={`flex flex-col sm:flex-row sm:items-center justify-between gap-2 px-3 sm:px-3.5 py-2 sm:py-2.5 min-h-[46px] sm:h-[50px] transition-colors ${
+                            campusMode === 'flexible' ? 'cursor-pointer hover:bg-slate-50/70' : ''
+                          }`}
+                        >
+                          {/* Left Section: [ PERIOD ] [ CLASS ] [ SUBJECT ] [ TIME ] */}
+                          <div className="flex items-center gap-2.5 sm:gap-3 min-w-0 flex-1">
+                            {/* [ PERIOD ] */}
+                            <span className="w-8 h-6 rounded-[6px] bg-slate-900 text-white font-mono text-[11px] font-bold tracking-tight flex items-center justify-center shrink-0 shadow-2xs">
+                              P{p}
+                            </span>
+
+                            {/* [ CLASS ] */}
+                            <span className="text-xs font-bold text-slate-800 truncate max-w-[120px] sm:max-w-[140px] shrink-0">
+                              {cls.className}
+                            </span>
+
+                            {/* [ SUBJECT ] */}
+                            <div className="flex items-center gap-1.5 min-w-0 flex-1 truncate text-xs text-slate-600">
+                              {cls.subjectCode && (
+                                <span className="font-semibold text-slate-700 font-mono text-[11px] shrink-0">
+                                  {cls.subjectCode}
+                                </span>
+                              )}
+                              <span className="truncate text-slate-500 text-[11px] sm:text-xs">
+                                {cls.subject}
+                              </span>
+                            </div>
+
+                            {/* [ TIME ] */}
+                            <span className="text-[11px] font-mono text-slate-400 shrink-0 hidden md:inline-flex items-center gap-1">
+                              <ClockIcon className="w-3 h-3 text-slate-300 shrink-0" />
+                              {cls.time}
+                            </span>
+                          </div>
+
+                          {/* Right Section: [ SUBSTITUTE STATUS ] [ > ] */}
+                          <div className="flex items-center justify-between sm:justify-end gap-2 shrink-0 pt-1 sm:pt-0 border-t sm:border-t-0 border-slate-100">
+                            {/* Mobile Time */}
+                            <span className="text-[10px] font-mono text-slate-400 sm:hidden">
+                              {cls.time}
+                            </span>
+
+                            {campusMode === 'flexible' ? (
+                              <div className="flex items-center gap-1.5 ml-auto sm:ml-0">
+                                {/* [ SUBSTITUTE STATUS ] */}
+                                {selectedId ? (
+                                  <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-800 text-[11px] font-bold">
+                                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0" />
+                                    <span className="truncate max-w-[120px] sm:max-w-[150px]">
+                                      {selectedName || 'Substitute Nominated'}
+                                    </span>
+                                    <button
+                                      type="button"
+                                      onClick={(e) => {
+                                        e.stopPropagation()
+                                        setSelectedSubstitutes(prev => ({ ...prev, [p]: null }))
+                                      }}
+                                      className="text-emerald-600 hover:text-rose-600 hover:bg-emerald-100 rounded-full w-3.5 h-3.5 flex items-center justify-center font-bold text-xs transition shrink-0 ml-0.5"
+                                      title="Clear proposed substitute"
+                                    >
+                                      ×
+                                    </button>
+                                  </div>
+                                ) : (
+                                  <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-amber-50 border border-amber-200 text-amber-800 text-[11px] font-semibold hover:bg-amber-100 transition">
+                                    <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse shrink-0" />
+                                    <span>Select Sub</span>
+                                  </span>
+                                )}
+
+                                {/* [ > ] */}
+                                <span className="w-6 h-6 rounded-md flex items-center justify-center text-slate-400 hover:text-slate-700 transition">
+                                  <ChevronDownIcon
+                                    className={`w-3.5 h-3.5 transform transition-transform duration-200 ${
+                                      isExpanded ? 'rotate-180 text-indigo-600' : ''
+                                    }`}
+                                  />
+                                </span>
+                              </div>
+                            ) : (
+                              <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-slate-600 bg-slate-100 px-2 py-0.5 rounded border border-slate-200">
+                                Auto-coverage
+                              </span>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* ── Rich Intelligent Recommendation Drawer (Exact module requested from Leaves.jsx) ── */}
+                        {isExpanded && campusMode === 'flexible' && (
+                          <div className="border-t border-slate-100 bg-slate-50/70 p-3 sm:p-4 space-y-3">
+                            {/* Header: Recommended Candidates (N) + Ranked by score & workload */}
+                            <div className="flex items-center justify-between">
+                              <p className="text-xs font-bold text-slate-600 uppercase tracking-wider flex items-center gap-1.5">
+                                <SparklesIcon className="w-3.5 h-3.5 text-primary-500" />
+                                Recommended Candidates ({candidates.length})
+                              </p>
+                              <div className="flex items-center gap-2">
+                                <span className="text-[10px] text-slate-400 font-medium">Ranked by score &amp; workload</span>
+                                {selectedId && (
+                                  <button
+                                    type="button"
+                                    onClick={() => setSelectedSubstitutes(prev => ({ ...prev, [p]: null }))}
+                                    className="text-rose-600 font-semibold hover:underline text-[10px] ml-1"
+                                  >
+                                    Clear Selection
+                                  </button>
+                                )}
+                              </div>
+                            </div>
+
+                            {loadingCandidates ? (
+                              <div className="py-6 text-center text-xs text-slate-400 flex items-center justify-center gap-2">
+                                <Spinner size="xs" /> Finding eligible faculty &amp; simulating workloads…
+                              </div>
+                            ) : candidates.length === 0 ? (
+                              <div className="py-3 px-3.5 bg-amber-50/80 border border-amber-200/80 rounded-xl text-xs text-amber-800">
+                                No free faculty found for Period P{p}. Your HOD will assign coverage upon leave approval.
+                              </div>
+                            ) : (
+                              /* List of Full Intelligent Recommendation Cards */
+                              <div className="space-y-3 max-h-[420px] overflow-y-auto pr-1">
+                                {candidates.map(c => {
+                                  const candId = c.teacher?.id || c.id
+                                  const isPicked = selectedId === candId
+                                  return (
+                                    <RecommendationCard
+                                      key={candId}
+                                      rec={c}
+                                      isSelected={isPicked}
+                                      onSelect={() => {
+                                        setSelectedSubstitutes(prev => ({ ...prev, [p]: candId }))
+                                        setExpandedPeriod(null) // One-click selection closes tray
+                                      }}
+                                      periodNumber={p}
+                                    />
+                                  )
+                                })}
+                              </div>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    )
+                  })}
+                </div>
               )}
             </div>
 
@@ -448,7 +1073,7 @@ export default function ApplyLeave() {
                 <button
                   type="submit"
                   disabled={loading || isBlocked}
-                  className="px-5 py-2 bg-primary-600 hover:bg-primary-700 active:bg-primary-800 disabled:opacity-50 disabled:cursor-not-allowed text-white text-xs sm:text-sm font-bold rounded-lg transition shadow-xs flex items-center gap-2"
+                  className="px-5 py-2 bg-primary-600 hover:bg-primary-700 active:bg-primary-800 text-white text-xs sm:text-sm font-bold rounded-lg transition shadow-xs flex items-center gap-2"
                 >
                   {loading ? (
                     <>
@@ -498,6 +1123,13 @@ export default function ApplyLeave() {
               </div>
 
               <div>
+                <span className="text-[10px] uppercase font-bold text-slate-400 block">Scheduled Teaching Classes</span>
+                <span className="font-bold text-slate-900 block mt-0.5">
+                  {scheduledSlotsForDayOrder.length} class{scheduledSlotsForDayOrder.length === 1 ? '' : 'es'}
+                </span>
+              </div>
+
+              <div>
                 <span className="text-[10px] uppercase font-bold text-slate-400 block">Leave Eligibility</span>
                 <div className="mt-0.5">
                   {calendarInfo ? (
@@ -530,6 +1162,14 @@ export default function ApplyLeave() {
                   <span className="text-slate-500">Duration:</span>
                   <span className="font-bold text-slate-800">{formattedPeriodString}</span>
                 </div>
+                {campusMode === 'flexible' && (
+                  <div className="flex justify-between">
+                    <span className="text-slate-500">Substitutes:</span>
+                    <span className={`font-bold ${assignedCount === activePeriodNumbers.length ? 'text-emerald-700' : 'text-amber-700'}`}>
+                      {assignedCount}/{activePeriodNumbers.length} selected
+                    </span>
+                  </div>
+                )}
                 <div className="flex justify-between">
                   <span className="text-slate-500">Reason:</span>
                   <span className="font-bold text-slate-800 truncate max-w-[120px]">{form.reason || '—'}</span>

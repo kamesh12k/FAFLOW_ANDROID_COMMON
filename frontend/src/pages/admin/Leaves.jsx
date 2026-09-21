@@ -321,7 +321,16 @@ export default function AdminLeaves() {
     setLeaves(prev => prev.map(l => pendingIds.has(l.id) ? { ...l, status: 'approved' } : l))
 
     try {
-      const results = await Promise.all(pendingReqs.map(r => leavesApi.approve(r.id).then(res => res.data.leave)))
+      let results
+      if (pendingReqs.length > 1) {
+        const res = await leavesApi.bulkApprove(pendingReqs.map(r => r.id))
+        results = res.data.leaves || []
+      } else if (pendingReqs.length === 1) {
+        const res = await leavesApi.approve(pendingReqs[0].id)
+        results = [res.data.leave]
+      } else {
+        results = []
+      }
       const updatedList = await load()
       
       setToast({
@@ -847,6 +856,7 @@ export default function AdminLeaves() {
                   const approved = group.requests.filter(r => r.status === 'approved')
                   const covered = approved.filter(r => r.alter_assignment)
                   const subsNames = [...new Set(covered.map(r => r.alter_assignment.substitute?.name))].filter(Boolean)
+                  const proposedSubs = [...new Set(group.requests.map(r => r.proposed_substitute?.name).filter(Boolean))]
                   const hasUnassigned = approved.some(r => !r.alter_assignment)
                   const uniquePeriods = [...new Set(group.requests.map(r => r.period_number))].sort((a, b) => a - b)
 
@@ -887,6 +897,15 @@ export default function AdminLeaves() {
                               Needs sub ({covered.length}/{approved.length})
                             </span>
                           )
+                        ) : group.status === 'pending' && proposedSubs.length > 0 ? (
+                          <div className="space-y-0.5 max-w-[180px]">
+                            <p className="text-xs font-semibold text-indigo-700 truncate" title={proposedSubs.join(', ')}>
+                              {proposedSubs.join(', ')}
+                            </p>
+                            <span className="inline-block text-[10px] font-semibold text-indigo-700 bg-indigo-50 border border-indigo-200/80 px-1.5 py-0.5 rounded">
+                              Proposed by Teacher
+                            </span>
+                          </div>
                         ) : (
                           <span className="text-xs text-slate-300">—</span>
                         )}
@@ -1088,9 +1107,31 @@ export default function AdminLeaves() {
                 </div>
               </div>
             ) : (
-              <div className="bg-amber-50/80 border border-amber-200/80 rounded-xl p-3 text-xs text-amber-900 flex items-center gap-2">
-                <AlertTriangleIcon className="w-4 h-4 text-amber-600 shrink-0" />
-                <span className="font-semibold">Period P{subModal.activeReq.period_number} requires a substitute candidate. Select a candidate below.</span>
+              <div className="space-y-2">
+                {subModal.activeReq.proposed_substitute && (
+                  <div className="bg-indigo-50 border border-indigo-200 rounded-xl p-3 text-xs space-y-2">
+                    <div className="flex items-center gap-2">
+                      <SparklesIcon className="w-4 h-4 text-indigo-600 shrink-0" />
+                      <span className="font-bold text-indigo-900">Teacher Proposed a Substitute</span>
+                    </div>
+                    <div className="flex items-center justify-between gap-3 pl-6">
+                      <div>
+                        <p className="font-extrabold text-slate-900">{subModal.activeReq.proposed_substitute.name}</p>
+                        {subModal.activeReq.proposed_substitute.department_name && (
+                          <p className="text-[11px] text-indigo-600">{subModal.activeReq.proposed_substitute.department_name}</p>
+                        )}
+                      </div>
+                      <span className="text-[10px] text-indigo-700 font-semibold bg-indigo-100 border border-indigo-300 px-1.5 py-0.5 rounded shrink-0">Proposed</span>
+                    </div>
+                    <p className="text-[11px] text-slate-500 pl-6">
+                      The teacher proposed this faculty member. Search their name in the candidates list below to assign them — or choose a different substitute.
+                    </p>
+                  </div>
+                )}
+                <div className="bg-amber-50/80 border border-amber-200/80 rounded-xl p-3 text-xs text-amber-900 flex items-center gap-2">
+                  <AlertTriangleIcon className="w-4 h-4 text-amber-600 shrink-0" />
+                  <span className="font-semibold">Period P{subModal.activeReq.period_number} requires a substitute candidate. Select a candidate below.</span>
+                </div>
               </div>
             )}
 

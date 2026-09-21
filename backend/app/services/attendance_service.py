@@ -115,6 +115,8 @@ class AttendanceService:
         if existing_today and existing_today.check_in_time is not None:
             if not allow_unlimited_testing:
                 AttendanceService._log_audit(db, user.id, "DUPLICATE_ATTENDANCE", {"date": str(today)})
+                if existing_today.check_out_time is not None:
+                    raise DomainException(f"Staff member is already checked out for today ({today})", status_code=400)
                 raise DomainException(f"Staff member is already checked in for today ({today})", status_code=400)
             else:
                 existing_today.check_out_time = None

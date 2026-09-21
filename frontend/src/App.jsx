@@ -1,4 +1,5 @@
 import { lazy, Suspense, useEffect } from 'react'
+import { useNotificationPermission } from './hooks/useNotificationPermission'
 import { Routes, Route, Navigate } from 'react-router-dom'
 import { AuthProvider } from './context/AuthContext'
 import { DepartmentProvider } from './context/DepartmentContext'
@@ -42,6 +43,7 @@ const DataRetention = lazy(() => import('./pages/admin/DataRetention'))
 const AdminGeofences = lazy(() => import('./pages/admin/Geofences'))
 const AdminBiometrics = lazy(() => import('./pages/admin/Biometrics'))
 const AdminAttendance = lazy(() => import('./pages/admin/Attendance'))
+const DutyManagement = lazy(() => import('./pages/admin/DutyManagement'))
 
 // Principal pages (lazy loaded)
 const PrincipalDashboard = lazy(() => import('./pages/admin/PrincipalDashboard'))
@@ -73,15 +75,23 @@ const SubstitutionPreferences = lazy(() => import('./pages/teacher/Preferences')
 const TeacherSubstitution = lazy(() => import('./pages/teacher/Substitution'))
 const StudentAttendance = lazy(() => import('./pages/teacher/StudentAttendance'))
 const HodStudentAttendance = lazy(() => import('./pages/admin/HodStudentAttendance'))
+const MyDuties = lazy(() => import('./pages/teacher/MyDuties'))
 
 // Announcement pages (lazy loaded)
 const Announcements = lazy(() => import('./pages/announcements/index'))
 const AnnouncementDetail = lazy(() => import('./pages/announcements/AnnouncementDetail'))
 
 export default function App() {
+  // Register the service worker on mount
   useEffect(() => {
     registerServiceWorker();
   }, []);
+
+  // Check notification permission on every page open:
+  //  - If granted → cache it, don't ask again
+  //  - If denied  → cache it, skip (browser blocks anyway)
+  //  - If default (or revoked back to default) → ask once per session
+  useNotificationPermission();
 
   return (
     <AuthProvider>
@@ -109,7 +119,8 @@ export default function App() {
               <Route element={<AppShell />}>
                 <Route path="/admin/dashboard" element={<AdminDashboard />} />
                 <Route path="/admin/attendance" element={<AdminAttendance />} />
-                <Route path="/admin/student-attendance" element={<HodStudentAttendance />} />
+                <Route path="/admin/student-attendance" element={<PrincipalStudentAttendance />} />
+                <Route path="/principal/student-attendance" element={<PrincipalStudentAttendance />} />
                 <Route path="/admin/setup" element={<SetupGuide />} />
                 <Route path="/admin/setup-guide" element={<SetupGuide />} />
                 <Route path="/admin/guide" element={<SetupGuide />} />
@@ -129,6 +140,7 @@ export default function App() {
                 <Route path="/admin/rooms" element={<AdminRooms />} />
                 <Route path="/admin/resource-availability" element={<ResourceAvailability />} />
                 <Route path="/admin/today-substitutions" element={<TodaySubstitutions />} />
+                <Route path="/admin/duties" element={<DutyManagement />} />
                 <Route path="/admin/settings" element={<AdminSettings />} />
                 <Route path="/admin/backup" element={<BackupRestore />} />
 
@@ -152,6 +164,7 @@ export default function App() {
                 <Route path="/governance/attendance" element={<AdminAttendance />} />
                 <Route path="/governance/student-attendance" element={<PrincipalStudentAttendance />} />
                 <Route path="/governance/timetable" element={<HodTimetable />} />
+                <Route path="/governance/duties" element={<DutyManagement />} />
               </Route>
             </Route>
           </Route>
@@ -164,6 +177,7 @@ export default function App() {
                 <Route path="/principal/attendance" element={<AdminAttendance />} />
                 <Route path="/principal/student-attendance" element={<PrincipalStudentAttendance />} />
                 <Route path="/principal/class-timetable" element={<ClasswiseTimetable />} />
+                <Route path="/principal/duties" element={<DutyManagement readOnly={true} />} />
               </Route>
             </Route>
           </Route>
@@ -203,6 +217,7 @@ export default function App() {
                 <Route path="/teacher/leaves" element={<LeaveHistory />} />
                 <Route path="/teacher/substitution" element={<TeacherSubstitution />} />
                 <Route path="/teacher/today-coverage" element={<TodaySubstitutions />} />
+                <Route path="/teacher/duties" element={<MyDuties />} />
                 <Route path="/teacher/credits" element={<MyCredits />} />
                 <Route path="/teacher/preferences" element={<SubstitutionPreferences />} />
               </Route>

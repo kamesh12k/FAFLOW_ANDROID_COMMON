@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 import { useDepartment } from '../../context/DepartmentContext'
-import { adminApi, campusOperationsApi, teachersModeApi, timetableApi, teachersApi, departmentsApi } from '../../api/services'
+import { adminApi, campusOperationsApi, teachersModeApi, timetableApi, teachersApi, departmentsApi, campusDutiesApi } from '../../api/services'
 import { Spinner, ErrorAlert, EmptyState, Modal } from '../../components/ui'
 import { SparklesIcon } from '../../components/icons'
 
@@ -115,6 +115,10 @@ const MODE_INFO = {
     label: 'Assisted',
     description: 'The system ranks substitute candidates by current workload (today\'s periods and this week\'s periods) when you open the assign-substitute panel. You always click to approve — nothing happens automatically.',
   },
+  flexible: {
+    label: 'Flexible',
+    description: 'Assisted mode with mandatory Teacher Self-Management. Teachers propose their own eligible substitute(s) during leave application. The proposed substitute becomes official only after HOD approval.',
+  },
   autonomous: {
     label: 'Autonomous',
     description: 'The moment a leave is approved, the system immediately assigns the best eligible substitute with no click required. It will never assign a teacher who is on leave, already teaching, has opted out, or is over their weekly cap — but it does act without waiting for you. You can still override, undo, or lock any assignment afterward.',
@@ -211,6 +215,24 @@ function CampusOperationsModePanel({ isSuperAdmin, modeConfig, onModeChange, loa
               )
             })}
           </div>
+          {modeConfig.configured_mode === 'flexible' && (
+            <div className="mx-6 mb-4 mt-2 flex items-center justify-between px-4 py-3 rounded-2xl bg-indigo-50 border border-indigo-100">
+              <div>
+                <p className="text-sm font-semibold text-indigo-900">Teacher Self-Management</p>
+                <p className="text-[12px] text-indigo-600 mt-0.5 leading-snug">
+                  Teachers must propose their own substitutes when applying for leave.
+                </p>
+              </div>
+              <div className="flex items-center gap-2 shrink-0">
+                <span className="text-[11px] font-bold text-indigo-700 bg-indigo-100 border border-indigo-300 px-2.5 py-0.5 rounded-full">
+                  ON · Locked
+                </span>
+                <svg className="w-4 h-4 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                </svg>
+              </div>
+            </div>
+          )}
           {!isSuperAdmin && (
             <p className="px-6 py-3 text-xs text-gray-400 border-t border-gray-100 bg-gray-50/60">Only an Admin can change this setting.</p>
           )}
@@ -249,6 +271,10 @@ const OVERRIDE_INFO = {
   assisted: {
     label: 'Force Assisted',
     description: 'System-wide override. All departments are forced to Assisted mode.',
+  },
+  flexible: {
+    label: 'Force Flexible',
+    description: 'System-wide override. All departments are forced to Flexible mode (Assisted + Mandatory Teacher Self-Management).',
   },
   autonomous: {
     label: 'Force Autonomous',
@@ -351,6 +377,7 @@ function TeachersModeSettings({ isSuperAdmin, campusMode }) {
   }
 
   const isBypassed = campusMode === 'autonomous'
+  const isMandatoryInFlexible = campusMode === 'flexible'
 
   return (
     <SettingsSection
@@ -380,19 +407,37 @@ function TeachersModeSettings({ isSuperAdmin, campusMode }) {
             </div>
           )}
 
+          {isMandatoryInFlexible && (
+            <div className="flex items-start gap-2.5 px-4 py-3 rounded-2xl bg-blue-50 border border-blue-100 text-blue-800 text-[13px] leading-snug">
+              <ShieldIcon className="w-4 h-4 shrink-0 text-blue-500 mt-0.5" />
+              <div>
+                <span className="font-semibold">Mandatory in Flexible Mode:</span> Campus Operations Mode is currently set to Flexible. Teacher Self-Management is strictly enforced and cannot be disabled.
+              </div>
+            </div>
+          )}
+
           <div className="flex items-center justify-between gap-4">
             <div>
-              <span className="text-sm font-semibold text-gray-800">Teacher Self-Management Permission</span>
+              <div className="flex items-center gap-2">
+                <span className="text-sm font-semibold text-gray-800">Teacher Self-Management Permission</span>
+                {isMandatoryInFlexible && (
+                  <span className="text-[11px] font-semibold text-blue-600 bg-blue-100 px-2.5 py-0.5 rounded-full">
+                    Mandatory in Flexible Mode
+                  </span>
+                )}
+              </div>
               <p className="text-[13px] text-gray-500 mt-0.5 leading-snug">
-                {enabled
+                {isMandatoryInFlexible
+                  ? 'Teachers propose substitutes directly during leave application. HOD must approve before official assignment.'
+                  : enabled
                   ? 'Teachers can manually select substitutes and override assignments for their leaves.'
                   : 'Teachers cannot assign substitutes or modify coverage assignments.'}
               </p>
             </div>
             <ToggleSwitch
-              checked={enabled && !isBypassed}
-              onChange={(val) => isSuperAdmin && !isBypassed && handleToggle(val)}
-              disabled={!isSuperAdmin || isBypassed || saving}
+              checked={isMandatoryInFlexible ? true : (enabled && !isBypassed)}
+              onChange={(val) => isSuperAdmin && !isBypassed && !isMandatoryInFlexible && handleToggle(val)}
+              disabled={!isSuperAdmin || isBypassed || isMandatoryInFlexible || saving}
             />
           </div>
 
@@ -828,6 +873,420 @@ function DryRunPanel() {
           </div>
         )}
       </form>
+    </SettingsSection>
+  )
+}
+
+/* ── Campus Duty Rules & Safe Ranges Configuration ──────────────────────── */
+function CampusDutyRulesPanel({ isSuperAdmin, isSystemAdmin }) {
+  const [rules, setRules] = useState({
+    max_discipline_teachers: 3,
+    safe_min_discipline_teachers: 1,
+    safe_max_discipline_teachers: 10,
+    default_daily_duty_limit: 1,
+    default_weekly_duty_limit: 3,
+    prefer_free_before_break: true,
+    auto_assignment_enabled: true,
+    auto_replacement_enabled: true,
+    allow_cross_department: false,
+    max_exam_duties_per_faculty: 4,
+    max_wing_duties_per_faculty: 2,
+    duty_conflict_policy: 'strict',
+    lock_behavior: 'protect_locked'
+  })
+  const [initialRules, setInitialRules] = useState(null)
+  const [loading, setLoading] = useState(true)
+  const [saving, setSaving] = useState(false)
+  const [error, setError] = useState('')
+  const [success, setSuccess] = useState('')
+  const [impactModalOpen, setImpactModalOpen] = useState(false)
+  const [impactChanges, setImpactChanges] = useState([])
+
+  const fetchRules = async () => {
+    setLoading(true)
+    try {
+      const res = await campusDutiesApi.getRules()
+      if (res.data) {
+        setRules(res.data)
+        setInitialRules(res.data)
+      }
+    } catch (err) {
+      console.error('Failed to load campus duty rules', err)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    fetchRules()
+  }, [])
+
+  const handlePreviewImpact = (e) => {
+    e.preventDefault()
+    setError('')
+    setSuccess('')
+
+    if (!initialRules) return
+
+    const diffs = []
+    const settingMeta = {
+      max_discipline_teachers: {
+        label: 'Max Discipline Teachers per Break',
+        affects: 'Break duty quota and candidate selection count',
+        consequence: 'Engine will select more or fewer teachers for interval and lunch duties.'
+      },
+      default_daily_duty_limit: {
+        label: 'Daily Duty Cap',
+        affects: 'Maximum duties of any type per teacher per calendar day',
+        consequence: 'Teachers reaching this limit will be disqualified from additional duties today.'
+      },
+      default_weekly_duty_limit: {
+        label: 'Weekly Duty Cap',
+        affects: 'Cumulative 7-day rolling duty workload limit',
+        consequence: 'Prevents staff exhaustion across all campus duty types.'
+      },
+      prefer_free_before_break: {
+        label: 'Prefer Free Period Before Break',
+        affects: 'Candidate ranking scoring bonus (+50 points)',
+        consequence: 'Prioritizes staff who have no class immediately before interval or lunch.'
+      },
+      auto_assignment_enabled: {
+        label: 'Autonomous Assignment Engine',
+        affects: 'Campus-wide automatic assignment generation',
+        consequence: 'When disabled, HODs must manually allocate every duty.'
+      },
+      auto_replacement_enabled: {
+        label: 'Autonomous Replacement Workflow',
+        affects: 'Handling of teachers who check out or take emergency leave',
+        consequence: 'When enabled, system auto-allocates an eligible replacement or alerts HOD.'
+      },
+      allow_cross_department: {
+        label: 'Cross-Department Duty Assignment',
+        affects: 'Candidate eligibility pool boundaries',
+        consequence: 'When enabled, break and wing duties can draw staff from other departments.'
+      },
+      max_exam_duties_per_faculty: {
+        label: 'Exam Duty Ceiling',
+        affects: 'Semester examination invigilation limits',
+        consequence: 'Restricts invigilation assignments per teacher.'
+      },
+      max_wing_duties_per_faculty: {
+        label: 'Wing Duty Ceiling',
+        affects: 'Campus corridor and block surveillance limits',
+        consequence: 'Restricts wing patrol duties per teacher.'
+      },
+      duty_conflict_policy: {
+        label: 'Duty Conflict Policy',
+        affects: 'Validation rigor during duty creation and assignment',
+        consequence: 'Strict policy prevents any timetable, substitution or duty overlaps.'
+      },
+      lock_behavior: {
+        label: 'Assignment Lock Behavior',
+        affects: 'Protection of HOD-locked duty assignments',
+        consequence: 'Protect Locked guarantees the automatic engine will never overwrite locked duties.'
+      }
+    }
+
+    for (const [key, val] of Object.entries(rules)) {
+      if (initialRules[key] !== val) {
+        diffs.push({
+          key,
+          label: settingMeta[key]?.label || key,
+          oldVal: String(initialRules[key]),
+          newVal: String(val),
+          affects: settingMeta[key]?.affects || 'Operational duty assignment behavior',
+          consequence: settingMeta[key]?.consequence || 'Adjusts runtime evaluation rules.'
+        })
+      }
+    }
+
+    if (diffs.length === 0) {
+      setSuccess('No settings have been modified.')
+      return
+    }
+
+    setImpactChanges(diffs)
+    setImpactModalOpen(true)
+  }
+
+  const handleConfirmSave = async () => {
+    setSaving(true)
+    setError('')
+    try {
+      await campusDutiesApi.updateRules(rules)
+      setInitialRules({ ...rules })
+      setImpactModalOpen(false)
+      setSuccess('Campus Duty Rules and safe operational boundaries successfully updated!')
+    } catch (err) {
+      setError(err.response?.data?.detail || 'Failed to update campus duty rules.')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  return (
+    <SettingsSection
+      icon={ShieldIcon}
+      tint="bg-amber-50 text-amber-600"
+      title="Campus Duty Rules & Safe Operational Boundaries"
+      description="System-wide rules, break duty quotas, safe ranges, and candidate scoring preferences."
+    >
+      <form onSubmit={handlePreviewImpact} className="px-6 pb-6 pt-4 border-t border-gray-100 space-y-5">
+        {error && <ErrorAlert message={error} />}
+        {success && (
+          <div className="p-3.5 bg-green-50 text-green-700 text-xs font-bold rounded-2xl border border-green-100 flex items-center gap-2">
+            <span className="w-2 h-2 rounded-full bg-green-500" />
+            {success}
+          </div>
+        )}
+
+        {loading ? (
+          <div className="flex justify-center py-8"><Spinner /></div>
+        ) : (
+          <>
+            {/* Numerical Quotas & Safe Boundaries */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <div className="p-3.5 rounded-2xl border border-gray-100 bg-gray-50/50 space-y-1.5">
+                <div className="flex items-center justify-between">
+                  <label className="text-xs font-bold text-gray-800">Max Discipline Teachers</label>
+                  <span className="text-[10px] font-bold text-gray-400">Safe: 1–10</span>
+                </div>
+                <input
+                  type="number"
+                  min={1}
+                  max={15}
+                  value={rules.max_discipline_teachers}
+                  onChange={e => setRules({ ...rules, max_discipline_teachers: parseInt(e.target.value, 10) || 1 })}
+                  className="w-full rounded-xl border border-gray-200 px-3 py-1.5 text-sm bg-white font-semibold text-gray-800"
+                />
+                <p className="text-[10px] text-gray-500 leading-tight">Default: 3. Target quota of faculty deployed per break period.</p>
+              </div>
+
+              <div className="p-3.5 rounded-2xl border border-gray-100 bg-gray-50/50 space-y-1.5">
+                <div className="flex items-center justify-between">
+                  <label className="text-xs font-bold text-gray-800">Daily Duty Limit</label>
+                  <span className="text-[10px] font-bold text-gray-400">Safe: 1–3</span>
+                </div>
+                <input
+                  type="number"
+                  min={1}
+                  max={5}
+                  value={rules.default_daily_duty_limit}
+                  onChange={e => setRules({ ...rules, default_daily_duty_limit: parseInt(e.target.value, 10) || 1 })}
+                  className="w-full rounded-xl border border-gray-200 px-3 py-1.5 text-sm bg-white font-semibold text-gray-800"
+                />
+                <p className="text-[10px] text-gray-500 leading-tight">Default: 1. Max duties assigned to any faculty member per day.</p>
+              </div>
+
+              <div className="p-3.5 rounded-2xl border border-gray-100 bg-gray-50/50 space-y-1.5">
+                <div className="flex items-center justify-between">
+                  <label className="text-xs font-bold text-gray-800">Weekly Duty Limit</label>
+                  <span className="text-[10px] font-bold text-gray-400">Safe: 1–10</span>
+                </div>
+                <input
+                  type="number"
+                  min={1}
+                  max={15}
+                  value={rules.default_weekly_duty_limit}
+                  onChange={e => setRules({ ...rules, default_weekly_duty_limit: parseInt(e.target.value, 10) || 1 })}
+                  className="w-full rounded-xl border border-gray-200 px-3 py-1.5 text-sm bg-white font-semibold text-gray-800"
+                />
+                <p className="text-[10px] text-gray-500 leading-tight">Default: 3. Max duties cumulative over rolling 7 days.</p>
+              </div>
+            </div>
+
+            {/* Exam & Wing Ceilings */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="p-3.5 rounded-2xl border border-gray-100 bg-gray-50/50 space-y-1.5">
+                <div className="flex items-center justify-between">
+                  <label className="text-xs font-bold text-gray-800">Max Exam Duties per Faculty</label>
+                  <span className="text-[10px] font-bold text-gray-400">Safe: 1–20</span>
+                </div>
+                <input
+                  type="number"
+                  min={1}
+                  max={25}
+                  value={rules.max_exam_duties_per_faculty}
+                  onChange={e => setRules({ ...rules, max_exam_duties_per_faculty: parseInt(e.target.value, 10) || 1 })}
+                  className="w-full rounded-xl border border-gray-200 px-3 py-1.5 text-sm bg-white font-semibold text-gray-800"
+                />
+                <p className="text-[10px] text-gray-500 leading-tight">Default: 4. Caps invigilation sessions per faculty member per semester.</p>
+              </div>
+
+              <div className="p-3.5 rounded-2xl border border-gray-100 bg-gray-50/50 space-y-1.5">
+                <div className="flex items-center justify-between">
+                  <label className="text-xs font-bold text-gray-800">Max Wing Duties per Faculty</label>
+                  <span className="text-[10px] font-bold text-gray-400">Safe: 1–10</span>
+                </div>
+                <input
+                  type="number"
+                  min={1}
+                  max={10}
+                  value={rules.max_wing_duties_per_faculty}
+                  onChange={e => setRules({ ...rules, max_wing_duties_per_faculty: parseInt(e.target.value, 10) || 1 })}
+                  className="w-full rounded-xl border border-gray-200 px-3 py-1.5 text-sm bg-white font-semibold text-gray-800"
+                />
+                <p className="text-[10px] text-gray-500 leading-tight">Default: 2. Max corridor surveillance shifts per faculty member per week.</p>
+              </div>
+            </div>
+
+            {/* Behavioral Policies & Engine Toggles */}
+            <div className="space-y-3 pt-2">
+              <div className="flex items-center justify-between p-3.5 rounded-2xl border border-gray-100 bg-white">
+                <div>
+                  <h4 className="text-xs font-bold text-gray-900">Prefer Free Period Immediately Before Break (+50 Pts)</h4>
+                  <p className="text-[11px] text-gray-500">Gives high ranking priority to teachers with no lecture scheduled right before break start.</p>
+                </div>
+                <ToggleSwitch
+                  checked={rules.prefer_free_before_break}
+                  onChange={val => setRules({ ...rules, prefer_free_before_break: val })}
+                  disabled={!isSystemAdmin && !isSuperAdmin}
+                />
+              </div>
+
+              <div className="flex items-center justify-between p-3.5 rounded-2xl border border-gray-100 bg-white">
+                <div>
+                  <h4 className="text-xs font-bold text-gray-900">Autonomous Duty Assignment Engine</h4>
+                  <p className="text-[11px] text-gray-500">Enables automatic evaluation and assignment of eligible staff for scheduled break periods.</p>
+                </div>
+                <ToggleSwitch
+                  checked={rules.auto_assignment_enabled}
+                  onChange={val => setRules({ ...rules, auto_assignment_enabled: val })}
+                  disabled={!isSystemAdmin && !isSuperAdmin}
+                />
+              </div>
+
+              <div className="flex items-center justify-between p-3.5 rounded-2xl border border-gray-100 bg-white">
+                <div>
+                  <h4 className="text-xs font-bold text-gray-900">Autonomous Replacement on Unavailability</h4>
+                  <p className="text-[11px] text-gray-500">Automatically re-evaluates candidate pool and finds a replacement if an assigned teacher leaves or checks out.</p>
+                </div>
+                <ToggleSwitch
+                  checked={rules.auto_replacement_enabled}
+                  onChange={val => setRules({ ...rules, auto_replacement_enabled: val })}
+                  disabled={!isSystemAdmin && !isSuperAdmin}
+                />
+              </div>
+
+              <div className="flex items-center justify-between p-3.5 rounded-2xl border border-gray-100 bg-white">
+                <div>
+                  <h4 className="text-xs font-bold text-gray-900">Allow Cross-Department Campus Duties</h4>
+                  <p className="text-[11px] text-gray-500">Permits break and wing duty pools to draw qualified faculty across departmental boundaries.</p>
+                </div>
+                <ToggleSwitch
+                  checked={rules.allow_cross_department}
+                  onChange={val => setRules({ ...rules, allow_cross_department: val })}
+                  disabled={!isSystemAdmin && !isSuperAdmin}
+                />
+              </div>
+            </div>
+
+            {/* Conflict & Lock Policies */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-1">
+              <div>
+                <label className={labelCls}>Duty Conflict Policy</label>
+                <select
+                  value={rules.duty_conflict_policy}
+                  onChange={e => setRules({ ...rules, duty_conflict_policy: e.target.value })}
+                  className={inputCls}
+                  disabled={!isSystemAdmin && !isSuperAdmin}
+                >
+                  <option value="strict">Strict (Zero overlap with classes, substitutions, or other duties)</option>
+                  <option value="flexible">Flexible (Issue warnings, allow administrative override)</option>
+                </select>
+              </div>
+
+              <div>
+                <label className={labelCls}>Assignment Lock Behavior</label>
+                <select
+                  value={rules.lock_behavior}
+                  onChange={e => setRules({ ...rules, lock_behavior: e.target.value })}
+                  className={inputCls}
+                  disabled={!isSystemAdmin && !isSuperAdmin}
+                >
+                  <option value="protect_locked">Protect Locked (Engine never touches locked duties)</option>
+                  <option value="allow_admin_override">Allow Admin Override (Requires explicit unlock prompt)</option>
+                </select>
+              </div>
+            </div>
+
+            <div className="pt-2">
+              <button
+                type="submit"
+                disabled={saving || (!isSystemAdmin && !isSuperAdmin)}
+                className={`${btnPrimary} w-full`}
+              >
+                Save & Preview Impact
+              </button>
+            </div>
+          </>
+        )}
+      </form>
+
+      {/* Rule Change Impact Preview Modal */}
+      <Modal
+        isOpen={impactModalOpen}
+        onClose={() => setImpactModalOpen(false)}
+        title="Rule Change Impact Assessment"
+      >
+        <div className="space-y-4">
+          <div className="p-3.5 bg-amber-50 border border-amber-200 rounded-2xl flex items-start gap-3">
+            <AlertTriangleIcon className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
+            <div className="text-xs text-amber-900 leading-snug">
+              <span className="font-bold">Important Impact Preview:</span> You are updating {impactChanges.length} institutional rule(s). Review the operational consequences below before confirming.
+            </div>
+          </div>
+
+          <div className="space-y-3 max-h-60 overflow-y-auto pr-1">
+            {impactChanges.map((change, idx) => (
+              <div key={idx} className="p-3 rounded-2xl border border-gray-100 bg-gray-50/60 space-y-1">
+                <div className="flex items-center justify-between text-xs font-bold text-gray-900">
+                  <span>{change.label}</span>
+                  <span className="font-mono text-primary-700 bg-primary-50 px-2 py-0.5 rounded-lg border border-primary-100">
+                    {change.oldVal} → {change.newVal}
+                  </span>
+                </div>
+                <p className="text-[11px] text-gray-600">
+                  <span className="font-semibold text-gray-700">Affects:</span> {change.affects}
+                </p>
+                <p className="text-[11px] text-gray-500">
+                  <span className="font-semibold text-gray-700">Consequence:</span> {change.consequence}
+                </p>
+              </div>
+            ))}
+          </div>
+
+          <div className="p-3 rounded-2xl border border-blue-100 bg-blue-50/50 text-[11px] text-blue-900 space-y-1 font-medium">
+            <div className="font-bold text-blue-950 flex items-center gap-1.5">
+              <CheckCircleIcon className="w-4 h-4 text-blue-600" />
+              Safety Guarantees
+            </div>
+            <ul className="list-disc list-inside space-y-0.5 text-blue-800">
+              <li><span className="font-semibold">Existing locked assignments</span> will remain strictly protected and unchanged.</li>
+              <li><span className="font-semibold">Manual overrides</span> will remain protected with audit trails intact.</li>
+              <li><span className="font-semibold">Future & unlocked automatic assignments</span> will recalculate using these updated limits.</li>
+            </ul>
+          </div>
+
+          <div className="flex items-center justify-end gap-3 pt-2">
+            <button
+              type="button"
+              onClick={() => setImpactModalOpen(false)}
+              className={btnSecondary}
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              onClick={handleConfirmSave}
+              disabled={saving}
+              className={btnPrimary}
+            >
+              {saving ? 'Applying…' : 'Confirm & Apply Rules'}
+            </button>
+          </div>
+        </div>
+      </Modal>
     </SettingsSection>
   )
 }
@@ -1539,6 +1998,10 @@ export default function AdminSettings() {
 
       {isSystemAdmin && activeDepartmentId === null && (
         <DryRunPanel />
+      )}
+
+      {(isSuperAdmin || isSystemAdmin) && (
+        <CampusDutyRulesPanel isSuperAdmin={isSuperAdmin} isSystemAdmin={isSystemAdmin} />
       )}
 
       <TeachersModeSettings isSuperAdmin={isSuperAdmin} campusMode={modeConfig.mode} />

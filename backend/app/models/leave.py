@@ -49,8 +49,10 @@ class LeaveRequest(Base):
     # because "how close to class was this submitted" should reflect the
     # moment of submission even if someone looks at the record days after.
     is_emergency = Column(Boolean, default=False, nullable=False)
+    proposed_substitute_id = Column(Integer, ForeignKey("users.id", ondelete="SET NULL"), nullable=True, index=True)
 
     teacher = relationship("User", back_populates="leave_requests", foreign_keys=[teacher_id])
+    proposed_substitute = relationship("User", foreign_keys=[proposed_substitute_id])
     alter_assignment = relationship("AlterAssignment", back_populates="leave_request", uselist=False)
     credit_transactions = relationship("CreditTransaction", back_populates="related_leave")
 
