@@ -190,7 +190,7 @@ def get_slot_candidates(
     from app.core.timezone import is_substitution_expired
     from app.models.user import Role
     if is_substitution_expired(date):
-        raise HTTPException(status_code=400, detail="Cannot find candidates for an expired substitution date")
+        return []
     
     target_teacher_id = current_user.id
     if current_user.role != Role.teacher:
