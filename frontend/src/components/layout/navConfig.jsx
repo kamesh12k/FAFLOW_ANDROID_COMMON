@@ -44,6 +44,7 @@ export const ADMIN_NAV = [
       { to: '/admin/subjects', label: 'Subjects', icon: <BookIcon /> },
       { to: '/admin/classes', label: 'Classes', icon: <UsersIcon /> },
       { to: '/admin/rooms', label: 'Rooms & Labs', icon: <DoorIcon /> },
+      { to: '/admin/campus-structure', label: 'Campus Builder', icon: <DoorIcon /> },
     ],
   },
 ]
@@ -98,6 +99,7 @@ export const SYSTEM_ADMIN_NAV = [
       { to: '/admin/biometrics', label: 'Biometrics & Face Profiles', icon: <BiometricIcon /> },
       { to: '/admin/attendance', label: 'Live Attendance', icon: <AttendanceNavIcon /> },
       { to: '/admin/duties', label: 'Campus Duties', icon: <DoorIcon /> },
+      { to: '/admin/campus-structure', label: 'Campus Builder', icon: <DoorIcon /> },
     ],
   },
   {
@@ -157,6 +159,7 @@ export const PRINCIPAL_NAV = [
       { to: '/principal/student-attendance', label: 'Student Attendance', icon: <UsersIcon /> },
       { to: '/principal/attendance', label: 'Faculty Attendance', icon: <AttendanceNavIcon /> },
       { to: '/principal/duties', label: 'Campus Duties', icon: <DoorIcon /> },
+      { to: '/principal/campus-structure', label: 'Campus Structure', icon: <DoorIcon /> },
       { to: '/principal/class-timetable', label: 'Classwise Timetable', icon: <CalIcon /> },
     ],
   },

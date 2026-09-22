@@ -378,6 +378,43 @@ export const intelligenceApi = {
   acknowledgeEvent: (id) => api.patch(`/intelligence/events/${id}/acknowledge`),
 }
 
+export const campusStructureApi = {
+  // Tree & Dashboard
+  getTree: () => api.get('/campus-structure/tree'),
+  getMetrics: () => api.get('/campus-structure/metrics'),
+  search: (q) => api.get('/campus-structure/search', { params: { q } }),
+
+  // Blocks
+  listBlocks: (activeOnly = true) => api.get('/campus-structure/blocks', { params: { is_active_only: activeOnly } }),
+  createBlock: (data) => api.post('/campus-structure/blocks', data),
+  updateBlock: (id, data) => api.put(`/campus-structure/blocks/${id}`, data),
+  deleteBlock: (id) => api.delete(`/campus-structure/blocks/${id}`),
+  duplicateBlock: (id, data) => api.post(`/campus-structure/blocks/${id}/duplicate`, data),
+
+  // Floors
+  listFloors: (blockId) => api.get(`/campus-structure/blocks/${blockId}/floors`),
+  createFloor: (data) => api.post('/campus-structure/floors', data),
+
+  // Room Generation & Assignment
+  previewRooms: (data) => api.post('/campus-structure/preview-rooms', data),
+  generateRooms: (data) => api.post('/campus-structure/generate-rooms', data),
+  smartAutofill: (data) => api.post('/campus-structure/smart-autofill', data),
+  bulkAssign: (data) => api.post('/campus-structure/rooms/bulk-assign', data),
+
+  // Export / Import
+  exportCsv: () => api.get('/campus-structure/export', { responseType: 'blob' }),
+  validateImport: (file) => {
+    const fd = new FormData()
+    fd.append('file', file)
+    return api.post('/campus-structure/import/validate', fd, { headers: { 'Content-Type': 'multipart/form-data' } })
+  },
+  commitImport: (file) => {
+    const fd = new FormData()
+    fd.append('file', file)
+    return api.post('/campus-structure/import/commit', fd, { headers: { 'Content-Type': 'multipart/form-data' } })
+  },
+}
+
 export const campusDutiesApi = {
   getMyDuties: (params) => api.get('/campus-duties/my', { params }),
   listDuties: (params) => api.get('/campus-duties', { params }),

@@ -45,6 +45,7 @@ const AdminBiometrics = lazy(() => import('./pages/admin/Biometrics'))
 const AdminAttendance = lazy(() => import('./pages/admin/Attendance'))
 const DutyManagement = lazy(() => import('./pages/admin/DutyManagement'))
 const GovernanceRules = lazy(() => import('./pages/admin/GovernanceRules'))
+const CampusStructureBuilder = lazy(() => import('./pages/admin/CampusStructureBuilder'))
 
 // Principal pages (lazy loaded)
 const PrincipalDashboard = lazy(() => import('./pages/admin/PrincipalDashboard'))
@@ -142,6 +143,7 @@ export default function App() {
                 <Route path="/admin/resource-availability" element={<ResourceAvailability />} />
                 <Route path="/admin/today-substitutions" element={<TodaySubstitutions />} />
                 <Route path="/admin/duties" element={<DutyManagement />} />
+                <Route path="/admin/campus-structure" element={<CampusStructureBuilder />} />
                 <Route path="/admin/settings" element={<AdminSettings />} />
                 <Route path="/admin/backup" element={<BackupRestore />} />
 
@@ -181,6 +183,7 @@ export default function App() {
                 <Route path="/principal/student-attendance" element={<PrincipalStudentAttendance />} />
                 <Route path="/principal/class-timetable" element={<ClasswiseTimetable />} />
                 <Route path="/principal/duties" element={<DutyManagement readOnly={true} />} />
+                <Route path="/principal/campus-structure" element={<CampusStructureBuilder readOnly={true} />} />
               </Route>
             </Route>
           </Route>
