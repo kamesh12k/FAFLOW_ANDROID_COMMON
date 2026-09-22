@@ -17,6 +17,26 @@ const ROOM_TYPE_COLORS = {
   other:        { bg: 'bg-gray-50',   text: 'text-gray-600',   border: 'border-gray-200' },
 }
 
+function formatError(e, fallback = 'Operation failed') {
+  if (!e) return ''
+  const detail = e?.response?.data?.detail ?? e?.message ?? e
+  if (typeof detail === 'string') return detail
+  if (Array.isArray(detail)) {
+    return detail.map(d => {
+      if (typeof d === 'string') return d
+      if (d && typeof d === 'object') {
+        const field = Array.isArray(d.loc) ? d.loc.slice(-1)[0] : (d.loc || '')
+        return field ? `${field}: ${d.msg || JSON.stringify(d)}` : (d.msg || JSON.stringify(d))
+      }
+      return String(d)
+    }).join('; ')
+  }
+  if (typeof detail === 'object' && detail !== null) {
+    return detail.msg || detail.message || JSON.stringify(detail)
+  }
+  return String(detail) || fallback
+}
+
 function RoomTypeBadge({ type }) {
   const c = ROOM_TYPE_COLORS[type] || ROOM_TYPE_COLORS.other
   const label = (type || 'other').replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())
@@ -190,21 +210,37 @@ function AutoFillWizard({ onClose, onSuccess }) {
     setSaving(true)
     setError('')
     try {
+      const numFloors = Math.max(1, parseInt(form.num_floors) || 1)
+      const roomsPerFloor = Math.max(1, parseInt(form.rooms_per_floor) || 10)
+      const startNum = parseInt(form.start_number) || 1
+      const capacity = parseInt(form.room_capacity) || 60
+      const pattern = form.room_number_pattern || '{block_prefix}{floor_code}{number:02d}'
+      const blockCode = (form.block_prefix || form.block_name.replace(/[^a-zA-Z0-9]/g, '').slice(0, 4) || 'BLK').toUpperCase()
+
+      const floorConfigs = []
+      for (let f = 0; f < numFloors; f++) {
+        const floorName = f === 0 ? 'Ground Floor' : (f === 1 ? 'First Floor' : (f === 2 ? 'Second Floor' : (f === 3 ? 'Third Floor' : `Floor ${f}`)))
+        floorConfigs.push({
+          floor_number: f,
+          floor_name: floorName,
+          room_count: roomsPerFloor,
+          start_num: startNum,
+          pattern: pattern,
+          room_type: form.room_type || 'classroom',
+          capacity: capacity,
+        })
+      }
+
       const res = await campusStructureApi.smartAutofill({
-        block_name: form.block_name,
-        block_prefix: form.block_prefix,
-        num_floors: parseInt(form.num_floors),
-        rooms_per_floor: parseInt(form.rooms_per_floor),
-        room_number_pattern: form.room_number_pattern,
-        room_type: form.room_type,
-        room_capacity: parseInt(form.room_capacity),
-        pad_digits: parseInt(form.pad_digits),
-        start_number: parseInt(form.start_number),
+        block_name: form.block_name.trim(),
+        block_code: blockCode,
+        description: `Auto-generated ${numFloors}-floor block`,
+        floors: floorConfigs,
       })
       setResult(res.data)
       setStep(3)
     } catch (e) {
-      setError(e?.response?.data?.detail || 'Auto-fill failed. Please try again.')
+      setError(formatError(e, 'Auto-fill failed. Please try again.'))
     } finally {
       setSaving(false)
     }
@@ -335,8 +371,8 @@ function AutoFillWizard({ onClose, onSuccess }) {
             <div className="text-4xl mb-2">🎉</div>
             <p className="font-black text-emerald-700 text-lg">Block Created Successfully!</p>
             <p className="text-sm text-emerald-600 mt-1">
-              {result.floors_created} floor{result.floors_created !== 1 ? 's' : ''} ·{' '}
-              {result.rooms_created} room{result.rooms_created !== 1 ? 's' : ''} created
+              {(result.total_floors_created ?? result.floors_created ?? 0)} floor{(result.total_floors_created ?? result.floors_created ?? 0) !== 1 ? 's' : ''} ·{' '}
+              {(result.total_rooms_created ?? result.rooms_created ?? 0)} room{(result.total_rooms_created ?? result.rooms_created ?? 0) !== 1 ? 's' : ''} created
             </p>
           </div>
           <button onClick={() => { onSuccess(); onClose() }}
@@ -381,18 +417,20 @@ function BulkRoomGenerator({ block, onClose, onSuccess }) {
     setPreviewing(true)
     setError('')
     try {
+      const count = Math.max(1, (parseInt(form.end_num) || 10) - (parseInt(form.start_num) || 1) + 1)
       const res = await campusStructureApi.previewRooms({
+        block_id: block?.id,
         floor_id: parseInt(form.floor_id),
-        room_number_pattern: form.room_number_pattern,
-        start_num: parseInt(form.start_num),
-        end_num: parseInt(form.end_num),
-        pad_digits: parseInt(form.pad_digits),
-        room_type: form.room_type,
-        capacity: parseInt(form.capacity),
+        pattern: form.room_number_pattern || 'Room {n}',
+        start_num: parseInt(form.start_num) || 1,
+        count: count,
+        pad_digits: parseInt(form.pad_digits) || 0,
+        room_type: form.room_type || 'classroom',
+        capacity: parseInt(form.capacity) || 60,
       })
       setPreview(res.data)
     } catch (e) {
-      setError(e?.response?.data?.detail || 'Preview failed')
+      setError(formatError(e, 'Preview failed'))
     } finally {
       setPreviewing(false)
     }
@@ -402,19 +440,21 @@ function BulkRoomGenerator({ block, onClose, onSuccess }) {
     setGenerating(true)
     setError('')
     try {
+      const count = Math.max(1, (parseInt(form.end_num) || 10) - (parseInt(form.start_num) || 1) + 1)
       await campusStructureApi.generateRooms({
+        block_id: block?.id,
         floor_id: parseInt(form.floor_id),
-        room_number_pattern: form.room_number_pattern,
-        start_num: parseInt(form.start_num),
-        end_num: parseInt(form.end_num),
-        pad_digits: parseInt(form.pad_digits),
-        room_type: form.room_type,
-        capacity: parseInt(form.capacity),
+        pattern: form.room_number_pattern || 'Room {n}',
+        start_num: parseInt(form.start_num) || 1,
+        count: count,
+        pad_digits: parseInt(form.pad_digits) || 2,
+        room_type: form.room_type || 'classroom',
+        capacity: parseInt(form.capacity) || 60,
       })
       onSuccess()
       onClose()
     } catch (e) {
-      setError(e?.response?.data?.detail || 'Generation failed')
+      setError(formatError(e, 'Generation failed'))
     } finally {
       setGenerating(false)
     }
@@ -522,11 +562,16 @@ function AddFloorModal({ block, onClose, onSuccess }) {
     setSaving(true)
     setError('')
     try {
-      await campusStructureApi.createFloor({ block_id: block.id, ...form, floor_number: parseInt(form.floor_number) })
+      await campusStructureApi.createFloor({
+        block_id: block.id,
+        floor_name: form.floor_name.trim(),
+        floor_number: parseInt(form.floor_number) || 0,
+        display_order: parseInt(form.floor_number) || 0,
+      })
       onSuccess()
       onClose()
     } catch (e) {
-      setError(e?.response?.data?.detail || 'Failed to add floor')
+      setError(formatError(e, 'Failed to add floor'))
     } finally {
       setSaving(false)
     }
@@ -577,7 +622,7 @@ function BlockModal({ block, onClose, onSuccess }) {
   const isEdit = !!block
   const [form, setForm] = useState({
     name: block?.name || '',
-    prefix: block?.prefix || '',
+    prefix: block?.code || block?.prefix || '',
     color_hex: block?.color_hex || BLOCK_COLORS[0],
     description: block?.description || '',
     is_active: block?.is_active ?? true,
@@ -591,15 +636,22 @@ function BlockModal({ block, onClose, onSuccess }) {
     setSaving(true)
     setError('')
     try {
+      const code = (form.prefix || form.name.replace(/[^a-zA-Z0-9]/g, '').slice(0, 4) || 'BLK').toUpperCase()
+      const payload = {
+        name: form.name.trim(),
+        code: code,
+        description: form.description || null,
+        is_active: form.is_active ?? true,
+      }
       if (isEdit) {
-        await campusStructureApi.updateBlock(block.id, form)
+        await campusStructureApi.updateBlock(block.id, payload)
       } else {
-        await campusStructureApi.createBlock(form)
+        await campusStructureApi.createBlock({ ...payload, floors_count: 1 })
       }
       onSuccess()
       onClose()
     } catch (e) {
-      setError(e?.response?.data?.detail || 'Failed to save block')
+      setError(formatError(e, 'Failed to save block'))
     } finally {
       setSaving(false)
     }
@@ -742,7 +794,7 @@ export default function CampusStructureBuilder({ readOnly = false }) {
       setTree(treeRes.data)
       setMetrics(metricsRes.data)
     } catch (e) {
-      setError(e?.response?.data?.detail || 'Failed to load campus structure')
+      setError(formatError(e, 'Failed to load campus structure'))
     } finally {
       setLoading(false)
     }
@@ -758,7 +810,7 @@ export default function CampusStructureBuilder({ readOnly = false }) {
       setDeleteConfirm(null)
       fetchData()
     } catch (e) {
-      alert(e?.response?.data?.detail || 'Failed to delete block')
+      alert(formatError(e, 'Failed to delete block'))
     } finally {
       setDeleting(false)
     }
@@ -768,10 +820,14 @@ export default function CampusStructureBuilder({ readOnly = false }) {
     const newName = prompt(`Duplicate "${block.name}"\nEnter name for the new block:`, `${block.name} (Copy)`)
     if (!newName) return
     try {
-      await campusStructureApi.duplicateBlock(block.id, { new_name: newName })
+      const newCode = (block.code ? `${block.code}_COPY` : `${block.name.slice(0, 3)}_CPY`).toUpperCase().slice(0, 50)
+      await campusStructureApi.duplicateBlock(block.id, {
+        new_block_name: newName.trim(),
+        new_block_code: newCode,
+      })
       fetchData()
     } catch (e) {
-      alert(e?.response?.data?.detail || 'Failed to duplicate block')
+      alert(formatError(e, 'Failed to duplicate block'))
     }
   }
 
@@ -807,7 +863,7 @@ export default function CampusStructureBuilder({ readOnly = false }) {
       setImportResult({ type: 'success', data: commitRes.data })
       fetchData()
     } catch (e) {
-      setImportResult({ type: 'error', message: e?.response?.data?.detail || 'Import failed' })
+      setImportResult({ type: 'error', message: formatError(e, 'Import failed') })
     } finally {
       e.target.value = ''
     }
