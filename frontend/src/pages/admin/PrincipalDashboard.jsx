@@ -26,12 +26,113 @@ const DUTY_TYPE_COLORS = {
   exam:       { bg: 'bg-amber-50',  text: 'text-amber-700',  border: 'border-amber-200',  dot: 'bg-amber-500' },
 }
 
-// ─── Autonomous Duty Control Panel ────────────────────────────────────────────
-function AutonomousDutyPanel() {
+// ─── 6-Day-Order Schedule Tab (full replacement) ─────────────────────────────
+//
+// Combines:
+//  • Autonomous activation toggle (generates next 6 day-orders in one click)
+//  • Live per-day-order schedule view that mirrors existing DutyManagement UX
+//  • Per-duty card with assigned teacher, lock status, override button
+//
+
+function DutyCard({ duty, onAutoAssign, onOverride, isLoading }) {
+  const dt = (duty.duty_type || '').toLowerCase()
+  const c = DUTY_TYPE_COLORS[dt.includes('discipline') ? 'discipline' : dt.includes('wing') ? 'wing' : 'exam']
+    || DUTY_TYPE_COLORS.discipline
+  const assignedTeachers = (duty.assignments || []).filter(a =>
+    a.status === 'assigned' || a.status === 'proposed'
+  )
+  const isFull = assignedTeachers.length >= (duty.required_teachers || 1)
+
+  return (
+    <div className={`border ${c.border} ${c.bg} rounded-xl px-3 py-2.5 flex items-start gap-3`}>
+      <div className={`w-2 h-2 rounded-full ${c.dot} mt-1.5 shrink-0`} />
+      <div className="flex-1 min-w-0">
+        <div className="flex items-start justify-between gap-2">
+          <p className={`font-bold text-xs ${c.text} leading-tight`}>{duty.title}</p>
+          <div className="flex items-center gap-1 shrink-0">
+            {duty.is_locked && <span className="text-[9px] bg-slate-100 text-slate-500 px-1 rounded font-bold">🔒</span>}
+            {!duty.is_locked && !isFull && (
+              <button
+                onClick={() => onAutoAssign(duty.id)}
+                disabled={isLoading}
+                className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-indigo-600 text-white hover:bg-indigo-700 transition-colors"
+              >
+                Auto
+              </button>
+            )}
+          </div>
+        </div>
+        <div className="mt-1 text-[10px] text-slate-500 space-y-0.5">
+          {duty.location_hierarchy && <p className="truncate">📍 {duty.location_hierarchy}</p>}
+          {duty.break_period_name && <p>⏱ {duty.break_period_name}</p>}
+          {assignedTeachers.length === 0 ? (
+            <p className="text-amber-600 font-semibold">⚠️ Unassigned ({duty.required_teachers} needed)</p>
+          ) : (
+            assignedTeachers.map(a => (
+              <div key={a.id} className="flex items-center gap-1">
+                <span className="text-emerald-700 font-semibold">👤 {a.teacher_name}</span>
+                {a.is_manual && <span className="text-slate-400">(manual)</span>}
+              </div>
+            ))
+          )}
+          {assignedTeachers.length > 0 && assignedTeachers.length < (duty.required_teachers || 1) && (
+            <p className="text-amber-500 font-semibold">+{(duty.required_teachers || 1) - assignedTeachers.length} more needed</p>
+          )}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function SixDayOrderSchedule() {
   const [activating, setActivating] = useState(false)
-  const [result, setResult] = useState(null)
+  const [startDate, setStartDate] = useState(today())
+  const [numDayOrders, setNumDayOrders] = useState(6)
+  const [result, setResult] = useState(null)   // activation summary
   const [error, setError] = useState('')
-  const [targetDate, setTargetDate] = useState(today())
+
+  // Schedule view state
+  const [duties, setDuties] = useState([])       // flat list of all duties
+  const [loadingDuties, setLoadingDuties] = useState(false)
+  const [scheduleFrom, setScheduleFrom] = useState(null)
+  const [scheduleTo, setScheduleTo] = useState(null)
+  const [selectedDayIdx, setSelectedDayIdx] = useState(0)  // tab across day-orders
+  const [filterType, setFilterType] = useState('')
+  const [actionLoading, setActionLoading] = useState(false)
+
+  // Load schedule across date range
+  const loadSchedule = useCallback(async (from, to) => {
+    if (!from || !to) return
+    setLoadingDuties(true)
+    try {
+      const res = await campusDutiesApi.listDuties({ date_from: from, date_to: to })
+      setDuties(res.data?.items || res.data || [])
+    } catch {
+      setDuties([])
+    } finally {
+      setLoadingDuties(false)
+    }
+  }, [])
+
+  // Refresh when schedule range changes
+  useEffect(() => {
+    if (scheduleFrom && scheduleTo) loadSchedule(scheduleFrom, scheduleTo)
+  }, [scheduleFrom, scheduleTo, loadSchedule])
+
+  // Also load a default window on mount
+  useEffect(() => {
+    const from = today()
+    // Compute 6 working days forward
+    let cursor = new Date(from)
+    const dates = []
+    while (dates.length < 6) {
+      if (cursor.getDay() !== 0) dates.push(cursor.toISOString().slice(0, 10))
+      cursor.setDate(cursor.getDate() + 1)
+    }
+    const to = dates[dates.length - 1]
+    setScheduleFrom(from)
+    setScheduleTo(to)
+  }, [])
 
   const activate = async (mode) => {
     setActivating(true)
@@ -39,12 +140,20 @@ function AutonomousDutyPanel() {
     setResult(null)
     try {
       const payload = {
-        target_date: targetDate,
+        start_date: startDate,
         activate_discipline: mode === 'discipline' || mode === 'both',
         activate_wing: mode === 'wing' || mode === 'both',
+        num_day_orders: numDayOrders,
       }
       const res = await campusDutiesApi.autonomousActivate(payload)
-      setResult({ mode, ...res.data })
+      const data = res.data
+      setResult({ mode, ...data })
+      // Update the schedule window from response
+      if (data.schedule_from && data.schedule_to) {
+        setScheduleFrom(data.schedule_from)
+        setScheduleTo(data.schedule_to)
+        setSelectedDayIdx(0)
+      }
     } catch (e) {
       const detail = e?.response?.data?.detail
       setError(typeof detail === 'string' ? detail : 'Activation failed — check backend logs.')
@@ -53,121 +162,296 @@ function AutonomousDutyPanel() {
     }
   }
 
+  const handleAutoAssign = async (dutyId) => {
+    setActionLoading(true)
+    try {
+      await campusDutiesApi.autoAssign(dutyId)
+      if (scheduleFrom && scheduleTo) loadSchedule(scheduleFrom, scheduleTo)
+    } catch (e) {
+      alert(e?.response?.data?.detail || 'Auto-assign failed')
+    } finally {
+      setActionLoading(false)
+    }
+  }
+
+  // Group duties by date (for day-order tabs)
+  const dateGroups = {}
+  duties.forEach(d => {
+    if (!dateGroups[d.duty_date]) dateGroups[d.duty_date] = []
+    dateGroups[d.duty_date].push(d)
+  })
+  const sortedDates = Object.keys(dateGroups).sort()
+
+  // Get per-day-order from result
+  const perDayOrder = result?.per_day_order || []
+
+  // Duties for the selected day-tab
+  const selectedDate = sortedDates[selectedDayIdx]
+  const selectedDuties = selectedDate
+    ? (dateGroups[selectedDate] || []).filter(d => {
+        if (!filterType) return true
+        return (d.duty_type || '').toLowerCase().includes(filterType)
+      })
+    : []
+
+  const disciplineCount = selectedDuties.filter(d => (d.duty_type||'').toLowerCase().includes('discipline')).length
+  const wingCount = selectedDuties.filter(d => (d.duty_type||'').toLowerCase().includes('wing')).length
+  const unfilledCount = selectedDuties.filter(d => {
+    const assigned = (d.assignments||[]).filter(a => a.status==='assigned'||a.status==='proposed').length
+    return assigned < (d.required_teachers||1)
+  }).length
+
   return (
-    <div className="space-y-4">
-      {/* Date picker — single input */}
-      <div className="flex items-center gap-3 flex-wrap">
+    <div className="space-y-5">
+      {/* ── Activation Panel ── */}
+      <div className="bg-gradient-to-br from-slate-900 to-indigo-950 border border-slate-800 rounded-2xl p-5 space-y-4">
         <div>
-          <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-wide mb-1">Duty Date</label>
-          <input
-            type="date"
-            value={targetDate}
-            min={today()}
-            onChange={e => setTargetDate(e.target.value)}
-            className="border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-primary-400"
-          />
+          <h2 className="text-base font-black text-white flex items-center gap-2">
+            ⚡ Autonomous Duty Schedule Generator
+          </h2>
+          <p className="text-xs text-slate-400 mt-0.5">
+            One click — system generates a complete duty schedule for the next{' '}
+            <span className="text-indigo-300 font-bold">{numDayOrders} day orders</span> and assigns
+            best available staff automatically.
+          </p>
         </div>
-        <p className="text-xs text-slate-400 font-semibold mt-4">
-          Press a button below — system picks available staff automatically, no manual selection needed.
-        </p>
-      </div>
 
-      {/* 3 Big Action Buttons */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-        <button
-          onClick={() => activate('discipline')}
-          disabled={activating}
-          className="relative flex flex-col items-center gap-2 p-5 rounded-2xl bg-gradient-to-br from-violet-600 to-purple-700 text-white shadow-lg hover:shadow-xl hover:from-violet-700 hover:to-purple-800 transition-all disabled:opacity-60"
-        >
-          <span className="text-3xl">🛡️</span>
-          <span className="font-black text-sm">Activate Discipline Duty</span>
-          <span className="text-[11px] text-violet-200">Break-time corridor duty</span>
-          {activating && <span className="absolute top-2 right-3 text-xs opacity-70">●</span>}
-        </button>
-
-        <button
-          onClick={() => activate('wing')}
-          disabled={activating}
-          className="relative flex flex-col items-center gap-2 p-5 rounded-2xl bg-gradient-to-br from-blue-600 to-cyan-700 text-white shadow-lg hover:shadow-xl hover:from-blue-700 hover:to-cyan-800 transition-all disabled:opacity-60"
-        >
-          <span className="text-3xl">🏢</span>
-          <span className="font-black text-sm">Activate Wing Duty</span>
-          <span className="text-[11px] text-blue-200">Block & wing supervision</span>
-        </button>
-
-        <button
-          onClick={() => activate('both')}
-          disabled={activating}
-          className="relative flex flex-col items-center gap-2 p-5 rounded-2xl bg-gradient-to-br from-indigo-600 to-violet-700 text-white shadow-lg hover:shadow-xl hover:from-indigo-700 hover:to-violet-800 transition-all disabled:opacity-60"
-        >
-          <span className="text-3xl">⚡</span>
-          <span className="font-black text-sm">Auto-Pilot — Both</span>
-          <span className="text-[11px] text-indigo-200">Full autonomous duty setup</span>
-        </button>
-      </div>
-
-      {activating && (
-        <div className="flex items-center gap-3 p-4 bg-indigo-50 border border-indigo-200 rounded-2xl">
-          <Spinner size="sm" />
+        {/* Controls row */}
+        <div className="flex flex-wrap gap-3 items-end">
           <div>
-            <p className="font-bold text-indigo-800 text-sm">System is working…</p>
-            <p className="text-xs text-indigo-600">Evaluating timetables, leaves, availability scores — assigning staff automatically.</p>
+            <label className="block text-[10px] font-bold text-slate-400 mb-1 uppercase">Starting From</label>
+            <input
+              type="date"
+              value={startDate}
+              min={today()}
+              onChange={e => setStartDate(e.target.value)}
+              className="bg-white/10 border border-white/20 text-white rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-indigo-400"
+            />
+          </div>
+          <div>
+            <label className="block text-[10px] font-bold text-slate-400 mb-1 uppercase">Day Orders</label>
+            <select
+              value={numDayOrders}
+              onChange={e => setNumDayOrders(parseInt(e.target.value))}
+              className="bg-white/10 border border-white/20 text-white rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-indigo-400"
+            >
+              {[1,2,3,4,5,6].map(n => <option key={n} value={n}>{n} Day Order{n>1?'s':''}</option>)}
+            </select>
           </div>
         </div>
-      )}
 
-      {error && (
-        <div className="p-4 bg-rose-50 border border-rose-200 rounded-2xl text-rose-700 text-sm">
-          <p className="font-bold mb-1">⚠️ Activation Error</p>
-          <p>{error}</p>
+        {/* Big action buttons */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <button
+            onClick={() => activate('discipline')}
+            disabled={activating}
+            className="flex flex-col items-center gap-1.5 p-4 rounded-2xl bg-gradient-to-br from-violet-600 to-purple-700 text-white shadow-lg hover:from-violet-700 hover:to-purple-800 transition-all disabled:opacity-60"
+          >
+            <span className="text-2xl">🛡️</span>
+            <span className="font-black text-sm">Discipline Duty</span>
+            <span className="text-[10px] text-violet-200">Break-time corridor</span>
+          </button>
+          <button
+            onClick={() => activate('wing')}
+            disabled={activating}
+            className="flex flex-col items-center gap-1.5 p-4 rounded-2xl bg-gradient-to-br from-blue-600 to-cyan-700 text-white shadow-lg hover:from-blue-700 hover:to-cyan-800 transition-all disabled:opacity-60"
+          >
+            <span className="text-2xl">🏢</span>
+            <span className="font-black text-sm">Wing Duty</span>
+            <span className="text-[10px] text-blue-200">Block supervision</span>
+          </button>
+          <button
+            onClick={() => activate('both')}
+            disabled={activating}
+            className="flex flex-col items-center gap-1.5 p-4 rounded-2xl bg-gradient-to-br from-indigo-600 to-violet-700 text-white shadow-lg hover:from-indigo-700 hover:to-violet-800 transition-all disabled:opacity-60"
+          >
+            <span className="text-2xl">⚡</span>
+            <span className="font-black text-sm">Auto-Pilot Both</span>
+            <span className="text-[10px] text-indigo-200">Full schedule</span>
+          </button>
         </div>
-      )}
 
-      {result && (
-        <div className="p-4 bg-emerald-50 border border-emerald-200 rounded-2xl space-y-3">
+        {activating && (
+          <div className="flex items-center gap-3 p-3 bg-white/10 rounded-xl border border-white/20">
+            <Spinner size="sm" />
+            <div>
+              <p className="font-bold text-white text-sm">Generating {numDayOrders}-day-order schedule…</p>
+              <p className="text-xs text-slate-400">Checking timetables, leaves, fairness scores — assigning staff autonomously.</p>
+            </div>
+          </div>
+        )}
+
+        {error && (
+          <div className="p-3 bg-rose-900/40 border border-rose-500/30 rounded-xl text-rose-300 text-sm">
+            <p className="font-bold mb-1">⚠️ Error</p>
+            <p>{error}</p>
+          </div>
+        )}
+
+        {/* Activation result summary */}
+        {result && (
+          <div className="p-4 bg-white/10 border border-white/20 rounded-2xl space-y-3">
+            <p className="font-black text-white flex items-center gap-2">
+              <span className="text-emerald-400">✅</span>
+              Schedule Generated: {result.schedule_from} → {result.schedule_to}
+            </p>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+              <div className="bg-white/10 rounded-xl p-2.5 text-center">
+                <p className="text-xl font-black text-violet-300">{result.discipline_duties_count}</p>
+                <p className="text-[9px] text-slate-400 font-bold uppercase">Discipline</p>
+              </div>
+              <div className="bg-white/10 rounded-xl p-2.5 text-center">
+                <p className="text-xl font-black text-blue-300">{result.wing_duties_count}</p>
+                <p className="text-[9px] text-slate-400 font-bold uppercase">Wing</p>
+              </div>
+              <div className="bg-white/10 rounded-xl p-2.5 text-center">
+                <p className="text-xl font-black text-emerald-300">{result.total_assigned}</p>
+                <p className="text-[9px] text-slate-400 font-bold uppercase">Auto-Assigned</p>
+              </div>
+              <div className="bg-white/10 rounded-xl p-2.5 text-center">
+                <p className="text-xl font-black text-amber-300">{result.total_unfilled}</p>
+                <p className="text-[9px] text-slate-400 font-bold uppercase">Needs Manual</p>
+              </div>
+            </div>
+
+            {/* Per-day-order breakdown strip */}
+            {perDayOrder.length > 0 && (
+              <div className="grid grid-cols-3 sm:grid-cols-6 gap-1.5 mt-2">
+                {perDayOrder.map((d, i) => (
+                  <button
+                    key={d.date}
+                    onClick={() => { setSelectedDayIdx(i) }}
+                    className={`rounded-xl p-2 text-center border transition-all ${
+                      selectedDayIdx === i
+                        ? 'border-indigo-400 bg-indigo-600/40'
+                        : 'border-white/10 bg-white/5 hover:border-white/30'
+                    }`}
+                  >
+                    <p className="text-[10px] font-black text-white">DO {d.day_order ?? i+1}</p>
+                    <p className="text-[9px] text-slate-400">{d.date?.slice(5)}</p>
+                    <p className="text-[9px] text-emerald-400 font-bold mt-0.5">{d.assigned} ✓</p>
+                    {d.unfilled > 0 && <p className="text-[9px] text-amber-400 font-bold">{d.unfilled} ⚠</p>}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+
+      {/* ── Schedule View ── */}
+      <div className="space-y-3">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <h3 className="text-sm font-black text-slate-800">
+            📋 Duty Schedule{scheduleFrom && scheduleTo ? ` — ${scheduleFrom} to ${scheduleTo}` : ''}
+          </h3>
           <div className="flex items-center gap-2">
-            <span className="text-emerald-600 text-xl">✅</span>
-            <p className="font-black text-emerald-800">Duties Activated & Assigned</p>
+            <select
+              value={filterType}
+              onChange={e => setFilterType(e.target.value)}
+              className="border border-slate-200 rounded-xl px-2.5 py-1.5 text-xs focus:outline-none focus:border-primary-400"
+            >
+              <option value="">All Types</option>
+              <option value="discipline">🛡️ Discipline</option>
+              <option value="wing">🏢 Wing</option>
+              <option value="exam">📝 Exam</option>
+            </select>
+            <button
+              onClick={() => scheduleFrom && scheduleTo && loadSchedule(scheduleFrom, scheduleTo)}
+              className="px-2.5 py-1.5 rounded-xl border border-slate-200 text-xs font-bold text-slate-600 hover:bg-slate-50 transition-all"
+            >
+              🔄
+            </button>
           </div>
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-center">
-            {result.discipline_duties_created != null && (
-              <div className="bg-white rounded-xl p-3 border border-emerald-100">
-                <p className="text-2xl font-black text-violet-700">{result.discipline_duties_created}</p>
-                <p className="text-[10px] text-slate-500 font-bold uppercase">Discipline Duties</p>
-              </div>
-            )}
-            {result.wing_duties_created != null && (
-              <div className="bg-white rounded-xl p-3 border border-emerald-100">
-                <p className="text-2xl font-black text-blue-700">{result.wing_duties_created}</p>
-                <p className="text-[10px] text-slate-500 font-bold uppercase">Wing Duties</p>
-              </div>
-            )}
-            {result.assignments_made != null && (
-              <div className="bg-white rounded-xl p-3 border border-emerald-100">
-                <p className="text-2xl font-black text-indigo-700">{result.assignments_made}</p>
-                <p className="text-[10px] text-slate-500 font-bold uppercase">Staff Assigned</p>
-              </div>
-            )}
-            {result.skipped != null && (
-              <div className="bg-white rounded-xl p-3 border border-emerald-100">
-                <p className="text-2xl font-black text-amber-600">{result.skipped}</p>
-                <p className="text-[10px] text-slate-500 font-bold uppercase">Skipped / Manual</p>
-              </div>
-            )}
-          </div>
-          {result.message && <p className="text-xs text-emerald-700 font-semibold">{result.message}</p>}
         </div>
-      )}
+
+        {/* Day-order tabs (dates) */}
+        {sortedDates.length > 0 && (
+          <div className="flex gap-1 overflow-x-auto border-b border-slate-200 pb-0">
+            {sortedDates.map((d, i) => {
+              const count = (dateGroups[d]||[]).length
+              const unfilled = (dateGroups[d]||[]).filter(duty => {
+                const a = (duty.assignments||[]).filter(a => a.status==='assigned'||a.status==='proposed').length
+                return a < (duty.required_teachers||1)
+              }).length
+              const dayNum = i + 1
+              return (
+                <button
+                  key={d}
+                  onClick={() => setSelectedDayIdx(i)}
+                  className={`flex flex-col items-center px-3 py-2 rounded-t-xl text-xs font-bold border-b-2 transition-all whitespace-nowrap min-w-[80px] ${
+                    selectedDayIdx === i
+                      ? 'border-primary-600 text-primary-700 bg-primary-50'
+                      : 'border-transparent text-slate-500 hover:text-slate-700 hover:bg-slate-50'
+                  }`}
+                >
+                  <span>DO {dayNum}</span>
+                  <span className="font-normal text-[10px] opacity-70">{d.slice(5)}</span>
+                  <span className="text-[9px] mt-0.5">
+                    {count} duties{unfilled > 0 ? ` · ⚠️${unfilled}` : ''}
+                  </span>
+                </button>
+              )
+            })}
+          </div>
+        )}
+
+        {/* Summary bar for selected day */}
+        {selectedDate && (
+          <div className="flex gap-3 flex-wrap text-xs">
+            <span className="px-2 py-1 rounded-lg bg-violet-50 border border-violet-200 text-violet-700 font-bold">
+              🛡️ {disciplineCount} Discipline
+            </span>
+            <span className="px-2 py-1 rounded-lg bg-blue-50 border border-blue-200 text-blue-700 font-bold">
+              🏢 {wingCount} Wing
+            </span>
+            {unfilledCount > 0 && (
+              <span className="px-2 py-1 rounded-lg bg-amber-50 border border-amber-200 text-amber-700 font-bold">
+                ⚠️ {unfilledCount} Unassigned
+              </span>
+            )}
+            {unfilledCount === 0 && selectedDuties.length > 0 && (
+              <span className="px-2 py-1 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-700 font-bold">
+                ✅ Fully Assigned
+              </span>
+            )}
+          </div>
+        )}
+
+        {/* Duty cards grid */}
+        {loadingDuties ? (
+          <div className="flex justify-center py-10"><Spinner size="lg" /></div>
+        ) : sortedDates.length === 0 ? (
+          <div className="text-center py-12 border-2 border-dashed border-slate-200 rounded-2xl text-slate-400">
+            <p className="text-4xl mb-2">📋</p>
+            <p className="text-sm font-bold">No schedule generated yet</p>
+            <p className="text-xs mt-1">Press one of the Auto-Pilot buttons above to generate the 6-day-order duty schedule.</p>
+          </div>
+        ) : selectedDuties.length === 0 ? (
+          <div className="text-center py-8 text-slate-400 text-sm">No duties match the current filter.</div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+            {selectedDuties.map(duty => (
+              <DutyCard
+                key={duty.id}
+                duty={duty}
+                onAutoAssign={handleAutoAssign}
+                onOverride={() => {}}
+                isLoading={actionLoading}
+              />
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   )
 }
 
-// ─── Live Duty Roster ──────────────────────────────────────────────────────────
+// ─── Live Duty Roster (for today filter) ──────────────────────────────────────
 function DutyRoster() {
   const [duties, setDuties] = useState([])
   const [loading, setLoading] = useState(true)
   const [filterType, setFilterType] = useState('')
-  const [filterBlock, setFilterBlock] = useState('')
   const [filterDate, setFilterDate] = useState(today())
 
   const load = useCallback(async () => {
@@ -187,71 +471,50 @@ function DutyRoster() {
 
   useEffect(() => { load() }, [load])
 
-  // Blocks from duties
-  const blocks = [...new Set(duties.map(d => d.block_name).filter(Boolean))]
-
-  const visible = duties.filter(d => {
-    if (filterBlock && d.block_name !== filterBlock) return false
-    return true
-  })
-
   return (
-    <div className="space-y-4">
-      {/* Filters bar */}
+    <div className="space-y-3">
       <div className="flex flex-wrap gap-2 items-center">
         <input type="date" value={filterDate} onChange={e => setFilterDate(e.target.value)}
           className="border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-primary-400" />
         <select value={filterType} onChange={e => setFilterType(e.target.value)}
           className="border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-primary-400">
           <option value="">All Duty Types</option>
-          <option value="discipline">🛡️ Discipline</option>
-          <option value="wing">🏢 Wing</option>
-          <option value="exam">📝 Exam</option>
+          <option value="DISCIPLINE_DUTY">🛡️ Discipline</option>
+          <option value="WING_DUTY">🏢 Wing</option>
+          <option value="EXAM_DUTY">📝 Exam</option>
         </select>
-        {blocks.length > 0 && (
-          <select value={filterBlock} onChange={e => setFilterBlock(e.target.value)}
-            className="border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-primary-400">
-            <option value="">All Blocks</option>
-            {blocks.map(b => <option key={b} value={b}>{b}</option>)}
-          </select>
-        )}
-        <button onClick={load} className="px-3 py-2 rounded-xl border border-slate-200 text-xs font-bold text-slate-600 hover:bg-slate-50 transition-all">
-          🔄 Refresh
-        </button>
-        <span className="text-xs text-slate-400 font-semibold ml-auto">{visible.length} duties</span>
+        <button onClick={load} className="px-3 py-2 rounded-xl border border-slate-200 text-xs font-bold text-slate-600 hover:bg-slate-50 transition-all">🔄</button>
+        <span className="text-xs text-slate-400 font-semibold ml-auto">{duties.length} duties</span>
       </div>
 
       {loading ? (
-        <div className="flex justify-center py-10"><Spinner size="lg" /></div>
-      ) : visible.length === 0 ? (
-        <div className="text-center py-12 text-slate-400">
-          <p className="text-4xl mb-2">📋</p>
-          <p className="text-sm font-semibold">No duties found for these filters.</p>
-          <p className="text-xs mt-1">Use the Auto-Pilot buttons above to activate duties.</p>
+        <div className="flex justify-center py-8"><Spinner size="lg" /></div>
+      ) : duties.length === 0 ? (
+        <div className="text-center py-10 text-slate-400">
+          <p className="text-3xl mb-2">📋</p>
+          <p className="text-sm font-semibold">No duties for this date.</p>
+          <p className="text-xs mt-1">Generate the schedule using the Auto-Pilot buttons in the Schedule tab.</p>
         </div>
       ) : (
         <div className="space-y-2">
-          {visible.map(duty => {
-            const c = DUTY_TYPE_COLORS[duty.duty_type] || DUTY_TYPE_COLORS.discipline
+          {duties.map(duty => {
+            const dt = (duty.duty_type || '').toLowerCase()
+            const c = DUTY_TYPE_COLORS[dt.includes('discipline') ? 'discipline' : dt.includes('wing') ? 'wing' : 'exam'] || DUTY_TYPE_COLORS.discipline
+            const assignedTeachers = (duty.assignments || []).filter(a => a.status === 'assigned' || a.status === 'proposed')
             return (
-              <div key={duty.id} className={`border ${c.border} ${c.bg} rounded-xl px-4 py-3 flex items-start gap-4`}>
+              <div key={duty.id} className={`border ${c.border} ${c.bg} rounded-xl px-4 py-3 flex items-start gap-3`}>
                 <div className={`w-2.5 h-2.5 rounded-full ${c.dot} mt-1.5 shrink-0`} />
                 <div className="flex-1 min-w-0">
                   <div className="flex flex-wrap items-center gap-2">
-                    <p className={`font-black text-sm ${c.text}`}>{duty.title || duty.area_name || `${duty.duty_type} Duty`}</p>
-                    <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full border ${c.border} ${c.text}`}>
-                      {duty.duty_type?.toUpperCase()}
-                    </span>
-                    {duty.is_locked && <span className="text-[10px] bg-slate-100 text-slate-500 px-1.5 py-0.5 rounded-full border border-slate-200 font-bold">🔒 Locked</span>}
+                    <p className={`font-black text-sm ${c.text}`}>{duty.title}</p>
+                    {duty.is_locked && <span className="text-[10px] bg-slate-100 text-slate-500 px-1.5 py-0.5 rounded-full font-bold">🔒 Locked</span>}
                   </div>
                   <div className="flex flex-wrap gap-3 mt-1 text-xs text-slate-500">
-                    {duty.block_name && <span>🏢 {duty.block_name}</span>}
-                    {duty.floor_name && <span>🏬 {duty.floor_name}</span>}
-                    {duty.area_name && <span>📍 {duty.area_name}</span>}
-                    {duty.start_time && <span>⏰ {fmtTime(duty.start_time)} – {fmtTime(duty.end_time)}</span>}
-                    {duty.assigned_teacher_name
-                      ? <span className="text-emerald-700 font-semibold">👤 {duty.assigned_teacher_name}</span>
-                      : <span className="text-amber-600 font-semibold">⚠️ Unassigned</span>
+                    {duty.location_hierarchy && <span>📍 {duty.location_hierarchy}</span>}
+                    {duty.break_period_name && <span>⏱ {duty.break_period_name}</span>}
+                    {assignedTeachers.length === 0
+                      ? <span className="text-amber-600 font-semibold">⚠️ Unassigned</span>
+                      : assignedTeachers.map(a => <span key={a.id} className="text-emerald-700 font-semibold">👤 {a.teacher_name}</span>)
                     }
                   </div>
                 </div>
@@ -263,6 +526,7 @@ function DutyRoster() {
     </div>
   )
 }
+
 
 // ─── Classroom Availability Grid ──────────────────────────────────────────────
 function ClassroomAvailability() {
@@ -507,26 +771,7 @@ export default function PrincipalDashboard() {
 
       {/* ── Campus Duties ── */}
       {activeTab === 'duties' && (
-        <div className="space-y-8">
-          {/* Autonomous Activation */}
-          <div className="bg-gradient-to-br from-slate-900 to-indigo-950 border border-slate-800 rounded-2xl p-6 space-y-4">
-            <div>
-              <h2 className="text-lg font-black text-white">⚡ Autonomous Duty Activation</h2>
-              <p className="text-xs text-slate-400 mt-0.5">
-                One click — system evaluates timetables, ongoing leaves, precedence rules and assigns best available staff automatically.
-              </p>
-            </div>
-            <div className="bg-white/5 rounded-xl p-4">
-              <AutonomousDutyPanel />
-            </div>
-          </div>
-
-          {/* Live Duty Roster */}
-          <div>
-            <h2 className="text-base font-black text-slate-800 mb-3">📋 Live Duty Roster</h2>
-            <DutyRoster />
-          </div>
-        </div>
+        <SixDayOrderSchedule />
       )}
 
       {/* ── Class Availability ── */}

@@ -286,19 +286,34 @@ class DutyRulesImpactPreview(BaseModel):
 
 # ── Autonomous Duty Activation ───────────────────────────────────────────────
 
+class DayOrderSummary(BaseModel):
+    date: str
+    day_order: Optional[int] = None
+    discipline_duties: int = 0
+    wing_duties: int = 0
+    total_duties: int = 0
+    assigned: int = 0
+    unfilled: int = 0
+
+
 class AutonomousDutyActivateRequest(BaseModel):
-    target_date: Optional[date] = None
+    start_date: Optional[date] = None  # first date of the 6-day-order window
+    target_date: Optional[date] = None  # legacy alias
     activate_discipline: bool = True
     activate_wing: bool = True
+    num_day_orders: int = 6
 
 
 class AutonomousDutyActivateResponse(BaseModel):
     success: bool
-    target_date: date
+    start_date: str
+    schedule_from: str
+    schedule_to: str
+    num_day_orders: int
     discipline_duties_count: int
     wing_duties_count: int
     total_duties_active: int
     total_assigned: int
     total_unfilled: int
+    per_day_order: List[DayOrderSummary] = []
     message: str
-

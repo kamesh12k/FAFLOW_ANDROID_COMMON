@@ -493,6 +493,8 @@ class CampusDutyService:
     def list_duties(
         db: Session,
         target_date: Optional[date] = None,
+        date_from: Optional[date] = None,
+        date_to: Optional[date] = None,
         duty_type: Optional[str] = None,
         department_id: Optional[int] = None,
         teacher_id: Optional[int] = None
@@ -509,6 +511,13 @@ class CampusDutyService:
 
         if target_date:
             q = q.filter(CampusDuty.duty_date == target_date)
+        elif date_from and date_to:
+            q = q.filter(CampusDuty.duty_date >= date_from, CampusDuty.duty_date <= date_to)
+        elif date_from:
+            q = q.filter(CampusDuty.duty_date >= date_from)
+        elif date_to:
+            q = q.filter(CampusDuty.duty_date <= date_to)
+
         if duty_type:
             q = q.filter(CampusDuty.duty_type == duty_type)
         if department_id is not None:
@@ -871,41 +880,107 @@ class CampusDutyService:
         target_date: Optional[date] = None,
         activate_discipline: bool = True,
         activate_wing: bool = True,
+        num_day_orders: int = 6,
         user_id: Optional[int] = None
     ) -> Dict[str, Any]:
-        """One-click autonomous activation: generates duties and auto-assigns available staff."""
-        t_date = target_date or date.today()
-        discipline_duties = []
-        wing_duties = []
+        """
+        One-click autonomous activation:
+        Generates duties for the next `num_day_orders` working day-orders starting from
+        `target_date` and auto-assigns available staff for each day.
+        Returns a per-day-order summary and overall totals.
+        """
+        start_date = target_date or date.today()
 
-        if activate_discipline:
-            discipline_duties = CampusDutyService.generate_discipline_duties(
-                db, target_date=t_date, department_id=None, user_id=user_id
+        # Walk forward from start_date to collect `num_day_orders` working days
+        collected_dates: List[date] = []
+        cursor = start_date
+        max_search = num_day_orders * 3  # guard against infinite loops
+        for _ in range(max_search):
+            if cursor.weekday() < 6:  # Mon-Sat (0-5)
+                collected_dates.append(cursor)
+            if len(collected_dates) == num_day_orders:
+                break
+            cursor += timedelta(days=1)
+
+        per_day_order: List[Dict[str, Any]] = []
+        total_discipline = 0
+        total_wing = 0
+        total_assigned = 0
+        total_unfilled = 0
+
+        for d_date in collected_dates:
+            day_order = CampusDutyService.get_day_order_for_date(db, d_date)
+            discipline_duties: List[CampusDuty] = []
+            wing_duties: List[CampusDuty] = []
+
+            if activate_discipline:
+                discipline_duties = CampusDutyService.generate_discipline_duties(
+                    db, target_date=d_date, department_id=None, user_id=user_id
+                )
+
+            if activate_wing:
+                wing_duties = CampusDutyService.generate_wing_duties(
+                    db, target_date=d_date, department_id=None, user_id=user_id
+                )
+
+            # Auto-assign faculty for this day
+            assign_summary = CampusDutyService.auto_assign_all_for_date(
+                db, target_date=d_date, department_id=None, user_id=user_id
             )
 
-        if activate_wing:
-            wing_duties = CampusDutyService.generate_wing_duties(
-                db, target_date=t_date, department_id=None, user_id=user_id
-            )
+            day_assigned = assign_summary.get("total_assigned", 0)
+            day_unfilled = assign_summary.get("total_unfilled", 0)
 
-        # Autonomously match and assign available faculty to all duties for today
-        assign_summary = CampusDutyService.auto_assign_all_for_date(
-            db, target_date=t_date, department_id=None, user_id=user_id
-        )
+            total_discipline += len(discipline_duties)
+            total_wing += len(wing_duties)
+            total_assigned += day_assigned
+            total_unfilled += day_unfilled
 
+            per_day_order.append({
+                "date": str(d_date),
+                "day_order": day_order,
+                "discipline_duties": len(discipline_duties),
+                "wing_duties": len(wing_duties),
+                "total_duties": len(discipline_duties) + len(wing_duties),
+                "assigned": day_assigned,
+                "unfilled": day_unfilled,
+            })
+
+        # Collect the full flat duty list across all generated dates
+        date_from = collected_dates[0] if collected_dates else start_date
+        date_to = collected_dates[-1] if collected_dates else start_date
         all_duties = db.query(CampusDuty).filter(
-            CampusDuty.duty_date == t_date
-        ).order_by(CampusDuty.start_time).all()
+            CampusDuty.duty_date >= date_from,
+            CampusDuty.duty_date <= date_to
+        ).order_by(CampusDuty.duty_date, CampusDuty.start_time).all()
+
+        CampusDutyService._log_audit(db, user_id, "AUTONOMOUS_SCHEDULE_ACTIVATED", {
+            "start_date": str(start_date),
+            "num_day_orders": num_day_orders,
+            "activate_discipline": activate_discipline,
+            "activate_wing": activate_wing,
+            "total_discipline": total_discipline,
+            "total_wing": total_wing,
+            "total_assigned": total_assigned,
+        })
 
         return {
             "success": True,
-            "target_date": t_date,
-            "discipline_duties_count": len(discipline_duties),
-            "wing_duties_count": len(wing_duties),
+            "start_date": str(start_date),
+            "num_day_orders": num_day_orders,
+            "schedule_from": str(date_from),
+            "schedule_to": str(date_to),
+            "discipline_duties_count": total_discipline,
+            "wing_duties_count": total_wing,
             "total_duties_active": len(all_duties),
-            "total_assigned": assign_summary.get("total_assigned", 0),
-            "total_unfilled": assign_summary.get("total_unfilled", 0),
-            "message": f"Autonomous duty activation complete: {assign_summary.get('total_assigned', 0)} faculty assignments made across {len(all_duties)} active duties."
+            "total_assigned": total_assigned,
+            "total_unfilled": total_unfilled,
+            "per_day_order": per_day_order,
+            "message": (
+                f"6-day-order duty schedule generated: {total_discipline} discipline + "
+                f"{total_wing} wing duties across {num_day_orders} day orders. "
+                f"{total_assigned} faculty auto-assigned."
+            )
         }
 
     @staticmethod

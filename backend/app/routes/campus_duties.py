@@ -120,7 +120,10 @@ def get_dashboard_metrics(
 @router.get("", response_model=List[CampusDutyOut])
 def list_duties(
     target_date: Optional[date] = Query(None),
+    date_from: Optional[date] = Query(None),
+    date_to: Optional[date] = Query(None),
     duty_type: Optional[str] = Query(None),
+    limit: Optional[int] = Query(None),
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
     tenant_dept_id: Optional[int] = Depends(get_tenant_department_id)
@@ -128,7 +131,16 @@ def list_duties(
     dept_id = tenant_dept_id if tenant_dept_id is not None else current_user.department_id
     if current_user.role in (Role.system_admin, Role.principal, Role.governance):
         dept_id = None
-    duties = CampusDutyService.list_duties(db, target_date=target_date, duty_type=duty_type, department_id=dept_id)
+    duties = CampusDutyService.list_duties(
+        db,
+        target_date=target_date,
+        date_from=date_from,
+        date_to=date_to,
+        duty_type=duty_type,
+        department_id=dept_id
+    )
+    if limit:
+        duties = duties[:limit]
     return [CampusDutyService.to_duty_out(d) for d in duties]
 
 
@@ -246,13 +258,17 @@ def autonomous_activate_duties(
     """
     Autonomous one-click activation:
     Principal/Admin clicks 'Turn ON Discipline/Wing Duty' -> system automatically
-    generates duties for the day and auto-assigns available faculty without timetable conflicts.
+    generates a complete duty schedule for the next 6 day-orders and auto-assigns
+    available faculty without timetable conflicts or manual input.
     """
+    # Support both start_date and legacy target_date
+    start = data.start_date or data.target_date
     return CampusDutyService.autonomous_activate_duties(
         db,
-        target_date=data.target_date,
+        target_date=start,
         activate_discipline=data.activate_discipline,
         activate_wing=data.activate_wing,
+        num_day_orders=data.num_day_orders,
         user_id=current_user.id
     )
 
