@@ -272,6 +272,7 @@ class CampusStructureTreeBlockOut(BaseModel):
     department_name: Optional[str]
     is_active: bool
     floors: List[CampusStructureTreeFloorOut]
+    associated_departments: Optional[List[Dict[str, Any]]] = None
 
 
 class CampusStructureTreeOut(BaseModel):

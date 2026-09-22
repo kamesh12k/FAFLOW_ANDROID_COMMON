@@ -64,6 +64,14 @@ def require_admin(
     return current_user
 
 
+def require_admin_or_principal(
+    current_user: User = Depends(require_credentials_set)
+) -> User:
+    if current_user.role not in (Role.admin, Role.system_admin, Role.principal):
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Admin or Principal access required")
+    return current_user
+
+
 def require_super_admin(current_user: User = Depends(require_credentials_set)) -> User:
     if current_user.role == Role.system_admin:
         return current_user

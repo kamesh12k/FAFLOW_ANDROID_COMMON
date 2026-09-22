@@ -6,7 +6,7 @@ from sqlalchemy.orm import Session
 from app.database import get_db
 from app.core.dependencies import (
     get_current_user, require_teacher, require_admin,
-    require_super_admin, get_tenant_department_id
+    require_admin_or_principal, require_super_admin, get_tenant_department_id
 )
 from app.models.user import User, Role
 from app.services.campus_duty_service import CampusDutyService
@@ -18,7 +18,8 @@ from app.schemas.campus_duty import (
     DutyAutoAssignRequest, DutyManualAssignRequest,
     DutyOverrideRequest, DutyLockRequest, DutyReplaceRequest,
     DutyCandidateOut, DutyCandidatesResponse, DutyDashboardMetricsOut,
-    DutyRulesOut, DutyRulesUpdate, DutyRulesImpactPreview
+    DutyRulesOut, DutyRulesUpdate, DutyRulesImpactPreview,
+    AutonomousDutyActivateRequest, AutonomousDutyActivateResponse
 )
 
 router = APIRouter(prefix="/campus-duties", tags=["Campus Duties"])
@@ -236,10 +237,30 @@ def auto_assign_duty(
     return CampusDutyService.to_duty_out(duty)
 
 
+@router.post("/autonomous-activate", response_model=AutonomousDutyActivateResponse)
+def autonomous_activate_duties(
+    data: AutonomousDutyActivateRequest,
+    current_user: User = Depends(require_admin_or_principal),
+    db: Session = Depends(get_db)
+):
+    """
+    Autonomous one-click activation:
+    Principal/Admin clicks 'Turn ON Discipline/Wing Duty' -> system automatically
+    generates duties for the day and auto-assigns available faculty without timetable conflicts.
+    """
+    return CampusDutyService.autonomous_activate_duties(
+        db,
+        target_date=data.target_date,
+        activate_discipline=data.activate_discipline,
+        activate_wing=data.activate_wing,
+        user_id=current_user.id
+    )
+
+
 @router.post("/auto-assign-all")
 def auto_assign_all_for_date(
     data: DutyAutoAssignRequest,
-    current_user: User = Depends(require_admin),
+    current_user: User = Depends(require_admin_or_principal),
     db: Session = Depends(get_db),
     tenant_dept_id: Optional[int] = Depends(get_tenant_department_id)
 ):

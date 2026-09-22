@@ -866,6 +866,49 @@ class CampusDutyService:
         }
 
     @staticmethod
+    def autonomous_activate_duties(
+        db: Session,
+        target_date: Optional[date] = None,
+        activate_discipline: bool = True,
+        activate_wing: bool = True,
+        user_id: Optional[int] = None
+    ) -> Dict[str, Any]:
+        """One-click autonomous activation: generates duties and auto-assigns available staff."""
+        t_date = target_date or date.today()
+        discipline_duties = []
+        wing_duties = []
+
+        if activate_discipline:
+            discipline_duties = CampusDutyService.generate_discipline_duties(
+                db, target_date=t_date, department_id=None, user_id=user_id
+            )
+
+        if activate_wing:
+            wing_duties = CampusDutyService.generate_wing_duties(
+                db, target_date=t_date, department_id=None, user_id=user_id
+            )
+
+        # Autonomously match and assign available faculty to all duties for today
+        assign_summary = CampusDutyService.auto_assign_all_for_date(
+            db, target_date=t_date, department_id=None, user_id=user_id
+        )
+
+        all_duties = db.query(CampusDuty).filter(
+            CampusDuty.duty_date == t_date
+        ).order_by(CampusDuty.start_time).all()
+
+        return {
+            "success": True,
+            "target_date": t_date,
+            "discipline_duties_count": len(discipline_duties),
+            "wing_duties_count": len(wing_duties),
+            "total_duties_active": len(all_duties),
+            "total_assigned": assign_summary.get("total_assigned", 0),
+            "total_unfilled": assign_summary.get("total_unfilled", 0),
+            "message": f"Autonomous duty activation complete: {assign_summary.get('total_assigned', 0)} faculty assignments made across {len(all_duties)} active duties."
+        }
+
+    @staticmethod
     def manual_assign(db: Session, duty_id: int, teacher_id: int, user_id: Optional[int] = None, role: str = "GENERAL") -> DutyAssignment:
         duty = CampusDutyService.get_duty(db, duty_id)
 

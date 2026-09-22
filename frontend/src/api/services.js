@@ -426,6 +426,7 @@ export const campusDutiesApi = {
   generateDiscipline: (data) => api.post('/campus-duties/generate-discipline', data),
   generateWingDuties: (data) => api.post('/campus-duties/generate-wing-duties', data),
   generateExamDuties: (data) => api.post('/campus-duties/generate-exam-duties', data),
+  autonomousActivate: (data) => api.post('/campus-duties/autonomous-activate', data),
   getCandidates: (dutyId) => api.get(`/campus-duties/${dutyId}/candidates`),
   autoAssign: (dutyId) => api.post(`/campus-duties/${dutyId}/auto-assign`),
   autoAssignAll: (data) => api.post('/campus-duties/auto-assign-all', data),

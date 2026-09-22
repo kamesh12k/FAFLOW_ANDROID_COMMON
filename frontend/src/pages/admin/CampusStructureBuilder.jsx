@@ -540,6 +540,16 @@ function BlockNode({ block, onEdit, onDelete, onDuplicate, onAddFloor, onGenerat
             <p className="text-slate-400 text-[10px]">
               Prefix: {block.prefix || '—'} · {floors.length} floor{floors.length !== 1 ? 's' : ''} · {roomCount} rooms
             </p>
+            {block.associated_departments && block.associated_departments.length > 0 && (
+              <div className="flex items-center gap-1 flex-wrap mt-1">
+                <span className="text-[9px] uppercase font-bold tracking-wider text-slate-300">🏢 Departments in Block:</span>
+                {block.associated_departments.map(d => (
+                  <span key={d.id} className="px-1.5 py-0.2 rounded text-[10px] font-semibold bg-indigo-500/30 text-indigo-100 border border-indigo-400/30">
+                    {d.name} {d.code ? `(${d.code})` : ''} · {d.room_count} {d.room_count === 1 ? 'rm' : 'rms'}
+                  </span>
+                ))}
+              </div>
+            )}
           </div>
         </button>
         {!readOnly && (
@@ -1300,6 +1310,310 @@ function BlockModal({ block, onClose, onSuccess }) {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// Room & Department Mapping Panel (In-Place, Zero Navigation)
+// ─────────────────────────────────────────────────────────────────────────────
+function RoomMappingPanel({ tree, departments, classes, onRefresh, canEdit }) {
+  const [expandedBlocks, setExpandedBlocks] = useState({})
+  const [expandedFloors, setExpandedFloors] = useState({})
+  const [saving, setSaving] = useState({})
+  const [bulkSaving, setBulkSaving] = useState({})
+  const [filterDept, setFilterDept] = useState('')
+  const [filterType, setFilterType] = useState('')
+  const [searchQ, setSearchQ] = useState('')
+  const [successMsg, setSuccessMsg] = useState('')
+
+  const blocks = tree?.blocks || []
+
+  const toggleBlock = (id) => setExpandedBlocks(p => ({ ...p, [id]: !p[id] }))
+  const toggleFloor = (key) => setExpandedFloors(p => ({ ...p, [key]: !p[key] }))
+
+  const flash = (msg) => { setSuccessMsg(msg); setTimeout(() => setSuccessMsg(''), 2500) }
+
+  const updateRoom = async (room, patch) => {
+    const key = room.id
+    setSaving(p => ({ ...p, [key]: true }))
+    try {
+      await roomsApi.update(room.id, patch)
+      flash(`✅ Room ${room.room_number} updated`)
+      onRefresh()
+    } catch {}
+    finally { setSaving(p => ({ ...p, [key]: false })) }
+  }
+
+  const bulkAssignFloor = async (floor, deptId) => {
+    const key = `f${floor.id}`
+    setBulkSaving(p => ({ ...p, [key]: true }))
+    try {
+      await campusStructureApi.bulkAssignFloorDepartment(floor.id, {
+        department_id: deptId ? parseInt(deptId) : null,
+        overwrite_existing: true,
+      })
+      flash(`✅ All rooms on ${floor.floor_name} updated`)
+      onRefresh()
+    } catch {}
+    finally { setBulkSaving(p => ({ ...p, [key]: false })) }
+  }
+
+  const bulkAssignBlock = async (block, deptId) => {
+    const key = `b${block.id}`
+    setBulkSaving(p => ({ ...p, [key]: true }))
+    try {
+      await campusStructureApi.bulkAssignBlockDepartment(block.id, {
+        department_id: deptId ? parseInt(deptId) : null,
+        overwrite_existing: true,
+      })
+      flash(`✅ All rooms in ${block.name} updated`)
+      onRefresh()
+    } catch {}
+    finally { setBulkSaving(p => ({ ...p, [key]: false })) }
+  }
+
+  const matchesSearch = (room, block, floor) => {
+    if (!searchQ) return true
+    const q = searchQ.toLowerCase()
+    return (
+      room.room_number?.toLowerCase().includes(q) ||
+      block.name?.toLowerCase().includes(q) ||
+      floor.floor_name?.toLowerCase().includes(q) ||
+      room.department_name?.toLowerCase().includes(q)
+    )
+  }
+
+  const allRoomCount = blocks.reduce((a, b) => a + (b.floors || []).reduce((fa, f) => fa + (f.rooms || []).length, 0), 0)
+
+  return (
+    <div className="space-y-4">
+      {/* Toolbar */}
+      <div className="flex flex-wrap gap-2 items-center">
+        <div className="relative flex-1 min-w-[160px]">
+          <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 text-sm">🔍</span>
+          <input value={searchQ} onChange={e => setSearchQ(e.target.value)}
+            placeholder="Search rooms, blocks, dept…"
+            className="w-full pl-8 pr-3 py-2 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-primary-400" />
+        </div>
+        <select value={filterDept} onChange={e => setFilterDept(e.target.value)}
+          className="border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-primary-400 min-w-[140px]">
+          <option value="">All Departments</option>
+          {departments.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
+          <option value="none">Unassigned</option>
+        </select>
+        <select value={filterType} onChange={e => setFilterType(e.target.value)}
+          className="border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-primary-400">
+          <option value="">All Types</option>
+          <option value="classroom">Classroom</option>
+          <option value="laboratory">Lab</option>
+          <option value="seminar_room">Seminar</option>
+          <option value="lecture_hall">Lecture Hall</option>
+          <option value="staff_room">Staff Room</option>
+          <option value="office">Office</option>
+          <option value="auditorium">Auditorium</option>
+        </select>
+        <button onClick={() => {
+          const allOpen = {}
+          blocks.forEach(b => { allOpen[b.id] = true; (b.floors||[]).forEach(f => { allOpen[`${b.id}-${f.id}`] = true }) })
+          setExpandedBlocks(allOpen)
+          setExpandedFloors(allOpen)
+        }} className="px-3 py-2 rounded-xl border border-slate-200 text-xs font-bold text-slate-600 hover:bg-slate-50 transition-all">
+          Expand All
+        </button>
+        <span className="text-xs text-slate-400 font-semibold">{allRoomCount} rooms total</span>
+      </div>
+
+      {successMsg && (
+        <div className="p-2.5 bg-emerald-50 border border-emerald-200 rounded-xl text-sm text-emerald-700 font-semibold">{successMsg}</div>
+      )}
+
+      {blocks.length === 0 && (
+        <div className="text-center py-12 text-slate-400 text-sm">
+          No blocks yet — use the Hierarchy tab to create blocks and rooms first.
+        </div>
+      )}
+
+      {blocks.map(block => {
+        // Check if this block has any matching rooms
+        const blockFloors = block.floors || []
+        const blockRoomsAll = blockFloors.flatMap(f => (f.rooms || []).map(r => ({ ...r, floor })))
+        const blockVisible = blockFloors.some(f =>
+          (f.rooms || []).some(room => {
+            if (filterDept === 'none' && room.department_id) return false
+            if (filterDept && filterDept !== 'none' && String(room.department_id) !== String(filterDept)) return false
+            if (filterType && room.room_type !== filterType) return false
+            if (!matchesSearch(room, block, f)) return false
+            return true
+          })
+        )
+        if ((filterDept || filterType || searchQ) && !blockVisible) return null
+
+        const isBlockOpen = expandedBlocks[block.id]
+        return (
+          <div key={block.id} className="border border-slate-200 rounded-2xl overflow-hidden bg-white shadow-sm">
+            {/* Block Header */}
+            <div className="flex items-center gap-3 px-4 py-3 bg-gradient-to-r from-slate-50 to-white border-b border-slate-100 cursor-pointer"
+              onClick={() => toggleBlock(block.id)}>
+              <span className="text-lg transition-transform duration-200" style={{ display: 'inline-block', transform: isBlockOpen ? 'rotate(0deg)' : 'rotate(-90deg)' }}>▾</span>
+              <div className="w-3 h-3 rounded-full shrink-0" style={{ background: block.color_hex || '#4F46E5' }} />
+              <div className="flex-1 min-w-0">
+                <p className="font-black text-slate-800 text-sm">{block.name}</p>
+                <p className="text-[11px] text-slate-500">
+                  {blockFloors.length} floors · {blockRoomsAll.length} rooms
+                  {block.associated_departments?.length > 0 && (
+                    <span className="ml-2">
+                      {block.associated_departments.map(d => (
+                        <span key={d.id} className="inline-block bg-indigo-50 text-indigo-700 text-[10px] font-bold px-1.5 py-0.5 rounded-full border border-indigo-200 mr-1">{d.code || d.name}</span>
+                      ))}
+                    </span>
+                  )}
+                </p>
+              </div>
+              {canEdit && (
+                <div className="flex items-center gap-2" onClick={e => e.stopPropagation()}>
+                  <select
+                    defaultValue=""
+                    onChange={e => { if (e.target.value !== '') bulkAssignBlock(block, e.target.value === 'none' ? null : e.target.value) }}
+                    className="border border-slate-200 rounded-lg px-2 py-1.5 text-xs focus:outline-none focus:border-primary-400 max-w-[160px]"
+                    title="Bulk assign all rooms in block to a department">
+                    <option value="">🏢 Assign Whole Block…</option>
+                    <option value="none">— Clear Department —</option>
+                    {departments.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
+                  </select>
+                  {bulkSaving[`b${block.id}`] && <span className="text-xs text-primary-600">Saving…</span>}
+                </div>
+              )}
+            </div>
+
+            {/* Floors */}
+            {isBlockOpen && blockFloors.map(floor => {
+              const floorKey = `${block.id}-${floor.id}`
+              const isFloorOpen = expandedFloors[floorKey]
+              const rooms = (floor.rooms || []).filter(room => {
+                if (filterDept === 'none' && room.department_id) return false
+                if (filterDept && filterDept !== 'none' && String(room.department_id) !== String(filterDept)) return false
+                if (filterType && room.room_type !== filterType) return false
+                if (!matchesSearch(room, block, floor)) return false
+                return true
+              })
+              if ((filterDept || filterType || searchQ) && rooms.length === 0) return null
+
+              return (
+                <div key={floor.id} className="border-t border-slate-100">
+                  {/* Floor header */}
+                  <div className="flex items-center gap-3 px-4 py-2.5 bg-slate-50/70 cursor-pointer hover:bg-slate-100/70 transition-all"
+                    onClick={() => toggleFloor(floorKey)}>
+                    <span className="text-sm transition-transform duration-200" style={{ display: 'inline-block', transform: isFloorOpen ? 'rotate(0deg)' : 'rotate(-90deg)' }}>▾</span>
+                    <p className="flex-1 font-bold text-slate-700 text-xs">{floor.floor_name} <span className="font-normal text-slate-400">({(floor.rooms||[]).length} rooms)</span></p>
+                    {canEdit && (
+                      <div className="flex items-center gap-2" onClick={e => e.stopPropagation()}>
+                        <select
+                          defaultValue=""
+                          onChange={e => { if (e.target.value !== '') bulkAssignFloor(floor, e.target.value === 'none' ? null : e.target.value) }}
+                          className="border border-slate-200 rounded-lg px-2 py-1 text-xs focus:outline-none focus:border-primary-400 max-w-[160px]"
+                          title="Bulk assign all rooms on this floor to a department">
+                          <option value="">Assign Floor…</option>
+                          <option value="none">— Clear —</option>
+                          {departments.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
+                        </select>
+                        {bulkSaving[`f${floor.id}`] && <span className="text-xs text-primary-600">Saving…</span>}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Rooms grid */}
+                  {isFloorOpen && (
+                    <div className="px-4 pb-3 pt-2 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+                      {rooms.map(room => {
+                        const c = ROOM_TYPE_COLORS[room.room_type] || ROOM_TYPE_COLORS.other
+                        const isSaving = saving[room.id]
+                        return (
+                          <div key={room.id} className={`border ${c.border} ${c.bg} rounded-xl p-3 space-y-2`}>
+                            {/* Room identifier */}
+                            <div className="flex items-center justify-between">
+                              <span className={`font-black text-sm ${c.text} font-mono`}>{room.room_number}</span>
+                              <RoomTypeBadge type={room.room_type} />
+                            </div>
+
+                            {canEdit ? (
+                              <div className="space-y-2">
+                                {/* Department */}
+                                <div>
+                                  <label className="block text-[10px] font-bold text-slate-500 mb-0.5">Department</label>
+                                  <select
+                                    defaultValue={room.department_id || ''}
+                                    key={`dept-${room.id}-${room.department_id}`}
+                                    onChange={e => updateRoom(room, { department_id: e.target.value ? parseInt(e.target.value) : null })}
+                                    disabled={isSaving}
+                                    className="w-full border border-slate-200 rounded-lg px-2 py-1 text-xs focus:outline-none focus:border-primary-400 bg-white">
+                                    <option value="">— No Dept —</option>
+                                    {departments.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
+                                  </select>
+                                </div>
+
+                                {/* Home Class */}
+                                <div>
+                                  <label className="block text-[10px] font-bold text-slate-500 mb-0.5">Home Class (Optional)</label>
+                                  <select
+                                    defaultValue={room.primary_class_id || ''}
+                                    key={`cls-${room.id}-${room.primary_class_id}`}
+                                    onChange={e => updateRoom(room, { primary_class_id: e.target.value ? parseInt(e.target.value) : null })}
+                                    disabled={isSaving}
+                                    className="w-full border border-slate-200 rounded-lg px-2 py-1 text-xs focus:outline-none focus:border-primary-400 bg-white">
+                                    <option value="">— No Class —</option>
+                                    {classes.map(cls => <option key={cls.id} value={cls.id}>{cls.name}</option>)}
+                                  </select>
+                                </div>
+
+                                {/* Type + Exam toggle */}
+                                <div className="flex items-center gap-2">
+                                  <select
+                                    defaultValue={room.room_type || 'classroom'}
+                                    key={`type-${room.id}-${room.room_type}`}
+                                    onChange={e => updateRoom(room, { room_type: e.target.value })}
+                                    disabled={isSaving}
+                                    className="flex-1 border border-slate-200 rounded-lg px-2 py-1 text-xs focus:outline-none focus:border-primary-400 bg-white">
+                                    <option value="classroom">🚪 Classroom</option>
+                                    <option value="laboratory">🧪 Lab</option>
+                                    <option value="seminar_room">🏛️ Seminar</option>
+                                    <option value="lecture_hall">🎓 Lecture</option>
+                                    <option value="staff_room">👥 Staff Room</option>
+                                    <option value="office">💼 Office</option>
+                                    <option value="auditorium">🎭 Auditorium</option>
+                                    <option value="other">📦 Other</option>
+                                  </select>
+                                  <label className="flex items-center gap-1 cursor-pointer" title="Exam eligible">
+                                    <input type="checkbox"
+                                      defaultChecked={room.is_exam_eligible}
+                                      key={`exam-${room.id}-${room.is_exam_eligible}`}
+                                      onChange={e => updateRoom(room, { is_exam_eligible: e.target.checked })}
+                                      disabled={isSaving}
+                                      className="w-3.5 h-3.5 rounded" />
+                                    <span className="text-[10px] text-slate-500 font-semibold whitespace-nowrap">Exam</span>
+                                  </label>
+                                </div>
+                                {isSaving && <p className="text-[10px] text-primary-600 font-semibold">Saving…</p>}
+                              </div>
+                            ) : (
+                              <div className="text-xs text-slate-500 space-y-0.5">
+                                {room.department_name && <p>🏢 {room.department_name}</p>}
+                                {room.primary_class_name && <p>📚 {room.primary_class_name}</p>}
+                                {room.is_exam_eligible && <p className="text-amber-600 font-semibold">✅ Exam Hall</p>}
+                              </div>
+                            )}
+                          </div>
+                        )
+                      })}
+                      {rooms.length === 0 && <p className="col-span-full text-xs text-slate-400 text-center py-4">No rooms match the current filters.</p>}
+                    </div>
+                  )}
+                </div>
+              )
+            })}
+          </div>
+        )
+      })}
+    </div>
+  )
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // Search Panel
 // ─────────────────────────────────────────────────────────────────────────────
 function SearchPanel() {
@@ -1541,13 +1855,14 @@ export default function CampusStructureBuilder({ readOnly = false }) {
       )}
 
       {/* Tabs */}
-      <div className="flex gap-1 border-b border-slate-200">
+      <div className="flex gap-1 border-b border-slate-200 overflow-x-auto">
         {[
           { id: 'tree', label: '🌳 Hierarchy' },
+          { id: 'mapping', label: '🗺️ Room & Dept Mapping' },
           { id: 'search', label: '🔍 Search' },
         ].map(tab => (
           <button key={tab.id} onClick={() => setActiveTab(tab.id)}
-            className={`px-4 py-2.5 text-sm font-bold border-b-2 transition-all -mb-px ${
+            className={`px-4 py-2.5 text-sm font-bold border-b-2 transition-all -mb-px whitespace-nowrap ${
               activeTab === tab.id
                 ? 'border-primary-600 text-primary-600'
                 : 'border-transparent text-slate-500 hover:text-slate-700'
@@ -1564,6 +1879,14 @@ export default function CampusStructureBuilder({ readOnly = false }) {
         <ErrorAlert message={error} onRetry={fetchData} />
       ) : activeTab === 'search' ? (
         <SearchPanel />
+      ) : activeTab === 'mapping' ? (
+        <RoomMappingPanel
+          tree={tree}
+          departments={departments}
+          classes={classes}
+          onRefresh={fetchData}
+          canEdit={canEdit}
+        />
       ) : (
         <div>
           {blocks.length === 0 ? (

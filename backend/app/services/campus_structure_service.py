@@ -618,8 +618,20 @@ class CampusStructureService:
 
         for b in blocks:
             floor_list: List[CampusStructureTreeFloorOut] = []
+            dept_map: Dict[int, Dict[str, Any]] = {}
             for f in sorted(b.floors, key=lambda fl: fl.display_order):
                 room_list = [CampusStructureService._to_room_out(r) for r in sorted(f.rooms, key=lambda rm: rm.room_number)]
+                for r in f.rooms:
+                    if r.department_id and r.department:
+                        if r.department_id not in dept_map:
+                            dept_map[r.department_id] = {
+                                "id": r.department.id,
+                                "name": r.department.name,
+                                "code": r.department.code or "",
+                                "room_count": 0
+                            }
+                        dept_map[r.department_id]["room_count"] += 1
+
                 floor_list.append(CampusStructureTreeFloorOut(
                     id=f.id,
                     floor_number=f.floor_number,
@@ -637,7 +649,8 @@ class CampusStructureService:
                 department_id=b.department_id,
                 department_name=b.department.name if b.department else None,
                 is_active=b.is_active,
-                floors=floor_list
+                floors=floor_list,
+                associated_departments=list(dept_map.values())
             ))
 
         # Check for unassigned legacy rooms

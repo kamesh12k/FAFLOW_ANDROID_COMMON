@@ -274,3 +274,48 @@ def test_automated_wing_duty_and_exam_duty_generation(db_session):
     assert len(exam_duties) >= 1
     assert any(d.room_id == r1.id for d in exam_duties)
     assert not any(d.room_id == r2.id for d in exam_duties)
+
+
+def test_autonomous_duty_activation_and_block_department_identification(db_session):
+    """Verifies that the system identifies which departments belong to a block from rooms,
+    and autonomous duty activation generates and auto-assigns duties in one click."""
+    db = db_session
+    dept_cs = Department(name="Computer Science", code="CS")
+    dept_mech = Department(name="Mechanical Eng", code="MECH")
+    db.add_all([dept_cs, dept_mech])
+    db.flush()
+
+    teacher1 = User(email="t1@faflow.edu", name="Teacher One", role=Role.teacher, password_hash="pw", department_id=dept_cs.id)
+    teacher2 = User(email="t2@faflow.edu", name="Teacher Two", role=Role.teacher, password_hash="pw", department_id=dept_mech.id)
+    db.add_all([teacher1, teacher2])
+    db.flush()
+
+    block = CampusBlock(name="Science Block", code="SCI", floors_count=2)
+    db.add(block)
+    db.flush()
+
+    f1 = CampusFloor(block_id=block.id, floor_number=0, floor_name="Ground Floor", display_order=0)
+    db.add(f1)
+    db.flush()
+
+    # Room 1 belongs to CS, Room 2 belongs to MECH
+    r1 = Room(room_number="SCI001", block_id=block.id, floor_id=f1.id, department_id=dept_cs.id)
+    r2 = Room(room_number="SCI002", block_id=block.id, floor_id=f1.id, department_id=dept_mech.id)
+    db.add_all([r1, r2])
+    db.commit()
+
+    # 1. Verify structure tree identifies associated departments from room links
+    tree = CampusStructureService.get_structure_tree(db)
+    sci_block = next(b for b in tree.blocks if b.id == block.id)
+    assoc_dept_names = [d["name"] for d in sci_block.associated_departments]
+    assert "Computer Science" in assoc_dept_names
+    assert "Mechanical Eng" in assoc_dept_names
+
+    # 2. Verify autonomous activation
+    today = date.today()
+    res = CampusDutyService.autonomous_activate_duties(
+        db, target_date=today, activate_discipline=True, activate_wing=True
+    )
+    assert res["success"] is True
+    assert res["discipline_duties_count"] >= 1 or res["wing_duties_count"] >= 1
+    assert res["total_duties_active"] >= 1

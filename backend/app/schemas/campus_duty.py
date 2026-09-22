@@ -282,3 +282,23 @@ class DutyRulesImpactPreview(BaseModel):
     affects_future: bool = True
     affects_existing_unlocked: bool = False
     affects_existing_locked: bool = False
+
+
+# ── Autonomous Duty Activation ───────────────────────────────────────────────
+
+class AutonomousDutyActivateRequest(BaseModel):
+    target_date: Optional[date] = None
+    activate_discipline: bool = True
+    activate_wing: bool = True
+
+
+class AutonomousDutyActivateResponse(BaseModel):
+    success: bool
+    target_date: date
+    discipline_duties_count: int
+    wing_duties_count: int
+    total_duties_active: int
+    total_assigned: int
+    total_unfilled: int
+    message: str
+
