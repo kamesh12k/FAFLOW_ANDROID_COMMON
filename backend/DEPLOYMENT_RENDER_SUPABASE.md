@@ -96,7 +96,7 @@ Configure the following under **Environment** in the Render dashboard:
 | `DATABASE_URL` | Supabase PostgreSQL connection URI | `postgresql://postgres:pass@db.ref.supabase.co:5432/postgres` |
 | `SECRET_KEY` | Strong random string (minimum 32 characters) | `openssl rand -hex 32` |
 | `ALGORITHM` | JWT signing algorithm | `HS256` |
-| `ACCESS_TOKEN_EXPIRE_MINUTES` | Session validity duration | `43200` (30 days) |
+| `ACCESS_TOKEN_EXPIRE_MINUTES` | Session validity duration | `259200` (180 days) |
 | `FRONTEND_ORIGIN` | Allowed CORS origins (JSON array or string) | `["https://your-frontend.onrender.com"]` |
 | `APP_NAME` | Display name of the application | `FAFLOW` |
 | `PRIMARY_COLOR` | Theme primary brand color | `#4f46e5` |

@@ -12,6 +12,7 @@ from app.models.campus_duty import (
     CampusArea, DutyBreakPeriod, CampusDuty, DutyAssignment, DutyAssignmentRun,
     DutyType, DutyStatus, AssignmentStatus
 )
+from app.models.room import Room
 from app.models.staff_attendance import StaffAttendanceRecord
 from app.models.leave import LeaveRequest, LeaveStatus, AlterAssignment
 from app.models.timetable import TimetableSlot
@@ -303,6 +304,19 @@ class CampusDutyService:
     @staticmethod
     def create_duty(db: Session, data: CampusDutyCreate, user_id: Optional[int] = None) -> CampusDuty:
         day_order = data.day_order or CampusDutyService.get_day_order_for_date(db, data.duty_date)
+        
+        # Check Exam Hall double-booking conflict
+        if data.room_id:
+            room_conflict = db.query(CampusDuty).filter(
+                CampusDuty.room_id == data.room_id,
+                CampusDuty.duty_date == data.duty_date,
+                CampusDuty.status.in_([DutyStatus.PUBLISHED, DutyStatus.DRAFT]),
+                CampusDuty.start_time < data.end_time,
+                CampusDuty.end_time > data.start_time
+            ).first()
+            if room_conflict:
+                raise DomainException(f"Examination room is already booked for '{room_conflict.title}' during this time window", status_code=409)
+
         duty = CampusDuty(
             duty_type=data.duty_type,
             title=data.title,
@@ -311,6 +325,7 @@ class CampusDutyService:
             end_time=data.end_time,
             break_period_id=data.break_period_id,
             area_id=data.area_id,
+            room_id=data.room_id,
             department_id=data.department_id,
             day_order=day_order,
             required_teachers=data.required_teachers,
@@ -320,7 +335,7 @@ class CampusDutyService:
         db.add(duty)
         db.commit()
         db.refresh(duty)
-        CampusDutyService._log_audit(db, user_id, "CAMPUS_DUTY_CREATED", {"duty_id": duty.id, "title": duty.title})
+        CampusDutyService._log_audit(db, user_id, "CAMPUS_DUTY_CREATED", {"duty_id": duty.id, "title": duty.title, "room_id": data.room_id})
         return duty
 
     @staticmethod
@@ -334,6 +349,8 @@ class CampusDutyService:
         q = db.query(CampusDuty).options(
             joinedload(CampusDuty.break_period),
             joinedload(CampusDuty.area),
+            joinedload(CampusDuty.room).joinedload(Room.block),
+            joinedload(CampusDuty.room).joinedload(Room.floor),
             joinedload(CampusDuty.department),
             joinedload(CampusDuty.locked_by_user),
             joinedload(CampusDuty.assignments).joinedload(DutyAssignment.teacher)
@@ -358,6 +375,8 @@ class CampusDutyService:
         duty = db.query(CampusDuty).options(
             joinedload(CampusDuty.break_period),
             joinedload(CampusDuty.area),
+            joinedload(CampusDuty.room).joinedload(Room.block),
+            joinedload(CampusDuty.room).joinedload(Room.floor),
             joinedload(CampusDuty.department),
             joinedload(CampusDuty.locked_by_user),
             joinedload(CampusDuty.assignments).joinedload(DutyAssignment.teacher)
@@ -533,6 +552,22 @@ class CampusDutyService:
                 score -= (duties_this_week * 10.0)
                 if duties_today == 0:
                     reasons.append("0 duties today")
+
+            # Structural Proximity Preference for Exam Duty
+            if is_eligible and duty.duty_type == DutyType.EXAM_DUTY and duty.room and duty.room.block_id:
+                exam_block_id = duty.room.block_id
+                is_same_block = False
+                if t.department_id:
+                    dept_room_in_block = db.query(Room).filter(
+                        Room.block_id == exam_block_id,
+                        Room.department_id == t.department_id
+                    ).first() is not None
+                    is_same_block = dept_room_in_block
+
+                if is_same_block:
+                    score += 20.0
+                    block_name = duty.room.block.name if duty.room.block else "Block"
+                    reasons.append(f"Structural proximity: Faculty department is in same block ({block_name}) (+20 pts)")
 
             final_score = max(0.0, min(100.0, round(score, 1)))
 
@@ -1051,6 +1086,22 @@ class CampusDutyService:
         if duty.locked_by_user:
             locked_by = getattr(duty.locked_by_user, "name", None) or getattr(duty.locked_by_user, "username", None)
 
+        room_number = None
+        room_name = None
+        loc_hierarchy = None
+        if duty.room:
+            room_number = duty.room.room_number
+            room_name = duty.room.room_name or duty.room.room_number
+            parts = []
+            if duty.room.block:
+                parts.append(duty.room.block.name)
+            if duty.room.floor:
+                parts.append(duty.room.floor.floor_name)
+            parts.append(room_name)
+            loc_hierarchy = " · ".join(parts)
+        elif duty.area:
+            loc_hierarchy = duty.area.name
+
         return CampusDutyOut(
             id=duty.id,
             duty_type=duty.duty_type.value if hasattr(duty.duty_type, "value") else str(duty.duty_type),
@@ -1063,6 +1114,10 @@ class CampusDutyService:
             area_id=duty.area_id,
             area_name=duty.area.name if duty.area else None,
             area_code=duty.area.code if duty.area else None,
+            room_id=duty.room_id,
+            room_number=room_number,
+            room_name=room_name,
+            location_hierarchy=loc_hierarchy,
             department_id=duty.department_id,
             department_name=duty.department.name if duty.department else None,
             day_order=duty.day_order,

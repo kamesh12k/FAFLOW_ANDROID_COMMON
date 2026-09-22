@@ -92,6 +92,9 @@ class TeacherClassSlotOut(BaseModel):
     substitution_id: Optional[int] = None
     session_id: Optional[int] = None
     session_status: Optional[SessionStatus] = None
+    start_time: Optional[str] = None
+    end_time: Optional[str] = None
+    can_take_attendance: bool = True
 
 
 class TeacherTodayAttendanceOut(BaseModel):

@@ -40,6 +40,8 @@ class CampusArea(Base):
     name = Column(String(150), nullable=False)
     code = Column(String(50), nullable=False, unique=True, index=True)
     duty_type = Column(String(50), nullable=False, default=DutyType.WING_DUTY.value)
+    block_id = Column(Integer, ForeignKey("campus_blocks.id", ondelete="SET NULL"), nullable=True, index=True)
+    floor_id = Column(Integer, ForeignKey("campus_floors.id", ondelete="SET NULL"), nullable=True, index=True)
     building_or_block = Column(String(100), nullable=True)
     floor = Column(String(50), nullable=True)
     required_teachers = Column(Integer, nullable=False, default=1)
@@ -48,6 +50,8 @@ class CampusArea(Base):
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
     department = relationship("Department", foreign_keys=[department_id])
+    block = relationship("CampusBlock", foreign_keys=[block_id])
+    floor_rel = relationship("CampusFloor", foreign_keys=[floor_id])
     duties = relationship("CampusDuty", back_populates="area")
 
 
@@ -89,6 +93,7 @@ class CampusDuty(Base):
 
     break_period_id = Column(Integer, ForeignKey("duty_break_periods.id", ondelete="SET NULL"), nullable=True)
     area_id = Column(Integer, ForeignKey("campus_areas.id", ondelete="SET NULL"), nullable=True)
+    room_id = Column(Integer, ForeignKey("rooms.id", ondelete="SET NULL"), nullable=True, index=True)
     department_id = Column(Integer, ForeignKey("departments.id", ondelete="CASCADE"), nullable=True)
     day_order = Column(Integer, nullable=True)
     required_teachers = Column(Integer, nullable=False, default=1)
@@ -105,6 +110,7 @@ class CampusDuty(Base):
 
     break_period = relationship("DutyBreakPeriod", back_populates="duties")
     area = relationship("CampusArea", back_populates="duties")
+    room = relationship("Room", foreign_keys=[room_id])
     department = relationship("Department", foreign_keys=[department_id])
     locked_by_user = relationship("User", foreign_keys=[locked_by_user_id])
     created_by_user = relationship("User", foreign_keys=[created_by_user_id])

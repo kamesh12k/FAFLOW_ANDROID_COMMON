@@ -209,12 +209,23 @@ class StudentAttendanceService:
                     )
                     .first()
                 )
-                _, _, p_time = PERIOD_SCHEDULE.get(slot.period_number, (None, None, f"Period {slot.period_number}"))
+                period_schedule = _build_period_map(db)
+                start_t, end_t, p_time = period_schedule.get(slot.period_number, (time(9, 20), time(10, 20), f"Period {slot.period_number}"))
+                st_str = start_t.strftime("%H:%M") if start_t else None
+                et_str = end_t.strftime("%H:%M") if end_t else None
+                is_past = today < date.today()
+                is_today = today == date.today()
+                class_started = is_past or (is_today and start_t is not None and now_local.time() >= start_t)
+                can_take = class_started and (session is None or session.status not in (SessionStatus.submitted, SessionStatus.submitted_late, SessionStatus.locked))
+
                 scheduled_slots.append(
                     TeacherClassSlotOut(
                         timetable_slot_id=slot.id,
                         period_number=slot.period_number,
                         period_time=p_time,
+                        start_time=st_str,
+                        end_time=et_str,
+                        can_take_attendance=can_take,
                         class_id=slot.class_id,
                         class_name=slot.class_.name if slot.class_ else "",
                         section=slot.class_.section if slot.class_ else "",
@@ -261,12 +272,23 @@ class StudentAttendanceService:
                     )
                     .first()
                 )
-                _, _, p_time = PERIOD_SCHEDULE.get(orig_slot.period_number, (None, None, f"Period {orig_slot.period_number}"))
+                period_schedule = _build_period_map(db)
+                start_t, end_t, p_time = period_schedule.get(orig_slot.period_number, (time(9, 20), time(10, 20), f"Period {orig_slot.period_number}"))
+                st_str = start_t.strftime("%H:%M") if start_t else None
+                et_str = end_t.strftime("%H:%M") if end_t else None
+                is_past = today < date.today()
+                is_today = today == date.today()
+                class_started = is_past or (is_today and start_t is not None and now_local.time() >= start_t)
+                can_take = class_started and (session is None or session.status not in (SessionStatus.submitted, SessionStatus.submitted_late, SessionStatus.locked))
+
                 substitutions.append(
                     TeacherClassSlotOut(
                         timetable_slot_id=orig_slot.id,
                         period_number=orig_slot.period_number,
                         period_time=p_time,
+                        start_time=st_str,
+                        end_time=et_str,
+                        can_take_attendance=can_take,
                         class_id=orig_slot.class_id,
                         class_name=orig_slot.class_.name if orig_slot.class_ else "",
                         section=orig_slot.class_.section if orig_slot.class_ else "",
@@ -576,12 +598,32 @@ class StudentAttendanceService:
                     except ValueError:
                         pass
 
-        # 7. Evaluate 15-Minute Submission Timing Rule
+        # 7. Evaluate Class Start Time and Submission Timing Rule
         start_time, end_time = StudentAttendanceService.get_scheduled_times(att_date, data.period_number, db)
         now_utc = datetime.now(timezone.utc)
         sub_time = data.client_timestamp if data.client_timestamp else now_utc
         if sub_time.tzinfo is None:
             sub_time = sub_time.replace(tzinfo=timezone.utc)
+
+        # Rule Change: Teachers can only take attendance AFTER class starts (now >= start_time).
+        # Admin, Principal, and System Admin retain administrative override.
+        if current_user.role == Role.teacher:
+            if att_date > date.today():
+                raise HTTPException(
+                    status_code=400,
+                    detail="Cannot take attendance for future calendar dates."
+                )
+            if sub_time < start_time:
+                from zoneinfo import ZoneInfo
+                try:
+                    tz_kolkata = ZoneInfo("Asia/Kolkata")
+                except Exception:
+                    tz_kolkata = timezone(timedelta(hours=5, minutes=30))
+                start_time_ist = start_time.astimezone(tz_kolkata).strftime("%I:%M %p")
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"Attendance can only be taken after class starts (scheduled start time: {start_time_ist})."
+                )
 
         window_mins = StudentAttendanceService.get_submission_window_minutes(db)
         submission_cutoff = start_time + timedelta(minutes=window_mins)

@@ -44,6 +44,27 @@ def mark_read(notification_id: int, current_user: User = Depends(get_current_use
     return {"ok": True}
 
 
+@router.delete("/")
+def clear_all_notifications(current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    """Permanently clears all notifications for the current user."""
+    from app.models.notification import Notification
+    db.query(Notification).filter(Notification.user_id == current_user.id).delete(synchronize_session=False)
+    db.commit()
+    return {"ok": True, "message": "All notifications cleared"}
+
+
+@router.delete("/{notification_id}")
+def delete_notification(notification_id: int, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    """Deletes a specific notification for the current user."""
+    from app.models.notification import Notification
+    db.query(Notification).filter(
+        Notification.id == notification_id,
+        Notification.user_id == current_user.id
+    ).delete(synchronize_session=False)
+    db.commit()
+    return {"ok": True}
+
+
 @router.get("/vapid-public-key")
 def vapid_public_key():
     return {"key": settings.VAPID_PUBLIC_KEY}

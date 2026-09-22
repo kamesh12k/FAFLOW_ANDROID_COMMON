@@ -34,7 +34,7 @@ from app.routes import (
     campus_operations, teacher_substitution, substitutions, principal, manager, staff,
     backup, governance, data_retention, geofences, attendance, system_control,
     student_attendance, intelligence, class_roll_rules, announcements, policy,
-    campus_duties, governance_rules,
+    campus_duties, campus_structure, governance_rules,
 )
 from app.services.admin_service import bootstrap_default_super_admin
 from app.services.governance_service import bootstrap_governance_user
@@ -488,6 +488,7 @@ ROUTERS = [
     announcements.router,
     policy.router,
     campus_duties.router,
+    campus_structure.router,
 ]
 
 for r in ROUTERS:

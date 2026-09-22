@@ -45,5 +45,6 @@ from app.models.campus_duty import (
 from app.models.governance_rule import (
     PeriodConfig, BusinessRule, BusinessRuleHistory
 )
+from app.models.campus_structure import CampusBlock, CampusFloor
 
 

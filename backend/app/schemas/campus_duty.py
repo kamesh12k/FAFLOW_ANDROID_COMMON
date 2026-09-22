@@ -106,6 +106,7 @@ class CampusDutyCreate(BaseModel):
     end_time: time
     break_period_id: Optional[int] = None
     area_id: Optional[int] = None
+    room_id: Optional[int] = None
     department_id: Optional[int] = None
     day_order: Optional[int] = None
     required_teachers: int = 1
@@ -116,6 +117,7 @@ class CampusDutyUpdate(BaseModel):
     start_time: Optional[time] = None
     end_time: Optional[time] = None
     area_id: Optional[int] = None
+    room_id: Optional[int] = None
     required_teachers: Optional[int] = None
     status: Optional[str] = None
 
@@ -132,6 +134,10 @@ class CampusDutyOut(BaseModel):
     area_id: Optional[int] = None
     area_name: Optional[str] = None
     area_code: Optional[str] = None
+    room_id: Optional[int] = None
+    room_number: Optional[str] = None
+    room_name: Optional[str] = None
+    location_hierarchy: Optional[str] = None
     department_id: Optional[int] = None
     department_name: Optional[str] = None
     day_order: Optional[int] = None

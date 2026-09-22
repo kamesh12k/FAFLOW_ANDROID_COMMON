@@ -747,6 +747,8 @@ def test_offline_sync_with_negative_session_id(setup_attendance_context, test_te
     cls_b = ctx["class_b"]
     slot2 = ctx["slot_p3"]
     today = ctx["today"]
+    p4_start, _ = StudentAttendanceService.get_scheduled_times(today, 4, db_session)
+    valid_ts = (p4_start + timedelta(minutes=5)).isoformat()
 
     batch_req = OfflineSyncBatchRequest(
         device_id="ANDROID_TEST_DEVICE_02",
@@ -755,12 +757,14 @@ def test_offline_sync_with_negative_session_id(setup_attendance_context, test_te
                 operation_id="op-neg-406",
                 idempotency_key=f"student-attendance-neg-test-{slot2.id}-uuid",
                 operation_type="SUBMIT_ATTENDANCE",
+                client_timestamp=p4_start + timedelta(minutes=5),
                 payload={
                     "session_id": -slot2.id,  # e.g. -406
                     "class_id": cls_b.id,
                     "period_number": 4,
+                    "attendance_date": str(today),
                     "absent_roll_suffixes": ["101"],
-                    "client_timestamp": datetime.now(timezone.utc).isoformat()
+                    "client_timestamp": valid_ts
                 }
             )
         ]
