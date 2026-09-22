@@ -206,10 +206,18 @@ class CampusStructureService:
             if has_conflict:
                 conflicts += 1
 
+            # Check for room type override
+            room_type = data.room_type
+            if data.room_type_overrides:
+                if room_no in data.room_type_overrides:
+                    room_type = data.room_type_overrides[room_no]
+                elif str(cur_num) in data.room_type_overrides:
+                    room_type = data.room_type_overrides[str(cur_num)]
+
             items.append(RoomPatternPreviewItem(
                 room_number=room_no,
                 room_name=room_no,
-                room_type=data.room_type,
+                room_type=room_type,
                 capacity=data.capacity,
                 is_existing_conflict=has_conflict,
                 conflict_message="A room with this code already exists in FAFLOW" if has_conflict else None
@@ -238,7 +246,8 @@ class CampusStructureService:
 
         for idx in range(data.count):
             cur_num = data.start_num + idx
-            floor_code_str = "G" if floor.floor_number == 0 else str(floor.floor_number)
+            # Floor 0 -> "0" yielding 001, 002... Floor 1 -> "1" yielding 101, 102...
+            floor_code_str = "0" if floor.floor_number == 0 else (f"B{abs(floor.floor_number)}" if floor.floor_number < 0 else str(floor.floor_number))
             room_no = CampusStructureService.format_room_number(
                 pattern=data.pattern,
                 num=cur_num,
@@ -250,10 +259,20 @@ class CampusStructureService:
                 skipped_count += 1
                 continue
 
+            # Determine room_type with potential override
+            cur_room_type = data.room_type
+            if data.room_type_overrides:
+                if room_no in data.room_type_overrides:
+                    cur_room_type = data.room_type_overrides[room_no]
+                elif str(cur_num) in data.room_type_overrides:
+                    cur_room_type = data.room_type_overrides[str(cur_num)]
+                elif f"{cur_num:0{data.pad_digits}d}" in data.room_type_overrides:
+                    cur_room_type = data.room_type_overrides[f"{cur_num:0{data.pad_digits}d}"]
+
             room = Room(
                 room_number=room_no,
                 room_name=room_no,
-                room_type=data.room_type,
+                room_type=cur_room_type,
                 capacity=data.capacity,
                 block_id=data.block_id,
                 floor_id=data.floor_id,
@@ -329,7 +348,7 @@ class CampusStructureService:
             db.flush()
             total_floors += 1
 
-            floor_code_str = "G" if f_cfg.floor_number == 0 else str(f_cfg.floor_number)
+            floor_code_str = "0" if f_cfg.floor_number == 0 else (f"B{abs(f_cfg.floor_number)}" if f_cfg.floor_number < 0 else str(f_cfg.floor_number))
             block_prefix = f"{block.code}-"
 
             for r_idx in range(f_cfg.room_count):
@@ -346,10 +365,20 @@ class CampusStructureService:
                     # Append unique discriminator if needed
                     room_no = f"{room_no}_{total_rooms+1}"
 
+                # Determine room_type with potential override
+                cur_room_type = f_cfg.room_type
+                if f_cfg.room_type_overrides:
+                    if room_no in f_cfg.room_type_overrides:
+                        cur_room_type = f_cfg.room_type_overrides[room_no]
+                    elif str(cur_num) in f_cfg.room_type_overrides:
+                        cur_room_type = f_cfg.room_type_overrides[str(cur_num)]
+                    elif f"{cur_num:02d}" in f_cfg.room_type_overrides:
+                        cur_room_type = f_cfg.room_type_overrides[f"{cur_num:02d}"]
+
                 room = Room(
                     room_number=room_no,
                     room_name=room_no,
-                    room_type=f_cfg.room_type,
+                    room_type=cur_room_type,
                     capacity=f_cfg.capacity,
                     block_id=block.id,
                     floor_id=floor.id,
@@ -511,6 +540,40 @@ class CampusStructureService:
             updated_count=len(rooms),
             message=f"Successfully updated {len(rooms)} room(s)."
         )
+
+    @staticmethod
+    def bulk_assign_floor_department(db: Session, floor_id: int, department_id: Optional[int], clear_department: bool = False, user_id: Optional[int] = None) -> int:
+        floor = db.query(CampusFloor).filter(CampusFloor.id == floor_id).first()
+        if not floor:
+            raise HTTPException(status_code=404, detail="Floor not found")
+        new_dept_id = None if clear_department else department_id
+        count = db.query(Room).filter(Room.floor_id == floor_id).update({"department_id": new_dept_id}, synchronize_session=False)
+        db.commit()
+        CampusStructureService._log_audit(db, user_id, "FLOOR_DEPARTMENT_BULK_ASSIGNED", {
+            "floor_id": floor_id,
+            "department_id": new_dept_id,
+            "updated_count": count
+        })
+        return count
+
+    @staticmethod
+    def bulk_assign_block_department(db: Session, block_id: int, department_id: Optional[int], clear_department: bool = False, user_id: Optional[int] = None) -> int:
+        block = db.query(CampusBlock).filter(CampusBlock.id == block_id).first()
+        if not block:
+            raise HTTPException(status_code=404, detail="Block not found")
+        new_dept_id = None if clear_department else department_id
+        if not clear_department and department_id is not None:
+            block.department_id = department_id
+        elif clear_department:
+            block.department_id = None
+        count = db.query(Room).filter(Room.block_id == block_id).update({"department_id": new_dept_id}, synchronize_session=False)
+        db.commit()
+        CampusStructureService._log_audit(db, user_id, "BLOCK_DEPARTMENT_BULK_ASSIGNED", {
+            "block_id": block_id,
+            "department_id": new_dept_id,
+            "updated_count": count
+        })
+        return count
 
     # ── Structure Tree & Metrics ──────────────────────────────────────────────
 

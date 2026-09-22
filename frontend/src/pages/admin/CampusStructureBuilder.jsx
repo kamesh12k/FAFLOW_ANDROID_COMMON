@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
-import { campusStructureApi } from '../../api/services'
+import { campusStructureApi, departmentsApi } from '../../api/services'
 import { Spinner, ErrorAlert, Modal, Badge } from '../../components/ui'
 import { useAuth } from '../../context/AuthContext'
 
@@ -73,36 +73,158 @@ function SectionLabel({ children }) {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Tree Node components
+// Bulk Department Assignment Modal (Floor / Block)
 // ─────────────────────────────────────────────────────────────────────────────
-function RoomRow({ room }) {
+function BulkAssignDeptModal({ target, type, onClose, onSuccess }) {
+  const [departments, setDepartments] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [selectedDeptId, setSelectedDeptId] = useState('')
+  const [overwrite, setOverwrite] = useState(true)
+  const [saving, setSaving] = useState(false)
+  const [error, setError] = useState('')
+
+  useEffect(() => {
+    departmentsApi.list(true)
+      .then(r => setDepartments(r.data || []))
+      .catch(() => setDepartments([]))
+      .finally(() => setLoading(false))
+  }, [])
+
+  const handleSubmit = async () => {
+    setSaving(true)
+    setError('')
+    try {
+      const payload = {
+        department_id: selectedDeptId === '' ? null : Number(selectedDeptId),
+        overwrite_existing: overwrite,
+      }
+      if (type === 'floor') {
+        await campusStructureApi.bulkAssignFloorDepartment(target.id, payload)
+      } else {
+        await campusStructureApi.bulkAssignBlockDepartment(target.id, payload)
+      }
+      onSuccess()
+      onClose()
+    } catch (e) {
+      setError(formatError(e, 'Failed to assign department to rooms'))
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const titleName = type === 'floor' ? target?.floor_name : target?.name
+
   return (
-    <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-50 border border-slate-100 hover:border-slate-200 transition-all">
-      <span className="text-slate-300 text-xs">🚪</span>
-      <span className="font-semibold text-slate-700 text-sm flex-1 truncate">{room.room_number}</span>
-      {room.name && <span className="text-slate-400 text-xs truncate max-w-[100px]">{room.name}</span>}
-      <RoomTypeBadge type={room.room_type} />
-      {room.capacity && <span className="text-[10px] text-slate-400 font-semibold shrink-0">{room.capacity} seats</span>}
+    <div className="space-y-4">
+      {error && <div className="p-3 bg-rose-50 border border-rose-200 rounded-xl text-sm text-rose-700">{error}</div>}
+      {loading ? <div className="flex justify-center py-6"><Spinner /></div> : (
+        <>
+          <p className="text-sm text-slate-600">
+            Bulk assign a department to all rooms on <strong>{titleName}</strong> without setting them room-by-room.
+          </p>
+          <div>
+            <label className="block text-xs font-bold text-slate-600 mb-1">Select Department</label>
+            <select
+              value={selectedDeptId}
+              onChange={e => setSelectedDeptId(e.target.value)}
+              className="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-primary-400"
+            >
+              <option value="">-- Clear / Unassign Department (None) --</option>
+              {departments.map(d => (
+                <option key={d.id} value={d.id}>{d.name} {d.code ? `(${d.code})` : ''}</option>
+              ))}
+            </select>
+          </div>
+          <div className="flex items-center gap-2">
+            <input
+              type="checkbox"
+              id="overwrite_dept"
+              checked={overwrite}
+              onChange={e => setOverwrite(e.target.checked)}
+              className="w-4 h-4 text-primary-600 rounded"
+            />
+            <label htmlFor="overwrite_dept" className="text-xs text-slate-600">
+              Overwrite rooms that already have a department assigned
+            </label>
+          </div>
+          <div className="flex gap-2 pt-2">
+            <button onClick={onClose} className="flex-1 py-2.5 rounded-xl border border-slate-200 text-sm font-bold text-slate-600 hover:bg-slate-50 transition-all">
+              Cancel
+            </button>
+            <button
+              onClick={handleSubmit}
+              disabled={saving}
+              className="flex-[2] py-2.5 rounded-xl bg-primary-600 text-white font-bold text-sm disabled:opacity-50 hover:bg-primary-700 transition-all flex items-center justify-center gap-2"
+            >
+              {saving ? <><Spinner size="sm" /> Applying...</> : `🏢 Apply to ${type === 'floor' ? 'Floor' : 'Block'}`}
+            </button>
+          </div>
+        </>
+      )}
     </div>
   )
 }
 
-function FloorNode({ floor }) {
+// ─────────────────────────────────────────────────────────────────────────────
+// Tree Node components
+// ─────────────────────────────────────────────────────────────────────────────
+function RoomRow({ room }) {
+  return (
+    <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-50 border border-slate-100 hover:border-slate-200 transition-all flex-wrap sm:flex-nowrap">
+      <span className="text-slate-300 text-xs">🚪</span>
+      <span className="font-semibold text-slate-700 text-sm font-mono">{room.room_number}</span>
+      {room.name && <span className="text-slate-400 text-xs truncate max-w-[100px]">{room.name}</span>}
+      <RoomTypeBadge type={room.room_type} />
+      {room.department_name && (
+        <span className="text-[10px] bg-slate-100 text-slate-600 px-1.5 py-0.5 rounded font-medium truncate max-w-[120px]" title={room.department_name}>
+          🏢 {room.department_name}
+        </span>
+      )}
+      {room.primary_class_name && (
+        <span className="text-[10px] bg-indigo-50 text-indigo-700 border border-indigo-200 px-1.5 py-0.5 rounded font-medium">
+          🎓 {room.primary_class_name}
+        </span>
+      )}
+      {room.is_exam_eligible && (
+        <span className="text-[10px] bg-purple-50 text-purple-700 border border-purple-200 px-1.5 py-0.5 rounded font-semibold" title={`Exam Hall (${room.exam_capacity || room.capacity || 0} seats)`}>
+          📝 Exam Hall
+        </span>
+      )}
+      {room.capacity && <span className="text-[10px] text-slate-400 font-semibold shrink-0 ml-auto">{room.capacity} seats</span>}
+    </div>
+  )
+}
+
+function FloorNode({ floor, onBulkAssignDept, readOnly }) {
   const [open, setOpen] = useState(true)
   const rooms = floor.rooms || []
   return (
     <div className="ml-4 border-l-2 border-slate-100 pl-3">
-      <button
-        onClick={() => setOpen(o => !o)}
-        className="flex items-center gap-2 py-1.5 text-sm font-bold text-slate-600 hover:text-slate-800 group w-full text-left"
-      >
-        <span className={`text-slate-300 transition-transform text-xs ${open ? 'rotate-90' : ''}`}>▶</span>
-        <span className="w-5 h-5 text-center">🏢</span>
-        <span className="flex-1">{floor.floor_name}</span>
-        <span className="ml-auto text-[10px] font-bold text-slate-400 bg-slate-100 rounded-full px-2 py-0.5">
-          {rooms.length} room{rooms.length !== 1 ? 's' : ''}
-        </span>
-      </button>
+      <div className="flex items-center gap-2 py-1.5 text-sm font-bold text-slate-600 group w-full">
+        <button
+          onClick={() => setOpen(o => !o)}
+          className="flex items-center gap-2 flex-1 text-left hover:text-slate-800"
+        >
+          <span className={`text-slate-300 transition-transform text-xs ${open ? 'rotate-90' : ''}`}>▶</span>
+          <span className="w-5 h-5 text-center">🏢</span>
+          <span>{floor.floor_name}</span>
+          <span className="ml-1 px-1.5 py-0.2 rounded text-[10px] font-semibold bg-blue-50 text-blue-600 border border-blue-100">
+            🏢 Wing Duty
+          </span>
+          <span className="text-[10px] font-bold text-slate-400 bg-slate-100 rounded-full px-2 py-0.5 ml-2">
+            {rooms.length} room{rooms.length !== 1 ? 's' : ''}
+          </span>
+        </button>
+        {!readOnly && (
+          <button
+            onClick={() => onBulkAssignDept(floor)}
+            title="Bulk assign department to all rooms on this floor"
+            className="px-2 py-0.5 rounded text-[11px] font-bold bg-slate-100 hover:bg-slate-200 text-slate-600 border border-slate-200 transition-all"
+          >
+            + Dept
+          </button>
+        )}
+      </div>
       {open && rooms.length > 0 && (
         <div className="space-y-1 pb-2">
           {rooms.map(r => <RoomRow key={r.id} room={r} />)}
@@ -115,7 +237,7 @@ function FloorNode({ floor }) {
   )
 }
 
-function BlockNode({ block, onEdit, onDelete, onDuplicate, onAddFloor, onGenerateRooms, readOnly }) {
+function BlockNode({ block, onEdit, onDelete, onDuplicate, onAddFloor, onGenerateRooms, onBulkAssignDept, readOnly }) {
   const [open, setOpen] = useState(true)
   const floors = block.floors || []
   const roomCount = floors.reduce((acc, f) => acc + (f.rooms?.length || 0), 0)
@@ -133,7 +255,12 @@ function BlockNode({ block, onEdit, onDelete, onDuplicate, onAddFloor, onGenerat
             {(block.prefix || block.name || '?').charAt(0).toUpperCase()}
           </div>
           <div className="min-w-0">
-            <p className="text-white font-bold text-sm truncate">{block.name}</p>
+            <div className="flex items-center gap-2">
+              <p className="text-white font-bold text-sm truncate">{block.name}</p>
+              <span className="px-1.5 py-0.2 rounded text-[9px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                🛡️ Discipline Zone
+              </span>
+            </div>
             <p className="text-slate-400 text-[10px]">
               Prefix: {block.prefix || '—'} · {floors.length} floor{floors.length !== 1 ? 's' : ''} · {roomCount} rooms
             </p>
@@ -141,6 +268,10 @@ function BlockNode({ block, onEdit, onDelete, onDuplicate, onAddFloor, onGenerat
         </button>
         {!readOnly && (
           <div className="flex items-center gap-1 shrink-0">
+            <button onClick={() => onBulkAssignDept(block)} title="Bulk assign department to all rooms in this block"
+              className="px-2 py-1 rounded-lg text-[11px] font-bold bg-slate-700 hover:bg-slate-600 text-slate-200 border border-slate-600 transition-all">
+              + Dept
+            </button>
             <button onClick={() => onGenerateRooms(block)} title="Bulk generate rooms"
               className="px-2 py-1 rounded-lg text-[11px] font-bold bg-primary-600/90 text-white hover:bg-primary-500 transition-all">
               + Rooms
@@ -168,7 +299,7 @@ function BlockNode({ block, onEdit, onDelete, onDuplicate, onAddFloor, onGenerat
       {open && (
         <div className="px-4 py-3 bg-white">
           {floors.length > 0
-            ? floors.map(f => <FloorNode key={f.id} floor={f} />)
+            ? floors.map(f => <FloorNode key={f.id} floor={f} onBulkAssignDept={onBulkAssignDept} readOnly={readOnly} />)
             : <p className="text-xs text-slate-400 italic py-1">No floors added yet.</p>
           }
         </div>
@@ -187,12 +318,14 @@ function AutoFillWizard({ onClose, onSuccess }) {
     block_prefix: '',
     num_floors: 2,
     rooms_per_floor: 10,
-    room_number_pattern: '{block_prefix}{floor_code}{n}',
+    room_number_pattern: '{floor_code}{number:02d}',
     room_type: 'classroom',
     room_capacity: 60,
     pad_digits: 2,
     start_number: 1,
   })
+  // Optional mixed room presets per floor, e.g. floor 1 room 3 = lab, room 4 = seminar_room
+  const [mixedRoomsConfig, setMixedRoomsConfig] = useState({}) // { [floorNum]: { [roomNum]: roomType } }
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
   const [result, setResult] = useState(null)
@@ -200,8 +333,8 @@ function AutoFillWizard({ onClose, onSuccess }) {
   const upd = (k, v) => setForm(f => ({ ...f, [k]: v }))
 
   const PATTERNS = [
-    { label: 'A101, A102 …', value: '{block_prefix}{floor_code}{n}' },
-    { label: 'GF-01, GF-02 …', value: '{floor_code}-{n}' },
+    { label: '001, 002… / 101, 102… (Standard 3-Digit)', value: '{floor_code}{number:02d}' },
+    { label: 'A001, A002… / A101, A102… (Prefix + 3-Digit)', value: '{block_prefix}{floor_code}{number:02d}' },
     { label: 'Block-A-101 …', value: '{block_prefix}-{floor_code}-{n}' },
     { label: 'Room 101, Room 102 …', value: 'Room {n}' },
   ]
@@ -214,12 +347,13 @@ function AutoFillWizard({ onClose, onSuccess }) {
       const roomsPerFloor = Math.max(1, parseInt(form.rooms_per_floor) || 10)
       const startNum = parseInt(form.start_number) || 1
       const capacity = parseInt(form.room_capacity) || 60
-      const pattern = form.room_number_pattern || '{block_prefix}{floor_code}{number:02d}'
+      const pattern = form.room_number_pattern || '{floor_code}{number:02d}'
       const blockCode = (form.block_prefix || form.block_name.replace(/[^a-zA-Z0-9]/g, '').slice(0, 4) || 'BLK').toUpperCase()
 
       const floorConfigs = []
       for (let f = 0; f < numFloors; f++) {
         const floorName = f === 0 ? 'Ground Floor' : (f === 1 ? 'First Floor' : (f === 2 ? 'Second Floor' : (f === 3 ? 'Third Floor' : `Floor ${f}`)))
+        const overrides = mixedRoomsConfig[f] || {}
         floorConfigs.push({
           floor_number: f,
           floor_name: floorName,
@@ -228,6 +362,7 @@ function AutoFillWizard({ onClose, onSuccess }) {
           pattern: pattern,
           room_type: form.room_type || 'classroom',
           capacity: capacity,
+          room_type_overrides: Object.keys(overrides).length > 0 ? overrides : undefined,
         })
       }
 
@@ -259,7 +394,7 @@ function AutoFillWizard({ onClose, onSuccess }) {
           </div>
         ))}
         <div className="text-xs text-slate-500 font-semibold ml-2 whitespace-nowrap">
-          {step === 1 ? 'Block Info' : step === 2 ? 'Room Config' : '✅ Done'}
+          {step === 1 ? 'Block Info' : step === 2 ? 'Room Config & Mixed Types' : '✅ Done'}
         </div>
       </div>
 
@@ -318,11 +453,11 @@ function AutoFillWizard({ onClose, onSuccess }) {
             <input value={form.room_number_pattern} onChange={e => upd('room_number_pattern', e.target.value)}
               placeholder="Custom pattern"
               className="w-full border border-slate-200 rounded-xl px-3 py-2 text-xs font-mono focus:outline-none focus:border-primary-400" />
-            <p className="text-[10px] text-slate-400 mt-1">Tokens: {'{'+'block_prefix}  {floor_code}  {n}  {number:02d}'}</p>
+            <p className="text-[10px] text-slate-400 mt-1">Ground floor will generate as <strong>001, 002...</strong> and 1st floor as <strong>101, 102...</strong></p>
           </div>
           <div className="grid grid-cols-3 gap-3">
             <div>
-              <label className="block text-xs font-bold text-slate-600 mb-1">Room Type</label>
+              <label className="block text-xs font-bold text-slate-600 mb-1">Default Room Type</label>
               <select value={form.room_type} onChange={e => upd('room_type', e.target.value)}
                 className="w-full border border-slate-200 rounded-xl px-2 py-2 text-xs focus:outline-none focus:border-primary-400">
                 <option value="classroom">Classroom</option>
@@ -346,12 +481,24 @@ function AutoFillWizard({ onClose, onSuccess }) {
                 className="w-full border border-slate-200 rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-primary-400" />
             </div>
           </div>
+
+          {/* Quick Mixed Types Setting (Lab, Seminar Hall) */}
+          <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl space-y-2">
+            <p className="text-xs font-bold text-slate-700 flex items-center justify-between">
+              <span>🧪 Mixed Room Types (e.g. 103 Lab, 104 Seminar Hall)</span>
+              <span className="text-[10px] font-normal text-slate-500">Rooms on same floor need not be identical</span>
+            </p>
+            <p className="text-[11px] text-slate-500">
+              Need non-classroom venues like a Lab or Seminar Room on any floor? You can customize specific rooms after creation, or generate via the Floor "+ Rooms" generator with live per-room type assignment.
+            </p>
+          </div>
+
           {/* Summary */}
           <div className="bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs text-slate-600 space-y-1">
             <p className="font-bold text-slate-700 mb-1">📋 Summary</p>
             <p>Block: <span className="font-bold text-slate-800">{form.block_name}</span></p>
             <p>{form.num_floors} floor{form.num_floors>1?'s':''} × {form.rooms_per_floor} rooms = <span className="font-black text-primary-600">{form.num_floors * form.rooms_per_floor} total rooms</span></p>
-            <p>Type: {form.room_type.replace(/_/g,' ')} · Capacity: {form.room_capacity}</p>
+            <p>Default: {form.room_type.replace(/_/g,' ')} · Numbering: <strong>001-0{form.rooms_per_floor < 10 ? '0' : ''}{form.rooms_per_floor}</strong> (Ground), <strong>101-1{form.rooms_per_floor < 10 ? '0' : ''}{form.rooms_per_floor}</strong> (1st Floor)</p>
           </div>
           <div className="flex gap-2">
             <button onClick={() => setStep(1)} className="flex-1 py-2.5 rounded-xl border border-slate-200 text-sm font-bold text-slate-600 hover:bg-slate-50 transition-all">
@@ -393,13 +540,14 @@ function BulkRoomGenerator({ block, onClose, onSuccess }) {
   const [loadingFloors, setLoadingFloors] = useState(true)
   const [form, setForm] = useState({
     floor_id: '',
-    room_number_pattern: 'Room {n}',
+    room_number_pattern: '{floor_code}{number:02d}',
     start_num: 1,
     end_num: 10,
     pad_digits: 2,
     room_type: 'classroom',
     capacity: 60,
   })
+  const [roomTypeOverrides, setRoomTypeOverrides] = useState({}) // { "103": "laboratory", "104": "seminar_room" }
   const [preview, setPreview] = useState(null)
   const [previewing, setPreviewing] = useState(false)
   const [generating, setGenerating] = useState(false)
@@ -407,7 +555,10 @@ function BulkRoomGenerator({ block, onClose, onSuccess }) {
 
   useEffect(() => {
     campusStructureApi.listFloors(block.id)
-      .then(r => { setFloors(r.data || []); if (r.data?.length > 0) setForm(f => ({ ...f, floor_id: r.data[0].id })) })
+      .then(r => {
+        setFloors(r.data || [])
+        if (r.data?.length > 0) setForm(f => ({ ...f, floor_id: r.data[0].id }))
+      })
       .finally(() => setLoadingFloors(false))
   }, [block.id])
 
@@ -421,18 +572,37 @@ function BulkRoomGenerator({ block, onClose, onSuccess }) {
       const res = await campusStructureApi.previewRooms({
         block_id: block?.id,
         floor_id: parseInt(form.floor_id),
-        pattern: form.room_number_pattern || 'Room {n}',
+        pattern: form.room_number_pattern || '{floor_code}{number:02d}',
         start_num: parseInt(form.start_num) || 1,
         count: count,
         pad_digits: parseInt(form.pad_digits) || 0,
         room_type: form.room_type || 'classroom',
         capacity: parseInt(form.capacity) || 60,
+        room_type_overrides: roomTypeOverrides,
       })
       setPreview(res.data)
     } catch (e) {
       setError(formatError(e, 'Preview failed'))
     } finally {
       setPreviewing(false)
+    }
+  }
+
+  const handleToggleRoomType = (roomNumber, currentType) => {
+    const types = ['classroom', 'laboratory', 'seminar_room', 'lecture_hall', 'office', 'staff_room']
+    const nextIdx = (types.indexOf(currentType) + 1) % types.length
+    const nextType = types[nextIdx]
+    setRoomTypeOverrides(prev => ({
+      ...prev,
+      [roomNumber]: nextType
+    }))
+    if (preview?.preview_items) {
+      setPreview(prev => ({
+        ...prev,
+        preview_items: prev.preview_items.map(it =>
+          it.room_number === roomNumber ? { ...it, room_type: nextType } : it
+        )
+      }))
     }
   }
 
@@ -444,12 +614,13 @@ function BulkRoomGenerator({ block, onClose, onSuccess }) {
       await campusStructureApi.generateRooms({
         block_id: block?.id,
         floor_id: parseInt(form.floor_id),
-        pattern: form.room_number_pattern || 'Room {n}',
+        pattern: form.room_number_pattern || '{floor_code}{number:02d}',
         start_num: parseInt(form.start_num) || 1,
         count: count,
         pad_digits: parseInt(form.pad_digits) || 2,
         room_type: form.room_type || 'classroom',
         capacity: parseInt(form.capacity) || 60,
+        room_type_overrides: roomTypeOverrides,
       })
       onSuccess()
       onClose()
@@ -468,31 +639,31 @@ function BulkRoomGenerator({ block, onClose, onSuccess }) {
           <div className="grid grid-cols-2 gap-3">
             <div className="col-span-2">
               <label className="block text-xs font-bold text-slate-600 mb-1">Select Floor *</label>
-              <select value={form.floor_id} onChange={e => upd('floor_id', e.target.value)}
+              <select value={form.floor_id} onChange={e => { upd('floor_id', e.target.value); setPreview(null) }}
                 className="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-primary-400">
-                {floors.map(f => <option key={f.id} value={f.id}>{f.floor_name}</option>)}
+                {floors.map(f => <option key={f.id} value={f.id}>{f.floor_name} (Floor {f.floor_number})</option>)}
                 {floors.length === 0 && <option value="">No floors — add one first</option>}
               </select>
             </div>
             <div className="col-span-2">
               <label className="block text-xs font-bold text-slate-600 mb-1">Room Number Pattern</label>
-              <input value={form.room_number_pattern} onChange={e => upd('room_number_pattern', e.target.value)}
+              <input value={form.room_number_pattern} onChange={e => { upd('room_number_pattern', e.target.value); setPreview(null) }}
                 className="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm font-mono focus:outline-none focus:border-primary-400" />
-              <p className="text-[10px] text-slate-400 mt-0.5">Use {'{'+'n}'} for number, {'{'+'floor_code}'} for floor, {'{'+'block_prefix}'} for block</p>
+              <p className="text-[10px] text-slate-400 mt-0.5">Use <code>{'{floor_code}{number:02d}'}</code> for 001, 002... (Ground) and 101, 102... (1st Floor)</p>
             </div>
             <div>
               <label className="block text-xs font-bold text-slate-600 mb-1">Start Number</label>
-              <input type="number" value={form.start_num} onChange={e => upd('start_num', e.target.value)}
+              <input type="number" value={form.start_num} onChange={e => { upd('start_num', e.target.value); setPreview(null) }}
                 className="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-primary-400" />
             </div>
             <div>
               <label className="block text-xs font-bold text-slate-600 mb-1">End Number</label>
-              <input type="number" value={form.end_num} onChange={e => upd('end_num', e.target.value)}
+              <input type="number" value={form.end_num} onChange={e => { upd('end_num', e.target.value); setPreview(null) }}
                 className="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-primary-400" />
             </div>
             <div>
-              <label className="block text-xs font-bold text-slate-600 mb-1">Room Type</label>
-              <select value={form.room_type} onChange={e => upd('room_type', e.target.value)}
+              <label className="block text-xs font-bold text-slate-600 mb-1">Default Room Type</label>
+              <select value={form.room_type} onChange={e => { upd('room_type', e.target.value); setPreview(null) }}
                 className="w-full border border-slate-200 rounded-xl px-2 py-2 text-xs focus:outline-none focus:border-primary-400">
                 {Object.keys(ROOM_TYPE_COLORS).map(t => (
                   <option key={t} value={t}>{t.replace(/_/g,' ').replace(/\b\w/g, l => l.toUpperCase())}</option>
@@ -509,28 +680,47 @@ function BulkRoomGenerator({ block, onClose, onSuccess }) {
           {/* Preview Panel */}
           <button onClick={handlePreview} disabled={previewing || !form.floor_id}
             className="w-full py-2 rounded-xl border-2 border-dashed border-primary-300 text-primary-600 font-bold text-sm hover:bg-primary-50 disabled:opacity-50 transition-all flex items-center justify-center gap-2">
-            {previewing ? <><Spinner size="sm" /> Loading preview...</> : '👁️ Preview Room Numbers'}
+            {previewing ? <><Spinner size="sm" /> Loading preview...</> : '👁️ Preview Rooms & Configure Mixed Types'}
           </button>
 
           {preview && (
-            <div className="bg-slate-50 border border-slate-200 rounded-xl p-3 max-h-48 overflow-y-auto">
-              <div className="flex items-center justify-between mb-2">
-                <p className="text-xs font-bold text-slate-600">{preview.preview_items?.length} rooms to create</p>
+            <div className="bg-slate-50 border border-slate-200 rounded-xl p-3 max-h-56 overflow-y-auto space-y-2">
+              <div className="flex items-center justify-between">
+                <p className="text-xs font-bold text-slate-600">
+                  {preview.preview_items?.length} rooms to create · <span className="text-slate-400 font-normal">Click a room badge to cycle type (e.g. Lab, Seminar)</span>
+                </p>
                 {preview.duplicate_count > 0 && (
                   <span className="text-[10px] font-bold text-amber-600 bg-amber-50 border border-amber-200 rounded-full px-2 py-0.5">
                     ⚠️ {preview.duplicate_count} duplicates
                   </span>
                 )}
               </div>
-              <div className="flex flex-wrap gap-1.5">
-                {(preview.preview_items || []).map((item, i) => (
-                  <span key={i} className={`px-2 py-0.5 rounded-lg text-[11px] font-mono font-bold ${
-                    item.is_duplicate ? 'bg-amber-50 text-amber-700 border border-amber-300' : 'bg-emerald-50 text-emerald-700 border border-emerald-200'
-                  }`}>
-                    {item.room_number}
-                    {item.is_duplicate && ' ⚠️'}
-                  </span>
-                ))}
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                {(preview.preview_items || []).map((item, i) => {
+                  const currentType = roomTypeOverrides[item.room_number] || item.room_type || form.room_type
+                  return (
+                    <button
+                      key={i}
+                      type="button"
+                      onClick={() => handleToggleRoomType(item.room_number, currentType)}
+                      title={`Click to change type: current is ${currentType}`}
+                      className={`p-2 rounded-xl border text-left flex flex-col justify-between transition-all ${
+                        item.is_duplicate
+                          ? 'bg-amber-50 border-amber-300 text-amber-900'
+                          : 'bg-white border-slate-200 hover:border-primary-400'
+                      }`}
+                    >
+                      <div className="flex items-center justify-between">
+                        <span className="font-mono font-bold text-xs">{item.room_number}</span>
+                        {item.is_duplicate && <span className="text-[10px]">⚠️</span>}
+                      </div>
+                      <div className="mt-1 flex items-center justify-between">
+                        <RoomTypeBadge type={currentType} />
+                        <span className="text-[9px] text-slate-400">change ↻</span>
+                      </div>
+                    </button>
+                  )
+                })}
               </div>
             </div>
           )}
@@ -776,6 +966,7 @@ export default function CampusStructureBuilder({ readOnly = false }) {
   const [blockModal, setBlockModal] = useState(null) // null | block | 'new'
   const [floorModal, setFloorModal] = useState(null) // null | block
   const [generateModal, setGenerateModal] = useState(null) // null | block
+  const [bulkDeptModal, setBulkDeptModal] = useState(null) // null | { target, type: 'floor' | 'block' }
   const [deleteConfirm, setDeleteConfirm] = useState(null) // null | block
   const [deleting, setDeleting] = useState(false)
 
@@ -992,6 +1183,10 @@ export default function CampusStructureBuilder({ readOnly = false }) {
                   onDuplicate={handleDuplicate}
                   onAddFloor={b => setFloorModal(b)}
                   onGenerateRooms={b => setGenerateModal(b)}
+                  onBulkAssignDept={target => setBulkDeptModal({
+                    target: target.floor_name ? target : block,
+                    type: target.floor_name ? 'floor' : 'block'
+                  })}
                 />
               ))}
             </div>
@@ -1034,6 +1229,22 @@ export default function CampusStructureBuilder({ readOnly = false }) {
         title={`🏗️ Bulk Generate Rooms — ${generateModal?.name}`}>
         {generateModal && (
           <BulkRoomGenerator block={generateModal} onClose={() => setGenerateModal(null)} onSuccess={fetchData} />
+        )}
+      </Modal>
+
+      {/* Bulk Assign Department Modal (Floor or Block) */}
+      <Modal
+        isOpen={bulkDeptModal !== null}
+        onClose={() => setBulkDeptModal(null)}
+        title={`🏢 Bulk Assign Department — ${bulkDeptModal?.type === 'floor' ? bulkDeptModal?.target?.floor_name : bulkDeptModal?.target?.name}`}
+      >
+        {bulkDeptModal && (
+          <BulkAssignDeptModal
+            target={bulkDeptModal.target}
+            type={bulkDeptModal.type}
+            onClose={() => setBulkDeptModal(null)}
+            onSuccess={fetchData}
+          />
         )}
       </Modal>
 

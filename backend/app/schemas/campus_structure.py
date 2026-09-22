@@ -124,14 +124,15 @@ class CampusRoomOut(CampusRoomBase):
 # ── Pattern Preview & Generation Schemas ───────────────────────────────────────
 
 class RoomPatternPreviewRequest(BaseModel):
-    pattern: str = "A-{number}"  # e.g., "A-{number}", "CS-{number:02d}", "G{number}"
-    start_num: int = 101
+    pattern: str = "{floor_code}{number:02d}"
+    start_num: int = 1
     count: int = 10
-    pad_digits: int = 0
+    pad_digits: int = 2
     room_type: RoomType = RoomType.classroom
     capacity: int = 60
     block_id: Optional[int] = None
     floor_id: Optional[int] = None
+    room_type_overrides: Optional[Dict[str, RoomType]] = None
 
 
 class RoomPatternPreviewItem(BaseModel):
@@ -164,6 +165,7 @@ class BulkRoomGenerateRequest(BaseModel):
     is_exam_eligible: bool = False
     exam_capacity: Optional[int] = None
     required_invigilators: int = 1
+    room_type_overrides: Optional[Dict[str, RoomType]] = None  # e.g. {"103": "lab", "104": "seminar_hall", "003": "lab"}
 
 
 class BulkRoomGenerateResponse(BaseModel):
@@ -180,10 +182,11 @@ class SmartFloorConfig(BaseModel):
     floor_name: str    # "Ground Floor", "First Floor"
     room_count: int = 10
     start_num: int = 1
-    pattern: str = "{block_prefix}{floor_code}{number:02d}"  # e.g. "A-G01" or "A-101"
+    pattern: str = "{floor_code}{number:02d}"  # e.g. "001" or "101"
     room_type: RoomType = RoomType.classroom
     capacity: int = 60
     department_id: Optional[int] = None
+    room_type_overrides: Optional[Dict[str, RoomType]] = None  # e.g. {"103": "lab", "104": "seminar_hall"}
 
 
 class SmartBlockAutoFillRequest(BaseModel):
@@ -219,6 +222,16 @@ class BulkRoomAssignRequest(BaseModel):
 class BulkRoomAssignResponse(BaseModel):
     updated_count: int
     message: str
+
+
+class BulkFloorAssignDepartmentRequest(BaseModel):
+    department_id: Optional[int] = None
+    clear_department: bool = False
+
+
+class BulkBlockAssignDepartmentRequest(BaseModel):
+    department_id: Optional[int] = None
+    clear_department: bool = False
 
 
 # ── Duplicate Structure ───────────────────────────────────────────────────────

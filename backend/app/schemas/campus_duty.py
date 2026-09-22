@@ -160,6 +160,25 @@ class DutyGenerateRequest(BaseModel):
     department_id: Optional[int] = None
 
 
+class WingDutyGenerateRequest(BaseModel):
+    target_date: date
+    start_time: time = time(9, 30)
+    end_time: time = time(16, 30)
+    block_ids: Optional[List[int]] = None
+    department_id: Optional[int] = None
+    required_teachers_per_wing: int = 1
+
+
+class ExamDutyGenerateRequest(BaseModel):
+    target_date: date
+    start_time: time = time(10, 0)
+    end_time: time = time(13, 0)
+    title: str = "Semester Examination"
+    block_ids: Optional[List[int]] = None
+    floor_ids: Optional[List[int]] = None
+    department_id: Optional[int] = None
+
+
 class DutyAutoAssignRequest(BaseModel):
     duty_id: Optional[int] = None
     target_date: Optional[date] = None

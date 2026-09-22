@@ -14,7 +14,8 @@ from app.schemas.campus_duty import (
     CampusAreaCreate, CampusAreaOut,
     DutyBreakPeriodCreate, DutyBreakPeriodOut,
     CampusDutyCreate, CampusDutyUpdate, CampusDutyOut,
-    DutyGenerateRequest, DutyAutoAssignRequest, DutyManualAssignRequest,
+    DutyGenerateRequest, WingDutyGenerateRequest, ExamDutyGenerateRequest,
+    DutyAutoAssignRequest, DutyManualAssignRequest,
     DutyOverrideRequest, DutyLockRequest, DutyReplaceRequest,
     DutyCandidateOut, DutyCandidatesResponse, DutyDashboardMetricsOut,
     DutyRulesOut, DutyRulesUpdate, DutyRulesImpactPreview
@@ -155,6 +156,51 @@ def generate_discipline_duties(
 ):
     dept_id = data.department_id or tenant_dept_id or current_user.department_id
     duties = CampusDutyService.generate_discipline_duties(db, target_date=data.target_date, department_id=dept_id, user_id=current_user.id)
+    return [CampusDutyService.to_duty_out(d) for d in duties]
+
+
+@router.post("/generate-wing-duties", response_model=List[CampusDutyOut])
+def generate_wing_duties(
+    data: WingDutyGenerateRequest,
+    current_user: User = Depends(require_admin),
+    db: Session = Depends(get_db),
+    tenant_dept_id: Optional[int] = Depends(get_tenant_department_id)
+):
+    """Automatically generates Wing Duties for floors across campus blocks."""
+    dept_id = data.department_id or tenant_dept_id or current_user.department_id
+    duties = CampusDutyService.generate_wing_duties(
+        db,
+        target_date=data.target_date,
+        start_time=data.start_time,
+        end_time=data.end_time,
+        block_ids=data.block_ids,
+        department_id=dept_id,
+        required_teachers_per_wing=data.required_teachers_per_wing,
+        user_id=current_user.id
+    )
+    return [CampusDutyService.to_duty_out(d) for d in duties]
+
+
+@router.post("/generate-exam-duties", response_model=List[CampusDutyOut])
+def generate_exam_duties(
+    data: ExamDutyGenerateRequest,
+    current_user: User = Depends(require_admin),
+    db: Session = Depends(get_db),
+    tenant_dept_id: Optional[int] = Depends(get_tenant_department_id)
+):
+    """Automatically generates Exam Duties for exam-eligible classrooms doubling as exam halls."""
+    dept_id = data.department_id or tenant_dept_id or current_user.department_id
+    duties = CampusDutyService.generate_exam_duties(
+        db,
+        target_date=data.target_date,
+        start_time=data.start_time,
+        end_time=data.end_time,
+        title=data.title,
+        block_ids=data.block_ids,
+        floor_ids=data.floor_ids,
+        department_id=dept_id,
+        user_id=current_user.id
+    )
     return [CampusDutyService.to_duty_out(d) for d in duties]
 
 

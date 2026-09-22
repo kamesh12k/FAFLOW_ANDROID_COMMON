@@ -4,7 +4,11 @@ from sqlalchemy.orm import Session
 from app.database import get_db
 from app.core.dependencies import require_admin, get_current_user
 from app.models.user import User
-from app.schemas.room import RoomCreate, RoomUpdate, RoomOut, RoomAvailabilityOut, BulkRoomCreate, BulkRoomCreateOut
+from app.schemas.room import (
+    RoomCreate, RoomUpdate, RoomOut, RoomAvailabilityOut,
+    BulkRoomCreate, BulkRoomCreateOut,
+    BulkRoomAssignIn, BulkRoomAssignOut
+)
 from app.services import room_service
 
 router = APIRouter(prefix="/rooms", tags=["Rooms"])
@@ -35,6 +39,15 @@ def bulk_create_rooms(
     db: Session = Depends(get_db),
 ):
     return room_service.bulk_create_rooms(data, db)
+
+
+@router.post("/bulk-assign", response_model=BulkRoomAssignOut)
+def bulk_assign_rooms(
+    data: BulkRoomAssignIn,
+    _admin: User = Depends(require_admin),
+    db: Session = Depends(get_db),
+):
+    return room_service.bulk_assign_rooms(data, db)
 
 
 

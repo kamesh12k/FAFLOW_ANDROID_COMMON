@@ -147,6 +147,7 @@ export const roomsApi = {
   list: (roomType) => api.get('/rooms/', { params: roomType ? { room_type: roomType } : {} }),
   create: (data) => api.post('/rooms/', data),
   bulkCreate: (data) => api.post('/rooms/bulk', data),
+  bulkAssign: (data) => api.post('/rooms/bulk-assign', data),
   update: (id, data) => api.patch(`/rooms/${id}`, data),
   remove: (id) => api.delete(`/rooms/${id}`),
   availabilityDashboard: (dayOrder, periodNumber) =>
@@ -400,6 +401,8 @@ export const campusStructureApi = {
   generateRooms: (data) => api.post('/campus-structure/generate-rooms', data),
   smartAutofill: (data) => api.post('/campus-structure/smart-autofill', data),
   bulkAssign: (data) => api.post('/campus-structure/rooms/bulk-assign', data),
+  bulkAssignFloorDepartment: (floorId, data) => api.post(`/campus-structure/floors/${floorId}/bulk-assign-department`, data),
+  bulkAssignBlockDepartment: (blockId, data) => api.post(`/campus-structure/blocks/${blockId}/bulk-assign-department`, data),
 
   // Export / Import
   exportCsv: () => api.get('/campus-structure/export', { responseType: 'blob' }),
@@ -421,6 +424,8 @@ export const campusDutiesApi = {
   getDuty: (id) => api.get(`/campus-duties/${id}`),
   createDuty: (data) => api.post('/campus-duties', data),
   generateDiscipline: (data) => api.post('/campus-duties/generate-discipline', data),
+  generateWingDuties: (data) => api.post('/campus-duties/generate-wing-duties', data),
+  generateExamDuties: (data) => api.post('/campus-duties/generate-exam-duties', data),
   getCandidates: (dutyId) => api.get(`/campus-duties/${dutyId}/candidates`),
   autoAssign: (dutyId) => api.post(`/campus-duties/${dutyId}/auto-assign`),
   autoAssignAll: (data) => api.post('/campus-duties/auto-assign-all', data),

@@ -302,6 +302,157 @@ class CampusDutyService:
         ).order_by(CampusDuty.start_time).all()
 
     @staticmethod
+    def generate_wing_duties(
+        db: Session,
+        target_date: date,
+        start_time: time = time(9, 30),
+        end_time: time = time(16, 30),
+        block_ids: Optional[List[int]] = None,
+        department_id: Optional[int] = None,
+        required_teachers_per_wing: int = 1,
+        user_id: Optional[int] = None
+    ) -> List[CampusDuty]:
+        """Automatically creates WING_DUTY assignments for each active floor (corridor/wing)
+        across specified campus blocks."""
+        day_order = CampusDutyService.get_day_order_for_date(db, target_date)
+        from app.models.campus_structure import CampusBlock, CampusFloor
+
+        q = db.query(CampusFloor).join(CampusBlock).filter(CampusFloor.is_active == True, CampusBlock.is_active == True)
+        if block_ids:
+            q = q.filter(CampusFloor.block_id.in_(block_ids))
+        if department_id:
+            q = q.filter(or_(CampusBlock.department_id == department_id, CampusBlock.department_id == None))
+        floors = q.order_by(CampusBlock.name, CampusFloor.display_order).all()
+
+        created_duties = []
+        for fl in floors:
+            title = f"Wing Duty - {fl.block.name} ({fl.floor_name})"
+            existing = db.query(CampusDuty).filter(
+                CampusDuty.duty_date == target_date,
+                CampusDuty.duty_type == DutyType.WING_DUTY,
+                CampusDuty.title == title,
+                CampusDuty.status.in_([DutyStatus.PUBLISHED, DutyStatus.DRAFT])
+            ).first()
+
+            if not existing:
+                area_code = f"WING_{fl.block.code}_{fl.floor_number}".upper()
+                area = db.query(CampusArea).filter(CampusArea.code == area_code).first()
+                if not area:
+                    area = CampusArea(
+                        name=f"{fl.block.name} - {fl.floor_name}",
+                        code=area_code,
+                        duty_type=DutyType.WING_DUTY.value,
+                        block_id=fl.block_id,
+                        floor_id=fl.id,
+                        building_or_block=fl.block.name,
+                        floor=fl.floor_name,
+                        required_teachers=required_teachers_per_wing,
+                        department_id=department_id or fl.block.department_id,
+                        is_active=True
+                    )
+                    db.add(area)
+                    db.flush()
+
+                duty = CampusDuty(
+                    duty_type=DutyType.WING_DUTY,
+                    title=title,
+                    duty_date=target_date,
+                    start_time=start_time,
+                    end_time=end_time,
+                    area_id=area.id,
+                    department_id=department_id or fl.block.department_id,
+                    day_order=day_order,
+                    required_teachers=required_teachers_per_wing,
+                    status=DutyStatus.PUBLISHED,
+                    created_by_user_id=user_id
+                )
+                db.add(duty)
+                created_duties.append(duty)
+
+        if created_duties:
+            db.commit()
+            for d in created_duties:
+                db.refresh(d)
+            CampusDutyService._log_audit(db, user_id, "WING_DUTIES_GENERATED", {
+                "date": str(target_date),
+                "count": len(created_duties)
+            })
+
+        return db.query(CampusDuty).filter(
+            CampusDuty.duty_date == target_date,
+            CampusDuty.duty_type == DutyType.WING_DUTY
+        ).order_by(CampusDuty.start_time).all()
+
+    @staticmethod
+    def generate_exam_duties(
+        db: Session,
+        target_date: date,
+        start_time: time = time(10, 0),
+        end_time: time = time(13, 0),
+        title: str = "Semester Examination",
+        block_ids: Optional[List[int]] = None,
+        floor_ids: Optional[List[int]] = None,
+        department_id: Optional[int] = None,
+        user_id: Optional[int] = None
+    ) -> List[CampusDuty]:
+        """Automatically allocates EXAM_DUTY invigilation duties for all exam-eligible classrooms
+        across specified blocks/floors, transforming classrooms into examination halls."""
+        day_order = CampusDutyService.get_day_order_for_date(db, target_date)
+        from app.models.room import Room
+
+        q = db.query(Room).filter(Room.is_exam_eligible == True, Room.is_active == True)
+        if block_ids:
+            q = q.filter(Room.block_id.in_(block_ids))
+        if floor_ids:
+            q = q.filter(Room.floor_id.in_(floor_ids))
+        if department_id:
+            q = q.filter(or_(Room.department_id == department_id, Room.department_id == None))
+        rooms = q.order_by(Room.room_number).all()
+
+        created_duties = []
+        for rm in rooms:
+            existing = db.query(CampusDuty).filter(
+                CampusDuty.room_id == rm.id,
+                CampusDuty.duty_date == target_date,
+                CampusDuty.duty_type == DutyType.EXAM_DUTY,
+                CampusDuty.status.in_([DutyStatus.PUBLISHED, DutyStatus.DRAFT]),
+                CampusDuty.start_time < end_time,
+                CampusDuty.end_time > start_time
+            ).first()
+
+            if not existing:
+                duty_title = f"{title} - Room {rm.room_number}"
+                duty = CampusDuty(
+                    duty_type=DutyType.EXAM_DUTY,
+                    title=duty_title,
+                    duty_date=target_date,
+                    start_time=start_time,
+                    end_time=end_time,
+                    room_id=rm.id,
+                    department_id=rm.department_id or department_id,
+                    day_order=day_order,
+                    required_teachers=rm.required_invigilators or 1,
+                    status=DutyStatus.PUBLISHED,
+                    created_by_user_id=user_id
+                )
+                db.add(duty)
+                created_duties.append(duty)
+
+        if created_duties:
+            db.commit()
+            for d in created_duties:
+                db.refresh(d)
+            CampusDutyService._log_audit(db, user_id, "EXAM_DUTIES_GENERATED", {
+                "date": str(target_date),
+                "count": len(created_duties)
+            })
+
+        return db.query(CampusDuty).filter(
+            CampusDuty.duty_date == target_date,
+            CampusDuty.duty_type == DutyType.EXAM_DUTY
+        ).order_by(CampusDuty.start_time).all()
+
+    @staticmethod
     def create_duty(db: Session, data: CampusDutyCreate, user_id: Optional[int] = None) -> CampusDuty:
         day_order = data.day_order or CampusDutyService.get_day_order_for_date(db, data.duty_date)
         

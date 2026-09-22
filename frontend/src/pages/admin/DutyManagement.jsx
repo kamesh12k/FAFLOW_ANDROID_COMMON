@@ -92,6 +92,37 @@ export default function DutyManagement({ readOnly = false }) {
     }
   }
 
+  const handleGenerateWingDuties = async () => {
+    setActionLoading(true)
+    try {
+      const res = await campusDutiesApi.generateWingDuties({ target_date: selectedDate })
+      alert(`Wing duties generated from campus floors! Created: ${res?.data?.created_count ?? 0}`)
+      await fetchData()
+    } catch (err) {
+      alert(err?.response?.data?.detail || 'Failed to generate wing duties')
+    } finally {
+      setActionLoading(false)
+    }
+  }
+
+  const handleGenerateExamDuties = async () => {
+    const session = prompt('Enter Exam Session (FN or AN):', 'FN')
+    if (!session) return
+    setActionLoading(true)
+    try {
+      const res = await campusDutiesApi.generateExamDuties({
+        target_date: selectedDate,
+        session: session.trim().toUpperCase(),
+      })
+      alert(`Exam duties generated from exam-eligible classrooms! Created: ${res?.data?.created_count ?? 0}`)
+      await fetchData()
+    } catch (err) {
+      alert(err?.response?.data?.detail || 'Failed to generate exam duties')
+    } finally {
+      setActionLoading(false)
+    }
+  }
+
   const handleAutoAssign = async (dutyId) => {
     setActionLoading(true)
     try {
@@ -236,9 +267,26 @@ export default function DutyManagement({ readOnly = false }) {
             <button
               onClick={handleGenerateDiscipline}
               disabled={actionLoading}
-              className="px-3.5 py-2 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-xs font-bold rounded-xl border border-indigo-200 transition-all flex items-center gap-1.5 shadow-sm"
+              title="Generate Discipline Duties from Campus Blocks"
+              className="px-3 py-2 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-xs font-bold rounded-xl border border-indigo-200 transition-all flex items-center gap-1.5 shadow-sm"
             >
-              <span>⚡</span> Generate Today's Break Duties
+              <span>🛡️</span> Discipline Duties
+            </button>
+            <button
+              onClick={handleGenerateWingDuties}
+              disabled={actionLoading}
+              title="Generate Wing Supervision Duties from Campus Floors"
+              className="px-3 py-2 bg-blue-50 hover:bg-blue-100 text-blue-700 text-xs font-bold rounded-xl border border-blue-200 transition-all flex items-center gap-1.5 shadow-sm"
+            >
+              <span>🏢</span> Wing Duties
+            </button>
+            <button
+              onClick={handleGenerateExamDuties}
+              disabled={actionLoading}
+              title="Generate Invigilation Duties from Exam-Eligible Classrooms"
+              className="px-3 py-2 bg-purple-50 hover:bg-purple-100 text-purple-700 text-xs font-bold rounded-xl border border-purple-200 transition-all flex items-center gap-1.5 shadow-sm"
+            >
+              <span>📝</span> Exam Duties
             </button>
             <button
               onClick={handleAutoAssignAll}

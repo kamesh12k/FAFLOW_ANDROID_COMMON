@@ -14,6 +14,7 @@ from app.schemas.campus_structure import (
     BulkRoomGenerateRequest, BulkRoomGenerateResponse,
     SmartBlockAutoFillRequest, SmartBlockAutoFillResponse,
     BulkRoomAssignRequest, BulkRoomAssignResponse,
+    BulkFloorAssignDepartmentRequest, BulkBlockAssignDepartmentRequest,
     DuplicateBlockRequest, DuplicateBlockResponse,
     CampusStructureTreeOut, CampusStructureMetricsOut,
     CampusSearchResponse,
@@ -165,6 +166,34 @@ def bulk_assign_rooms(
 ):
     """Batch updates departments, classes, room types, or exam capacities across multiple rooms."""
     return CampusStructureService.bulk_assign_rooms(db, data, user_id=current_user.id)
+
+
+@router.post("/floors/{floor_id}/bulk-assign-department")
+def bulk_assign_floor_department(
+    floor_id: int,
+    data: BulkFloorAssignDepartmentRequest,
+    current_user: User = Depends(require_admin),
+    db: Session = Depends(get_db)
+):
+    """Assigns or clears department for all rooms on the specified floor."""
+    count = CampusStructureService.bulk_assign_floor_department(
+        db, floor_id=floor_id, department_id=data.department_id, clear_department=data.clear_department, user_id=current_user.id
+    )
+    return {"updated_count": count, "message": f"Successfully updated {count} room(s) on floor."}
+
+
+@router.post("/blocks/{block_id}/bulk-assign-department")
+def bulk_assign_block_department(
+    block_id: int,
+    data: BulkBlockAssignDepartmentRequest,
+    current_user: User = Depends(require_admin),
+    db: Session = Depends(get_db)
+):
+    """Assigns or clears department for all rooms in the specified block."""
+    count = CampusStructureService.bulk_assign_block_department(
+        db, block_id=block_id, department_id=data.department_id, clear_department=data.clear_department, user_id=current_user.id
+    )
+    return {"updated_count": count, "message": f"Successfully updated {count} room(s) in block."}
 
 
 # ── Import & Export ───────────────────────────────────────────────────────────

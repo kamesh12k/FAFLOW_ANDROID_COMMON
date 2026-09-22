@@ -8,6 +8,10 @@ class RoomCreate(BaseModel):
     room_type: RoomType = RoomType.classroom
     capacity: int
     department_id: int | None = None
+    primary_class_id: int | None = None
+    is_exam_eligible: bool = False
+    exam_capacity: int | None = None
+    required_invigilators: int = 1
 
     @field_validator("capacity")
     @classmethod
@@ -22,6 +26,10 @@ class RoomUpdate(BaseModel):
     room_type: RoomType | None = None
     capacity: int | None = None
     department_id: int | None = None
+    primary_class_id: int | None = None
+    is_exam_eligible: bool | None = None
+    exam_capacity: int | None = None
+    required_invigilators: int | None = None
 
 
 class RoomOut(BaseModel):
@@ -30,9 +38,31 @@ class RoomOut(BaseModel):
     room_type: RoomType
     capacity: int
     department_id: int | None
+    primary_class_id: int | None = None
+    primary_class_name: str | None = None
+    is_exam_eligible: bool = False
+    exam_capacity: int | None = None
+    required_invigilators: int = 1
     created_at: datetime
 
     model_config = {"from_attributes": True}
+
+
+class BulkRoomAssignIn(BaseModel):
+    room_ids: list[int]
+    department_id: int | None = None
+    clear_department: bool = False
+    primary_class_id: int | None = None
+    clear_class: bool = False
+    room_type: RoomType | None = None
+    is_exam_eligible: bool | None = None
+    exam_capacity: int | None = None
+    required_invigilators: int | None = None
+
+
+class BulkRoomAssignOut(BaseModel):
+    updated_count: int
+    message: str
 
 
 class RoomAvailabilityOut(BaseModel):
