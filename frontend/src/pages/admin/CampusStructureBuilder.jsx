@@ -1,11 +1,26 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
-import { campusStructureApi, departmentsApi } from '../../api/services'
+import { campusStructureApi, departmentsApi, roomsApi, classesApi } from '../../api/services'
 import { Spinner, ErrorAlert, Modal, Badge } from '../../components/ui'
 import { useAuth } from '../../context/AuthContext'
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Helpers
 // ─────────────────────────────────────────────────────────────────────────────
+function formatRoomNumber(pattern, num, floorNum, blockPrefix = '') {
+  const floorCode = floorNum === 0 ? '0' : (floorNum < 0 ? `B${Math.abs(floorNum)}` : String(floorNum))
+  let res = pattern || '{floor_code}{number:02d}'
+  res = res.replace(/{block_prefix}/g, blockPrefix ? `${blockPrefix}-` : '')
+  res = res.replace(/{floor_code}/g, floorCode)
+  const num2d = String(num).padStart(2, '0')
+  const num3d = String(num).padStart(3, '0')
+  res = res.replace(/{number:02d}/g, num2d)
+  res = res.replace(/{number:03d}/g, num3d)
+  res = res.replace(/{number}/g, String(num))
+  res = res.replace(/{num}/g, String(num))
+  res = res.replace(/{n}/g, num2d)
+  return res.trim()
+}
+
 const ROOM_TYPE_COLORS = {
   classroom:    { bg: 'bg-blue-50',   text: 'text-blue-700',   border: 'border-blue-200' },
   laboratory:   { bg: 'bg-violet-50', text: 'text-violet-700', border: 'border-violet-200' },
@@ -166,15 +181,242 @@ function BulkAssignDeptModal({ target, type, onClose, onSuccess }) {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// Quick Edit Room Modal (In-Place, Zero Navigation)
+// ─────────────────────────────────────────────────────────────────────────────
+function QuickEditRoomModal({ room, departments, classes, onClose, onSuccess }) {
+  const [form, setForm] = useState({
+    room_number: room?.room_number || '',
+    room_name: room?.name || room?.room_name || '',
+    room_type: room?.room_type || 'classroom',
+    capacity: room?.capacity || 60,
+    department_id: room?.department_id || '',
+    primary_class_id: room?.primary_class_id || '',
+    is_exam_eligible: Boolean(room?.is_exam_eligible),
+    exam_capacity: room?.exam_capacity || '',
+    required_invigilators: room?.required_invigilators || 1,
+  })
+  const [saving, setSaving] = useState(false)
+  const [error, setError] = useState('')
+
+  const upd = (k, v) => setForm(f => ({ ...f, [k]: v }))
+
+  const handleSubmit = async (e) => {
+    e.preventDefault()
+    setSaving(true)
+    setError('')
+    try {
+      await roomsApi.update(room.id, {
+        room_number: form.room_number.trim(),
+        room_name: form.room_name.trim() || null,
+        room_type: form.room_type,
+        capacity: parseInt(form.capacity) || 60,
+        department_id: form.department_id ? parseInt(form.department_id) : null,
+        primary_class_id: form.primary_class_id ? parseInt(form.primary_class_id) : null,
+        is_exam_eligible: Boolean(form.is_exam_eligible),
+        exam_capacity: form.exam_capacity ? parseInt(form.exam_capacity) : null,
+        required_invigilators: parseInt(form.required_invigilators) || 1,
+      })
+      onSuccess()
+      onClose()
+    } catch (err) {
+      setError(formatError(err, 'Failed to update room'))
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  return (
+    <form onSubmit={handleSubmit} className="space-y-4">
+      {error && <div className="p-3 bg-rose-50 border border-rose-200 rounded-xl text-sm text-rose-700">{error}</div>}
+      <div className="grid grid-cols-2 gap-3">
+        <div>
+          <label className="block text-xs font-bold text-slate-600 mb-1">Room Number *</label>
+          <input
+            value={form.room_number}
+            onChange={e => upd('room_number', e.target.value)}
+            className="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm font-mono focus:outline-none focus:border-primary-400"
+            required
+          />
+        </div>
+        <div>
+          <label className="block text-xs font-bold text-slate-600 mb-1">Room Type *</label>
+          <select
+            value={form.room_type}
+            onChange={e => upd('room_type', e.target.value)}
+            className="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-primary-400"
+          >
+            <option value="classroom">🚪 Classroom</option>
+            <option value="laboratory">🧪 Laboratory</option>
+            <option value="seminar_room">🏛️ Seminar Hall</option>
+            <option value="lecture_hall">🎓 Lecture Hall</option>
+            <option value="office">💼 Office</option>
+            <option value="staff_room">👥 Staff Room</option>
+            <option value="auditorium">🎭 Auditorium</option>
+            <option value="other">📦 Other</option>
+          </select>
+        </div>
+        <div className="col-span-2">
+          <label className="block text-xs font-bold text-slate-600 mb-1">Department</label>
+          <select
+            value={form.department_id}
+            onChange={e => upd('department_id', e.target.value)}
+            className="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-primary-400"
+          >
+            <option value="">-- No Department Assigned --</option>
+            {departments.map(d => (
+              <option key={d.id} value={d.id}>{d.name} {d.code ? `(${d.code})` : ''}</option>
+            ))}
+          </select>
+        </div>
+        <div className="col-span-2">
+          <label className="block text-xs font-bold text-slate-600 mb-1">Home Classroom Mapping (Optional)</label>
+          <select
+            value={form.primary_class_id}
+            onChange={e => upd('primary_class_id', e.target.value)}
+            className="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-primary-400"
+          >
+            <option value="">-- No Home Class (Floating / Shared Room) --</option>
+            {classes.map(c => (
+              <option key={c.id} value={c.id}>
+                🎓 {c.name} {c.section ? `(${c.section})` : ''} {c.department_name ? `- ${c.department_name}` : ''}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div>
+          <label className="block text-xs font-bold text-slate-600 mb-1">Capacity (Seats)</label>
+          <input
+            type="number"
+            min={1}
+            value={form.capacity}
+            onChange={e => upd('capacity', e.target.value)}
+            className="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-primary-400"
+          />
+        </div>
+        <div>
+          <label className="block text-xs font-bold text-slate-600 mb-1">Room Name (Optional)</label>
+          <input
+            value={form.room_name}
+            onChange={e => upd('room_name', e.target.value)}
+            placeholder="e.g. CAD Lab, Turing Hall"
+            className="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-primary-400"
+          />
+        </div>
+      </div>
+
+      <div className="p-3 bg-purple-50/70 border border-purple-200 rounded-xl space-y-2">
+        <label className="flex items-center gap-2 cursor-pointer">
+          <input
+            type="checkbox"
+            checked={form.is_exam_eligible}
+            onChange={e => upd('is_exam_eligible', e.target.checked)}
+            className="w-4 h-4 text-purple-600 rounded"
+          />
+          <span className="text-xs font-bold text-purple-900">📝 Eligible as Examination Hall</span>
+        </label>
+        {form.is_exam_eligible && (
+          <div className="grid grid-cols-2 gap-2 pt-1">
+            <div>
+              <label className="block text-[10px] font-bold text-purple-800 mb-0.5">Exam Capacity</label>
+              <input
+                type="number"
+                value={form.exam_capacity}
+                onChange={e => upd('exam_capacity', e.target.value)}
+                placeholder={`${Math.floor(form.capacity / 2)} (alternate seating)`}
+                className="w-full border border-purple-200 rounded-lg px-2 py-1 text-xs bg-white"
+              />
+            </div>
+            <div>
+              <label className="block text-[10px] font-bold text-purple-800 mb-0.5">Invigilators</label>
+              <input
+                type="number"
+                min={1}
+                value={form.required_invigilators}
+                onChange={e => upd('required_invigilators', e.target.value)}
+                className="w-full border border-purple-200 rounded-lg px-2 py-1 text-xs bg-white"
+              />
+            </div>
+          </div>
+        )}
+      </div>
+
+      <div className="flex gap-2 pt-2">
+        <button type="button" onClick={onClose} className="flex-1 py-2.5 rounded-xl border border-slate-200 text-sm font-bold text-slate-600 hover:bg-slate-50 transition-all">
+          Cancel
+        </button>
+        <button
+          type="submit"
+          disabled={saving || !form.room_number}
+          className="flex-[2] py-2.5 rounded-xl bg-primary-600 text-white font-bold text-sm disabled:opacity-50 hover:bg-primary-700 transition-all flex items-center justify-center gap-2"
+        >
+          {saving ? <><Spinner size="sm" /> Saving...</> : '💾 Save Room'}
+        </button>
+      </div>
+    </form>
+  )
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // Tree Node components
 // ─────────────────────────────────────────────────────────────────────────────
-function RoomRow({ room }) {
+function RoomRow({ room, onEdit, onRefresh, readOnly }) {
+  const [updating, setUpdating] = useState(false)
+
+  const handleTypeChange = async (e) => {
+    const newType = e.target.value
+    if (newType === room.room_type) return
+    setUpdating(true)
+    try {
+      await roomsApi.update(room.id, { room_type: newType })
+      onRefresh?.()
+    } catch (err) {
+      alert(formatError(err, 'Failed to update room type'))
+    } finally {
+      setUpdating(false)
+    }
+  }
+
+  const handleToggleExam = async () => {
+    if (readOnly) return
+    setUpdating(true)
+    try {
+      await roomsApi.update(room.id, { is_exam_eligible: !room.is_exam_eligible })
+      onRefresh?.()
+    } catch (err) {
+      alert(formatError(err, 'Failed to toggle exam hall status'))
+    } finally {
+      setUpdating(false)
+    }
+  }
+
   return (
-    <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-50 border border-slate-100 hover:border-slate-200 transition-all flex-wrap sm:flex-nowrap">
+    <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-50 border border-slate-100 hover:border-slate-200 transition-all flex-wrap sm:flex-nowrap group">
       <span className="text-slate-300 text-xs">🚪</span>
       <span className="font-semibold text-slate-700 text-sm font-mono">{room.room_number}</span>
       {room.name && <span className="text-slate-400 text-xs truncate max-w-[100px]">{room.name}</span>}
-      <RoomTypeBadge type={room.room_type} />
+
+      {/* Inline Room Type Quick-Select or Badge */}
+      {!readOnly ? (
+        <select
+          value={room.room_type || 'classroom'}
+          onChange={handleTypeChange}
+          disabled={updating}
+          title="Change room type in-place"
+          className="text-[11px] font-bold py-0.5 px-1.5 rounded-lg border border-slate-200 bg-white hover:border-primary-400 focus:outline-none focus:border-primary-500 cursor-pointer text-slate-700"
+        >
+          <option value="classroom">🚪 Classroom</option>
+          <option value="laboratory">🧪 Laboratory</option>
+          <option value="seminar_room">🏛️ Seminar Hall</option>
+          <option value="lecture_hall">🎓 Lecture Hall</option>
+          <option value="office">💼 Office</option>
+          <option value="staff_room">👥 Staff Room</option>
+          <option value="auditorium">🎭 Auditorium</option>
+          <option value="other">📦 Other</option>
+        </select>
+      ) : (
+        <RoomTypeBadge type={room.room_type} />
+      )}
+
       {room.department_name && (
         <span className="text-[10px] bg-slate-100 text-slate-600 px-1.5 py-0.5 rounded font-medium truncate max-w-[120px]" title={room.department_name}>
           🏢 {room.department_name}
@@ -185,17 +427,43 @@ function RoomRow({ room }) {
           🎓 {room.primary_class_name}
         </span>
       )}
-      {room.is_exam_eligible && (
+
+      {/* Exam Hall Toggle */}
+      {!readOnly ? (
+        <button
+          onClick={handleToggleExam}
+          disabled={updating}
+          title="Click to toggle Exam Hall eligibility"
+          className={`text-[10px] px-1.5 py-0.5 rounded font-semibold transition-all border ${
+            room.is_exam_eligible
+              ? 'bg-purple-50 text-purple-700 border-purple-200 hover:bg-purple-100'
+              : 'bg-slate-100 text-slate-400 border-slate-200 hover:bg-slate-200'
+          }`}
+        >
+          {room.is_exam_eligible ? '📝 Exam Hall' : '+ Exam Hall'}
+        </button>
+      ) : room.is_exam_eligible ? (
         <span className="text-[10px] bg-purple-50 text-purple-700 border border-purple-200 px-1.5 py-0.5 rounded font-semibold" title={`Exam Hall (${room.exam_capacity || room.capacity || 0} seats)`}>
           📝 Exam Hall
         </span>
-      )}
+      ) : null}
+
       {room.capacity && <span className="text-[10px] text-slate-400 font-semibold shrink-0 ml-auto">{room.capacity} seats</span>}
+
+      {!readOnly && (
+        <button
+          onClick={() => onEdit?.(room)}
+          title="Edit room details (department, home class, capacity)"
+          className="opacity-0 group-hover:opacity-100 p-1 rounded text-slate-400 hover:text-slate-700 hover:bg-slate-200 transition-all text-xs shrink-0 cursor-pointer"
+        >
+          ✏️
+        </button>
+      )}
     </div>
   )
 }
 
-function FloorNode({ floor, onBulkAssignDept, readOnly }) {
+function FloorNode({ floor, onBulkAssignDept, onEditRoom, onRefresh, readOnly }) {
   const [open, setOpen] = useState(true)
   const rooms = floor.rooms || []
   return (
@@ -227,7 +495,15 @@ function FloorNode({ floor, onBulkAssignDept, readOnly }) {
       </div>
       {open && rooms.length > 0 && (
         <div className="space-y-1 pb-2">
-          {rooms.map(r => <RoomRow key={r.id} room={r} />)}
+          {rooms.map(r => (
+            <RoomRow
+              key={r.id}
+              room={r}
+              onEdit={onEditRoom}
+              onRefresh={onRefresh}
+              readOnly={readOnly}
+            />
+          ))}
         </div>
       )}
       {open && rooms.length === 0 && (
@@ -237,7 +513,7 @@ function FloorNode({ floor, onBulkAssignDept, readOnly }) {
   )
 }
 
-function BlockNode({ block, onEdit, onDelete, onDuplicate, onAddFloor, onGenerateRooms, onBulkAssignDept, readOnly }) {
+function BlockNode({ block, onEdit, onDelete, onDuplicate, onAddFloor, onGenerateRooms, onBulkAssignDept, onEditRoom, onRefresh, readOnly }) {
   const [open, setOpen] = useState(true)
   const floors = block.floors || []
   const roomCount = floors.reduce((acc, f) => acc + (f.rooms?.length || 0), 0)
@@ -299,7 +575,16 @@ function BlockNode({ block, onEdit, onDelete, onDuplicate, onAddFloor, onGenerat
       {open && (
         <div className="px-4 py-3 bg-white">
           {floors.length > 0
-            ? floors.map(f => <FloorNode key={f.id} floor={f} onBulkAssignDept={onBulkAssignDept} readOnly={readOnly} />)
+            ? floors.map(f => (
+                <FloorNode
+                  key={f.id}
+                  floor={f}
+                  onBulkAssignDept={onBulkAssignDept}
+                  onEditRoom={onEditRoom}
+                  onRefresh={onRefresh}
+                  readOnly={readOnly}
+                />
+              ))
             : <p className="text-xs text-slate-400 italic py-1">No floors added yet.</p>
           }
         </div>
@@ -482,15 +767,131 @@ function AutoFillWizard({ onClose, onSuccess }) {
             </div>
           </div>
 
-          {/* Quick Mixed Types Setting (Lab, Seminar Hall) */}
-          <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl space-y-2">
-            <p className="text-xs font-bold text-slate-700 flex items-center justify-between">
-              <span>🧪 Mixed Room Types (e.g. 103 Lab, 104 Seminar Hall)</span>
-              <span className="text-[10px] font-normal text-slate-500">Rooms on same floor need not be identical</span>
-            </p>
-            <p className="text-[11px] text-slate-500">
-              Need non-classroom venues like a Lab or Seminar Room on any floor? You can customize specific rooms after creation, or generate via the Floor "+ Rooms" generator with live per-room type assignment.
-            </p>
+          {/* Interactive Live Mixed Room Types Matrix (In-Place, Zero Navigation) */}
+          <div className="p-3.5 bg-slate-50 border border-slate-200 rounded-2xl space-y-3">
+            <div className="flex items-start justify-between flex-wrap gap-2">
+              <div>
+                <p className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
+                  <span>🧪 Live Floor & Room Layout</span>
+                  <span className="text-[10px] font-normal text-primary-600 bg-primary-50 px-2 py-0.5 rounded-full border border-primary-200">Click any room to cycle its type</span>
+                </p>
+                <p className="text-[11px] text-slate-500 mt-0.5">
+                  Rooms on the same floor don't have to be identical. Click any room chip below to customize it into a <strong>Lab</strong> or <strong>Seminar Hall</strong> directly right now:
+                </p>
+              </div>
+              <div className="flex items-center gap-1 text-[10px] flex-wrap">
+                <span className="px-1.5 py-0.5 rounded bg-blue-100 text-blue-700 font-semibold">🚪 Class</span>
+                <span className="px-1.5 py-0.5 rounded bg-violet-100 text-violet-700 font-semibold">🧪 Lab</span>
+                <span className="px-1.5 py-0.5 rounded bg-teal-100 text-teal-700 font-semibold">🏛️ Seminar</span>
+                <span className="px-1.5 py-0.5 rounded bg-amber-100 text-amber-700 font-semibold">🎓 Lecture</span>
+                <span className="px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-700 font-semibold">💼 Office</span>
+              </div>
+            </div>
+
+            {/* Live interactive rooms by floor */}
+            <div className="space-y-2.5 max-h-64 overflow-y-auto pr-1">
+              {Array.from({ length: Math.max(1, parseInt(form.num_floors) || 1) }).map((_, f) => {
+                const floorName = f === 0 ? 'Ground Floor' : (f === 1 ? 'First Floor' : (f === 2 ? 'Second Floor' : (f === 3 ? 'Third Floor' : `Floor ${f}`)))
+                const floorRoomsCount = Math.min(40, Math.max(1, parseInt(form.rooms_per_floor) || 10))
+                const startNum = parseInt(form.start_number) || 1
+                const pattern = form.room_number_pattern || '{floor_code}{number:02d}'
+                const blockCode = (form.block_prefix || form.block_name.replace(/[^a-zA-Z0-9]/g, '').slice(0, 4) || 'BLK').toUpperCase()
+
+                return (
+                  <div key={f} className="bg-white rounded-xl p-2.5 border border-slate-200 shadow-2xs">
+                    <div className="flex items-center justify-between mb-1.5">
+                      <span className="text-xs font-bold text-slate-700 flex items-center gap-1.5">
+                        <span>🏢 {floorName}</span>
+                        <span className="text-[10px] font-normal text-slate-400">({floorRoomsCount} rooms)</span>
+                      </span>
+                      <div className="flex gap-1">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const targetIdx = Math.min(3, floorRoomsCount)
+                            const curNum = startNum + targetIdx - 1
+                            const roomNo = formatRoomNumber(pattern, curNum, f, blockCode)
+                            setMixedRoomsConfig(prev => ({
+                              ...prev,
+                              [f]: { ...(prev[f] || {}), [roomNo]: 'laboratory', [String(curNum)]: 'laboratory' }
+                            }))
+                          }}
+                          className="text-[10px] px-1.5 py-0.5 rounded bg-violet-50 text-violet-700 border border-violet-200 hover:bg-violet-100 font-medium"
+                        >
+                          + Lab
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const targetIdx = Math.min(4, floorRoomsCount)
+                            const curNum = startNum + targetIdx - 1
+                            const roomNo = formatRoomNumber(pattern, curNum, f, blockCode)
+                            setMixedRoomsConfig(prev => ({
+                              ...prev,
+                              [f]: { ...(prev[f] || {}), [roomNo]: 'seminar_room', [String(curNum)]: 'seminar_room' }
+                            }))
+                          }}
+                          className="text-[10px] px-1.5 py-0.5 rounded bg-teal-50 text-teal-700 border border-teal-200 hover:bg-teal-100 font-medium"
+                        >
+                          + Seminar
+                        </button>
+                      </div>
+                    </div>
+
+                    <div className="flex flex-wrap gap-1.5">
+                      {Array.from({ length: floorRoomsCount }).map((_, rIdx) => {
+                        const curNum = startNum + rIdx
+                        const roomNo = formatRoomNumber(pattern, curNum, f, blockCode)
+                        const currentType = (mixedRoomsConfig[f]?.[roomNo] || mixedRoomsConfig[f]?.[String(curNum)]) || form.room_type || 'classroom'
+
+                        const typeStyles = {
+                          classroom: 'bg-blue-50 border-blue-200 text-blue-700 hover:border-blue-400',
+                          laboratory: 'bg-violet-100 border-violet-300 text-violet-800 font-bold hover:border-violet-500 shadow-xs',
+                          seminar_room: 'bg-teal-100 border-teal-300 text-teal-800 font-bold hover:border-teal-500 shadow-xs',
+                          lecture_hall: 'bg-amber-100 border-amber-300 text-amber-800 font-bold hover:border-amber-500',
+                          office: 'bg-emerald-100 border-emerald-300 text-emerald-800 font-bold hover:border-emerald-500',
+                          staff_room: 'bg-slate-100 border-slate-300 text-slate-700 hover:border-slate-500',
+                        }
+                        const typeIcons = {
+                          classroom: '🚪',
+                          laboratory: '🧪',
+                          seminar_room: '🏛️',
+                          lecture_hall: '🎓',
+                          office: '💼',
+                          staff_room: '👥',
+                        }
+
+                        return (
+                          <button
+                            key={curNum}
+                            type="button"
+                            onClick={() => {
+                              const types = ['classroom', 'laboratory', 'seminar_room', 'lecture_hall', 'office']
+                              const nextIdx = (types.indexOf(currentType) + 1) % types.length
+                              const nextType = types[nextIdx]
+                              setMixedRoomsConfig(prev => {
+                                const fObj = { ...(prev[f] || {}) }
+                                fObj[roomNo] = nextType
+                                fObj[String(curNum)] = nextType
+                                return { ...prev, [f]: fObj }
+                              })
+                            }}
+                            title={`Click to cycle type: ${roomNo} (${currentType})`}
+                            className={`flex items-center gap-1 px-2 py-1 rounded-lg text-xs border transition-all cursor-pointer select-none ${typeStyles[currentType] || typeStyles.classroom}`}
+                          >
+                            <span className="font-mono font-bold">{roomNo}</span>
+                            <span className="text-[11px]">{typeIcons[currentType] || '🚪'}</span>
+                            <span className="text-[9px] uppercase tracking-tighter opacity-85">
+                              {currentType === 'laboratory' ? 'Lab' : currentType === 'seminar_room' ? 'Seminar' : currentType === 'lecture_hall' ? 'Lecture' : currentType === 'classroom' ? 'Class' : currentType}
+                            </span>
+                          </button>
+                        )
+                      })}
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
           </div>
 
           {/* Summary */}
@@ -499,6 +900,11 @@ function AutoFillWizard({ onClose, onSuccess }) {
             <p>Block: <span className="font-bold text-slate-800">{form.block_name}</span></p>
             <p>{form.num_floors} floor{form.num_floors>1?'s':''} × {form.rooms_per_floor} rooms = <span className="font-black text-primary-600">{form.num_floors * form.rooms_per_floor} total rooms</span></p>
             <p>Default: {form.room_type.replace(/_/g,' ')} · Numbering: <strong>001-0{form.rooms_per_floor < 10 ? '0' : ''}{form.rooms_per_floor}</strong> (Ground), <strong>101-1{form.rooms_per_floor < 10 ? '0' : ''}{form.rooms_per_floor}</strong> (1st Floor)</p>
+            {Object.keys(mixedRoomsConfig).length > 0 && (
+              <p className="text-violet-700 font-semibold text-[11px] pt-1">
+                🧪 Customized Mixed Types: {Object.entries(mixedRoomsConfig).flatMap(([_, rMap]) => Object.entries(rMap).filter(([k]) => isNaN(k)).map(([r, t]) => `${r} (${t})`)).join(', ') || 'Configured'}
+              </p>
+            )}
           </div>
           <div className="flex gap-2">
             <button onClick={() => setStep(1)} className="flex-1 py-2.5 rounded-xl border border-slate-200 text-sm font-bold text-slate-600 hover:bg-slate-50 transition-all">
@@ -967,6 +1373,9 @@ export default function CampusStructureBuilder({ readOnly = false }) {
   const [floorModal, setFloorModal] = useState(null) // null | block
   const [generateModal, setGenerateModal] = useState(null) // null | block
   const [bulkDeptModal, setBulkDeptModal] = useState(null) // null | { target, type: 'floor' | 'block' }
+  const [roomEditModal, setRoomEditModal] = useState(null) // null | room
+  const [departments, setDepartments] = useState([])
+  const [classes, setClasses] = useState([])
   const [deleteConfirm, setDeleteConfirm] = useState(null) // null | block
   const [deleting, setDeleting] = useState(false)
 
@@ -991,7 +1400,11 @@ export default function CampusStructureBuilder({ readOnly = false }) {
     }
   }, [])
 
-  useEffect(() => { fetchData() }, [fetchData])
+  useEffect(() => {
+    fetchData()
+    departmentsApi.list(true).then(r => setDepartments(r.data || [])).catch(() => setDepartments([]))
+    classesApi.list().then(r => setClasses(r.data || [])).catch(() => setClasses([]))
+  }, [fetchData])
 
   const handleDeleteBlock = async () => {
     if (!deleteConfirm) return
@@ -1183,6 +1596,8 @@ export default function CampusStructureBuilder({ readOnly = false }) {
                   onDuplicate={handleDuplicate}
                   onAddFloor={b => setFloorModal(b)}
                   onGenerateRooms={b => setGenerateModal(b)}
+                  onEditRoom={room => setRoomEditModal(room)}
+                  onRefresh={fetchData}
                   onBulkAssignDept={target => setBulkDeptModal({
                     target: target.floor_name ? target : block,
                     type: target.floor_name ? 'floor' : 'block'
@@ -1243,6 +1658,23 @@ export default function CampusStructureBuilder({ readOnly = false }) {
             target={bulkDeptModal.target}
             type={bulkDeptModal.type}
             onClose={() => setBulkDeptModal(null)}
+            onSuccess={fetchData}
+          />
+        )}
+      </Modal>
+
+      {/* Quick Edit Room Modal (In-Place, Zero Navigation) */}
+      <Modal
+        isOpen={roomEditModal !== null}
+        onClose={() => setRoomEditModal(null)}
+        title={`🚪 Edit Room ${roomEditModal?.room_number || ''}`}
+      >
+        {roomEditModal && (
+          <QuickEditRoomModal
+            room={roomEditModal}
+            departments={departments}
+            classes={classes}
+            onClose={() => setRoomEditModal(null)}
             onSuccess={fetchData}
           />
         )}
