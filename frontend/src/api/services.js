@@ -447,6 +447,9 @@ export const campusDutiesApi = {
   deleteBreakPeriod: (id) => api.delete(`/campus-duties/break-periods/${id}`),
   resetBreakPeriods: () => api.post('/campus-duties/reset-break-periods'),
   triggerAutoReplace: (targetDate) => api.post('/campus-duties/auto-replace-absent', { target_date: targetDate }),
+  resetDuty: (dutyId) => api.post(`/campus-duties/${dutyId}/reset`),
+  toggleDutyActive: (dutyId) => api.post(`/campus-duties/${dutyId}/toggle-active`),
+  deleteDuty: (dutyId) => api.delete(`/campus-duties/${dutyId}`),
   getRules: () => api.get('/campus-duties/rules'),
   updateRules: (data) => api.put('/campus-duties/rules', data),
 }

@@ -445,3 +445,35 @@ def replace_duty_teacher(
     replacement = CampusDutyService.replace_unavailable_teacher(db, assignment_id, user_id=current_user.id, reason=data.reason)
     duty = CampusDutyService.get_duty(db, replacement.duty_id)
     return CampusDutyService.to_duty_out(duty)
+
+
+@router.post("/{duty_id}/reset", response_model=CampusDutyOut)
+def reset_duty(
+    duty_id: int,
+    current_user: User = Depends(require_admin_or_principal),
+    db: Session = Depends(get_db)
+):
+    """Resets duty assignments back to 0 and unlocks the duty."""
+    duty = CampusDutyService.reset_duty(db, duty_id, user_id=current_user.id)
+    return CampusDutyService.to_duty_out(duty)
+
+
+@router.post("/{duty_id}/toggle-active", response_model=CampusDutyOut)
+def toggle_duty_active(
+    duty_id: int,
+    current_user: User = Depends(require_admin_or_principal),
+    db: Session = Depends(get_db)
+):
+    """Toggles duty status between PUBLISHED (active) and CANCELLED (deactivated)."""
+    duty = CampusDutyService.toggle_duty_active(db, duty_id, user_id=current_user.id)
+    return CampusDutyService.to_duty_out(duty)
+
+
+@router.delete("/{duty_id}")
+def delete_duty(
+    duty_id: int,
+    current_user: User = Depends(require_admin_or_principal),
+    db: Session = Depends(get_db)
+):
+    """Permanently deletes a campus duty and its assignments."""
+    return CampusDutyService.delete_duty(db, duty_id, user_id=current_user.id)

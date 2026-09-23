@@ -987,6 +987,9 @@ class CampusDutyService:
         if duty.is_locked:
             raise DomainException(f"Cannot auto-assign: Duty '{duty.title}' is locked by administrator ({duty.lock_reason or 'Protected'})", status_code=409)
 
+        if duty.status == DutyStatus.CANCELLED:
+            raise DomainException(f"Cannot auto-assign: Duty '{duty.title}' is deactivated.", status_code=409)
+
         cand_resp = CampusDutyService.evaluate_candidates(db, duty_id, allowed_department_ids=allowed_department_ids)
         eligible_candidates = [c for c in cand_resp.candidates if c.is_eligible]
 
@@ -1261,6 +1264,9 @@ class CampusDutyService:
     def manual_assign(db: Session, duty_id: int, teacher_id: int, user_id: Optional[int] = None, role: str = "GENERAL") -> DutyAssignment:
         duty = CampusDutyService.get_duty(db, duty_id)
 
+        if duty.status == DutyStatus.CANCELLED:
+            raise DomainException(f"Cannot assign: Duty '{duty.title}' is deactivated.", status_code=409)
+
         # Check existing active assignment
         existing = db.query(DutyAssignment).filter(
             DutyAssignment.duty_id == duty_id,
@@ -1383,6 +1389,73 @@ class CampusDutyService:
             "reason": reason
         })
         return CampusDutyService.get_duty(db, duty.id)
+
+    @staticmethod
+    def reset_duty(db: Session, duty_id: int, user_id: Optional[int] = None) -> CampusDuty:
+        """Clears all faculty assignments and unlocks the duty, resetting staff count to 0."""
+        duty = db.query(CampusDuty).filter(CampusDuty.id == duty_id).first()
+        if not duty:
+            raise DomainException("Duty not found", status_code=404)
+
+        # Remove all assignments
+        db.query(DutyAssignment).filter(DutyAssignment.duty_id == duty_id).delete(synchronize_session=False)
+
+        # Reset lock & restore status
+        duty.is_locked = False
+        duty.locked_by_user_id = None
+        duty.locked_at = None
+        duty.lock_reason = None
+        if duty.status == DutyStatus.CANCELLED:
+            duty.status = DutyStatus.PUBLISHED
+
+        db.commit()
+        db.refresh(duty)
+        CampusDutyService._log_audit(db, user_id, "DUTY_RESET", {
+            "duty_id": duty.id,
+            "title": duty.title
+        })
+        return CampusDutyService.get_duty(db, duty.id)
+
+    @staticmethod
+    def toggle_duty_active(db: Session, duty_id: int, user_id: Optional[int] = None) -> CampusDuty:
+        """Toggles a duty's status between PUBLISHED (active) and CANCELLED (deactivated)."""
+        duty = db.query(CampusDuty).filter(CampusDuty.id == duty_id).first()
+        if not duty:
+            raise DomainException("Duty not found", status_code=404)
+
+        if duty.status == DutyStatus.CANCELLED:
+            duty.status = DutyStatus.PUBLISHED
+            action = "DUTY_ACTIVATED"
+        else:
+            duty.status = DutyStatus.CANCELLED
+            action = "DUTY_DEACTIVATED"
+
+        db.commit()
+        db.refresh(duty)
+        CampusDutyService._log_audit(db, user_id, action, {
+            "duty_id": duty.id,
+            "title": duty.title,
+            "status": duty.status.value if hasattr(duty.status, "value") else str(duty.status)
+        })
+        return CampusDutyService.get_duty(db, duty.id)
+
+    @staticmethod
+    def delete_duty(db: Session, duty_id: int, user_id: Optional[int] = None) -> dict:
+        """Permanently deletes a duty and its assignments."""
+        duty = db.query(CampusDuty).filter(CampusDuty.id == duty_id).first()
+        if not duty:
+            raise DomainException("Duty not found", status_code=404)
+
+        title = duty.title
+        db.query(DutyAssignment).filter(DutyAssignment.duty_id == duty_id).delete(synchronize_session=False)
+        db.delete(duty)
+        db.commit()
+
+        CampusDutyService._log_audit(db, user_id, "DUTY_DELETED", {
+            "duty_id": duty_id,
+            "title": title
+        })
+        return {"success": True, "message": f"Duty '{title}' has been deleted.", "duty_id": duty_id}
 
     @staticmethod
     def replace_unavailable_teacher(db: Session, assignment_id: int, user_id: Optional[int] = None, reason: str = "") -> DutyAssignment:

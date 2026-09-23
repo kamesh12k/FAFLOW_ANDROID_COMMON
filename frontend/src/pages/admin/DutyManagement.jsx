@@ -293,6 +293,49 @@ export default function DutyManagement({ readOnly = false }) {
     }
   }
 
+  const handleResetDuty = async (duty) => {
+    if (!window.confirm(`Reset all assigned faculty for "${duty.title}"?\nThis will clear current assignments and unlock the duty.`)) return
+    setActionLoading(true)
+    try {
+      await campusDutiesApi.resetDuty(duty.id)
+      await fetchData()
+    } catch (err) {
+      alert(err?.response?.data?.detail || 'Reset duty failed')
+    } finally {
+      setActionLoading(false)
+    }
+  }
+
+  const handleToggleDutyActive = async (duty) => {
+    const isDeactivated = duty.status === 'CANCELLED'
+    const confirmMsg = isDeactivated
+      ? `Reactivate duty "${duty.title}"?`
+      : `Deactivate duty "${duty.title}"? This duty will be marked inactive.`
+    if (!window.confirm(confirmMsg)) return
+    setActionLoading(true)
+    try {
+      await campusDutiesApi.toggleDutyActive(duty.id)
+      await fetchData()
+    } catch (err) {
+      alert(err?.response?.data?.detail || 'Failed to toggle duty status')
+    } finally {
+      setActionLoading(false)
+    }
+  }
+
+  const handleDeleteDuty = async (duty) => {
+    if (!window.confirm(`Are you sure you want to permanently DELETE "${duty.title}"?\nThis action cannot be undone.`)) return
+    setActionLoading(true)
+    try {
+      await campusDutiesApi.deleteDuty(duty.id)
+      await fetchData()
+    } catch (err) {
+      alert(err?.response?.data?.detail || 'Failed to delete duty')
+    } finally {
+      setActionLoading(false)
+    }
+  }
+
   const handleExecuteOverride = async () => {
     if (!actionModal?.assignment || !selectedTeacherId) return
     setActionLoading(true)
@@ -907,11 +950,16 @@ export default function DutyManagement({ readOnly = false }) {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {filteredDuties.map((d) => {
             const isFull = d.assigned_teachers_count >= d.required_teachers
+            const isDeactivated = d.status === 'CANCELLED'
             return (
               <div
                 key={d.id}
                 className={`rounded-2xl border bg-white p-5 space-y-4 shadow-sm transition-all hover:shadow-md ${
-                  d.is_locked ? 'border-amber-200 bg-amber-50/20' : 'border-slate-200/80'
+                  isDeactivated
+                    ? 'border-dashed border-rose-300 bg-rose-50/20 opacity-80'
+                    : d.is_locked
+                    ? 'border-amber-200 bg-amber-50/20'
+                    : 'border-slate-200/80'
                 }`}
               >
                 {/* Card Header */}
@@ -926,15 +974,20 @@ export default function DutyManagement({ readOnly = false }) {
                           DO {d.day_order}
                         </span>
                       )}
+                      {isDeactivated && (
+                        <span className="inline-block px-2 py-0.5 rounded-md text-[10px] font-black uppercase tracking-wider bg-rose-100 text-rose-700 border border-rose-200">
+                          DEACTIVATED
+                        </span>
+                      )}
                     </div>
-                    <h3 className="font-extrabold text-sm text-slate-900 mt-1.5 leading-snug">{d.title}</h3>
+                    <h3 className={`font-extrabold text-sm mt-1.5 leading-snug ${isDeactivated ? 'line-through text-slate-400' : 'text-slate-900'}`}>{d.title}</h3>
                     <p className="text-[11px] font-semibold text-slate-500 mt-0.5">
                       {d.start_time.substring(0, 5)} – {d.end_time.substring(0, 5)} · {d.duty_date}
                     </p>
                   </div>
 
                   <div className="flex flex-col items-end gap-1">
-                    <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${isFull ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'}`}>
+                    <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${isDeactivated ? 'bg-slate-100 text-slate-500' : isFull ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'}`}>
                       {d.assigned_teachers_count} / {d.required_teachers} Staff
                     </span>
                     {d.is_locked && (
@@ -983,14 +1036,16 @@ export default function DutyManagement({ readOnly = false }) {
                               <button
                                 onClick={() => setActionModal({ type: 'override', duty: d, assignment: a })}
                                 title="Reassign/Override"
-                                className="px-1.5 py-0.5 text-[10px] font-bold text-slate-600 hover:text-indigo-600 bg-white border border-slate-200 rounded"
+                                disabled={isDeactivated}
+                                className="px-1.5 py-0.5 text-[10px] font-bold text-slate-600 hover:text-indigo-600 bg-white border border-slate-200 rounded disabled:opacity-40"
                               >
                                 Reassign
                               </button>
                               <button
                                 onClick={() => setActionModal({ type: 'replace', duty: d, assignment: a })}
                                 title="Mark Unavailable & Replace"
-                                className="px-1.5 py-0.5 text-[10px] font-bold text-rose-600 hover:bg-rose-50 border border-rose-200 rounded"
+                                disabled={isDeactivated}
+                                className="px-1.5 py-0.5 text-[10px] font-bold text-rose-600 hover:bg-rose-50 border border-rose-200 rounded disabled:opacity-40"
                               >
                                 Replace
                               </button>
@@ -1004,21 +1059,55 @@ export default function DutyManagement({ readOnly = false }) {
 
                 {/* Actions Footer */}
                 {!readOnly && (
-                  <div className="pt-2 border-t border-slate-100 flex items-center justify-between gap-2">
-                    <button
-                      onClick={() => handleToggleLock(d)}
-                      disabled={actionLoading}
-                      className={`text-[11px] font-bold px-2.5 py-1.5 rounded-lg border transition-all ${
-                        d.is_locked ? 'bg-amber-100 text-amber-900 border-amber-300' : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100'
-                      }`}
-                    >
-                      {d.is_locked ? '🔓 Unlock' : '🔒 Lock'}
-                    </button>
+                  <div className="pt-2 border-t border-slate-100 flex flex-wrap items-center justify-between gap-2">
+                    <div className="flex items-center gap-1 flex-wrap">
+                      <button
+                        onClick={() => handleToggleLock(d)}
+                        disabled={actionLoading}
+                        title={d.is_locked ? 'Unlock duty to allow edits' : 'Lock duty to prevent auto-changes'}
+                        className={`text-[11px] font-bold px-2 py-1.5 rounded-lg border transition-all ${
+                          d.is_locked ? 'bg-amber-100 text-amber-900 border-amber-300' : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100'
+                        }`}
+                      >
+                        {d.is_locked ? '🔓 Unlock' : '🔒 Lock'}
+                      </button>
+
+                      <button
+                        onClick={() => handleResetDuty(d)}
+                        disabled={actionLoading || d.is_locked}
+                        title="Clear all assigned faculty and reset duty to 0"
+                        className="text-[11px] font-bold px-2 py-1.5 rounded-lg border border-slate-200 bg-slate-50 text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition-all disabled:opacity-50"
+                      >
+                        🔄 Reset
+                      </button>
+
+                      <button
+                        onClick={() => handleToggleDutyActive(d)}
+                        disabled={actionLoading}
+                        title={isDeactivated ? 'Reactivate this duty' : 'Deactivate this duty'}
+                        className={`text-[11px] font-bold px-2 py-1.5 rounded-lg border transition-all ${
+                          isDeactivated
+                            ? 'bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100'
+                            : 'bg-amber-50 text-amber-700 border-amber-200 hover:bg-amber-100'
+                        }`}
+                      >
+                        {isDeactivated ? '✅ Activate' : '🚫 Deactivate'}
+                      </button>
+
+                      <button
+                        onClick={() => handleDeleteDuty(d)}
+                        disabled={actionLoading}
+                        title="Permanently delete this duty"
+                        className="text-[11px] font-bold px-2 py-1.5 rounded-lg border border-rose-200 bg-rose-50 text-rose-600 hover:bg-rose-100 transition-all disabled:opacity-50"
+                      >
+                        🗑️ Delete
+                      </button>
+                    </div>
 
                     <div className="flex items-center gap-1.5">
                       <button
                         onClick={() => openCandidatePicker(d)}
-                        disabled={actionLoading || d.is_locked}
+                        disabled={actionLoading || d.is_locked || isDeactivated}
                         className="text-[11px] font-bold px-3 py-1.5 rounded-lg bg-indigo-50 text-indigo-700 hover:bg-indigo-100 border border-indigo-200 transition-all disabled:opacity-50"
                       >
                         Pick Staff...
@@ -1026,7 +1115,7 @@ export default function DutyManagement({ readOnly = false }) {
 
                       <button
                         onClick={() => handleAutoAssign(d.id)}
-                        disabled={actionLoading || isFull || d.is_locked}
+                        disabled={actionLoading || isFull || d.is_locked || isDeactivated}
                         className="text-[11px] font-bold px-3 py-1.5 rounded-lg bg-indigo-600 text-white hover:bg-indigo-700 shadow-sm transition-all disabled:opacity-50"
                       >
                         ⚡ Auto-Fill
