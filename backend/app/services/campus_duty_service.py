@@ -1805,7 +1805,15 @@ class CampusDutyService:
     @staticmethod
     def to_duty_out(duty: CampusDuty) -> CampusDutyOut:
         assignments_out = []
+        seen_teacher_ids = set()
         for a in duty.assignments:
+            status_val = a.status.value if hasattr(a.status, "value") else str(a.status)
+            if status_val not in (AssignmentStatus.ASSIGNED.value, AssignmentStatus.PROPOSED.value):
+                continue
+            if a.teacher_id in seen_teacher_ids:
+                continue
+            seen_teacher_ids.add(a.teacher_id)
+
             teacher_name = getattr(a.teacher, "name", None) or getattr(a.teacher, "username", "Unknown")
             teacher_dept = a.teacher.department if isinstance(a.teacher.department, str) else (a.teacher.department.name if a.teacher and a.teacher.department else None)
             raw_reason = a.selection_reason
