@@ -160,6 +160,20 @@ class DutyGenerateRequest(BaseModel):
     department_id: Optional[int] = None
 
 
+class DutyBulkDeleteRequest(BaseModel):
+    target_date: Optional[date] = None
+    duty_ids: Optional[List[int]] = None
+    duty_type: Optional[str] = None
+    department_id: Optional[int] = None
+
+
+class DutyBulkResetRequest(BaseModel):
+    target_date: Optional[date] = None
+    duty_ids: Optional[List[int]] = None
+    duty_type: Optional[str] = None
+    department_id: Optional[int] = None
+
+
 class WingDutyGenerateRequest(BaseModel):
     target_date: date
     start_time: time = time(9, 30)

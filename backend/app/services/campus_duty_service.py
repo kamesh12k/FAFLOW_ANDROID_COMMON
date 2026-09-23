@@ -1458,6 +1458,98 @@ class CampusDutyService:
         return {"success": True, "message": f"Duty '{title}' has been deleted.", "duty_id": duty_id}
 
     @staticmethod
+    def bulk_delete_duties(
+        db: Session,
+        target_date: Optional[date] = None,
+        duty_ids: Optional[List[int]] = None,
+        duty_type: Optional[str] = None,
+        department_id: Optional[int] = None,
+        user_id: Optional[int] = None
+    ) -> dict:
+        """Permanently deletes multiple duties (by explicit IDs or by target date/filter)."""
+        q = db.query(CampusDuty)
+        if duty_ids:
+            q = q.filter(CampusDuty.id.in_(duty_ids))
+        elif target_date:
+            q = q.filter(CampusDuty.duty_date == target_date)
+            if duty_type:
+                q = q.filter(CampusDuty.duty_type == duty_type)
+            if department_id:
+                q = q.filter(CampusDuty.department_id == department_id)
+        else:
+            raise DomainException("Must specify target_date or duty_ids for bulk deletion", status_code=400)
+
+        duties_to_delete = q.all()
+        count = len(duties_to_delete)
+        if count == 0:
+            return {"success": True, "deleted_count": 0, "message": "No duties found matching the criteria."}
+
+        target_ids = [d.id for d in duties_to_delete]
+        db.query(DutyAssignment).filter(DutyAssignment.duty_id.in_(target_ids)).delete(synchronize_session=False)
+        db.query(CampusDuty).filter(CampusDuty.id.in_(target_ids)).delete(synchronize_session=False)
+        db.commit()
+
+        CampusDutyService._log_audit(db, user_id, "DUTIES_BULK_DELETED", {
+            "target_date": str(target_date) if target_date else None,
+            "deleted_count": count,
+            "duty_ids": target_ids
+        })
+        return {
+            "success": True,
+            "deleted_count": count,
+            "message": f"Successfully deleted {count} duty schedule(s)."
+        }
+
+    @staticmethod
+    def bulk_reset_duties(
+        db: Session,
+        target_date: Optional[date] = None,
+        duty_ids: Optional[List[int]] = None,
+        duty_type: Optional[str] = None,
+        department_id: Optional[int] = None,
+        user_id: Optional[int] = None
+    ) -> dict:
+        """Clears faculty assignments and unlocks multiple duties (by IDs or by target date)."""
+        q = db.query(CampusDuty)
+        if duty_ids:
+            q = q.filter(CampusDuty.id.in_(duty_ids))
+        elif target_date:
+            q = q.filter(CampusDuty.duty_date == target_date)
+            if duty_type:
+                q = q.filter(CampusDuty.duty_type == duty_type)
+            if department_id:
+                q = q.filter(CampusDuty.department_id == department_id)
+        else:
+            raise DomainException("Must specify target_date or duty_ids for bulk reset", status_code=400)
+
+        duties = q.all()
+        count = len(duties)
+        if count == 0:
+            return {"success": True, "reset_count": 0, "message": "No duties found matching the criteria."}
+
+        target_ids = [d.id for d in duties]
+        db.query(DutyAssignment).filter(DutyAssignment.duty_id.in_(target_ids)).delete(synchronize_session=False)
+
+        for d in duties:
+            d.is_locked = False
+            d.locked_by_user_id = None
+            d.locked_at = None
+            d.lock_reason = None
+            if d.status == DutyStatus.CANCELLED:
+                d.status = DutyStatus.PUBLISHED
+
+        db.commit()
+        CampusDutyService._log_audit(db, user_id, "DUTIES_BULK_RESET", {
+            "target_date": str(target_date) if target_date else None,
+            "reset_count": count
+        })
+        return {
+            "success": True,
+            "reset_count": count,
+            "message": f"Successfully reset assignments for {count} duty schedule(s)."
+        }
+
+    @staticmethod
     def replace_unavailable_teacher(db: Session, assignment_id: int, user_id: Optional[int] = None, reason: str = "") -> DutyAssignment:
         assignment = db.query(DutyAssignment).filter(DutyAssignment.id == assignment_id).first()
         if not assignment:

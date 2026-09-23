@@ -336,6 +336,64 @@ export default function DutyManagement({ readOnly = false }) {
     }
   }
 
+  const handleBulkDelete = async () => {
+    const count = filteredDuties.length
+    if (count === 0) {
+      alert('No duties found to delete.')
+      return
+    }
+    const tabLabel = activeTab !== 'today' && activeTab !== 'upcoming' && activeTab !== 'all'
+      ? `${activeTab.toUpperCase()} `
+      : ''
+    const msg = `⚠️ PERMANENT BULK DELETION\n\nAre you sure you want to delete ALL ${count} ${tabLabel}duties for ${selectedDate}?\n\nThis will remove all duty records and clear faculty assignments. This action cannot be undone.`
+    if (!window.confirm(msg)) return
+
+    const confirmation = prompt(`Type "DELETE" to confirm deleting all ${count} duties for ${selectedDate}:`)
+    if (confirmation !== 'DELETE') {
+      alert('Bulk deletion cancelled.')
+      return
+    }
+
+    setActionLoading(true)
+    try {
+      const dutyIds = filteredDuties.map(d => d.id)
+      const res = await campusDutiesApi.bulkDelete({
+        target_date: selectedDate,
+        duty_ids: dutyIds
+      })
+      await fetchData()
+      alert(res?.data?.message || `Successfully deleted ${count} duties.`)
+    } catch (err) {
+      alert(err?.response?.data?.detail || 'Bulk deletion failed')
+    } finally {
+      setActionLoading(false)
+    }
+  }
+
+  const handleBulkReset = async () => {
+    const count = filteredDuties.length
+    if (count === 0) {
+      alert('No duties found to reset.')
+      return
+    }
+    if (!window.confirm(`Reset faculty assignments for ALL ${count} duties on ${selectedDate}?\n\nAll assigned staff will be cleared (0/N) and duties will be unlocked.`)) return
+
+    setActionLoading(true)
+    try {
+      const dutyIds = filteredDuties.map(d => d.id)
+      const res = await campusDutiesApi.bulkReset({
+        target_date: selectedDate,
+        duty_ids: dutyIds
+      })
+      await fetchData()
+      alert(res?.data?.message || `Successfully reset assignments for ${count} duties.`)
+    } catch (err) {
+      alert(err?.response?.data?.detail || 'Bulk reset failed')
+    } finally {
+      setActionLoading(false)
+    }
+  }
+
   const handleExecuteOverride = async () => {
     if (!actionModal?.assignment || !selectedTeacherId) return
     setActionLoading(true)
@@ -439,6 +497,14 @@ export default function DutyManagement({ readOnly = false }) {
               className="px-3.5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-xl transition-all shadow-md shadow-indigo-600/20 active:scale-95"
             >
               Auto-Assign All
+            </button>
+            <button
+              onClick={handleBulkDelete}
+              disabled={actionLoading || filteredDuties.length === 0}
+              title={`Permanently delete all ${filteredDuties.length} duties currently displayed for ${selectedDate}`}
+              className="px-3.5 py-2 bg-rose-50 hover:bg-rose-100 text-rose-700 text-xs font-bold rounded-xl border border-rose-200 transition-all flex items-center gap-1.5 shadow-sm disabled:opacity-40 active:scale-95"
+            >
+              <span>🗑️</span> Delete All ({filteredDuties.length})
             </button>
             <button
               onClick={() => setActionModal({ type: 'create' })}
@@ -924,7 +990,7 @@ export default function DutyManagement({ readOnly = false }) {
           ))}
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
           <label className="text-xs font-bold text-slate-500">Date:</label>
           <input
             type="date"
@@ -932,6 +998,26 @@ export default function DutyManagement({ readOnly = false }) {
             onChange={(e) => setSelectedDate(e.target.value)}
             className="px-2.5 py-1 text-xs font-bold bg-white border border-slate-200 rounded-lg text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500"
           />
+          {!readOnly && filteredDuties.length > 0 && (
+            <div className="flex items-center gap-1.5 ml-1">
+              <button
+                onClick={handleBulkReset}
+                disabled={actionLoading}
+                title={`Reset faculty assignments for all ${filteredDuties.length} duties on ${selectedDate}`}
+                className="px-2.5 py-1 text-xs font-bold rounded-lg border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 transition-all flex items-center gap-1 shadow-sm disabled:opacity-50"
+              >
+                <span>🔄</span> Reset All
+              </button>
+              <button
+                onClick={handleBulkDelete}
+                disabled={actionLoading}
+                title={`Permanently delete all ${filteredDuties.length} duties on ${selectedDate}`}
+                className="px-2.5 py-1 text-xs font-bold rounded-lg border border-rose-200 bg-rose-50 text-rose-700 hover:bg-rose-100 transition-all flex items-center gap-1 shadow-sm disabled:opacity-50"
+              >
+                <span>🗑️</span> Delete All ({filteredDuties.length})
+              </button>
+            </div>
+          )}
         </div>
       </div>
 

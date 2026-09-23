@@ -450,6 +450,8 @@ export const campusDutiesApi = {
   resetDuty: (dutyId) => api.post(`/campus-duties/${dutyId}/reset`),
   toggleDutyActive: (dutyId) => api.post(`/campus-duties/${dutyId}/toggle-active`),
   deleteDuty: (dutyId) => api.delete(`/campus-duties/${dutyId}`),
+  bulkDelete: (data) => api.post('/campus-duties/bulk-delete', data),
+  bulkReset: (data) => api.post('/campus-duties/bulk-reset', data),
   getRules: () => api.get('/campus-duties/rules'),
   updateRules: (data) => api.put('/campus-duties/rules', data),
 }

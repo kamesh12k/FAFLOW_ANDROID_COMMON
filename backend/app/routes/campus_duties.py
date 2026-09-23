@@ -21,7 +21,8 @@ from app.schemas.campus_duty import (
     DutyRulesOut, DutyRulesUpdate, DutyRulesImpactPreview,
     AutonomousDutyActivateRequest, AutonomousDutyActivateResponse,
     Next6DayOrdersResponse, AutonomousDutyToggleRequest,
-    AutoReplaceRequest, AutoReplaceResponse
+    AutoReplaceRequest, AutoReplaceResponse,
+    DutyBulkDeleteRequest, DutyBulkResetRequest
 )
 from app.services.system_setting_service import get_setting, set_setting
 
@@ -477,3 +478,45 @@ def delete_duty(
 ):
     """Permanently deletes a campus duty and its assignments."""
     return CampusDutyService.delete_duty(db, duty_id, user_id=current_user.id)
+
+
+@router.post("/bulk-delete")
+def bulk_delete_duties(
+    data: DutyBulkDeleteRequest,
+    current_user: User = Depends(require_admin_or_principal),
+    db: Session = Depends(get_db),
+    tenant_dept_id: Optional[int] = Depends(get_tenant_department_id)
+):
+    """Bulk deletes duties by list of IDs or by target_date/filter."""
+    dept_id = data.department_id or tenant_dept_id
+    if current_user.role in (Role.system_admin, Role.principal, Role.governance):
+        dept_id = None
+    return CampusDutyService.bulk_delete_duties(
+        db,
+        target_date=data.target_date,
+        duty_ids=data.duty_ids,
+        duty_type=data.duty_type,
+        department_id=dept_id,
+        user_id=current_user.id
+    )
+
+
+@router.post("/bulk-reset")
+def bulk_reset_duties(
+    data: DutyBulkResetRequest,
+    current_user: User = Depends(require_admin_or_principal),
+    db: Session = Depends(get_db),
+    tenant_dept_id: Optional[int] = Depends(get_tenant_department_id)
+):
+    """Bulk resets assignments for duties by list of IDs or by target_date/filter."""
+    dept_id = data.department_id or tenant_dept_id
+    if current_user.role in (Role.system_admin, Role.principal, Role.governance):
+        dept_id = None
+    return CampusDutyService.bulk_reset_duties(
+        db,
+        target_date=data.target_date,
+        duty_ids=data.duty_ids,
+        duty_type=data.duty_type,
+        department_id=dept_id,
+        user_id=current_user.id
+    )
