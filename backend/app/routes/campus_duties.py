@@ -12,7 +12,7 @@ from app.models.user import User, Role
 from app.services.campus_duty_service import CampusDutyService
 from app.schemas.campus_duty import (
     CampusAreaCreate, CampusAreaOut,
-    DutyBreakPeriodCreate, DutyBreakPeriodOut,
+    DutyBreakPeriodCreate, DutyBreakPeriodUpdate, DutyBreakPeriodOut,
     CampusDutyCreate, CampusDutyUpdate, CampusDutyOut,
     DutyGenerateRequest, WingDutyGenerateRequest, ExamDutyGenerateRequest,
     DutyAutoAssignRequest, DutyManualAssignRequest,
@@ -20,7 +20,8 @@ from app.schemas.campus_duty import (
     DutyCandidateOut, DutyCandidatesResponse, DutyDashboardMetricsOut,
     DutyRulesOut, DutyRulesUpdate, DutyRulesImpactPreview,
     AutonomousDutyActivateRequest, AutonomousDutyActivateResponse,
-    Next6DayOrdersResponse, AutonomousDutyToggleRequest
+    Next6DayOrdersResponse, AutonomousDutyToggleRequest,
+    AutoReplaceRequest, AutoReplaceResponse
 )
 from app.services.system_setting_service import get_setting, set_setting
 
@@ -76,6 +77,56 @@ def create_break_period(
     db: Session = Depends(get_db)
 ):
     return CampusDutyService.create_break_period(db, data, user_id=current_user.id)
+
+
+@router.put("/break-periods/{bp_id}", response_model=DutyBreakPeriodOut)
+def update_break_period(
+    bp_id: int,
+    data: DutyBreakPeriodUpdate,
+    current_user: User = Depends(require_admin_or_principal),
+    db: Session = Depends(get_db)
+):
+    """Update a break period configuration (time, required teachers, day orders, etc.)."""
+    return CampusDutyService.update_break_period(db, bp_id, data, user_id=current_user.id)
+
+
+@router.delete("/break-periods/{bp_id}", response_model=DutyBreakPeriodOut)
+def delete_break_period(
+    bp_id: int,
+    current_user: User = Depends(require_admin_or_principal),
+    db: Session = Depends(get_db)
+):
+    """Soft-delete a break period (sets is_active=False)."""
+    return CampusDutyService.delete_break_period(db, bp_id, user_id=current_user.id)
+
+
+@router.post("/reset-break-periods", response_model=List[DutyBreakPeriodOut])
+def reset_break_periods(
+    current_user: User = Depends(require_admin_or_principal),
+    db: Session = Depends(get_db)
+):
+    """Reset all break periods to factory defaults (Morning Interval, Lunch, Afternoon, Dispersal)."""
+    return CampusDutyService.reset_break_periods(db, user_id=current_user.id)
+
+
+@router.post("/auto-replace-absent", response_model=AutoReplaceResponse)
+def auto_replace_absent(
+    data: AutoReplaceRequest,
+    current_user: User = Depends(require_admin_or_principal),
+    db: Session = Depends(get_db)
+):
+    """
+    Manually trigger the absent-teacher sweep for a given date.
+    Checks each assigned teacher's attendance; if not checked-in by 9 AM
+    or 10 minutes before the break, auto-replaces them with the next eligible candidate.
+    Also called internally by the APScheduler.
+    """
+    result = CampusDutyService.auto_replace_absent_teachers(
+        db,
+        target_date=data.target_date,
+        user_id=current_user.id
+    )
+    return result
 
 
 @router.get("/rules", response_model=DutyRulesOut)

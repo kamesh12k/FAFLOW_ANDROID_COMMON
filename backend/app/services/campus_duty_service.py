@@ -234,7 +234,193 @@ class CampusDutyService:
         CampusDutyService._log_audit(db, user_id, "BREAK_PERIOD_CREATED", {"break_period_id": bp.id, "name": bp.name})
         return bp
 
+    @staticmethod
+    def update_break_period(db: Session, bp_id: int, data, user_id: Optional[int] = None) -> DutyBreakPeriod:
+        bp = db.query(DutyBreakPeriod).filter(DutyBreakPeriod.id == bp_id).first()
+        if not bp:
+            raise DomainException("Break period not found", status_code=404)
+        update_data = data.dict(exclude_unset=True)
+        for field, value in update_data.items():
+            setattr(bp, field, value)
+        db.commit()
+        db.refresh(bp)
+        CampusDutyService._log_audit(db, user_id, "BREAK_PERIOD_UPDATED", {"break_period_id": bp.id, "changes": update_data})
+        return bp
+
+    @staticmethod
+    def delete_break_period(db: Session, bp_id: int, user_id: Optional[int] = None) -> DutyBreakPeriod:
+        bp = db.query(DutyBreakPeriod).filter(DutyBreakPeriod.id == bp_id).first()
+        if not bp:
+            raise DomainException("Break period not found", status_code=404)
+        bp.is_active = False
+        db.commit()
+        db.refresh(bp)
+        CampusDutyService._log_audit(db, user_id, "BREAK_PERIOD_DELETED", {"break_period_id": bp.id, "name": bp.name})
+        return bp
+
+    @staticmethod
+    def reset_break_periods(db: Session, user_id: Optional[int] = None) -> List[DutyBreakPeriod]:
+        """Delete all existing break periods and re-seed factory defaults."""
+        db.query(DutyBreakPeriod).delete()
+        db.commit()
+        # Force re-seed by calling ensure_defaults (which checks count == 0)
+        CampusDutyService.ensure_default_break_periods(db)
+        result = db.query(DutyBreakPeriod).order_by(DutyBreakPeriod.start_time).all()
+        CampusDutyService._log_audit(db, user_id, "BREAK_PERIODS_RESET", {"count": len(result)})
+        return result
+
+    @staticmethod
+    def auto_replace_absent_teachers(
+        db: Session,
+        target_date: Optional[date] = None,
+        user_id: Optional[int] = None
+    ) -> Dict[str, Any]:
+        """
+        Sweeps all PUBLISHED duties for target_date.
+        For each ASSIGNED teacher who hasn't checked in by the cutoff:
+          - 9:00 AM cutoff for morning duties
+          - 10 minutes before each break's start_time
+        Replaces absent teacher with the next eligible candidate.
+        Returns a summary of replacements made.
+        """
+        t_date = target_date or date.today()
+        now = datetime.now()
+        cutoff_9am = time(9, 0)
+
+        duties = db.query(CampusDuty).options(
+            joinedload(CampusDuty.break_period),
+            joinedload(CampusDuty.assignments).joinedload(DutyAssignment.teacher)
+        ).filter(
+            CampusDuty.duty_date == t_date,
+            CampusDuty.status == DutyStatus.PUBLISHED
+        ).all()
+
+        replacements_made = 0
+        unfilled_after = 0
+        results = []
+
+        for duty in duties:
+            if duty.is_locked:
+                continue
+
+            # Determine the cutoff time for this duty:
+            # 10 minutes before break start, or 9 AM for morning entries
+            bp_start = duty.start_time
+            cutoff_dt = datetime.combine(t_date, bp_start) - timedelta(minutes=10)
+            nine_am_dt = datetime.combine(t_date, cutoff_9am)
+            effective_cutoff = min(cutoff_dt, nine_am_dt)
+
+            # Only act if we've already passed the cutoff
+            if now < effective_cutoff:
+                logger.debug(
+                    "Duty %d (%s) cutoff not reached yet (%s). Skipping.",
+                    duty.id, duty.title, effective_cutoff.strftime("%H:%M")
+                )
+                continue
+
+            active_assignments = [
+                a for a in duty.assignments
+                if a.status in (AssignmentStatus.ASSIGNED, AssignmentStatus.PROPOSED)
+                and not a.is_locked
+            ]
+
+            for assignment in active_assignments:
+                teacher = assignment.teacher
+                # Check if teacher has checked in today
+                att = db.query(StaffAttendanceRecord).filter(
+                    StaffAttendanceRecord.user_id == teacher.id,
+                    StaffAttendanceRecord.attendance_date == t_date
+                ).first()
+
+                if att and att.check_in_time is not None:
+                    # Teacher is present — no replacement needed
+                    continue
+
+                # Teacher is absent — mark as replaced
+                reason = f"Auto: Not checked in by {effective_cutoff.strftime('%H:%M')}"
+                old_teacher_name = teacher.name or teacher.username
+
+                assignment.status = AssignmentStatus.REPLACED
+                assignment.overridden_reason = reason
+                db.flush()
+
+                # Find next eligible candidate
+                try:
+                    cand_resp = CampusDutyService.evaluate_candidates(db, duty.id)
+                    eligible = [c for c in cand_resp.candidates if c.is_eligible]
+                except Exception as e:
+                    logger.warning("Could not evaluate candidates for duty %d: %s", duty.id, e)
+                    eligible = []
+
+                if eligible:
+                    best = eligible[0]
+                    new_assignment = DutyAssignment(
+                        duty_id=duty.id,
+                        teacher_id=best.teacher_id,
+                        status=AssignmentStatus.ASSIGNED,
+                        role=assignment.role,
+                        assigned_by_user_id=user_id,
+                        is_manual=False,
+                        selection_reason=best.reasons,
+                        score=best.score
+                    )
+                    db.add(new_assignment)
+
+                    # Notify replacement teacher
+                    time_str = f"{duty.start_time.strftime('%H:%M')} – {duty.end_time.strftime('%H:%M')}"
+                    create_notification(
+                        db=db,
+                        user_id=best.teacher_id,
+                        title=f"Duty Assignment — {duty.title}",
+                        body=f"You have been auto-assigned to {duty.title} on {t_date} ({time_str}) as a replacement.",
+                        event_type="campus_duty_auto_replaced"
+                    )
+
+                    results.append({
+                        "duty_id": duty.id,
+                        "duty_title": duty.title,
+                        "replaced_teacher_name": old_teacher_name,
+                        "new_teacher_name": best.teacher_name,
+                        "reason": reason,
+                    })
+                    replacements_made += 1
+                    logger.info(
+                        "Auto-replaced %s with %s for duty '%s' (reason: %s)",
+                        old_teacher_name, best.teacher_name, duty.title, reason
+                    )
+                else:
+                    logger.warning(
+                        "Duty '%s' (id=%d): no eligible replacement found after removing %s.",
+                        duty.title, duty.id, old_teacher_name
+                    )
+                    unfilled_after += 1
+
+        try:
+            db.commit()
+        except Exception as e:
+            db.rollback()
+            logger.error("Auto-replace commit failed: %s", e)
+
+        if replacements_made > 0:
+            CampusDutyService._log_audit(db, user_id, "DUTY_AUTO_REPLACE_RUN", {
+                "date": str(t_date),
+                "replacements_made": replacements_made,
+                "unfilled_after": unfilled_after,
+            })
+
+        return {
+            "target_date": str(t_date),
+            "replacements_made": replacements_made,
+            "unfilled_after": unfilled_after,
+            "results": results,
+            "message": (
+                f"{replacements_made} absent teacher(s) auto-replaced"
+                + (f", {unfilled_after} slot(s) remain unfilled." if unfilled_after else ".")
+            )
+        }
+
     # ── Duty Generation & Listing ────────────────────────────────────────────
+
 
     @staticmethod
     def get_day_order_for_date(db: Session, target_date: date) -> Optional[int]:

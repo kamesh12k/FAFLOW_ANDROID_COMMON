@@ -441,8 +441,12 @@ export const campusDutiesApi = {
   getMetrics: (params) => api.get('/campus-duties/metrics', { params }),
   getAreas: () => api.get('/campus-duties/areas'),
   createArea: (data) => api.post('/campus-duties/areas', data),
-  getBreakPeriods: () => api.get('/campus-duties/break-periods'),
+  getBreakPeriods: (params) => api.get('/campus-duties/break-periods', { params }),
   createBreakPeriod: (data) => api.post('/campus-duties/break-periods', data),
+  updateBreakPeriod: (id, data) => api.put(`/campus-duties/break-periods/${id}`, data),
+  deleteBreakPeriod: (id) => api.delete(`/campus-duties/break-periods/${id}`),
+  resetBreakPeriods: () => api.post('/campus-duties/reset-break-periods'),
+  triggerAutoReplace: (targetDate) => api.post('/campus-duties/auto-replace-absent', { target_date: targetDate }),
   getRules: () => api.get('/campus-duties/rules'),
   updateRules: (data) => api.put('/campus-duties/rules', data),
 }

@@ -342,3 +342,25 @@ class AutonomousDutyToggleRequest(BaseModel):
     num_day_orders: int = 6
     activate_discipline: bool = True
     activate_wing: bool = True
+
+
+# ── Auto-Replace Absent Teachers ─────────────────────────────────────────────
+
+class AutoReplaceRequest(BaseModel):
+    target_date: Optional[date] = None  # defaults to today
+
+
+class AutoReplaceResult(BaseModel):
+    duty_id: int
+    duty_title: str
+    replaced_teacher_name: str
+    new_teacher_name: str
+    reason: str
+
+
+class AutoReplaceResponse(BaseModel):
+    target_date: str
+    replacements_made: int
+    unfilled_after: int
+    results: List[AutoReplaceResult] = []
+    message: str

@@ -24,6 +24,18 @@ export default function DutyManagement({ readOnly = false }) {
   const [togglingAutonomous, setTogglingAutonomous] = useState(false)
   const [autonomousResult, setAutonomousResult] = useState(null)
 
+  // Configuration panel state
+  const [dutyRules, setDutyRules] = useState(null)
+  const [rulesLoading, setRulesLoading] = useState(false)
+  const [configSaving, setConfigSaving] = useState(false)
+  const [configMsg, setConfigMsg] = useState(null) // { type: 'success'|'error', text }
+  const [editingBreakPeriod, setEditingBreakPeriod] = useState(null) // { id, name, start_time, end_time, required_teachers, applicable_day_orders }
+  const [bpForm, setBpForm] = useState({})
+  const [rulesForm, setRulesForm] = useState({})
+  const [autoReplaceResult, setAutoReplaceResult] = useState(null)
+  const [autoReplaceLoading, setAutoReplaceLoading] = useState(false)
+  const [allBreakPeriods, setAllBreakPeriods] = useState([])
+
   // Candidate Picker Modal
   const [candidateModalDuty, setCandidateModalDuty] = useState(null)
   const [candidateData, setCandidateData] = useState(null)
@@ -571,17 +583,33 @@ export default function DutyManagement({ readOnly = false }) {
       {/* Tabs & Controls */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-2 border-b border-slate-200">
         <div className="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0">
-          {[
+        {[
             { id: 'today', label: "Today's Schedule" },
             { id: 'upcoming', label: 'Upcoming Duties' },
             { id: 'discipline', label: 'Discipline' },
             { id: 'wing', label: 'Wing Duty' },
             { id: 'exam', label: 'Exam Duty' },
             { id: 'all', label: 'All History' },
+            ...(isPrincipalOrAdmin ? [{ id: 'configuration', label: '⚙️ Configuration' }] : []),
           ].map(t => (
             <button
               key={t.id}
-              onClick={() => setActiveTab(t.id)}
+              onClick={() => {
+                setActiveTab(t.id)
+                if (t.id === 'configuration') {
+                  // Load rules and all break periods
+                  setRulesLoading(true)
+                  Promise.all([
+                    campusDutiesApi.getRules(),
+                    campusDutiesApi.getBreakPeriods({ is_active_only: false })
+                  ]).then(([rRes, bpRes]) => {
+                    const r = rRes?.data || {}
+                    setDutyRules(r)
+                    setRulesForm(r)
+                    setAllBreakPeriods(bpRes?.data || [])
+                  }).catch(() => {}).finally(() => setRulesLoading(false))
+                }
+              }}
               className={`px-3.5 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all ${
                 activeTab === t.id
                   ? 'bg-slate-900 text-white shadow-sm'
@@ -1008,6 +1036,326 @@ export default function DutyManagement({ readOnly = false }) {
               </button>
             </div>
           </form>
+        </div>
+      )}
+
+      {/* ── Configuration Panel ─────────────────────────────────────────── */}
+      {activeTab === 'configuration' && isPrincipalOrAdmin && (
+        <div className="space-y-5">
+          {configMsg && (
+            <div className={`p-3 rounded-2xl text-xs font-bold flex items-center justify-between ${configMsg.type === 'success' ? 'bg-emerald-50 text-emerald-800 border border-emerald-200' : 'bg-red-50 text-red-800 border border-red-200'}`}>
+              <span>{configMsg.type === 'success' ? '✅' : '❌'} {configMsg.text}</span>
+              <button onClick={() => setConfigMsg(null)} className="ml-3 hover:opacity-70">✕</button>
+            </div>
+          )}
+
+          {/* ── Block 1: Break Period Configuration ── */}
+          <div className="bg-white border border-slate-200 rounded-3xl shadow-sm overflow-hidden">
+            <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100">
+              <div>
+                <h3 className="text-sm font-black text-slate-900 flex items-center gap-2">
+                  <span className="text-lg">🕐</span> Break Period Configuration
+                </h3>
+                <p className="text-xs text-slate-400 mt-0.5">Configure each campus break / supervision window</p>
+              </div>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={async () => {
+                    if (!confirm('Reset ALL break periods to factory defaults? This will delete custom periods.')) return
+                    setConfigSaving(true)
+                    try {
+                      const res = await campusDutiesApi.resetBreakPeriods()
+                      setAllBreakPeriods(res?.data || [])
+                      setBreakPeriods((res?.data || []).filter(b => b.is_active))
+                      setConfigMsg({ type: 'success', text: 'Break periods reset to factory defaults.' })
+                    } catch (e) {
+                      setConfigMsg({ type: 'error', text: e?.response?.data?.detail || 'Reset failed.' })
+                    } finally { setConfigSaving(false) }
+                  }}
+                  disabled={configSaving}
+                  className="px-3 py-1.5 text-xs font-bold bg-amber-50 hover:bg-amber-100 text-amber-700 border border-amber-200 rounded-xl transition-all"
+                >
+                  🔄 Reset to Defaults
+                </button>
+              </div>
+            </div>
+
+            {rulesLoading ? (
+              <div className="py-10 flex justify-center"><Spinner /></div>
+            ) : (
+              <div className="divide-y divide-slate-50">
+                {allBreakPeriods.length === 0 ? (
+                  <p className="p-6 text-xs text-slate-400 text-center">No break periods configured. Click Reset to Defaults.</p>
+                ) : (
+                  allBreakPeriods.map(bp => (
+                    <div key={bp.id} className={`px-5 py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 ${!bp.is_active ? 'opacity-40' : ''}`}>
+                      <div className="flex items-center gap-3">
+                        <div className={`w-2 h-2 rounded-full flex-shrink-0 ${bp.is_active ? 'bg-emerald-500' : 'bg-slate-300'}`} />
+                        <div>
+                          <p className="text-sm font-black text-slate-800">{bp.name}</p>
+                          <p className="text-xs text-slate-400 mt-0.5">
+                            {bp.start_time?.slice(0,5)} – {bp.end_time?.slice(0,5)} · {bp.required_teachers} staff · Day Orders: {bp.applicable_day_orders}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2 flex-shrink-0">
+                        <button
+                          onClick={() => {
+                            setEditingBreakPeriod(bp)
+                            setBpForm({
+                              name: bp.name,
+                              start_time: bp.start_time?.slice(0,5),
+                              end_time: bp.end_time?.slice(0,5),
+                              required_teachers: bp.required_teachers,
+                              applicable_day_orders: bp.applicable_day_orders,
+                              is_active: bp.is_active
+                            })
+                          }}
+                          className="px-3 py-1.5 text-xs font-bold bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 rounded-xl transition-all"
+                        >
+                          ✏️ Edit
+                        </button>
+                        <button
+                          onClick={async () => {
+                            if (!confirm(`${bp.is_active ? 'Deactivate' : 'Delete'} "${bp.name}"?`)) return
+                            setConfigSaving(true)
+                            try {
+                              await campusDutiesApi.deleteBreakPeriod(bp.id)
+                              setAllBreakPeriods(prev => prev.map(b => b.id === bp.id ? { ...b, is_active: false } : b))
+                              setBreakPeriods(prev => prev.filter(b => b.id !== bp.id))
+                              setConfigMsg({ type: 'success', text: `"${bp.name}" deactivated.` })
+                            } catch (e) {
+                              setConfigMsg({ type: 'error', text: e?.response?.data?.detail || 'Delete failed.' })
+                            } finally { setConfigSaving(false) }
+                          }}
+                          disabled={!bp.is_active || configSaving}
+                          className="px-3 py-1.5 text-xs font-bold bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 rounded-xl transition-all disabled:opacity-40"
+                        >
+                          🗑️
+                        </button>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            )}
+
+            {/* Inline Edit Modal for break period */}
+            {editingBreakPeriod && (
+              <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-sm p-4">
+                <div className="bg-white rounded-3xl shadow-2xl w-full max-w-md p-6 space-y-4">
+                  <div className="flex items-center justify-between">
+                    <h4 className="text-sm font-black text-slate-900">Edit Break Period</h4>
+                    <button onClick={() => setEditingBreakPeriod(null)} className="text-slate-400 hover:text-slate-600 text-lg">✕</button>
+                  </div>
+                  <div className="space-y-3">
+                    <div>
+                      <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1">Name</label>
+                      <input value={bpForm.name || ''} onChange={e => setBpForm({...bpForm, name: e.target.value})}
+                        className="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl font-bold" />
+                    </div>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1">Start Time</label>
+                        <input type="time" value={bpForm.start_time || ''} onChange={e => setBpForm({...bpForm, start_time: e.target.value})}
+                          className="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl font-bold" />
+                      </div>
+                      <div>
+                        <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1">End Time</label>
+                        <input type="time" value={bpForm.end_time || ''} onChange={e => setBpForm({...bpForm, end_time: e.target.value})}
+                          className="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl font-bold" />
+                      </div>
+                    </div>
+                    <div>
+                      <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1">Required Staff</label>
+                      <input type="number" min="1" max="20" value={bpForm.required_teachers || 1} onChange={e => setBpForm({...bpForm, required_teachers: Number(e.target.value)})}
+                        className="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl font-bold" />
+                    </div>
+                    <div>
+                      <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1">Applicable Day Orders (comma-separated)</label>
+                      <input value={bpForm.applicable_day_orders || '1,2,3,4,5,6'} onChange={e => setBpForm({...bpForm, applicable_day_orders: e.target.value})}
+                        placeholder="e.g. 1,2,3,4,5,6"
+                        className="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl font-bold" />
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <input type="checkbox" id="bp-active" checked={!!bpForm.is_active} onChange={e => setBpForm({...bpForm, is_active: e.target.checked})} className="w-4 h-4 accent-indigo-600" />
+                      <label htmlFor="bp-active" className="text-xs font-bold text-slate-600">Active</label>
+                    </div>
+                  </div>
+                  <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-100">
+                    <button onClick={() => setEditingBreakPeriod(null)} className="px-4 py-2 text-xs font-bold text-slate-600 hover:bg-slate-100 rounded-xl">Cancel</button>
+                    <button
+                      disabled={configSaving}
+                      onClick={async () => {
+                        setConfigSaving(true)
+                        try {
+                          const res = await campusDutiesApi.updateBreakPeriod(editingBreakPeriod.id, bpForm)
+                          setAllBreakPeriods(prev => prev.map(b => b.id === editingBreakPeriod.id ? res.data : b))
+                          setBreakPeriods(prev => prev.map(b => b.id === editingBreakPeriod.id ? res.data : b).filter(b => b.is_active))
+                          setEditingBreakPeriod(null)
+                          setConfigMsg({ type: 'success', text: `"${res.data.name}" updated successfully.` })
+                        } catch (e) {
+                          setConfigMsg({ type: 'error', text: e?.response?.data?.detail || 'Update failed.' })
+                        } finally { setConfigSaving(false) }
+                      }}
+                      className="px-4 py-2 text-xs font-bold bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl shadow-sm"
+                    >
+                      Save Changes
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* ── Block 2: Auto-Reassignment ── */}
+          <div className="bg-white border border-slate-200 rounded-3xl shadow-sm overflow-hidden">
+            <div className="px-5 py-4 border-b border-slate-100">
+              <h3 className="text-sm font-black text-slate-900 flex items-center gap-2">
+                <span className="text-lg">🤖</span> Auto-Reassignment of Absent Staff
+              </h3>
+              <p className="text-xs text-slate-400 mt-0.5">
+                The system checks attendance at <strong>9:00 AM</strong> and <strong>10 minutes before each break</strong>.
+                If an assigned teacher hasn't checked in, they are automatically replaced with the next eligible candidate.
+              </p>
+            </div>
+            <div className="px-5 py-4 space-y-4">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div className="p-4 rounded-2xl bg-slate-50 border border-slate-100">
+                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Morning Cutoff</p>
+                  <p className="text-lg font-black text-slate-800 mt-1">09:00 AM</p>
+                  <p className="text-xs text-slate-400 mt-0.5">All duties checked</p>
+                </div>
+                <div className="p-4 rounded-2xl bg-slate-50 border border-slate-100">
+                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Pre-Break Cutoff</p>
+                  <p className="text-lg font-black text-slate-800 mt-1">10 min before</p>
+                  <p className="text-xs text-slate-400 mt-0.5">Each break start time</p>
+                </div>
+                <div className="p-4 rounded-2xl bg-indigo-50 border border-indigo-100">
+                  <p className="text-[10px] font-bold text-indigo-600 uppercase tracking-wider">Scheduler</p>
+                  <p className="text-lg font-black text-indigo-900 mt-1">Every 10 min</p>
+                  <p className="text-xs text-indigo-400 mt-0.5">09:00 – 16:00 Mon-Sat</p>
+                </div>
+              </div>
+
+              {autoReplaceResult && (
+                <div className="p-4 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-800 space-y-2">
+                  <p className="text-xs font-black">{autoReplaceResult.message}</p>
+                  {autoReplaceResult.results?.length > 0 && (
+                    <ul className="text-xs text-emerald-700 space-y-1 pl-2">
+                      {autoReplaceResult.results.map((r, i) => (
+                        <li key={i}>↔ <strong>{r.replaced_teacher_name}</strong> → <strong>{r.new_teacher_name}</strong> ({r.duty_title})</li>
+                      ))}
+                    </ul>
+                  )}
+                  {autoReplaceResult.unfilled_after > 0 && (
+                    <p className="text-xs text-amber-700 font-bold">⚠️ {autoReplaceResult.unfilled_after} slot(s) could not be filled (no eligible candidate available).</p>
+                  )}
+                </div>
+              )}
+
+              <div className="flex items-center gap-3">
+                <button
+                  disabled={autoReplaceLoading}
+                  onClick={async () => {
+                    setAutoReplaceLoading(true)
+                    setAutoReplaceResult(null)
+                    try {
+                      const res = await campusDutiesApi.triggerAutoReplace(selectedDate)
+                      setAutoReplaceResult(res?.data)
+                      await fetchData()
+                    } catch (e) {
+                      setConfigMsg({ type: 'error', text: e?.response?.data?.detail || 'Auto-replace sweep failed.' })
+                    } finally { setAutoReplaceLoading(false) }
+                  }}
+                  className="px-4 py-2 text-xs font-bold bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl shadow-md shadow-indigo-600/20 transition-all active:scale-95 disabled:opacity-60"
+                >
+                  {autoReplaceLoading ? '⌛ Running Sweep...' : '🔄 Run Auto-Replace Sweep Now'}
+                </button>
+                <span className="text-xs text-slate-400">for {selectedDate}</span>
+              </div>
+            </div>
+          </div>
+
+          {/* ── Block 3: Duty Rules ── */}
+          <div className="bg-white border border-slate-200 rounded-3xl shadow-sm overflow-hidden">
+            <div className="px-5 py-4 border-b border-slate-100">
+              <h3 className="text-sm font-black text-slate-900 flex items-center gap-2">
+                <span className="text-lg">📋</span> Duty Assignment Rules
+              </h3>
+              <p className="text-xs text-slate-400 mt-0.5">Governance rules applied during candidate evaluation and auto-assignment</p>
+            </div>
+            {rulesLoading ? (
+              <div className="py-8 flex justify-center"><Spinner /></div>
+            ) : dutyRules ? (
+              <div className="px-5 py-4 space-y-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {[
+                    { key: 'default_daily_duty_limit', label: 'Max Duties / Teacher / Day', type: 'number', min: 1, max: 5 },
+                    { key: 'default_weekly_duty_limit', label: 'Max Duties / Teacher / Week', type: 'number', min: 1, max: 15 },
+                    { key: 'max_discipline_teachers', label: 'Default Discipline Staff per Break', type: 'number', min: 1, max: 20 },
+                    { key: 'max_exam_duties', label: 'Max Exam Duties per Teacher', type: 'number', min: 1, max: 20 },
+                  ].map(({ key, label, type, min, max }) => (
+                    <div key={key} className="p-4 rounded-2xl bg-slate-50 border border-slate-100 space-y-2">
+                      <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">{label}</label>
+                      <input
+                        type={type}
+                        min={min}
+                        max={max}
+                        value={rulesForm[key] ?? dutyRules[key]}
+                        onChange={e => setRulesForm(prev => ({ ...prev, [key]: Number(e.target.value) }))}
+                        className="w-full px-3 py-2 text-sm font-black bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                      />
+                    </div>
+                  ))}
+                  {[
+                    { key: 'prefer_free_before_break', label: 'Prefer free period before break (+50 pts)' },
+                    { key: 'auto_assignment_enabled', label: 'Enable automatic assignment engine' },
+                    { key: 'auto_replacement_enabled', label: 'Enable auto-replacement (absent staff)' },
+                    { key: 'cross_department_assignment', label: 'Allow cross-department assignments' },
+                  ].map(({ key, label }) => (
+                    <div key={key} className="p-4 rounded-2xl bg-slate-50 border border-slate-100 flex items-center justify-between">
+                      <label className="text-xs font-bold text-slate-700">{label}</label>
+                      <button
+                        onClick={() => setRulesForm(prev => ({ ...prev, [key]: !prev[key] }))}
+                        className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${rulesForm[key] ? 'bg-indigo-600' : 'bg-slate-300'}`}
+                      >
+                        <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${rulesForm[key] ? 'translate-x-6' : 'translate-x-1'}`} />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+                <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-100">
+                  <button
+                    onClick={() => setRulesForm(dutyRules)}
+                    className="px-4 py-2 text-xs font-bold text-slate-600 hover:bg-slate-100 rounded-xl"
+                  >
+                    Discard
+                  </button>
+                  <button
+                    disabled={configSaving}
+                    onClick={async () => {
+                      setConfigSaving(true)
+                      try {
+                        const res = await campusDutiesApi.updateRules(rulesForm)
+                        const updated = res?.data?.rules || res?.data || rulesForm
+                        setDutyRules(updated)
+                        setRulesForm(updated)
+                        setConfigMsg({ type: 'success', text: 'Duty rules updated successfully.' })
+                      } catch (e) {
+                        setConfigMsg({ type: 'error', text: e?.response?.data?.detail || 'Rules update failed.' })
+                      } finally { setConfigSaving(false) }
+                    }}
+                    className="px-4 py-2 text-xs font-bold bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl shadow-sm"
+                  >
+                    Save Rules
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <p className="p-6 text-xs text-slate-400 text-center">Click the Configuration tab to load rules.</p>
+            )}
+          </div>
         </div>
       )}
     </div>

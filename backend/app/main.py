@@ -369,6 +369,62 @@ if not os.environ.get("SKIP_DB_INIT"):
     wait_for_db_and_init()
 
 
+# ── Duty Auto-Replace Absent Teacher Scheduler ───────────────────────────────
+
+def _run_duty_auto_replace():
+    """Background job: sweep all today's duties and auto-replace absent teachers."""
+    _logger = logging.getLogger("app.scheduler.duty_auto_replace")
+    try:
+        from app.services.campus_duty_service import CampusDutyService
+        with SessionLocal() as db:
+            result = CampusDutyService.auto_replace_absent_teachers(db)
+            replaced = result.get("replacements_made", 0)
+            unfilled = result.get("unfilled_after", 0)
+            _logger.info(
+                "Duty auto-replace sweep: %d replaced, %d unfilled.", replaced, unfilled
+            )
+    except Exception as e:
+        _logger.error("Duty auto-replace job failed: %s", e)
+
+
+try:
+    from apscheduler.schedulers.background import BackgroundScheduler
+    from apscheduler.triggers.cron import CronTrigger
+
+    _scheduler = BackgroundScheduler(daemon=True)
+
+    # Run at 9:00 AM every weekday (Mon-Sat)
+    _scheduler.add_job(
+        _run_duty_auto_replace,
+        CronTrigger(day_of_week="mon-sat", hour=9, minute=0),
+        id="duty_auto_replace_9am",
+        replace_existing=True,
+        misfire_grace_time=300
+    )
+
+    # Run every 10 minutes during working hours to handle pre-break cutoffs
+    _scheduler.add_job(
+        _run_duty_auto_replace,
+        CronTrigger(day_of_week="mon-sat", hour="9-16", minute="*/10"),
+        id="duty_auto_replace_periodic",
+        replace_existing=True,
+        misfire_grace_time=120
+    )
+
+    _scheduler.start()
+    logging.getLogger(__name__).info(
+        "APScheduler started: duty auto-replace at 09:00 and every 10 min (09:00-16:00)."
+    )
+except ImportError:
+    logging.getLogger(__name__).warning(
+        "apscheduler not installed — duty auto-replace scheduler disabled. "
+        "Install with: pip install apscheduler"
+    )
+except Exception as _sched_err:
+    logging.getLogger(__name__).error("Failed to start APScheduler: %s", _sched_err)
+
+
+
 def get_allowed_origins():
     import socket
     origins = list(settings.FRONTEND_ORIGIN)
