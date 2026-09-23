@@ -184,7 +184,7 @@ export default function App() {
                 <Route path="/principal/class-timetable" element={<ClasswiseTimetable />} />
                 <Route path="/principal/duties" element={<DutyManagement />} />
                 <Route path="/principal/campus-structure" element={<CampusStructureBuilder readOnly={true} />} />
-                <Route path="/principal/settings" element={<Settings />} />
+                <Route path="/principal/settings" element={<AdminSettings />} />
               </Route>
             </Route>
           </Route>
