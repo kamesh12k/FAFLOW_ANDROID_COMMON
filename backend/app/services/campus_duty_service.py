@@ -1313,9 +1313,15 @@ class CampusDutyService:
         if existing:
             raise DomainException("This teacher is already assigned to this duty", status_code=409)
 
-        teacher = db.query(User).filter(User.id == teacher_id).first()
+        teacher = db.query(User).filter(User.id == teacher_id, User.is_active == True).first()
         if not teacher:
             raise DomainException("Teacher not found", status_code=404)
+        if teacher.role != Role.teacher:
+            raise DomainException(
+                f"'{teacher.name}' is not a teacher and cannot be assigned to campus duties. "
+                "Only faculty members with the Teacher role may be assigned.",
+                status_code=422
+            )
 
         assignment = DutyAssignment(
             duty_id=duty.id,
@@ -1363,7 +1369,17 @@ class CampusDutyService:
         old_assignment.overridden_by_user_id = user_id
         old_assignment.overridden_reason = reason
 
-        # Create new assignment
+        # Create new assignment — validate replacement is a teacher
+        new_teacher = db.query(User).filter(User.id == new_teacher_id, User.is_active == True).first()
+        if not new_teacher:
+            raise DomainException("Replacement teacher not found", status_code=404)
+        if new_teacher.role != Role.teacher:
+            raise DomainException(
+                f"'{new_teacher.name}' is not a teacher and cannot be assigned to campus duties. "
+                "Only faculty members with the Teacher role may be assigned.",
+                status_code=422
+            )
+
         new_assignment = DutyAssignment(
             duty_id=duty.id,
             teacher_id=new_teacher_id,

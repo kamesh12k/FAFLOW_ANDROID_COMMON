@@ -46,6 +46,7 @@ export default function DutyManagement({ readOnly = false }) {
   const [actionModal, setActionModal] = useState(null) // { type: 'override'|'replace'|'lock'|'create', duty, assignment }
   const [overrideReason, setOverrideReason] = useState('')
   const [selectedTeacherId, setSelectedTeacherId] = useState('')
+  const [overrideCandidates, setOverrideCandidates] = useState([]) // teacher-only list for override dropdown
 
   // Create Duty Modal
   const [createForm, setCreateForm] = useState({
@@ -451,6 +452,21 @@ export default function DutyManagement({ readOnly = false }) {
       alert(err?.response?.data?.detail || 'Replacement failed')
     } finally {
       setActionLoading(false)
+    }
+  }
+
+  // Opens the Reassign modal AND pre-loads the teacher candidates dropdown
+  const handleOpenOverrideModal = async (duty, assignment) => {
+    setSelectedTeacherId('')
+    setOverrideReason('')
+    setOverrideCandidates([])
+    setActionModal({ type: 'override', duty, assignment })
+    try {
+      const res = await campusDutiesApi.getCandidates(duty.id)
+      // candidates are already teacher-role-only from the backend evaluate_candidates endpoint
+      setOverrideCandidates(res?.data?.candidates || [])
+    } catch {
+      setOverrideCandidates([])
     }
   }
 
@@ -1267,7 +1283,7 @@ export default function DutyManagement({ readOnly = false }) {
                                   {!readOnly && (
                                     <div className="flex items-center gap-1">
                                       <button
-                                        onClick={() => setActionModal({ type: 'override', duty: d, assignment: a })}
+                                        onClick={() => handleOpenOverrideModal(d, a)}
                                         title="Reassign/Override"
                                         disabled={isDeactivated}
                                         className="px-1.5 py-0.5 text-[10px] font-bold text-slate-600 hover:text-indigo-600 bg-white border border-slate-200 rounded disabled:opacity-40"
@@ -1479,14 +1495,27 @@ export default function DutyManagement({ readOnly = false }) {
 
               {actionModal.type === 'override' && (
                 <div>
-                  <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1">New Teacher ID</label>
-                  <input
-                    type="number"
-                    value={selectedTeacherId}
-                    onChange={(e) => setSelectedTeacherId(e.target.value)}
-                    placeholder="Enter User ID of replacement faculty"
-                    className="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                  />
+                  <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1">Replace With (Faculty Only)</label>
+                  {overrideCandidates.length > 0 ? (
+                    <select
+                      value={selectedTeacherId}
+                      onChange={(e) => setSelectedTeacherId(e.target.value)}
+                      className="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl font-semibold focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    >
+                      <option value="">— Select a faculty member —</option>
+                      {overrideCandidates
+                        .filter(c => c.teacher_id !== actionModal.assignment?.teacher_id)
+                        .map(c => (
+                          <option key={c.teacher_id} value={c.teacher_id}>
+                            {c.teacher_name}{c.department_name ? ` (${c.department_name})` : ''}{!c.is_eligible ? ' ⚠ Ineligible' : ''}
+                          </option>
+                        ))
+                      }
+                    </select>
+                  ) : (
+                    <p className="text-[11px] text-slate-400 py-2">Loading faculty list…</p>
+                  )}
+                  <p className="text-[10px] text-slate-400 mt-1">⚠ Ineligible faculty are shown for administrative override only — check leave/attendance before confirming.</p>
                 </div>
               )}
             </div>
