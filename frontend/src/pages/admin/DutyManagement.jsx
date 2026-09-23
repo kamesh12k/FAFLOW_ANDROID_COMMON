@@ -132,6 +132,33 @@ export default function DutyManagement({ readOnly = false }) {
     return duties
   }, [duties, activeTab, selectedDate, selectedDayOrderIndex])
 
+  // Group duties by day: ONE SINGLE CARD FOR EACH DAY
+  const dutiesByDay = useMemo(() => {
+    const map = {}
+    filteredDuties.forEach((d) => {
+      const key = d.duty_date
+      if (!map[key]) {
+        map[key] = {
+          date: d.duty_date,
+          day_order: d.day_order,
+          duties: []
+        }
+      }
+      map[key].duties.push(d)
+      if (!map[key].day_order && d.day_order) {
+        map[key].day_order = d.day_order
+      }
+    })
+
+    // Sort duties within each day chronologically by start_time
+    Object.values(map).forEach((group) => {
+      group.duties.sort((a, b) => (a.start_time || '').localeCompare(b.start_time || ''))
+    })
+
+    // Sort days chronologically
+    return Object.values(map).sort((a, b) => a.date.localeCompare(b.date))
+  }, [filteredDuties])
+
   // Autonomous 6-Day Order Toggle Handler
   const handleToggleAutonomous = async () => {
     if (!isPrincipalOrAdmin) {
@@ -1033,182 +1060,306 @@ export default function DutyManagement({ readOnly = false }) {
           <p className="text-xs text-slate-400 mt-1">Click "Generate Today's Break Duties" or "+ Create Duty" above to initialize assignments.</p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {filteredDuties.map((d) => {
-            const isFull = d.assigned_teachers_count >= d.required_teachers
-            const isDeactivated = d.status === 'CANCELLED'
+        <div className="space-y-6">
+          {dutiesByDay.map((dayGroup) => {
+            const totalRequired = dayGroup.duties.reduce((sum, d) => sum + (d.required_teachers || 0), 0)
+            const totalAssigned = dayGroup.duties.reduce((sum, d) => sum + (d.assigned_teachers_count || 0), 0)
+            const isDayFull = totalAssigned >= totalRequired && totalRequired > 0
+
+            // Format date readable: e.g. "Thursday, Sep 24, 2026"
+            let dateLabel = dayGroup.date
+            try {
+              const [y, m, day] = dayGroup.date.split('-')
+              const dt = new Date(parseInt(y), parseInt(m) - 1, parseInt(day))
+              dateLabel = dt.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'short', day: 'numeric' })
+            } catch (_) {}
+
             return (
               <div
-                key={d.id}
-                className={`rounded-2xl border bg-white p-5 space-y-4 shadow-sm transition-all hover:shadow-md ${
-                  isDeactivated
-                    ? 'border-dashed border-rose-300 bg-rose-50/20 opacity-80'
-                    : d.is_locked
-                    ? 'border-amber-200 bg-amber-50/20'
-                    : 'border-slate-200/80'
-                }`}
+                key={dayGroup.date}
+                className="rounded-3xl border border-slate-200/90 bg-white shadow-sm hover:shadow-md transition-all overflow-hidden"
               >
-                {/* Card Header */}
-                <div className="flex items-start justify-between gap-2">
-                  <div>
-                    <div className="flex items-center gap-1.5 flex-wrap">
-                      <span className="inline-block px-2 py-0.5 rounded-md text-[10px] font-black uppercase tracking-wider bg-indigo-50 text-indigo-700 border border-indigo-100">
-                        {d.duty_type.replace('_', ' ')}
-                      </span>
-                      {d.day_order && (
-                        <span className="inline-block px-2 py-0.5 rounded-md text-[10px] font-black uppercase tracking-wider bg-slate-100 text-slate-700 border border-slate-200">
-                          DO {d.day_order}
-                        </span>
-                      )}
-                      {isDeactivated && (
-                        <span className="inline-block px-2 py-0.5 rounded-md text-[10px] font-black uppercase tracking-wider bg-rose-100 text-rose-700 border border-rose-200">
-                          DEACTIVATED
-                        </span>
-                      )}
+                {/* ── Day Header ── */}
+                <div className="px-6 py-4 bg-gradient-to-r from-slate-50 via-indigo-50/20 to-white border-b border-slate-200/80 flex flex-wrap items-center justify-between gap-3">
+                  <div className="flex items-center gap-3 flex-wrap">
+                    <div className="w-10 h-10 rounded-2xl bg-indigo-600 text-white flex items-center justify-center font-black text-sm shadow-md shadow-indigo-600/20">
+                      📅
                     </div>
-                    <h3 className={`font-extrabold text-sm mt-1.5 leading-snug ${isDeactivated ? 'line-through text-slate-400' : 'text-slate-900'}`}>{d.title}</h3>
-                    <p className="text-[11px] font-semibold text-slate-500 mt-0.5">
-                      {d.start_time.substring(0, 5)} – {d.end_time.substring(0, 5)} · {d.duty_date}
-                    </p>
+                    <div>
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <h2 className="text-base font-black text-slate-900 leading-tight">
+                          {dateLabel}
+                        </h2>
+                        {dayGroup.day_order && (
+                          <span className="px-2 py-0.5 rounded-lg text-[10px] font-black uppercase tracking-wider bg-indigo-100 text-indigo-800 border border-indigo-200">
+                            Day Order {dayGroup.day_order}
+                          </span>
+                        )}
+                        <span className="px-2 py-0.5 rounded-lg text-[10px] font-bold bg-slate-100 text-slate-700 border border-slate-200">
+                          {dayGroup.duties.length} {dayGroup.duties.length === 1 ? 'Duty Period' : 'Duty Periods'}
+                        </span>
+                      </div>
+                      <p className="text-[11px] font-semibold text-slate-500 mt-0.5">
+                        Schedule & Supervision Coverage for {dayGroup.date}
+                      </p>
+                    </div>
                   </div>
 
-                  <div className="flex flex-col items-end gap-1">
-                    <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${isDeactivated ? 'bg-slate-100 text-slate-500' : isFull ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'}`}>
-                      {d.assigned_teachers_count} / {d.required_teachers} Staff
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className={`px-3 py-1 rounded-xl text-xs font-bold ${
+                      isDayFull ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'
+                    }`}>
+                      {totalAssigned} / {totalRequired} Staff Assigned
                     </span>
-                    {d.is_locked && (
-                      <span className="text-[9px] font-bold text-amber-700 bg-amber-100 px-1.5 py-0.5 rounded">
-                        🔒 Locked
-                      </span>
+
+                    {!readOnly && (
+                      <div className="flex items-center gap-1.5 ml-2">
+                        <button
+                          onClick={async () => {
+                            if (!window.confirm(`Auto-assign available faculty for all unfilled duties on ${dayGroup.date}?`)) return
+                            setActionLoading(true)
+                            try {
+                              await campusDutiesApi.autoAssignAll({ target_date: dayGroup.date })
+                              await fetchData()
+                            } catch (err) {
+                              alert(err?.response?.data?.detail || 'Auto-assign failed')
+                            } finally {
+                              setActionLoading(false)
+                            }
+                          }}
+                          disabled={actionLoading || isDayFull}
+                          className="px-2.5 py-1 text-xs font-bold rounded-lg bg-indigo-600 text-white hover:bg-indigo-700 shadow-sm transition-all disabled:opacity-50 flex items-center gap-1"
+                        >
+                          ⚡ Auto-Fill Day
+                        </button>
+                        <button
+                          onClick={async () => {
+                            if (!window.confirm(`Reset all faculty assignments for ${dayGroup.date} (${dayGroup.duties.length} duties)?`)) return
+                            setActionLoading(true)
+                            try {
+                              await campusDutiesApi.bulkReset({
+                                target_date: dayGroup.date,
+                                duty_ids: dayGroup.duties.map(d => d.id)
+                              })
+                              await fetchData()
+                            } catch (err) {
+                              alert(err?.response?.data?.detail || 'Reset failed')
+                            } finally {
+                              setActionLoading(false)
+                            }
+                          }}
+                          disabled={actionLoading}
+                          title={`Reset all duty assignments for ${dayGroup.date}`}
+                          className="px-2 py-1 text-xs font-bold rounded-lg border border-slate-200 bg-white text-slate-700 hover:bg-slate-100 transition-all flex items-center gap-1"
+                        >
+                          🔄 Reset Day
+                        </button>
+                        <button
+                          onClick={async () => {
+                            const msg = `Are you sure you want to permanently delete ALL ${dayGroup.duties.length} duties on ${dayGroup.date}?\nThis action cannot be undone.`
+                            if (!window.confirm(msg)) return
+                            const doubleCheck = prompt(`Type "DELETE" to confirm deleting all duties on ${dayGroup.date}:`)
+                            if (doubleCheck !== 'DELETE') return
+                            setActionLoading(true)
+                            try {
+                              await campusDutiesApi.bulkDelete({
+                                target_date: dayGroup.date,
+                                duty_ids: dayGroup.duties.map(d => d.id)
+                              })
+                              await fetchData()
+                            } catch (err) {
+                              alert(err?.response?.data?.detail || 'Failed to delete')
+                            } finally {
+                              setActionLoading(false)
+                            }
+                          }}
+                          disabled={actionLoading}
+                          title={`Permanently delete all duties on ${dayGroup.date}`}
+                          className="px-2 py-1 text-xs font-bold rounded-lg border border-rose-200 bg-rose-50 text-rose-700 hover:bg-rose-100 transition-all flex items-center gap-1"
+                        >
+                          🗑️ Delete Day
+                        </button>
+                      </div>
                     )}
                   </div>
                 </div>
 
-                {/* Location / Area info */}
-                {(d.area_name || d.break_period_name) && (
-                  <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-100 text-xs text-slate-700 space-y-0.5">
-                    {d.area_name && (
-                      <p className="font-bold flex items-center gap-1">
-                        <span>📍</span> {d.area_name} {d.area_code ? `(${d.area_code})` : ''}
-                      </p>
-                    )}
-                    {d.break_period_name && (
-                      <p className="text-[11px] text-slate-500 font-medium">Break Schedule: {d.break_period_name}</p>
-                    )}
-                  </div>
-                )}
-
-                {/* Assigned Staff Chips */}
-                <div className="space-y-1.5">
-                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Assigned Faculty</span>
-                  {d.assignments.length === 0 ? (
-                    <p className="text-xs text-slate-400 italic">No faculty assigned yet</p>
-                  ) : (
-                    <div className="space-y-1.5">
-                      {d.assignments.map((a) => (
-                        <div key={a.id} className="flex items-center justify-between p-2 rounded-xl bg-slate-50/80 border border-slate-100 text-xs">
-                          <div className="flex items-center gap-1.5">
-                            <span className="w-2 h-2 rounded-full bg-indigo-600" />
-                            <div>
-                              <span className="font-extrabold text-slate-800">{a.teacher_name}</span>
-                              {a.role && a.role !== 'GENERAL' && (
-                                <span className="ml-1.5 text-[9px] font-bold text-indigo-600 uppercase">({a.role})</span>
+                {/* ── Day Duties Content (List of Duty Periods inside Single Card) ── */}
+                <div className="p-5 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 bg-slate-50/40">
+                  {dayGroup.duties.map((d) => {
+                    const isFull = d.assigned_teachers_count >= d.required_teachers
+                    const isDeactivated = d.status === 'CANCELLED'
+                    return (
+                      <div
+                        key={d.id}
+                        className={`rounded-2xl border bg-white p-5 space-y-4 shadow-sm transition-all hover:shadow-md ${
+                          isDeactivated
+                            ? 'border-dashed border-rose-300 bg-rose-50/20 opacity-80'
+                            : d.is_locked
+                            ? 'border-amber-200 bg-amber-50/20'
+                            : 'border-slate-200/80'
+                        }`}
+                      >
+                        {/* Session Header */}
+                        <div className="flex items-start justify-between gap-2">
+                          <div>
+                            <div className="flex items-center gap-1.5 flex-wrap">
+                              <span className="inline-block px-2 py-0.5 rounded-md text-[10px] font-black uppercase tracking-wider bg-indigo-50 text-indigo-700 border border-indigo-100">
+                                {d.duty_type.replace('_', ' ')}
+                              </span>
+                              {isDeactivated && (
+                                <span className="inline-block px-2 py-0.5 rounded-md text-[10px] font-black uppercase tracking-wider bg-rose-100 text-rose-700 border border-rose-200">
+                                  DEACTIVATED
+                                </span>
                               )}
                             </div>
+                            <h3 className={`font-extrabold text-sm mt-1.5 leading-snug ${isDeactivated ? 'line-through text-slate-400' : 'text-slate-900'}`}>{d.title}</h3>
+                            <p className="text-[11px] font-semibold text-slate-500 mt-0.5">
+                              {d.start_time.substring(0, 5)} – {d.end_time.substring(0, 5)}
+                            </p>
                           </div>
 
-                          {!readOnly && (
-                            <div className="flex items-center gap-1">
-                              <button
-                                onClick={() => setActionModal({ type: 'override', duty: d, assignment: a })}
-                                title="Reassign/Override"
-                                disabled={isDeactivated}
-                                className="px-1.5 py-0.5 text-[10px] font-bold text-slate-600 hover:text-indigo-600 bg-white border border-slate-200 rounded disabled:opacity-40"
-                              >
-                                Reassign
-                              </button>
-                              <button
-                                onClick={() => setActionModal({ type: 'replace', duty: d, assignment: a })}
-                                title="Mark Unavailable & Replace"
-                                disabled={isDeactivated}
-                                className="px-1.5 py-0.5 text-[10px] font-bold text-rose-600 hover:bg-rose-50 border border-rose-200 rounded disabled:opacity-40"
-                              >
-                                Replace
-                              </button>
+                          <div className="flex flex-col items-end gap-1">
+                            <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${isDeactivated ? 'bg-slate-100 text-slate-500' : isFull ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'}`}>
+                              {d.assigned_teachers_count} / {d.required_teachers} Staff
+                            </span>
+                            {d.is_locked && (
+                              <span className="text-[9px] font-bold text-amber-700 bg-amber-100 px-1.5 py-0.5 rounded">
+                                🔒 Locked
+                              </span>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Location / Area info */}
+                        {(d.area_name || d.break_period_name) && (
+                          <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-100 text-xs text-slate-700 space-y-0.5">
+                            {d.area_name && (
+                              <p className="font-bold flex items-center gap-1">
+                                <span>📍</span> {d.area_name} {d.area_code ? `(${d.area_code})` : ''}
+                              </p>
+                            )}
+                            {d.break_period_name && (
+                              <p className="text-[11px] text-slate-500 font-medium">Break Schedule: {d.break_period_name}</p>
+                            )}
+                          </div>
+                        )}
+
+                        {/* Assigned Staff Chips */}
+                        <div className="space-y-1.5">
+                          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Assigned Faculty</span>
+                          {d.assignments.length === 0 ? (
+                            <p className="text-xs text-slate-400 italic">No faculty assigned yet</p>
+                          ) : (
+                            <div className="space-y-1.5">
+                              {d.assignments.map((a) => (
+                                <div key={a.id} className="flex items-center justify-between p-2 rounded-xl bg-slate-50/80 border border-slate-100 text-xs">
+                                  <div className="flex items-center gap-1.5">
+                                    <span className="w-2 h-2 rounded-full bg-indigo-600" />
+                                    <div>
+                                      <span className="font-extrabold text-slate-800">{a.teacher_name}</span>
+                                      {a.role && a.role !== 'GENERAL' && (
+                                        <span className="ml-1.5 text-[9px] font-bold text-indigo-600 uppercase">({a.role})</span>
+                                      )}
+                                    </div>
+                                  </div>
+
+                                  {!readOnly && (
+                                    <div className="flex items-center gap-1">
+                                      <button
+                                        onClick={() => setActionModal({ type: 'override', duty: d, assignment: a })}
+                                        title="Reassign/Override"
+                                        disabled={isDeactivated}
+                                        className="px-1.5 py-0.5 text-[10px] font-bold text-slate-600 hover:text-indigo-600 bg-white border border-slate-200 rounded disabled:opacity-40"
+                                      >
+                                        Reassign
+                                      </button>
+                                      <button
+                                        onClick={() => setActionModal({ type: 'replace', duty: d, assignment: a })}
+                                        title="Mark Unavailable & Replace"
+                                        disabled={isDeactivated}
+                                        className="px-1.5 py-0.5 text-[10px] font-bold text-rose-600 hover:bg-rose-50 border border-rose-200 rounded disabled:opacity-40"
+                                      >
+                                        Replace
+                                      </button>
+                                    </div>
+                                  )}
+                                </div>
+                              ))}
                             </div>
                           )}
                         </div>
-                      ))}
-                    </div>
-                  )}
+
+                        {/* Actions Footer */}
+                        {!readOnly && (
+                          <div className="pt-2 border-t border-slate-100 flex flex-wrap items-center justify-between gap-2">
+                            <div className="flex items-center gap-1 flex-wrap">
+                              <button
+                                onClick={() => handleToggleLock(d)}
+                                disabled={actionLoading}
+                                title={d.is_locked ? 'Unlock duty to allow edits' : 'Lock duty to prevent auto-changes'}
+                                className={`text-[11px] font-bold px-2 py-1.5 rounded-lg border transition-all ${
+                                  d.is_locked ? 'bg-amber-100 text-amber-900 border-amber-300' : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100'
+                                }`}
+                              >
+                                {d.is_locked ? '🔓 Unlock' : '🔒 Lock'}
+                              </button>
+
+                              <button
+                                onClick={() => handleResetDuty(d)}
+                                disabled={actionLoading || d.is_locked}
+                                title="Clear all assigned faculty and reset duty to 0"
+                                className="text-[11px] font-bold px-2 py-1.5 rounded-lg border border-slate-200 bg-slate-50 text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition-all disabled:opacity-50"
+                              >
+                                🔄 Reset
+                              </button>
+
+                              <button
+                                onClick={() => handleToggleDutyActive(d)}
+                                disabled={actionLoading}
+                                title={isDeactivated ? 'Reactivate this duty' : 'Deactivate this duty'}
+                                className={`text-[11px] font-bold px-2 py-1.5 rounded-lg border transition-all ${
+                                  isDeactivated
+                                    ? 'bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100'
+                                    : 'bg-amber-50 text-amber-700 border-amber-200 hover:bg-amber-100'
+                                }`}
+                              >
+                                {isDeactivated ? '✅ Activate' : '🚫 Deactivate'}
+                              </button>
+
+                              <button
+                                onClick={() => handleDeleteDuty(d)}
+                                disabled={actionLoading}
+                                title="Permanently delete this duty"
+                                className="text-[11px] font-bold px-2 py-1.5 rounded-lg border border-rose-200 bg-rose-50 text-rose-600 hover:bg-rose-100 transition-all disabled:opacity-50"
+                              >
+                                🗑️ Delete
+                              </button>
+                            </div>
+
+                            <div className="flex items-center gap-1.5">
+                              <button
+                                onClick={() => openCandidatePicker(d)}
+                                disabled={actionLoading || d.is_locked || isDeactivated}
+                                className="text-[11px] font-bold px-3 py-1.5 rounded-lg bg-indigo-50 text-indigo-700 hover:bg-indigo-100 border border-indigo-200 transition-all disabled:opacity-50"
+                              >
+                                Pick Staff...
+                              </button>
+
+                              <button
+                                onClick={() => handleAutoAssign(d.id)}
+                                disabled={actionLoading || isFull || d.is_locked || isDeactivated}
+                                className="text-[11px] font-bold px-3 py-1.5 rounded-lg bg-indigo-600 text-white hover:bg-indigo-700 shadow-sm transition-all disabled:opacity-50"
+                              >
+                                ⚡ Auto-Fill
+                              </button>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    )
+                  })}
                 </div>
-
-                {/* Actions Footer */}
-                {!readOnly && (
-                  <div className="pt-2 border-t border-slate-100 flex flex-wrap items-center justify-between gap-2">
-                    <div className="flex items-center gap-1 flex-wrap">
-                      <button
-                        onClick={() => handleToggleLock(d)}
-                        disabled={actionLoading}
-                        title={d.is_locked ? 'Unlock duty to allow edits' : 'Lock duty to prevent auto-changes'}
-                        className={`text-[11px] font-bold px-2 py-1.5 rounded-lg border transition-all ${
-                          d.is_locked ? 'bg-amber-100 text-amber-900 border-amber-300' : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100'
-                        }`}
-                      >
-                        {d.is_locked ? '🔓 Unlock' : '🔒 Lock'}
-                      </button>
-
-                      <button
-                        onClick={() => handleResetDuty(d)}
-                        disabled={actionLoading || d.is_locked}
-                        title="Clear all assigned faculty and reset duty to 0"
-                        className="text-[11px] font-bold px-2 py-1.5 rounded-lg border border-slate-200 bg-slate-50 text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition-all disabled:opacity-50"
-                      >
-                        🔄 Reset
-                      </button>
-
-                      <button
-                        onClick={() => handleToggleDutyActive(d)}
-                        disabled={actionLoading}
-                        title={isDeactivated ? 'Reactivate this duty' : 'Deactivate this duty'}
-                        className={`text-[11px] font-bold px-2 py-1.5 rounded-lg border transition-all ${
-                          isDeactivated
-                            ? 'bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100'
-                            : 'bg-amber-50 text-amber-700 border-amber-200 hover:bg-amber-100'
-                        }`}
-                      >
-                        {isDeactivated ? '✅ Activate' : '🚫 Deactivate'}
-                      </button>
-
-                      <button
-                        onClick={() => handleDeleteDuty(d)}
-                        disabled={actionLoading}
-                        title="Permanently delete this duty"
-                        className="text-[11px] font-bold px-2 py-1.5 rounded-lg border border-rose-200 bg-rose-50 text-rose-600 hover:bg-rose-100 transition-all disabled:opacity-50"
-                      >
-                        🗑️ Delete
-                      </button>
-                    </div>
-
-                    <div className="flex items-center gap-1.5">
-                      <button
-                        onClick={() => openCandidatePicker(d)}
-                        disabled={actionLoading || d.is_locked || isDeactivated}
-                        className="text-[11px] font-bold px-3 py-1.5 rounded-lg bg-indigo-50 text-indigo-700 hover:bg-indigo-100 border border-indigo-200 transition-all disabled:opacity-50"
-                      >
-                        Pick Staff...
-                      </button>
-
-                      <button
-                        onClick={() => handleAutoAssign(d.id)}
-                        disabled={actionLoading || isFull || d.is_locked || isDeactivated}
-                        className="text-[11px] font-bold px-3 py-1.5 rounded-lg bg-indigo-600 text-white hover:bg-indigo-700 shadow-sm transition-all disabled:opacity-50"
-                      >
-                        ⚡ Auto-Fill
-                      </button>
-                    </div>
-                  </div>
-                )}
               </div>
             )
           })}

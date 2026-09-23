@@ -87,7 +87,8 @@ class DutyAssignmentOut(BaseModel):
     role: str
     is_manual: bool = False
     is_locked: bool = False
-    selection_reason: Optional[List[str]] = None
+    selection_reason: Optional[str] = None
+    selection_reasons: Optional[List[str]] = None
     score: Optional[float] = None
     overridden_by_user_id: Optional[int] = None
     overridden_reason: Optional[str] = None

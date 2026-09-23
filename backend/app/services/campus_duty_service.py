@@ -451,8 +451,11 @@ class CampusDutyService:
             # Check if duty already generated for this break period on this date
             existing = db.query(CampusDuty).filter(
                 CampusDuty.duty_date == target_date,
-                CampusDuty.break_period_id == bp.id,
-                or_(CampusDuty.department_id == department_id, CampusDuty.department_id == None)
+                or_(
+                    CampusDuty.break_period_id == bp.id,
+                    CampusDuty.title == f"{bp.name} Discipline",
+                    CampusDuty.title == bp.name
+                )
             ).first()
 
             if not existing:
@@ -471,6 +474,16 @@ class CampusDutyService:
                 )
                 db.add(duty)
                 created_duties.append(duty)
+            else:
+                # Update existing duty in-place rather than creating duplicate
+                if existing.status == DutyStatus.CANCELLED:
+                    existing.status = DutyStatus.PUBLISHED
+                existing.required_teachers = bp.required_teachers
+                existing.start_time = bp.start_time
+                existing.end_time = bp.end_time
+                existing.break_period_id = bp.id
+                existing.day_order = day_order
+                created_duties.append(existing)
 
         if created_duties:
             db.commit()
@@ -653,6 +666,22 @@ class CampusDutyService:
             ).first()
             if room_conflict:
                 raise DomainException(f"Examination room is already booked for '{room_conflict.title}' during this time window", status_code=409)
+
+        # Check for existing duplicate duty on same date with same title or break period
+        dup_filter = [
+            CampusDuty.duty_date == data.duty_date,
+            CampusDuty.status.in_([DutyStatus.PUBLISHED, DutyStatus.DRAFT]),
+            CampusDuty.title == data.title
+        ]
+        if data.break_period_id:
+            dup_filter = [
+                CampusDuty.duty_date == data.duty_date,
+                CampusDuty.status.in_([DutyStatus.PUBLISHED, DutyStatus.DRAFT]),
+                CampusDuty.break_period_id == data.break_period_id
+            ]
+        existing_dup = db.query(CampusDuty).filter(*dup_filter).first()
+        if existing_dup:
+            raise DomainException(f"A duty for '{existing_dup.title}' already exists on {data.duty_date}", status_code=409)
 
         duty = CampusDuty(
             duty_type=data.duty_type,
@@ -1267,6 +1296,14 @@ class CampusDutyService:
         if duty.status == DutyStatus.CANCELLED:
             raise DomainException(f"Cannot assign: Duty '{duty.title}' is deactivated.", status_code=409)
 
+        # Check duty capacity
+        active_count = db.query(DutyAssignment).filter(
+            DutyAssignment.duty_id == duty_id,
+            DutyAssignment.status.in_([AssignmentStatus.ASSIGNED, AssignmentStatus.PROPOSED])
+        ).count()
+        if active_count >= duty.required_teachers:
+            raise DomainException(f"Duty '{duty.title}' is already full ({active_count}/{duty.required_teachers} staff assigned). Remove or replace an existing assignment first.", status_code=409)
+
         # Check existing active assignment
         existing = db.query(DutyAssignment).filter(
             DutyAssignment.duty_id == duty_id,
@@ -1771,6 +1808,17 @@ class CampusDutyService:
         for a in duty.assignments:
             teacher_name = getattr(a.teacher, "name", None) or getattr(a.teacher, "username", "Unknown")
             teacher_dept = a.teacher.department if isinstance(a.teacher.department, str) else (a.teacher.department.name if a.teacher and a.teacher.department else None)
+            raw_reason = a.selection_reason
+            reason_str = None
+            reasons_list = None
+            if raw_reason:
+                if isinstance(raw_reason, list):
+                    reasons_list = [str(r) for r in raw_reason if r]
+                    reason_str = " · ".join(reasons_list)
+                else:
+                    reason_str = str(raw_reason)
+                    reasons_list = [reason_str]
+
             assignments_out.append(DutyAssignmentOut(
                 id=a.id,
                 duty_id=a.duty_id,
@@ -1781,7 +1829,8 @@ class CampusDutyService:
                 role=a.role,
                 is_manual=a.is_manual,
                 is_locked=a.is_locked,
-                selection_reason=a.selection_reason,
+                selection_reason=reason_str,
+                selection_reasons=reasons_list,
                 score=a.score,
                 overridden_by_user_id=a.overridden_by_user_id,
                 overridden_reason=a.overridden_reason,
