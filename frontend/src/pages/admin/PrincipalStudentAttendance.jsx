@@ -94,12 +94,12 @@ export default function PrincipalStudentAttendance() {
   const [searchQuery, setSearchQuery] = useState('')
 
   // 1. Load Overview & Departments
-  const loadOverviewAndDepts = async (targetDate) => {
+  const loadOverviewAndDepts = async (targetDate, deptId) => {
     try {
       setLoading(true)
       setError('')
       const [ovRes, deptRes] = await Promise.all([
-        studentAttendanceApi.getPrincipalOverview(targetDate),
+        studentAttendanceApi.getPrincipalOverview(targetDate, deptId),
         departmentsApi.list().catch(() => ({ data: [] }))
       ])
       setOverview(ovRes.data)
@@ -275,7 +275,7 @@ export default function PrincipalStudentAttendance() {
 
   // Effects
   useEffect(() => {
-    loadOverviewAndDepts(selectedDate)
+    loadOverviewAndDepts(selectedDate, selectedDeptId)
     loadSessions(selectedDate, selectedDeptId)
     loadLiveIntelligence(selectedDate, selectedDeptId)
     loadLiveAbsentees(selectedDate, selectedDeptId)
@@ -314,7 +314,7 @@ export default function PrincipalStudentAttendance() {
     } else if (activeTab === 'exceptions') {
       loadExceptions(selectedDate, exceptionTypeFilter, selectedDeptId)
     }
-  }, [activeTab, selectedDeptId, selectedClassId, exceptionTypeFilter])
+  }, [activeTab, selectedDate, selectedDeptId, selectedClassId, exceptionTypeFilter])
 
 
   // Handle Export
@@ -431,11 +431,11 @@ export default function PrincipalStudentAttendance() {
             <UsersIcon className="w-7 h-7" />
           </div>
           <div>
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2">
               <h1 className="text-2xl font-black tracking-tight">Institutional Student Attendance</h1>
-              <Badge variant="primary" className="bg-indigo-500/30 text-indigo-200 border-indigo-400/40 text-[10px] uppercase font-bold">
+              <span className="inline-flex items-center px-2.5 py-1 rounded-lg text-[11px] font-black uppercase tracking-wider bg-indigo-500/30 text-indigo-100 border border-indigo-400/50 shadow-sm">
                 {user?.role === 'principal' ? 'Principal Controller' : user?.role === 'governance' ? 'Governance Controller' : isHod ? 'HOD Department Controller' : 'System Admin'}
-              </Badge>
+              </span>
             </div>
             <p className="text-xs text-slate-400 mt-0.5">
               Campus-Wide Hourly Attendance Governance, Faculty Compliance & Exception Intelligence
@@ -642,32 +642,26 @@ export default function PrincipalStudentAttendance() {
       )}
 
       {/* ── Global Filter Bar & Tabs ── */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-2 border-b border-slate-200">
-        <Tabs tabs={tabOptions} activeTab={activeTab} onChange={setActiveTab} />
-
-        <div className="flex items-center gap-3">
-          {/* Department Filter / Scope */}
-          {isHod ? (
-            <div className="flex items-center gap-2 px-3.5 py-2 bg-indigo-50 border border-indigo-200 rounded-xl text-xs font-bold text-indigo-900 shadow-sm">
-              <span className="text-[10px] text-indigo-500 uppercase font-black">My Department:</span>
-              <span>{departments.find(d => String(d.id) === String(selectedDeptId))?.name || user?.department_name || 'Department'}</span>
-            </div>
-          ) : (
-            <div className="flex items-center gap-2">
-              <span className="text-[11px] font-bold text-slate-500 uppercase hidden sm:inline">Department:</span>
-              <select
-                value={selectedDeptId}
-                onChange={(e) => setSelectedDeptId(e.target.value)}
-                className="px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs font-semibold text-slate-700 shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
-              >
-                <option value="">All Departments (Campus-Wide)</option>
-                {departments.map((d) => (
-                  <option key={d.id} value={d.id}>{d.name} ({d.code})</option>
-                ))}
-              </select>
-            </div>
-          )}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 pb-2 border-b border-slate-200">
+        <div className="flex-1 min-w-0">
+          <Tabs tabs={tabOptions} activeTab={activeTab} onChange={setActiveTab} />
         </div>
+
+        {!isHod && (
+          <div className="flex items-center gap-2 shrink-0">
+            <span className="text-[11px] font-bold text-slate-500 uppercase hidden sm:inline">Department:</span>
+            <select
+              value={selectedDeptId}
+              onChange={(e) => setSelectedDeptId(e.target.value)}
+              className="px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs font-semibold text-slate-700 shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 cursor-pointer"
+            >
+              <option value="">All Departments (Campus-Wide)</option>
+              {departments.map((d) => (
+                <option key={d.id} value={d.id}>{d.name} ({d.code})</option>
+              ))}
+            </select>
+          </div>
+        )}
       </div>
 
       {/* ───────────────────────────────────────────────────────────── */}
@@ -1765,10 +1759,22 @@ export default function PrincipalStudentAttendance() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100 font-medium">
-                  {complianceList.map((tc) => (
-                    <tr key={tc.teacher_id} className="hover:bg-slate-50/70 transition-colors">
-                      <td className="py-3 px-4 font-bold text-slate-900">{tc.teacher_name}</td>
-                      <td className="py-3 px-4 text-slate-600">{tc.department_name}</td>
+                  {complianceList.map((tc) => {
+                    const isAllied = tc.department_name?.includes('(Allied Faculty)')
+                    const displayDept = isAllied ? tc.department_name.replace(' (Allied Faculty)', '') : tc.department_name
+                    return (
+                    <tr key={tc.teacher_id} className={`hover:bg-slate-50/70 transition-colors ${isAllied ? 'bg-purple-50/30' : ''}`}>
+                      <td className="py-3 px-4 font-bold text-slate-900">
+                        <div className="flex items-center gap-2">
+                          <span>{tc.teacher_name}</span>
+                          {isAllied && (
+                            <span className="px-2 py-0.5 rounded-md text-[10px] font-black uppercase tracking-wide bg-purple-100 text-purple-800 border border-purple-200">
+                              Allied Faculty
+                            </span>
+                          )}
+                        </div>
+                      </td>
+                      <td className="py-3 px-4 text-slate-600 font-medium">{displayDept || 'General Academic'}</td>
                       <td className="py-3 px-4 text-center font-bold text-slate-800">{tc.scheduled_sessions_today}</td>
                       <td className="py-3 px-4 text-center font-bold text-emerald-700">{tc.submitted_on_time_count}</td>
                       <td className="py-3 px-4 text-center">
@@ -1806,7 +1812,8 @@ export default function PrincipalStudentAttendance() {
                         </span>
                       </td>
                     </tr>
-                  ))}
+                    )
+                  })}
                   {complianceList.length === 0 && (
                     <tr>
                       <td colSpan={8} className="py-12 text-center text-slate-400">

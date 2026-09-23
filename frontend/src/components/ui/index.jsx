@@ -723,26 +723,60 @@ export function Breadcrumbs({ links = [] }) {
 }
 
 // 20. Tabs Navigation
-export function Tabs({ tabs = [], activeTab, onChange }) {
+export function Tabs({ tabs = [], activeTab, onChange, className = '' }) {
+  const containerRef = useRef(null)
+
+  const scroll = (direction) => {
+    if (containerRef.current) {
+      containerRef.current.scrollBy({
+        left: direction === 'left' ? -220 : 220,
+        behavior: 'smooth'
+      })
+    }
+  }
+
   return (
-    <div
-      className="border-b border-slate-100 flex gap-4 sm:gap-6"
-      style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch', scrollbarWidth: 'none', msOverflowStyle: 'none' }}
-    >
-      {tabs.map((tab) => (
-        <button
-          key={tab.id}
-          onClick={() => onChange(tab.id)}
-          className={`pb-3 text-xs font-bold transition-all relative border-b-2 -mb-px shrink-0 flex items-center gap-1.5 min-h-[44px] ${
-            activeTab === tab.id
-              ? 'border-primary-600 text-primary-600'
-              : 'border-transparent text-slate-450 hover:text-slate-700'
-          }`}
-        >
-          {tab.icon && <span className="w-4 h-4">{tab.icon}</span>}
-          {tab.label}
-        </button>
-      ))}
+    <div className={`relative flex items-center w-full min-w-0 ${className}`}>
+      <button
+        type="button"
+        onClick={() => scroll('left')}
+        aria-label="Scroll tabs left"
+        className="hidden sm:inline-flex shrink-0 items-center justify-center w-7 h-7 mr-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-600 transition-colors text-sm font-black cursor-pointer shadow-xs"
+        title="Scroll tabs left"
+      >
+        ‹
+      </button>
+
+      <div
+        ref={containerRef}
+        className="border-b border-slate-200 flex gap-4 sm:gap-6 overflow-x-auto tabs-scrollbar custom-scrollbar w-full min-w-0 pb-1.5"
+        style={{ WebkitOverflowScrolling: 'touch' }}
+      >
+        {tabs.map((tab) => (
+          <button
+            key={tab.id}
+            onClick={() => onChange(tab.id)}
+            className={`pb-2.5 text-xs font-bold transition-all relative border-b-2 -mb-px shrink-0 whitespace-nowrap flex items-center gap-1.5 min-h-[40px] cursor-pointer ${
+              activeTab === tab.id
+                ? 'border-indigo-600 text-indigo-600'
+                : 'border-transparent text-slate-500 hover:text-slate-800'
+            }`}
+          >
+            {tab.icon && <span className="w-4 h-4">{tab.icon}</span>}
+            {tab.label}
+          </button>
+        ))}
+      </div>
+
+      <button
+        type="button"
+        onClick={() => scroll('right')}
+        aria-label="Scroll tabs right"
+        className="hidden sm:inline-flex shrink-0 items-center justify-center w-7 h-7 ml-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-600 transition-colors text-sm font-black cursor-pointer shadow-xs"
+        title="Scroll tabs right"
+      >
+        ›
+      </button>
     </div>
   )
 }
@@ -768,16 +802,18 @@ export function Timeline({ items = [] }) {
 }
 
 // 22. General Badge
-export function Badge({ children, variant = 'neutral' }) {
+export function Badge({ children, variant = 'neutral', className = '' }) {
   const styles = {
-    neutral: 'bg-slate-50 text-slate-700 border-slate-200',
-    primary: 'bg-primary-50 text-primary-750 border-primary-150',
-    success: 'bg-emerald-50 text-emerald-700 border-emerald-150',
-    warning: 'bg-amber-50 text-amber-700 border-amber-150',
-    danger:  'bg-rose-50 text-rose-700 border-rose-150',
+    neutral: 'bg-slate-100 text-slate-700 border-slate-200',
+    primary: 'bg-indigo-50 text-indigo-700 border-indigo-200',
+    success: 'bg-emerald-50 text-emerald-700 border-emerald-200',
+    warning: 'bg-amber-50 text-amber-800 border-amber-200',
+    danger:  'bg-rose-50 text-rose-700 border-rose-200',
+    indigo:  'bg-indigo-50 text-indigo-700 border-indigo-200',
+    purple:  'bg-purple-50 text-purple-700 border-purple-200',
   }
   return (
-    <span className={`inline-flex items-center px-2 py-0.5 rounded-lg text-[10px] font-bold border ${styles[variant]}`}>
+    <span className={`inline-flex items-center px-2 py-0.5 rounded-lg text-[10px] font-bold border ${styles[variant] || styles.neutral} ${className}`}>
       {children}
     </span>
   )

@@ -1346,7 +1346,8 @@ class StudentAttendanceService:
     @staticmethod
     def get_principal_overview(
         db: Session,
-        target_date: date
+        target_date: date,
+        department_id: Optional[int] = None
     ) -> PrincipalAttendanceOverviewOut:
         cal_day = db.query(CalendarDay).filter(CalendarDay.date == target_date).first()
         day_order = cal_day.day_order if cal_day else None
@@ -1450,19 +1451,48 @@ class StudentAttendanceService:
                 )
             )
 
-        inst_sched = len(expected_slots)
-        inst_submitted = sum(1 for s in sessions if s.status in {SessionStatus.submitted, SessionStatus.submitted_late})
-        inst_pending = max(0, inst_sched - inst_submitted)
-        inst_late_sub = sum(1 for s in sessions if s.status == SessionStatus.submitted_late)
-        inst_emergency = sum(1 for s in sessions if s.attendance_type == AttendanceType.emergency)
-        inst_missed = sum(1 for s in sessions if s.status == SessionStatus.missed)
-        inst_cancelled = sum(1 for s in sessions if s.status in {SessionStatus.cancelled, SessionStatus.not_conducted})
+        if department_id:
+            dept_slots = slots_by_dept.get(department_id, [])
+            dept_sess = sessions_by_dept.get(department_id, [])
+            inst_sched = len(dept_slots)
+            inst_submitted = sum(1 for s in dept_sess if s.status in {SessionStatus.submitted, SessionStatus.submitted_late})
+            inst_pending = max(0, inst_sched - inst_submitted)
+            inst_late_sub = sum(1 for s in dept_sess if s.status == SessionStatus.submitted_late)
+            inst_emergency = sum(1 for s in dept_sess if s.attendance_type == AttendanceType.emergency)
+            inst_missed = sum(1 for s in dept_sess if s.status == SessionStatus.missed)
+            inst_cancelled = sum(1 for s in dept_sess if s.status in {SessionStatus.cancelled, SessionStatus.not_conducted})
 
-        total_inst_marks = inst_present + inst_absent + inst_late + inst_od + inst_leave + inst_med
-        inst_overall_pct = (
-            round(((inst_present + inst_od + inst_late) / total_inst_marks * 100), 1)
-            if total_inst_marks > 0 else 0.0
-        )
+            p_cnt = 0
+            tot_marks = 0
+            for s in dept_sess:
+                if s.status in {SessionStatus.submitted, SessionStatus.submitted_late}:
+                    for r in s.records:
+                        tot_marks += 1
+                        if r.status in {StudentAttendanceStatus.present, StudentAttendanceStatus.on_duty, StudentAttendanceStatus.late}:
+                            p_cnt += 1
+            inst_overall_pct = round((p_cnt / tot_marks * 100), 1) if tot_marks > 0 else 0.0
+
+            dept_classes = classes_by_dept.get(department_id, [])
+            dept_class_ids = [c.id for c in dept_classes]
+            inst_total_students_enrolled = (
+                db.query(func.count(Student.id))
+                .filter(Student.class_id.in_(dept_class_ids), Student.is_active == True)
+                .scalar() or 0
+            ) if dept_class_ids else 0
+        else:
+            inst_sched = len(expected_slots)
+            inst_submitted = sum(1 for s in sessions if s.status in {SessionStatus.submitted, SessionStatus.submitted_late})
+            inst_pending = max(0, inst_sched - inst_submitted)
+            inst_late_sub = sum(1 for s in sessions if s.status == SessionStatus.submitted_late)
+            inst_emergency = sum(1 for s in sessions if s.attendance_type == AttendanceType.emergency)
+            inst_missed = sum(1 for s in sessions if s.status == SessionStatus.missed)
+            inst_cancelled = sum(1 for s in sessions if s.status in {SessionStatus.cancelled, SessionStatus.not_conducted})
+
+            total_inst_marks = inst_present + inst_absent + inst_late + inst_od + inst_leave + inst_med
+            inst_overall_pct = (
+                round(((inst_present + inst_od + inst_late) / total_inst_marks * 100), 1)
+                if total_inst_marks > 0 else 0.0
+            )
 
         return PrincipalAttendanceOverviewOut(
             date=target_date,
@@ -1945,27 +1975,72 @@ class StudentAttendanceService:
         cal_day = db.query(CalendarDay).filter(CalendarDay.date == target_date).first()
         day_order = cal_day.day_order if cal_day else None
 
-        teacher_query = db.query(User).filter(User.role == Role.teacher, User.is_active == True)
+        dept_class_ids = set()
         if department_id:
-            teacher_query = teacher_query.filter(User.department_id == department_id)
-        teachers = teacher_query.order_by(User.name).all()
+            dept_classes = db.query(Class.id).filter(Class.department_id == department_id).all()
+            dept_class_ids = set(c[0] for c in dept_classes)
+
+        # Teachers belonging directly to department
+        home_teachers = []
+        if department_id:
+            home_teachers = db.query(User).filter(User.role == Role.teacher, User.is_active == True, User.department_id == department_id).all()
+        else:
+            home_teachers = db.query(User).filter(User.role == Role.teacher, User.is_active == True).all()
+
+        # External / Allied teachers from other departments assigned to timetable slots for this department's classes
+        allied_slot_teacher_ids = set()
+        if day_order and dept_class_ids:
+            allied_slot_teacher_ids = set(
+                t[0] for t in db.query(TimetableSlot.teacher_id)
+                .filter(TimetableSlot.day_order == day_order, TimetableSlot.class_id.in_(list(dept_class_ids)))
+                .distinct().all() if t[0]
+            )
+
+        # External / Allied teachers from other departments who conducted or submitted attendance sessions for this department's classes
+        allied_session_teacher_ids = set()
+        if dept_class_ids:
+            allied_session_teacher_ids = set(
+                t[0] for t in db.query(AttendanceSession.actual_teacher_id)
+                .filter(AttendanceSession.attendance_date == target_date, AttendanceSession.class_id.in_(list(dept_class_ids)))
+                .distinct().all() if t[0]
+            )
+
+        all_teacher_ids = set(t.id for t in home_teachers) | allied_slot_teacher_ids | allied_session_teacher_ids
+        teachers = db.query(User).filter(User.id.in_(list(all_teacher_ids))).order_by(User.name).all() if all_teacher_ids else []
 
         slots_by_teacher: Dict[int, List[TimetableSlot]] = {}
         if day_order:
-            slots = db.query(TimetableSlot).filter(TimetableSlot.day_order == day_order).all()
-            for s in slots:
+            slot_query = db.query(TimetableSlot).filter(TimetableSlot.day_order == day_order)
+            if department_id:
+                slot_query = slot_query.filter(
+                    (TimetableSlot.class_id.in_(list(dept_class_ids))) |
+                    (TimetableSlot.teacher_id.in_([t.id for t in home_teachers]))
+                )
+            for s in slot_query.all():
                 slots_by_teacher.setdefault(s.teacher_id, []).append(s)
 
-        sessions = db.query(AttendanceSession).filter(AttendanceSession.attendance_date == target_date).all()
+        sessions_query = db.query(AttendanceSession).filter(AttendanceSession.attendance_date == target_date)
+        if department_id:
+            sessions_query = sessions_query.filter(
+                (AttendanceSession.class_id.in_(list(dept_class_ids))) |
+                (AttendanceSession.actual_teacher_id.in_([t.id for t in home_teachers]))
+            )
+        sessions = sessions_query.all()
         sessions_by_actual_teacher: Dict[int, List[AttendanceSession]] = {}
         for s in sessions:
             sessions_by_actual_teacher.setdefault(s.actual_teacher_id, []).append(s)
 
         compliance_items: List[TeacherComplianceItemOut] = []
         for t in teachers:
-            sched_slots = slots_by_teacher.get(t.id, [])
+            is_allied = department_id is not None and t.department_id != department_id
+            if is_allied:
+                sched_slots = [s for s in slots_by_teacher.get(t.id, []) if s.class_id in dept_class_ids]
+                actual_sessions = [s for s in sessions_by_actual_teacher.get(t.id, []) if s.class_id in dept_class_ids]
+            else:
+                sched_slots = slots_by_teacher.get(t.id, [])
+                actual_sessions = sessions_by_actual_teacher.get(t.id, [])
+
             sched_count = len(sched_slots)
-            actual_sessions = sessions_by_actual_teacher.get(t.id, [])
 
             on_time_cnt = 0
             late_cnt = 0
@@ -1995,12 +2070,16 @@ class StudentAttendanceService:
             missed_cnt = max(0, sched_count - submitted_cnt)
             comp_pct = round((on_time_cnt / sched_count * 100), 1) if sched_count > 0 else (100.0 if submitted_cnt > 0 else 100.0)
 
+            t_dept_name = t.department or ""
+            if is_allied:
+                t_dept_name = f"{t_dept_name} (Allied Faculty)" if t_dept_name else "Allied Faculty"
+
             compliance_items.append(
                 TeacherComplianceItemOut(
                     teacher_id=t.id,
                     teacher_name=t.name,
                     department_id=t.department_id or 0,
-                    department_name=t.department or "",
+                    department_name=t_dept_name,
                     scheduled_sessions_today=sched_count,
                     submitted_on_time_count=on_time_cnt,
                     submitted_late_count=late_cnt,

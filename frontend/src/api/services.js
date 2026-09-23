@@ -370,7 +370,12 @@ export const studentAttendanceApi = {
   syncOfflineBatch: (data) => api.post('/student-attendance/sync', data),
 
   // Principal & Institutional Governance Endpoints
-  getPrincipalOverview: (date) => api.get('/student-attendance/principal/overview', { params: date ? { target_date: date } : {} }),
+  getPrincipalOverview: (date, deptId) => {
+    const params = {}
+    if (date) params.target_date = date
+    if (deptId) params.department_id = deptId
+    return api.get('/student-attendance/principal/overview', { params })
+  },
   getPrincipalSessions: (params) => api.get('/student-attendance/principal/sessions', { params }),
   getClassPeriodMatrix: (classId, date) => api.get(`/student-attendance/principal/classes/${classId}/matrix`, { params: date ? { target_date: date } : {} }),
   getStudentProfile: (studentId, params) => api.get(`/student-attendance/principal/students/${studentId}`, { params }),

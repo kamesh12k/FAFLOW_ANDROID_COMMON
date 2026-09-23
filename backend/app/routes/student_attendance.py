@@ -179,12 +179,17 @@ def require_principal_or_governance(current_user: User = Depends(get_current_use
 @router.get("/principal/overview", response_model=PrincipalAttendanceOverviewOut, status_code=status.HTTP_200_OK)
 def get_principal_overview(
     target_date: Optional[date] = Query(None),
+    department_id: Optional[int] = Query(None),
     current_user: User = Depends(require_principal_or_governance),
     db: Session = Depends(get_db)
 ):
     """Institutional macro attendance dashboard aggregating all departments, scheduled classes, submissions, and attendance rates."""
     t_date = target_date if target_date else date.today()
-    return StudentAttendanceService.get_principal_overview(db, t_date)
+    target_dept_id = department_id
+    if current_user.role == Role.admin and current_user.department_id and not getattr(current_user, 'is_system_admin', False):
+        if target_dept_id is None:
+            target_dept_id = current_user.department_id
+    return StudentAttendanceService.get_principal_overview(db, t_date, department_id=target_dept_id)
 
 
 @router.get("/principal/sessions", response_model=List[PrincipalSessionItemOut], status_code=status.HTTP_200_OK)
@@ -201,10 +206,14 @@ def get_principal_sessions(
 ):
     """Institution-wide period-by-period class session monitoring grid with department, class, and compliance filters."""
     t_date = target_date if target_date else date.today()
+    target_dept_id = department_id
+    if current_user.role == Role.admin and current_user.department_id and not getattr(current_user, 'is_system_admin', False):
+        if target_dept_id is None:
+            target_dept_id = current_user.department_id
     return StudentAttendanceService.get_principal_sessions(
         db=db,
         target_date=t_date,
-        department_id=department_id,
+        department_id=target_dept_id,
         class_id=class_id,
         status_filter=status,
         type_filter=type,
@@ -246,7 +255,11 @@ def get_teacher_submission_compliance(
 ):
     """Institutional teacher submission compliance engine tracking on-time, late, missed, and emergency teaching sessions."""
     t_date = target_date if target_date else date.today()
-    return StudentAttendanceService.get_teacher_compliance(db, t_date, department_id)
+    target_dept_id = department_id
+    if current_user.role == Role.admin and current_user.department_id and not getattr(current_user, 'is_system_admin', False):
+        if target_dept_id is None:
+            target_dept_id = current_user.department_id
+    return StudentAttendanceService.get_teacher_compliance(db, t_date, target_dept_id)
 
 
 @router.get("/principal/exceptions", response_model=List[PrincipalExceptionItemOut], status_code=status.HTTP_200_OK)
@@ -259,7 +272,11 @@ def get_principal_exceptions(
 ):
     """Institutional attendance exception detector (late submissions, missed classes, emergency sessions, shortage list, absenteeism)."""
     t_date = target_date if target_date else date.today()
-    return StudentAttendanceService.get_principal_exceptions(db, t_date, type, department_id)
+    target_dept_id = department_id
+    if current_user.role == Role.admin and current_user.department_id and not getattr(current_user, 'is_system_admin', False):
+        if target_dept_id is None:
+            target_dept_id = current_user.department_id
+    return StudentAttendanceService.get_principal_exceptions(db, t_date, type, target_dept_id)
 
 
 @router.patch("/principal/sessions/{id}/lock", response_model=AttendanceSessionOut, status_code=status.HTTP_200_OK)
