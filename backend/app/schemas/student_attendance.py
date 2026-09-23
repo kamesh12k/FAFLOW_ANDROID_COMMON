@@ -479,3 +479,69 @@ class AdminAttendanceOverrideRequest(BaseModel):
 class AdminSessionLockRequest(BaseModel):
     locked: bool
     reason: Optional[str] = None
+
+
+# ==========================================
+# LIVE ABSENTEES & END-OF-DAY AUDIT SCHEMAS
+# ==========================================
+
+class AbsenteeStudentItemOut(BaseModel):
+    student_id: int
+    roll_number: str
+    roll_suffix: str
+    name: str
+    class_id: int
+    class_name: str
+    section: str
+    department_id: int
+    department_name: str
+    conducted_periods: List[int] = []
+    absent_periods: List[int] = []
+    late_periods: List[int] = []
+    present_periods: List[int] = []
+    category: str  # "FULL_DAY_ABSENT", "SKIPPED_CLASSES", "LATE", "ABSENT"
+    summary_text: str
+    period_marks: Dict[str, str] = {}
+
+
+class LiveAbsenteesOverviewOut(BaseModel):
+    date: date
+    department_id: Optional[int] = None
+    department_name: Optional[str] = None
+    total_students_enrolled: int = 0
+    total_absentees: int = 0
+    full_day_absent_count: int = 0
+    skipped_classes_count: int = 0
+    late_count: int = 0
+    attendance_percentage: float = 0.0
+    students: List[AbsenteeStudentItemOut] = []
+
+
+class ClassEodStudentItemOut(BaseModel):
+    student_id: int
+    roll_number: str
+    roll_suffix: str
+    name: str
+    status_summary: str
+    attended_periods: List[int] = []
+    skipped_periods: List[int] = []
+    late_periods: List[int] = []
+    details: Optional[str] = None
+
+
+class ClassEodAttendanceOut(BaseModel):
+    class_id: int
+    class_name: str
+    section: str
+    department_id: int
+    department_name: str
+    date: date
+    day_order: Optional[int] = None
+    total_enrolled: int = 0
+    conducted_periods: List[int] = []
+    attendance_percentage: float = 0.0
+    full_day_absentees: List[ClassEodStudentItemOut] = []
+    skipped_classes: List[ClassEodStudentItemOut] = []
+    late_arrivals: List[ClassEodStudentItemOut] = []
+    full_day_present: List[ClassEodStudentItemOut] = []
+

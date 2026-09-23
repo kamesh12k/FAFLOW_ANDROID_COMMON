@@ -30,7 +30,8 @@ from app.schemas.student_attendance import (
     ClassPeriodSlotInfo, ClassStudentMatrixRowOut, ClassPeriodMatrixOut,
     StudentSubjectAttendanceOut, StudentSessionHistoryItemOut, StudentProfileAttendanceOut,
     TeacherComplianceItemOut, PrincipalExceptionItemOut,
-    AdminAttendanceOverrideRequest, AdminSessionLockRequest
+    AdminAttendanceOverrideRequest, AdminSessionLockRequest,
+    AbsenteeStudentItemOut, LiveAbsenteesOverviewOut, ClassEodStudentItemOut, ClassEodAttendanceOut
 )
 
 logger = logging.getLogger(__name__)
@@ -2241,6 +2242,19 @@ class StudentAttendanceService:
                     tc.emergency_count, f"{tc.compliance_percentage}%"
                 ])
 
+        elif report_type == "absentees":
+            abs_data = StudentAttendanceService.get_live_absentees(db, User(role=Role.system_admin), target_date, department_id=department_id)
+            writer.writerow(["CAMPUS LIVE ABSENTEE REPORT", f"Date: {target_date}"])
+            writer.writerow(["Total Enrolled", abs_data.total_students_enrolled, "Total Absentees", abs_data.total_absentees])
+            writer.writerow(["Full Day Absent", abs_data.full_day_absent_count, "Skipped Classes", abs_data.skipped_classes_count, "Late", abs_data.late_count])
+            writer.writerow([])
+            writer.writerow(["Roll Number", "Student Name", "Department", "Class", "Section", "Category", "Absent Periods", "Details"])
+            for s in abs_data.students:
+                writer.writerow([
+                    s.roll_number, s.name, s.department_name, s.class_name, s.section,
+                    s.category, ", ".join(f"P{p}" for p in s.absent_periods), s.summary_text
+                ])
+
         else:
             sessions = StudentAttendanceService.get_principal_sessions(
                 db, target_date, department_id=department_id
@@ -2256,3 +2270,363 @@ class StudentAttendanceService:
                 ])
 
         return output.getvalue()
+
+    @staticmethod
+    def get_live_absentees(
+        db: Session,
+        current_user: User,
+        target_date: date,
+        department_id: Optional[int] = None
+    ) -> LiveAbsenteesOverviewOut:
+        """
+        Retrieves real-time day student absentees list.
+        - HOD: strictly filtered to their own department.
+        - System Admin / Principal: campus-wide or filtered by selected department.
+        Identifies full-day absentees, students who skipped classes, and late arrivals.
+        """
+        is_admin_privileged = current_user.role in {Role.system_admin, Role.governance, Role.principal} or not current_user.department_id
+        if is_admin_privileged:
+            dept_id = department_id
+        else:
+            dept_id = current_user.department_id
+
+        dept_name = None
+        if dept_id:
+            dept = db.query(Department).filter(Department.id == dept_id).first()
+            if dept:
+                dept_name = dept.name
+
+        class_query = db.query(Class)
+        if dept_id:
+            class_query = class_query.filter(Class.department_id == dept_id)
+        classes = class_query.all()
+        class_ids = [c.id for c in classes]
+
+        if not class_ids:
+            return LiveAbsenteesOverviewOut(
+                date=target_date,
+                department_id=dept_id,
+                department_name=dept_name,
+                total_students_enrolled=0,
+                total_absentees=0,
+                full_day_absent_count=0,
+                skipped_classes_count=0,
+                late_count=0,
+                attendance_percentage=0.0,
+                students=[]
+            )
+
+        total_enrolled = (
+            db.query(func.count(Student.id))
+            .filter(Student.class_id.in_(class_ids), Student.is_active == True)
+            .scalar() or 0
+        )
+
+        sessions = (
+            db.query(AttendanceSession)
+            .filter(
+                AttendanceSession.attendance_date == target_date,
+                AttendanceSession.class_id.in_(class_ids),
+                AttendanceSession.status.in_([
+                    SessionStatus.submitted, SessionStatus.submitted_late,
+                    SessionStatus.locked, SessionStatus.open
+                ])
+            )
+            .all()
+        )
+
+        conducted_sessions = [s for s in sessions if s.records]
+        session_ids = [s.id for s in conducted_sessions]
+
+        class_conducted_periods: Dict[int, List[int]] = {}
+        for s in conducted_sessions:
+            class_conducted_periods.setdefault(s.class_id, []).append(s.period_number)
+        for c_id in class_conducted_periods:
+            class_conducted_periods[c_id] = sorted(list(set(class_conducted_periods[c_id])))
+
+        if not session_ids:
+            return LiveAbsenteesOverviewOut(
+                date=target_date,
+                department_id=dept_id,
+                department_name=dept_name,
+                total_students_enrolled=total_enrolled,
+                total_absentees=0,
+                full_day_absent_count=0,
+                skipped_classes_count=0,
+                late_count=0,
+                attendance_percentage=100.0 if total_enrolled > 0 else 0.0,
+                students=[]
+            )
+
+        records = (
+            db.query(StudentAttendance)
+            .join(AttendanceSession, StudentAttendance.attendance_session_id == AttendanceSession.id)
+            .join(Student, StudentAttendance.student_id == Student.id)
+            .filter(StudentAttendance.attendance_session_id.in_(session_ids))
+            .all()
+        )
+
+        student_data: Dict[int, Dict[str, Any]] = {}
+        for r in records:
+            s_id = r.student_id
+            if s_id not in student_data:
+                student_data[s_id] = {
+                    "student": r.student,
+                    "marks": {}
+                }
+            student_data[s_id]["marks"][r.session.period_number] = r.status.value.upper()
+
+        absentee_items: List[AbsenteeStudentItemOut] = []
+        full_day_count = 0
+        skipped_count = 0
+        late_only_count = 0
+        total_present_marks = 0
+        total_possible_marks = 0
+
+        for s_id, s_info in student_data.items():
+            st: Student = s_info["student"]
+            if not st:
+                continue
+            marks = s_info["marks"]
+            conducted = class_conducted_periods.get(st.class_id, sorted(list(marks.keys())))
+
+            absent_p = sorted([p for p, m in marks.items() if m == "ABSENT"])
+            late_p = sorted([p for p, m in marks.items() if m == "LATE"])
+            present_p = sorted([p for p, m in marks.items() if m in {"PRESENT", "ON_DUTY"}])
+
+            total_present_marks += len(present_p) + len(late_p)
+            total_possible_marks += len(marks)
+
+            if not absent_p and not late_p:
+                continue
+
+            category = "ABSENT"
+            summary_parts = []
+            if len(absent_p) > 0 and len(present_p) == 0 and len(late_p) == 0:
+                category = "FULL_DAY_ABSENT"
+                full_day_count += 1
+                p_str = ", ".join(f"P{p}" for p in absent_p)
+                summary_parts.append(f"Full Day Absent ({p_str})")
+            elif len(absent_p) > 0 and (len(present_p) > 0 or len(late_p) > 0):
+                category = "SKIPPED_CLASSES"
+                skipped_count += 1
+                skipped_str = ", ".join(f"P{p}" for p in absent_p)
+                attended_str = ", ".join(f"P{p}" for p in sorted(present_p + late_p))
+                summary_parts.append(f"Skipped {skipped_str} (Attended {attended_str})")
+            elif len(late_p) > 0 and len(absent_p) == 0:
+                category = "LATE"
+                late_only_count += 1
+                late_str = ", ".join(f"P{p}" for p in late_p)
+                summary_parts.append(f"Late Arrival in {late_str}")
+            else:
+                category = "ABSENT"
+                p_str = ", ".join(f"P{p}" for p in absent_p)
+                summary_parts.append(f"Absent in {p_str}")
+
+            cls_name = st.class_.name if st.class_ else ""
+            cls_sec = st.class_.section if st.class_ else ""
+            dept_name_st = st.department.name if st.department else (st.class_.department.name if st.class_ and st.class_.department else "")
+
+            absentee_items.append(
+                AbsenteeStudentItemOut(
+                    student_id=st.id,
+                    roll_number=st.roll_number,
+                    roll_suffix=st.roll_suffix,
+                    name=st.name,
+                    class_id=st.class_id,
+                    class_name=cls_name,
+                    section=cls_sec,
+                    department_id=st.department_id,
+                    department_name=dept_name_st,
+                    conducted_periods=conducted,
+                    absent_periods=absent_p,
+                    late_periods=late_p,
+                    present_periods=present_p,
+                    category=category,
+                    summary_text=" · ".join(summary_parts),
+                    period_marks={str(p): m for p, m in marks.items()}
+                )
+            )
+
+        cat_order = {"FULL_DAY_ABSENT": 0, "SKIPPED_CLASSES": 1, "ABSENT": 2, "LATE": 3}
+        absentee_items.sort(key=lambda x: (cat_order.get(x.category, 99), x.department_name, x.class_name, x.section, x.roll_number))
+
+        att_pct = round((total_present_marks / total_possible_marks * 100), 1) if total_possible_marks > 0 else 0.0
+
+        return LiveAbsenteesOverviewOut(
+            date=target_date,
+            department_id=dept_id,
+            department_name=dept_name,
+            total_students_enrolled=total_enrolled,
+            total_absentees=len(absentee_items),
+            full_day_absent_count=full_day_count,
+            skipped_classes_count=skipped_count,
+            late_count=late_only_count,
+            attendance_percentage=att_pct,
+            students=absentee_items
+        )
+
+    @staticmethod
+    def get_class_eod_attendance(
+        db: Session,
+        class_id: int,
+        target_date: date
+    ) -> ClassEodAttendanceOut:
+        """
+        End-of-day attendance audit for a specific class on a date.
+        Categorizes students into:
+        - Full day absentees
+        - Class skippers (attended some periods, skipped others)
+        - Late arrivals
+        - Full day present
+        """
+        cls = db.query(Class).filter(Class.id == class_id).first()
+        if not cls:
+            raise HTTPException(status_code=404, detail="Class not found")
+
+        cal_day = db.query(CalendarDay).filter(CalendarDay.date == target_date).first()
+        day_order = cal_day.day_order if cal_day else None
+
+        from app.services.effective_membership_service import EffectiveMembershipService
+        effective_roster = EffectiveMembershipService.resolve_class_students(db, class_id)
+        if effective_roster and effective_roster.students:
+            student_ids = [s.id for s in effective_roster.students]
+            students = (
+                db.query(Student)
+                .filter(Student.id.in_(student_ids), Student.is_active == True)
+                .order_by(Student.roll_number)
+                .all()
+            )
+        else:
+            students = (
+                db.query(Student)
+                .filter(Student.class_id == class_id, Student.is_active == True)
+                .order_by(Student.roll_number)
+                .all()
+            )
+
+        sessions = (
+            db.query(AttendanceSession)
+            .filter(
+                AttendanceSession.class_id == class_id,
+                AttendanceSession.attendance_date == target_date,
+                AttendanceSession.status.in_([
+                    SessionStatus.submitted, SessionStatus.submitted_late,
+                    SessionStatus.locked, SessionStatus.open
+                ])
+            )
+            .all()
+        )
+
+        conducted_sessions = [s for s in sessions if s.records]
+        conducted_periods = sorted(list(set(s.period_number for s in conducted_sessions)))
+
+        today_marks_by_student_period: Dict[Tuple[int, int], str] = {}
+        for sess in conducted_sessions:
+            for rec in sess.records:
+                today_marks_by_student_period[(rec.student_id, sess.period_number)] = rec.status.value.upper()
+
+        full_day_absentees: List[ClassEodStudentItemOut] = []
+        skipped_classes: List[ClassEodStudentItemOut] = []
+        late_arrivals: List[ClassEodStudentItemOut] = []
+        full_day_present: List[ClassEodStudentItemOut] = []
+
+        total_present_count = 0
+        total_possible = len(students) * len(conducted_periods) if conducted_periods else 0
+
+        for s in students:
+            absent_p = []
+            present_p = []
+            late_p = []
+
+            for p in conducted_periods:
+                val = today_marks_by_student_period.get((s.id, p), "PRESENT")
+                if val == "ABSENT":
+                    absent_p.append(p)
+                elif val == "LATE":
+                    late_p.append(p)
+                    total_present_count += 1
+                else:
+                    present_p.append(p)
+                    total_present_count += 1
+
+            if len(absent_p) == len(conducted_periods) and len(conducted_periods) > 0:
+                p_str = ", ".join(f"P{p}" for p in absent_p)
+                full_day_absentees.append(
+                    ClassEodStudentItemOut(
+                        student_id=s.id,
+                        roll_number=s.roll_number,
+                        roll_suffix=s.roll_suffix,
+                        name=s.name,
+                        status_summary=f"Absent all day ({p_str})",
+                        attended_periods=[],
+                        skipped_periods=absent_p,
+                        late_periods=late_p,
+                        details="Did not attend any classes today"
+                    )
+                )
+            elif len(absent_p) > 0 and (len(present_p) > 0 or len(late_p) > 0):
+                sk_str = ", ".join(f"P{p}" for p in absent_p)
+                att_str = ", ".join(f"P{p}" for p in sorted(present_p + late_p))
+                skipped_classes.append(
+                    ClassEodStudentItemOut(
+                        student_id=s.id,
+                        roll_number=s.roll_number,
+                        roll_suffix=s.roll_suffix,
+                        name=s.name,
+                        status_summary=f"Skipped {sk_str}",
+                        attended_periods=sorted(present_p + late_p),
+                        skipped_periods=absent_p,
+                        late_periods=late_p,
+                        details=f"Present in {att_str} · Bunked/Missed {sk_str}"
+                    )
+                )
+            elif len(late_p) > 0:
+                l_str = ", ".join(f"P{p}" for p in late_p)
+                late_arrivals.append(
+                    ClassEodStudentItemOut(
+                        student_id=s.id,
+                        roll_number=s.roll_number,
+                        roll_suffix=s.roll_suffix,
+                        name=s.name,
+                        status_summary=f"Late in {l_str}",
+                        attended_periods=present_p,
+                        skipped_periods=[],
+                        late_periods=late_p,
+                        details=f"Marked late in {l_str}"
+                    )
+                )
+            else:
+                full_day_present.append(
+                    ClassEodStudentItemOut(
+                        student_id=s.id,
+                        roll_number=s.roll_number,
+                        roll_suffix=s.roll_suffix,
+                        name=s.name,
+                        status_summary="Present in all conducted classes",
+                        attended_periods=conducted_periods,
+                        skipped_periods=[],
+                        late_periods=[],
+                        details="100% Day Attendance"
+                    )
+                )
+
+        pct = round((total_present_count / total_possible * 100), 1) if total_possible > 0 else 0.0
+
+        return ClassEodAttendanceOut(
+            class_id=cls.id,
+            class_name=cls.name,
+            section=cls.section,
+            department_id=cls.department_id,
+            department_name=cls.department.name if cls.department else "",
+            date=target_date,
+            day_order=day_order,
+            total_enrolled=len(students),
+            conducted_periods=conducted_periods,
+            attendance_percentage=pct,
+            full_day_absentees=full_day_absentees,
+            skipped_classes=skipped_classes,
+            late_arrivals=late_arrivals,
+            full_day_present=full_day_present
+        )
+

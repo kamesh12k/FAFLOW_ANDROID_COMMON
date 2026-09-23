@@ -15,7 +15,8 @@ from app.schemas.student_attendance import (
     ClassPeriodSlotInfo, ClassStudentMatrixRowOut, ClassPeriodMatrixOut,
     StudentSubjectAttendanceOut, StudentSessionHistoryItemOut, StudentProfileAttendanceOut,
     TeacherComplianceItemOut, PrincipalExceptionItemOut,
-    AdminAttendanceOverrideRequest, AdminSessionLockRequest
+    AdminAttendanceOverrideRequest, AdminSessionLockRequest,
+    LiveAbsenteesOverviewOut, ClassEodAttendanceOut
 )
 from app.services.student_attendance_service import StudentAttendanceService
 
@@ -135,6 +136,31 @@ def get_hod_attendance_overview(
     """HOD consolidated operational view of department class attendance, percentages, late submissions, and exceptions."""
     t_date = target_date if target_date else date.today()
     return StudentAttendanceService.get_hod_overview(db, current_user, t_date, department_id=department_id)
+
+
+@router.get("/absentees/live", response_model=LiveAbsenteesOverviewOut, status_code=status.HTTP_200_OK)
+def get_live_student_absentees(
+    target_date: Optional[date] = Query(None),
+    department_id: Optional[int] = Query(None),
+    current_user: User = Depends(require_hod_or_principal),
+    db: Session = Depends(get_db)
+):
+    """Real-time live student absentees list for HOD (department-scoped) and System Admin / Principal (campus-wide / selectable department)."""
+    t_date = target_date if target_date else date.today()
+    return StudentAttendanceService.get_live_absentees(db, current_user, t_date, department_id=department_id)
+
+
+@router.get("/classes/{class_id}/eod-summary", response_model=ClassEodAttendanceOut, status_code=status.HTTP_200_OK)
+def get_class_eod_attendance_summary(
+    class_id: int,
+    target_date: Optional[date] = Query(None),
+    current_user: User = Depends(require_hod_or_principal),
+    db: Session = Depends(get_db)
+):
+    """End-of-day attendance audit for a class detailing full-day absentees, students who skipped classes, and latecomers."""
+    t_date = target_date if target_date else date.today()
+    return StudentAttendanceService.get_class_eod_attendance(db, class_id, t_date)
+
 
 
 # =========================================================================

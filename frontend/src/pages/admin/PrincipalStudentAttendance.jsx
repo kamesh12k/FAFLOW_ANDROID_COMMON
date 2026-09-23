@@ -10,9 +10,24 @@ import { useAuth } from '../../context/AuthContext'
 
 export default function PrincipalStudentAttendance() {
   const { user } = useAuth()
+  const isHod = user?.role === 'admin' && !!user?.department_id
+  const isSysAdmin = user?.role === 'system_admin' || user?.admin_level === 'super_admin' || !user?.department_id
+
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0])
-  const [activeTab, setActiveTab] = useState('overview') // 'overview', 'sessions', 'matrix', 'compliance', 'exceptions'
+  const [activeTab, setActiveTab] = useState('absentees') // 'absentees', 'overview', 'sessions', 'matrix', 'compliance', 'exceptions'
   
+  // Live Absentees Hub State
+  const [liveAbsentees, setLiveAbsentees] = useState(null)
+  const [loadingAbsentees, setLoadingAbsentees] = useState(false)
+  const [absenteeCategoryFilter, setAbsenteeCategoryFilter] = useState('ALL') // ALL, FULL_DAY_ABSENT, SKIPPED_CLASSES, LATE
+  const [absenteeSearch, setAbsenteeSearch] = useState('')
+  const [absenteeClassFilter, setAbsenteeClassFilter] = useState('')
+  const [copiedRollsMsg, setCopiedRollsMsg] = useState('')
+
+  // Class End-of-Day Summary State
+  const [eodSummary, setEodSummary] = useState(null)
+  const [loadingEodSummary, setLoadingEodSummary] = useState(false)
+
   // Data States
   const [overview, setOverview] = useState(null)
   const [sessions, setSessions] = useState([])
@@ -97,6 +112,43 @@ export default function PrincipalStudentAttendance() {
     }
   }
 
+  // 1b. Load Live Absentees Hub
+  const loadLiveAbsentees = async (targetDate, deptId) => {
+    try {
+      setLoadingAbsentees(true)
+      const params = { target_date: targetDate }
+      if (deptId) params.department_id = deptId
+      const res = await studentAttendanceApi.getLiveAbsentees(params)
+      setLiveAbsentees(res.data)
+    } catch (err) {
+      console.error('Failed to load live absentees', err)
+    } finally {
+      setLoadingAbsentees(false)
+    }
+  }
+
+  // 1c. Load Class EOD Summary
+  const loadClassEodSummary = async (classId, targetDate) => {
+    if (!classId) return
+    try {
+      setLoadingEodSummary(true)
+      const res = await studentAttendanceApi.getClassEodAttendance(classId, { target_date: targetDate })
+      setEodSummary(res.data)
+    } catch (err) {
+      console.error('Failed to load class EOD summary', err)
+    } finally {
+      setLoadingEodSummary(false)
+    }
+  }
+
+  const handleCopyRolls = (rollsList, label = 'roll numbers') => {
+    if (!rollsList || rollsList.length === 0) return
+    const text = rollsList.join(', ')
+    navigator.clipboard.writeText(text)
+    setCopiedRollsMsg(`${rollsList.length} ${label} copied to clipboard!`)
+    setTimeout(() => setCopiedRollsMsg(''), 3500)
+  }
+
   // 2. Load Sessions List
   const loadSessions = async (targetDate, deptId) => {
     try {
@@ -120,13 +172,17 @@ export default function PrincipalStudentAttendance() {
     }
   }
 
-  // 3. Load Matrix
+  // 3. Load Matrix & Class EOD Summary
   const loadMatrix = async (classId, targetDate) => {
     if (!classId) return
     try {
       setLoadingMatrix(true)
-      const res = await studentAttendanceApi.getClassPeriodMatrix(classId, targetDate)
-      setMatrixData(res.data)
+      const [matrixRes, eodRes] = await Promise.all([
+        studentAttendanceApi.getClassPeriodMatrix(classId, targetDate),
+        studentAttendanceApi.getClassEodAttendance(classId, { target_date: targetDate }).catch(() => null)
+      ])
+      setMatrixData(matrixRes.data)
+      if (eodRes?.data) setEodSummary(eodRes.data)
     } catch (err) {
       console.error('Failed to load class matrix', err)
       setError(err.response?.data?.detail || 'Failed to load class attendance matrix.')
@@ -222,10 +278,12 @@ export default function PrincipalStudentAttendance() {
     loadOverviewAndDepts(selectedDate)
     loadSessions(selectedDate, selectedDeptId)
     loadLiveIntelligence(selectedDate, selectedDeptId)
+    loadLiveAbsentees(selectedDate, selectedDeptId)
 
     // Continuous Live Polling every 15 seconds
     const pollInterval = setInterval(() => {
       loadLiveIntelligence(selectedDate, selectedDeptId)
+      loadLiveAbsentees(selectedDate, selectedDeptId)
     }, 15000)
     return () => clearInterval(pollInterval)
   }, [selectedDate, selectedDeptId])
@@ -238,7 +296,9 @@ export default function PrincipalStudentAttendance() {
   }, [lastPollTime])
 
   useEffect(() => {
-    if (activeTab === 'intelligence') {
+    if (activeTab === 'absentees') {
+      loadLiveAbsentees(selectedDate, selectedDeptId)
+    } else if (activeTab === 'intelligence') {
       loadLiveIntelligence(selectedDate, selectedDeptId)
     } else if (activeTab === 'sessions') {
       loadSessions(selectedDate, selectedDeptId)
@@ -331,11 +391,33 @@ export default function PrincipalStudentAttendance() {
     }
   }
 
+  const filteredAbsentees = useMemo(() => {
+    if (!liveAbsentees?.students) return []
+    return liveAbsentees.students.filter((st) => {
+      if (absenteeCategoryFilter !== 'ALL' && st.category !== absenteeCategoryFilter) {
+        return false
+      }
+      if (absenteeClassFilter && String(st.class_id) !== String(absenteeClassFilter)) {
+        return false
+      }
+      if (absenteeSearch.trim()) {
+        const q = absenteeSearch.trim().toLowerCase()
+        const matchRoll = (st.roll_number || '').toLowerCase().includes(q)
+        const matchName = (st.name || '').toLowerCase().includes(q)
+        const matchClass = (st.class_name || '').toLowerCase().includes(q)
+        const matchDept = (st.department_name || '').toLowerCase().includes(q)
+        if (!matchRoll && !matchName && !matchClass && !matchDept) return false
+      }
+      return true
+    })
+  }, [liveAbsentees, absenteeCategoryFilter, absenteeClassFilter, absenteeSearch])
+
   const tabOptions = [
+    { id: 'absentees', label: `📋 Live Absentees (${liveAbsentees?.total_absentees ?? 0})` },
     { id: 'overview', label: 'Campus Overview' },
     { id: 'intelligence', label: `⚡ Live Intelligence (${liveIntelligence?.needs_attention_count ?? 0})` },
     { id: 'sessions', label: 'Period Sessions Grid' },
-    { id: 'matrix', label: 'Class Matrix (Roster)' },
+    { id: 'matrix', label: 'Class Matrix & End-of-Day' },
     { id: 'compliance', label: 'Faculty Compliance' },
     { id: 'exceptions', label: 'Risk & Exceptions' },
   ]
@@ -352,7 +434,7 @@ export default function PrincipalStudentAttendance() {
             <div className="flex items-center gap-2">
               <h1 className="text-2xl font-black tracking-tight">Institutional Student Attendance</h1>
               <Badge variant="primary" className="bg-indigo-500/30 text-indigo-200 border-indigo-400/40 text-[10px] uppercase font-bold">
-                {user?.role === 'principal' ? 'Principal Controller' : user?.role === 'governance' ? 'Governance Controller' : 'HOD / Academic Controller'}
+                {user?.role === 'principal' ? 'Principal Controller' : user?.role === 'governance' ? 'Governance Controller' : isHod ? 'HOD Department Controller' : 'System Admin'}
               </Badge>
             </div>
             <p className="text-xs text-slate-400 mt-0.5">
@@ -390,6 +472,12 @@ export default function PrincipalStudentAttendance() {
               <span>{exporting ? 'Exporting...' : 'Export Reports'}</span>
             </button>
             <div className={`${showExportMenu ? 'block' : 'hidden'} group-hover:block absolute right-0 mt-1 w-56 bg-slate-900 border border-slate-700 rounded-xl shadow-2xl py-2 z-50 text-xs`}>
+              <button
+                onClick={() => { setShowExportMenu(false); handleExport('absentees') }}
+                className="w-full text-left px-4 py-2 hover:bg-slate-800 text-rose-300 font-semibold"
+              >
+                📋 Today's Student Absentees Report
+              </button>
               <button
                 onClick={() => { setShowExportMenu(false); handleExport('daily_summary') }}
                 className="w-full text-left px-4 py-2 hover:bg-slate-800 text-slate-200 font-medium"
@@ -558,19 +646,377 @@ export default function PrincipalStudentAttendance() {
         <Tabs tabs={tabOptions} activeTab={activeTab} onChange={setActiveTab} />
 
         <div className="flex items-center gap-3">
-          {/* Department Filter */}
-          <select
-            value={selectedDeptId}
-            onChange={(e) => setSelectedDeptId(e.target.value)}
-            className="px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs font-semibold text-slate-700 shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
-          >
-            <option value="">All Departments (Campus-Wide)</option>
-            {departments.map((d) => (
-              <option key={d.id} value={d.id}>{d.name} ({d.code})</option>
-            ))}
-          </select>
+          {/* Department Filter / Scope */}
+          {isHod ? (
+            <div className="flex items-center gap-2 px-3.5 py-2 bg-indigo-50 border border-indigo-200 rounded-xl text-xs font-bold text-indigo-900 shadow-sm">
+              <span className="text-[10px] text-indigo-500 uppercase font-black">My Department:</span>
+              <span>{departments.find(d => String(d.id) === String(selectedDeptId))?.name || user?.department_name || 'Department'}</span>
+            </div>
+          ) : (
+            <div className="flex items-center gap-2">
+              <span className="text-[11px] font-bold text-slate-500 uppercase hidden sm:inline">Department:</span>
+              <select
+                value={selectedDeptId}
+                onChange={(e) => setSelectedDeptId(e.target.value)}
+                className="px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs font-semibold text-slate-700 shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              >
+                <option value="">All Departments (Campus-Wide)</option>
+                {departments.map((d) => (
+                  <option key={d.id} value={d.id}>{d.name} ({d.code})</option>
+                ))}
+              </select>
+            </div>
+          )}
         </div>
       </div>
+
+      {/* ───────────────────────────────────────────────────────────── */}
+      {/* TAB 0: LIVE STUDENT ABSENTEES DIRECTORY (HOD & SYSTEM ADMIN)  */}
+      {/* ───────────────────────────────────────────────────────────── */}
+      {activeTab === 'absentees' && (
+        <div className="space-y-5">
+          {/* Absentees Header & Actions */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="p-2 bg-rose-50 text-rose-600 rounded-xl">
+                  <UsersIcon className="w-5 h-5" />
+                </span>
+                <div>
+                  <h3 className="text-base font-black text-slate-900 tracking-tight flex items-center gap-2">
+                    {isHod
+                      ? `Department Student Absentees — ${liveAbsentees?.department_name || 'My Department'}`
+                      : selectedDeptId
+                      ? `Department Student Absentees — ${liveAbsentees?.department_name || 'Selected Department'}`
+                      : 'Campus-Wide Student Absentees Directory'}
+                    {isHod && (
+                      <span className="text-[10px] uppercase font-black px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-700 border border-indigo-200">
+                        My Department
+                      </span>
+                    )}
+                  </h3>
+                  <p className="text-xs text-slate-500 mt-0.5">
+                    Live tracking of full-day absentees, period-bunking class skippers, and late arrivals for {selectedDate}.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex flex-wrap items-center gap-2">
+              <button
+                onClick={() => handleCopyRolls(filteredAbsentees.map(s => s.roll_number), 'absentee roll numbers')}
+                disabled={filteredAbsentees.length === 0}
+                className="flex items-center gap-1.5 px-3.5 py-2 bg-slate-900 hover:bg-slate-800 disabled:bg-slate-300 text-white rounded-xl text-xs font-bold transition-all shadow-sm active:scale-95 cursor-pointer"
+                title="Copy all filtered absentee roll numbers to clipboard"
+              >
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                </svg>
+                <span>Copy Roll Numbers ({filteredAbsentees.length})</span>
+              </button>
+
+              <button
+                onClick={() => handleExport('absentees')}
+                disabled={exporting}
+                className="flex items-center gap-1.5 px-3 py-2 bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 rounded-xl text-xs font-bold transition-all shadow-sm active:scale-95 cursor-pointer"
+              >
+                <DownloadIcon className="w-4 h-4 text-slate-500" />
+                <span>Export CSV</span>
+              </button>
+
+              <button
+                onClick={() => loadLiveAbsentees(selectedDate, selectedDeptId)}
+                className="p-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl transition-all cursor-pointer"
+                title="Refresh Live Absentees"
+              >
+                <RefreshIcon className="w-4 h-4 text-slate-600" />
+              </button>
+            </div>
+          </div>
+
+          {/* Copy feedback toast notification */}
+          {copiedRollsMsg && (
+            <div className="p-3 bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-xl text-xs font-bold flex items-center justify-between shadow-sm animate-fade-in">
+              <div className="flex items-center gap-2">
+                <CheckCircleIcon className="w-4 h-4 text-emerald-600" />
+                <span>{copiedRollsMsg}</span>
+              </div>
+              <button onClick={() => setCopiedRollsMsg('')} className="text-emerald-600 text-xs hover:underline cursor-pointer">Dismiss</button>
+            </div>
+          )}
+
+          {/* Live KPI Cards */}
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+            <div className="p-4 bg-white rounded-2xl border border-slate-200 shadow-sm">
+              <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Total Absentees</div>
+              <div className="text-2xl font-black text-rose-600 mt-1">
+                {liveAbsentees?.total_absentees ?? 0}
+              </div>
+              <div className="text-[11px] text-slate-500 font-medium mt-0.5">
+                of {liveAbsentees?.total_students_enrolled ?? 0} Enrolled
+              </div>
+            </div>
+
+            <div className="p-4 bg-rose-50/80 rounded-2xl border border-rose-200 shadow-sm">
+              <div className="text-[10px] font-bold text-rose-800 uppercase tracking-wider">Full Day Absent</div>
+              <div className="text-2xl font-black text-rose-700 mt-1">
+                {liveAbsentees?.full_day_absent_count ?? 0}
+              </div>
+              <div className="text-[11px] text-rose-600 font-medium mt-0.5">
+                All conducted periods
+              </div>
+            </div>
+
+            <div className="p-4 bg-amber-50/80 rounded-2xl border border-amber-200 shadow-sm">
+              <div className="text-[10px] font-bold text-amber-800 uppercase tracking-wider">Skipped Classes</div>
+              <div className="text-2xl font-black text-amber-700 mt-1">
+                {liveAbsentees?.skipped_classes_count ?? 0}
+              </div>
+              <div className="text-[11px] text-amber-700 font-medium mt-0.5">
+                Period bunking / partial
+              </div>
+            </div>
+
+            <div className="p-4 bg-orange-50/80 rounded-2xl border border-orange-200 shadow-sm">
+              <div className="text-[10px] font-bold text-orange-800 uppercase tracking-wider">Late Arrivals</div>
+              <div className="text-2xl font-black text-orange-700 mt-1">
+                {liveAbsentees?.late_count ?? 0}
+              </div>
+              <div className="text-[11px] text-orange-700 font-medium mt-0.5">
+                Marked late in period
+              </div>
+            </div>
+
+            <div className="p-4 bg-indigo-50/80 rounded-2xl border border-indigo-200 shadow-sm">
+              <div className="text-[10px] font-bold text-indigo-800 uppercase tracking-wider">Live Attendance %</div>
+              <div className={`text-2xl font-black mt-1 ${(liveAbsentees?.attendance_percentage ?? 100) < 75 ? 'text-rose-600' : 'text-indigo-700'}`}>
+                {liveAbsentees?.attendance_percentage ?? 0}%
+              </div>
+              <div className="text-[11px] text-indigo-600 font-medium mt-0.5">
+                Active attendance rate
+              </div>
+            </div>
+          </div>
+
+          {/* Filter Bar */}
+          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3 bg-white p-3.5 rounded-2xl border border-slate-200 shadow-sm">
+            {/* Category Filter Pills */}
+            <div className="flex flex-wrap items-center gap-1.5">
+              {[
+                { id: 'ALL', label: `All Absentees (${liveAbsentees?.total_absentees ?? 0})` },
+                { id: 'FULL_DAY_ABSENT', label: `🔴 Full Day (${liveAbsentees?.full_day_absent_count ?? 0})` },
+                { id: 'SKIPPED_CLASSES', label: `🟡 Skipped Classes (${liveAbsentees?.skipped_classes_count ?? 0})` },
+                { id: 'LATE', label: `🟠 Latecomers (${liveAbsentees?.late_count ?? 0})` },
+              ].map((btn) => (
+                <button
+                  key={btn.id}
+                  onClick={() => setAbsenteeCategoryFilter(btn.id)}
+                  className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                    absenteeCategoryFilter === btn.id
+                      ? 'bg-slate-900 text-white shadow-sm'
+                      : 'bg-slate-100 hover:bg-slate-200 text-slate-700'
+                  }`}
+                >
+                  {btn.label}
+                </button>
+              ))}
+            </div>
+
+            {/* Search & Class Dropdown */}
+            <div className="flex flex-wrap items-center gap-2">
+              <div className="relative min-w-[200px]">
+                <SearchIcon className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                <input
+                  type="text"
+                  placeholder="Search roll no or name..."
+                  value={absenteeSearch}
+                  onChange={(e) => setAbsenteeSearch(e.target.value)}
+                  className="w-full pl-8 pr-3 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                />
+              </div>
+
+              {classesList.length > 0 && (
+                <select
+                  value={absenteeClassFilter}
+                  onChange={(e) => setAbsenteeClassFilter(e.target.value)}
+                  className="px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 cursor-pointer"
+                >
+                  <option value="">All Classes</option>
+                  {classesList.map((c) => (
+                    <option key={c.id} value={c.id}>{c.name}</option>
+                  ))}
+                </select>
+              )}
+            </div>
+          </div>
+
+          {/* Table / List */}
+          {loadingAbsentees ? (
+            <div className="py-20 text-center bg-white rounded-2xl border border-slate-200">
+              <Spinner className="w-8 h-8 mx-auto text-indigo-600" />
+              <p className="mt-2 text-xs text-slate-500 font-semibold">Loading live student absentees...</p>
+            </div>
+          ) : filteredAbsentees.length === 0 ? (
+            <div className="py-16 text-center bg-white rounded-2xl border border-slate-200 p-8 shadow-sm">
+              <div className="w-12 h-12 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center mx-auto mb-3">
+                <CheckCircleIcon className="w-6 h-6" />
+              </div>
+              <h4 className="text-base font-black text-slate-900">
+                {liveAbsentees?.total_absentees === 0
+                  ? 'No Absentees Today!'
+                  : 'No Absentees Match Your Filter'}
+              </h4>
+              <p className="text-xs text-slate-500 mt-1 max-w-md mx-auto">
+                {liveAbsentees?.total_absentees === 0
+                  ? `All enrolled students across conducted sessions for ${selectedDate} are present.`
+                  : 'Try selecting a different filter category, clearing the search query, or choosing another class.'}
+              </p>
+            </div>
+          ) : (
+            <div className="overflow-x-auto bg-white rounded-2xl border border-slate-200 shadow-sm">
+              <table className="w-full text-left text-xs">
+                <thead>
+                  <tr className="border-b border-slate-200 bg-slate-50/80 text-slate-600 uppercase tracking-wider font-extrabold text-[11px]">
+                    <th className="py-3.5 px-4">Roll Number</th>
+                    <th className="py-3.5 px-4">Student Name</th>
+                    <th className="py-3.5 px-4">Department & Class</th>
+                    <th className="py-3.5 px-4">Category</th>
+                    <th className="py-3.5 px-4">Period Status</th>
+                    <th className="py-3.5 px-4">Absence Explanation</th>
+                    <th className="py-3.5 px-4 text-right">Action</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100 font-medium">
+                  {filteredAbsentees.map((st) => {
+                    const isFullDay = st.category === 'FULL_DAY_ABSENT'
+                    const isSkipped = st.category === 'SKIPPED_CLASSES'
+                    const isLate = st.category === 'LATE'
+
+                    return (
+                      <tr key={st.student_id} className="hover:bg-slate-50/80 transition-colors">
+                        {/* Roll Number Badge */}
+                        <td className="py-3 px-4 font-mono font-black text-slate-900">
+                          <div className="flex items-center gap-1.5">
+                            <span className="px-2 py-1 rounded-lg bg-slate-100 text-slate-800 border border-slate-200 text-xs">
+                              {st.roll_number}
+                            </span>
+                            <button
+                              onClick={() => handleCopyRolls([st.roll_number], 'roll number')}
+                              className="p-1 hover:bg-slate-200 rounded text-slate-400 hover:text-slate-600 transition-colors cursor-pointer"
+                              title="Copy roll number"
+                            >
+                              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                              </svg>
+                            </button>
+                          </div>
+                        </td>
+
+                        {/* Name */}
+                        <td className="py-3 px-4 font-bold text-slate-900">
+                          <button
+                            onClick={() => openStudentProfile(st.student_id, selectedDate)}
+                            className="hover:text-indigo-600 hover:underline text-left cursor-pointer"
+                          >
+                            {st.name}
+                          </button>
+                        </td>
+
+                        {/* Dept & Class */}
+                        <td className="py-3 px-4">
+                          <div className="flex flex-col">
+                            <span className="font-bold text-slate-800">{st.class_name} {st.section ? `(${st.section})` : ''}</span>
+                            <span className="text-[10px] text-slate-400 font-semibold">{st.department_name}</span>
+                          </div>
+                        </td>
+
+                        {/* Category */}
+                        <td className="py-3 px-4">
+                          {isFullDay && (
+                            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-rose-100 text-rose-800 border border-rose-200">
+                              <span className="w-1.5 h-1.5 rounded-full bg-rose-600" />
+                              Full Day Absent
+                            </span>
+                          )}
+                          {isSkipped && (
+                            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-amber-100 text-amber-800 border border-amber-200">
+                              <span className="w-1.5 h-1.5 rounded-full bg-amber-600" />
+                              Skipped Classes
+                            </span>
+                          )}
+                          {isLate && (
+                            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-orange-100 text-orange-800 border border-orange-200">
+                              <span className="w-1.5 h-1.5 rounded-full bg-orange-600" />
+                              Late Arrival
+                            </span>
+                          )}
+                          {!isFullDay && !isSkipped && !isLate && (
+                            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-slate-100 text-slate-700 border border-slate-200">
+                              {st.category}
+                            </span>
+                          )}
+                        </td>
+
+                        {/* Period Pills */}
+                        <td className="py-3 px-4">
+                          <div className="flex items-center gap-1">
+                            {[1, 2, 3, 4, 5].map((p) => {
+                              const mark = st.period_marks?.[String(p)]
+                              if (!mark) {
+                                return (
+                                  <span key={p} className="w-6 h-6 rounded flex items-center justify-center text-[10px] font-bold bg-slate-100 text-slate-300" title={`P${p}: Not conducted`}>
+                                    —
+                                  </span>
+                                )
+                              }
+                              let bg = 'bg-emerald-100 text-emerald-800 border-emerald-200'
+                              let text = 'P'
+                              if (mark === 'ABSENT') {
+                                bg = 'bg-rose-100 text-rose-800 border-rose-300 font-black'
+                                text = 'A'
+                              } else if (mark === 'LATE') {
+                                bg = 'bg-amber-100 text-amber-800 border-amber-300 font-bold'
+                                text = 'L'
+                              } else if (mark === 'ON_DUTY') {
+                                bg = 'bg-indigo-100 text-indigo-800 border-indigo-200'
+                                text = 'OD'
+                              }
+                              return (
+                                <span
+                                  key={p}
+                                  className={`w-6 h-6 rounded flex items-center justify-center text-[10px] border ${bg}`}
+                                  title={`P${p}: ${mark}`}
+                                >
+                                  {text}
+                                </span>
+                              )
+                            })}
+                          </div>
+                        </td>
+
+                        {/* Summary / Explanation */}
+                        <td className="py-3 px-4 text-xs font-semibold text-slate-600">
+                          {st.summary_text}
+                        </td>
+
+                        {/* Actions */}
+                        <td className="py-3 px-4 text-right">
+                          <button
+                            onClick={() => openStudentProfile(st.student_id, selectedDate)}
+                            className="px-2.5 py-1 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 rounded-lg text-xs font-bold transition-colors cursor-pointer"
+                          >
+                            Profile
+                          </button>
+                        </td>
+                      </tr>
+                    )
+                  })}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* ───────────────────────────────────────────────────────────── */}
       {/* TAB: LIVE CAMPUS ACADEMIC INTELLIGENCE & OPERATIONAL ALERTS */}
@@ -1033,6 +1479,144 @@ export default function PrincipalStudentAttendance() {
               </div>
             )}
           </div>
+
+          {/* ── End-of-Day Class Attendance Breakdown ── */}
+          {eodSummary && (
+            <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm space-y-4">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-3">
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="p-1.5 bg-indigo-50 text-indigo-600 rounded-lg">
+                      <ClockIcon className="w-4 h-4" />
+                    </span>
+                    <h4 className="text-sm font-black text-slate-900">
+                      End-of-Day Class Attendance Summary — {eodSummary.class_name} {eodSummary.section ? `(${eodSummary.section})` : ''}
+                    </h4>
+                  </div>
+                  <p className="text-[11px] text-slate-500 mt-0.5">
+                    {eodSummary.department_name} · {eodSummary.conducted_periods.length} Conducted Periods Today · {eodSummary.attendance_percentage}% Overall Class Attendance
+                  </p>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => {
+                      const allAbs = [...eodSummary.full_day_absentees, ...eodSummary.skipped_classes].map(s => s.roll_number)
+                      handleCopyRolls(allAbs, 'class absentees')
+                    }}
+                    className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold transition-colors cursor-pointer"
+                  >
+                    <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                    </svg>
+                    <span>Copy Absent Rolls ({eodSummary.full_day_absentees.length + eodSummary.skipped_classes.length})</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* 4-Box Breakdown: Full Day Absent, Skipped Classes, Late Arrivals, Full Day Present */}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
+                {/* 1. Full Day Absent */}
+                <div className="p-3.5 bg-rose-50/70 rounded-xl border border-rose-200">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-black text-rose-800 uppercase tracking-wider flex items-center gap-1.5">
+                      <span className="w-2 h-2 rounded-full bg-rose-600" />
+                      Full Day Absent ({eodSummary.full_day_absentees.length})
+                    </span>
+                    <button
+                      onClick={() => handleCopyRolls(eodSummary.full_day_absentees.map(s => s.roll_number), 'full-day absent rolls')}
+                      className="text-[10px] font-bold text-rose-700 hover:underline cursor-pointer"
+                    >
+                      Copy Rolls
+                    </button>
+                  </div>
+                  <div className="mt-2.5 max-h-40 overflow-y-auto space-y-1.5 pr-1">
+                    {eodSummary.full_day_absentees.map(s => (
+                      <div key={s.student_id} className="flex items-center justify-between p-1.5 bg-white/90 rounded-lg text-xs">
+                        <span className="font-mono font-bold text-slate-800">{s.roll_number}</span>
+                        <span className="text-[11px] font-medium text-slate-600 truncate max-w-[120px]">{s.name}</span>
+                      </div>
+                    ))}
+                    {eodSummary.full_day_absentees.length === 0 && (
+                      <div className="text-[11px] text-slate-400 italic py-2 text-center">None. All students attended.</div>
+                    )}
+                  </div>
+                </div>
+
+                {/* 2. Skipped Classes */}
+                <div className="p-3.5 bg-amber-50/70 rounded-xl border border-amber-200">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-black text-amber-800 uppercase tracking-wider flex items-center gap-1.5">
+                      <span className="w-2 h-2 rounded-full bg-amber-600" />
+                      Skipped Classes ({eodSummary.skipped_classes.length})
+                    </span>
+                    <button
+                      onClick={() => handleCopyRolls(eodSummary.skipped_classes.map(s => s.roll_number), 'class skipper rolls')}
+                      className="text-[10px] font-bold text-amber-700 hover:underline cursor-pointer"
+                    >
+                      Copy Rolls
+                    </button>
+                  </div>
+                  <div className="mt-2.5 max-h-40 overflow-y-auto space-y-1.5 pr-1">
+                    {eodSummary.skipped_classes.map(s => (
+                      <div key={s.student_id} className="p-1.5 bg-white/90 rounded-lg text-xs space-y-0.5">
+                        <div className="flex items-center justify-between">
+                          <span className="font-mono font-bold text-slate-800">{s.roll_number}</span>
+                          <span className="text-[11px] font-medium text-slate-600 truncate max-w-[110px]">{s.name}</span>
+                        </div>
+                        <div className="text-[10px] font-semibold text-amber-700">{s.details || s.status_summary}</div>
+                      </div>
+                    ))}
+                    {eodSummary.skipped_classes.length === 0 && (
+                      <div className="text-[11px] text-slate-400 italic py-2 text-center">No class skippers detected.</div>
+                    )}
+                  </div>
+                </div>
+
+                {/* 3. Late Arrivals */}
+                <div className="p-3.5 bg-orange-50/70 rounded-xl border border-orange-200">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-black text-orange-800 uppercase tracking-wider flex items-center gap-1.5">
+                      <span className="w-2 h-2 rounded-full bg-orange-600" />
+                      Late Arrivals ({eodSummary.late_arrivals.length})
+                    </span>
+                  </div>
+                  <div className="mt-2.5 max-h-40 overflow-y-auto space-y-1.5 pr-1">
+                    {eodSummary.late_arrivals.map(s => (
+                      <div key={s.student_id} className="p-1.5 bg-white/90 rounded-lg text-xs space-y-0.5">
+                        <div className="flex items-center justify-between">
+                          <span className="font-mono font-bold text-slate-800">{s.roll_number}</span>
+                          <span className="text-[11px] font-medium text-slate-600 truncate max-w-[110px]">{s.name}</span>
+                        </div>
+                        <div className="text-[10px] font-semibold text-orange-700">{s.details || s.status_summary}</div>
+                      </div>
+                    ))}
+                    {eodSummary.late_arrivals.length === 0 && (
+                      <div className="text-[11px] text-slate-400 italic py-2 text-center">No late arrivals recorded.</div>
+                    )}
+                  </div>
+                </div>
+
+                {/* 4. Full Day Present */}
+                <div className="p-3.5 bg-emerald-50/70 rounded-xl border border-emerald-200">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-black text-emerald-800 uppercase tracking-wider flex items-center gap-1.5">
+                      <span className="w-2 h-2 rounded-full bg-emerald-600" />
+                      Full Day Present ({eodSummary.full_day_present.length})
+                    </span>
+                  </div>
+                  <div className="mt-2.5">
+                    <div className="text-xl font-black text-emerald-700">
+                      {eodSummary.full_day_present.length} / {eodSummary.total_enrolled}
+                    </div>
+                    <div className="text-[11px] text-emerald-600 font-semibold mt-1">
+                      {eodSummary.total_enrolled > 0 ? Math.round((eodSummary.full_day_present.length / eodSummary.total_enrolled) * 100) : 0}% 100% Attendance Rate
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
 
           {loadingMatrix ? (
             <div className="py-16 text-center">

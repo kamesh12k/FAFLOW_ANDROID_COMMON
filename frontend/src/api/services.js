@@ -370,6 +370,8 @@ export const studentAttendanceApi = {
   adminLockSession: (sessionId, data) => api.post(`/student-attendance/principal/sessions/${sessionId}/lock`, data),
   adminOverrideAttendance: (sessionId, studentId, data) => api.post(`/student-attendance/principal/sessions/${sessionId}/students/${studentId}/override`, data),
   exportReport: (params) => api.get('/student-attendance/principal/export', { params, responseType: 'blob' }),
+  getLiveAbsentees: (params) => api.get('/student-attendance/absentees/live', { params }),
+  getClassEodAttendance: (classId, params) => api.get(`/student-attendance/classes/${classId}/eod-summary`, { params }),
 }
 
 export const intelligenceApi = {
