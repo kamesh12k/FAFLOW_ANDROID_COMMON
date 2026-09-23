@@ -364,11 +364,18 @@ export function DatePicker({ label, ...props }) {
 }
 
 // 16. Modal Dialog Wrapper
-export function Modal({ open, isOpen, onClose, title, children, size = 'md' }) {
+export function Modal({ open, isOpen, onClose, title, children, size = 'md', maxWidth: customMaxWidth }) {
   const isModalOpen = open !== undefined ? open : (isOpen !== undefined ? isOpen : true)
   if (!isModalOpen) return null
 
-  const maxWidth = size === 'sm' ? 'max-w-sm' : size === 'lg' ? 'max-w-2xl' : 'max-w-md'
+  const maxWidth = customMaxWidth || (
+    size === 'sm' ? 'max-w-sm' :
+    size === 'lg' ? 'max-w-2xl' :
+    size === 'xl' ? 'max-w-4xl' :
+    size === '2xl' ? 'max-w-5xl' :
+    'max-w-md'
+  )
+
   return (
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4">
       <div className="absolute inset-0 bg-black/40 backdrop-blur-[2px] transition-opacity" onClick={onClose} />

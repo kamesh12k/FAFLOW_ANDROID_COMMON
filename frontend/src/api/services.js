@@ -141,7 +141,16 @@ export const classRollRulesApi = {
     api.post('/academic-years/rollover/preview', null, { params: { from_year_id: fromYearId, to_year_id: toYearId, ...(departmentId ? { department_id: departmentId } : {}) } }),
   executeRollover: (data) =>
     api.post('/academic-years/rollover/execute', data),
+  updateStudent: (classId, studentId, data) =>
+    api.patch(`/classes/${classId}/students/${studentId}`, data),
+  deleteStudent: (classId, studentId) =>
+    api.delete(`/classes/${classId}/students/${studentId}`),
+  clearAllStudents: (classId) =>
+    api.post(`/classes/${classId}/roster/clear-all`),
+  deleteRule: (classId) =>
+    api.delete(`/classes/${classId}/roll-rule`),
 }
+
 
 export const roomsApi = {
   list: (roomType) => api.get('/rooms/', { params: roomType ? { room_type: roomType } : {} }),

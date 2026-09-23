@@ -158,3 +158,14 @@ class AcademicYearRolloverResultOut(BaseModel):
     graduated_students: int
     rules_copied: int
     message: str
+
+
+class StudentUpdateInClass(BaseModel):
+    name: Optional[str] = Field(None, min_length=1, max_length=150)
+    roll_number: Optional[str] = Field(None, min_length=1, max_length=50)
+
+
+class ClearRosterOut(BaseModel):
+    message: str
+    cleared_count: int
+

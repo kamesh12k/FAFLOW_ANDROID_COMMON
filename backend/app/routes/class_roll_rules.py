@@ -7,14 +7,16 @@ from app.core.dependencies import get_current_user, require_admin
 from app.models.user import User, Role
 from app.models.class_ import Class
 from app.models.student import Student
+from app.models.student_enrollment import StudentEnrollment
 from app.models.class_roll_rule import ClassRollRule, ClassRollException, RollExceptionType
 from app.models.audit_log import AuditLog
 from app.schemas.class_roll_rule import (
     ClassRollRuleCreate, ClassRollRuleUpdate, ClassRollRuleOut,
     ClassRollExceptionCreate, ClassRollExceptionOut,
-    EffectiveRosterOut, RollValidationPreviewOut,
+    EffectiveRosterOut, RollValidationPreviewOut, EffectiveStudentItem,
     BulkStudentImportPreviewOut, BulkStudentImportCommitRequest, BulkStudentImportResultOut,
-    AcademicYearRolloverPreviewOut, AcademicYearRolloverExecuteRequest, AcademicYearRolloverResultOut
+    AcademicYearRolloverPreviewOut, AcademicYearRolloverExecuteRequest, AcademicYearRolloverResultOut,
+    StudentUpdateInClass, ClearRosterOut
 )
 from app.services.effective_membership_service import EffectiveMembershipService
 from app.services.rollover_service import RolloverService
@@ -294,6 +296,246 @@ def get_effective_class_roster(
 ):
     """Returns authoritative resolved class students from primary range, includes, and excludes."""
     return EffectiveMembershipService.resolve_class_students(db, class_id, academic_year_id)
+
+
+@router.patch("/classes/{class_id}/students/{student_id}", response_model=EffectiveStudentItem)
+def update_student_in_class(
+    class_id: int,
+    student_id: int,
+    payload: StudentUpdateInClass,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    target_class = db.query(Class).filter(Class.id == class_id).first()
+    if not target_class:
+        raise HTTPException(status_code=404, detail="Class not found")
+    verify_class_access(current_user, target_class)
+
+    student = db.query(Student).filter(Student.id == student_id).first()
+    if not student:
+        raise HTTPException(status_code=404, detail="Student not found")
+
+    old_roll = student.roll_number
+
+    if payload.roll_number:
+        new_roll = payload.roll_number.strip().upper()
+        if new_roll != old_roll:
+            existing = db.query(Student).filter(Student.roll_number == new_roll, Student.id != student_id).first()
+            if existing:
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"Roll number '{new_roll}' is already in use by student '{existing.name}'."
+                )
+            student.roll_number = new_roll
+            # Update associated student enrollments
+            db.query(StudentEnrollment).filter(StudentEnrollment.student_id == student.id).update({"roll_number": new_roll})
+            # Update any exceptions referencing the old roll
+            db.query(ClassRollException).filter(ClassRollException.roll_number == old_roll).update({"roll_number": new_roll})
+
+    if payload.name:
+        student.name = payload.name.strip()
+
+    try:
+        audit = AuditLog(
+            user_id=current_user.id,
+            action="UPDATE_STUDENT_IN_CLASS",
+            details=f"Updated student {student_id} ({student.roll_number}, {student.name}) in Class '{target_class.name}'"
+        )
+        db.add(audit)
+    except Exception:
+        pass
+
+    db.commit()
+    db.refresh(student)
+
+    # Determine source tag
+    ay = EffectiveMembershipService.get_or_resolve_academic_year(db)
+    rule = (
+        db.query(ClassRollRule)
+        .filter(ClassRollRule.class_id == class_id, ClassRollRule.academic_year_id == ay.id, ClassRollRule.is_active == True)
+        .first()
+    )
+    src = "PRIMARY_RANGE"
+    if rule:
+        padding = rule.padding or 3
+        expected = {f"{rule.prefix.strip().upper()}{str(n).zfill(padding)}" for n in range(rule.start_number, rule.end_number + 1)}
+        if student.roll_number not in expected:
+            src = "ADDITIONAL"
+
+    return EffectiveStudentItem(
+        id=student.id,
+        roll_number=student.roll_number,
+        roll_suffix=student.roll_suffix,
+        name=student.name,
+        is_active=student.is_active,
+        source=src
+    )
+
+
+@router.delete("/classes/{class_id}/students/{student_id}", status_code=status.HTTP_200_OK)
+def delete_student_from_class(
+    class_id: int,
+    student_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    target_class = db.query(Class).filter(Class.id == class_id).first()
+    if not target_class:
+        raise HTTPException(status_code=404, detail="Class not found")
+    verify_class_access(current_user, target_class)
+
+    student = db.query(Student).filter(Student.id == student_id).first()
+    if not student:
+        raise HTTPException(status_code=404, detail="Student not found")
+
+    ay = EffectiveMembershipService.get_or_resolve_academic_year(db)
+    rule = (
+        db.query(ClassRollRule)
+        .filter(ClassRollRule.class_id == class_id, ClassRollRule.academic_year_id == ay.id, ClassRollRule.is_active == True)
+        .first()
+    )
+
+    roll = student.roll_number.strip().upper()
+
+    # If student is part of the primary roll range, add an EXCLUDE exception so the range generator ignores it
+    if rule:
+        padding = rule.padding or 3
+        expected = {f"{rule.prefix.strip().upper()}{str(n).zfill(padding)}" for n in range(rule.start_number, rule.end_number + 1)}
+        if roll in expected:
+            ex = (
+                db.query(ClassRollException)
+                .filter(ClassRollException.class_roll_rule_id == rule.id, ClassRollException.roll_number == roll)
+                .first()
+            )
+            if not ex:
+                ex = ClassRollException(
+                    class_roll_rule_id=rule.id,
+                    roll_number=roll,
+                    exception_type="EXCLUDE",
+                    reason="Removed from class roster",
+                    student_id=student.id,
+                    created_by_id=current_user.id
+                )
+                db.add(ex)
+            else:
+                ex.exception_type = "EXCLUDE"
+                ex.reason = "Removed from class roster"
+
+        # Also remove any INCLUDE exception for this roll
+        db.query(ClassRollException).filter(
+            ClassRollException.class_roll_rule_id == rule.id,
+            ClassRollException.roll_number == roll,
+            ClassRollException.exception_type == "INCLUDE"
+        ).delete()
+
+    # Deactivate or delete student record
+    has_attendance = False
+    try:
+        from app.models.student_attendance import StudentAttendance
+        att_count = db.query(StudentAttendance).filter(StudentAttendance.student_id == student.id).count()
+        has_attendance = att_count > 0
+    except Exception:
+        pass
+
+    if has_attendance:
+        student.is_active = False
+    else:
+        db.delete(student)
+
+    # Delete enrollments for this class
+    db.query(StudentEnrollment).filter(
+        StudentEnrollment.student_id == student_id,
+        StudentEnrollment.class_id == class_id
+    ).delete()
+
+    try:
+        audit = AuditLog(
+            user_id=current_user.id,
+            action="DELETE_STUDENT_FROM_CLASS",
+            details=f"Removed student '{roll}' ({student.name}) from Class '{target_class.name}'"
+        )
+        db.add(audit)
+    except Exception:
+        pass
+
+    db.commit()
+    return {"message": f"Student '{roll}' removed successfully from class."}
+
+
+@router.post("/classes/{class_id}/roster/clear-all", response_model=ClearRosterOut, status_code=status.HTTP_200_OK)
+def clear_all_class_students(
+    class_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    target_class = db.query(Class).filter(Class.id == class_id).first()
+    if not target_class:
+        raise HTTPException(status_code=404, detail="Class not found")
+    verify_class_access(current_user, target_class)
+
+    # 1. Clear all roll rules and exceptions for this class
+    rules = db.query(ClassRollRule).filter(ClassRollRule.class_id == class_id).all()
+    for rule in rules:
+        db.query(ClassRollException).filter(ClassRollException.class_roll_rule_id == rule.id).delete()
+        db.delete(rule)
+
+    # 2. Clear all students assigned to this class
+    class_students = db.query(Student).filter(Student.class_id == class_id).all()
+    cleared_count = len(class_students)
+
+    from app.models.student_attendance import StudentAttendance
+    for s in class_students:
+        att_count = db.query(StudentAttendance).filter(StudentAttendance.student_id == s.id).count()
+        if att_count > 0:
+            s.is_active = False
+        else:
+            db.delete(s)
+
+    # 3. Delete student enrollments for this class
+    db.query(StudentEnrollment).filter(StudentEnrollment.class_id == class_id).delete()
+
+    try:
+        audit = AuditLog(
+            user_id=current_user.id,
+            action="CLEAR_ALL_CLASS_STUDENTS",
+            details=f"Cleared roll rules, exceptions, and {cleared_count} students for Class '{target_class.name}'"
+        )
+        db.add(audit)
+    except Exception:
+        pass
+
+    db.commit()
+    return ClearRosterOut(
+        message=f"Successfully cleared all roll rules, exceptions, and {cleared_count} students from class.",
+        cleared_count=cleared_count
+    )
+
+
+@router.delete("/classes/{class_id}/roll-rule", status_code=status.HTTP_200_OK)
+def delete_class_roll_rule(
+    class_id: int,
+    academic_year_id: Optional[int] = Query(None),
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    target_class = db.query(Class).filter(Class.id == class_id).first()
+    if not target_class:
+        raise HTTPException(status_code=404, detail="Class not found")
+    verify_class_access(current_user, target_class)
+
+    ay = EffectiveMembershipService.get_or_resolve_academic_year(db, academic_year_id)
+    rule = (
+        db.query(ClassRollRule)
+        .filter(ClassRollRule.class_id == class_id, ClassRollRule.academic_year_id == ay.id)
+        .first()
+    )
+    if rule:
+        db.query(ClassRollException).filter(ClassRollException.class_roll_rule_id == rule.id).delete()
+        db.delete(rule)
+        db.commit()
+
+    return {"message": "Roll rule and exceptions deleted successfully."}
+
 
 
 # 4. Bulk Student Import Endpoints
