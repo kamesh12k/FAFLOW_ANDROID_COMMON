@@ -1,32 +1,61 @@
 import React from 'react'
 
+const CHUNK_ERROR_KEY = 'faflow_chunk_reload_attempted'
+
 /**
- * ErrorBoundary — catches unhandled React render errors and shows a recovery UI
- * instead of a blank white screen. Wraps the entire app to prevent full crashes.
+ * ErrorBoundary — catches unhandled React render errors and shows a recovery UI.
+ * Special case: "Failed to fetch dynamically imported module" (stale chunk hash
+ * after a deploy) triggers an automatic hard-reload ONCE, then shows the UI if
+ * it still fails.
  */
 class ErrorBoundary extends React.Component {
   constructor(props) {
     super(props)
-    this.state = { hasError: false, error: null, errorInfo: null }
+    this.state = { hasError: false, error: null, errorInfo: null, isChunkError: false }
   }
 
   static getDerivedStateFromError(error) {
-    return { hasError: true, error }
+    const isChunkError =
+      error?.message?.includes('Failed to fetch dynamically imported module') ||
+      error?.message?.includes('Importing a module script failed') ||
+      error?.message?.includes('Unable to preload CSS') ||
+      error?.name === 'ChunkLoadError'
+
+    return { hasError: true, error, isChunkError }
   }
 
   componentDidCatch(error, errorInfo) {
     this.setState({ errorInfo })
-    // In production, send to error tracking service (e.g., Sentry)
     console.error('[FAFLOW] Unhandled render error:', error, errorInfo)
+
+    // Auto-reload once for stale chunk errors (happens after deploys)
+    const isChunkError =
+      error?.message?.includes('Failed to fetch dynamically imported module') ||
+      error?.message?.includes('Importing a module script failed') ||
+      error?.message?.includes('Unable to preload CSS') ||
+      error?.name === 'ChunkLoadError'
+
+    if (isChunkError) {
+      const alreadyTried = sessionStorage.getItem(CHUNK_ERROR_KEY)
+      if (!alreadyTried) {
+        sessionStorage.setItem(CHUNK_ERROR_KEY, '1')
+        // Hard reload — bypass cache
+        window.location.href = window.location.href.split('?')[0] + '?v=' + Date.now()
+        return
+      }
+    }
   }
 
   handleReset = () => {
-    this.setState({ hasError: false, error: null, errorInfo: null })
+    sessionStorage.removeItem(CHUNK_ERROR_KEY)
+    this.setState({ hasError: false, error: null, errorInfo: null, isChunkError: false })
     window.location.href = '/'
   }
 
   render() {
     if (this.state.hasError) {
+      const { isChunkError } = this.state
+
       return (
         <div style={{
           minHeight: '100vh',
@@ -41,14 +70,16 @@ class ErrorBoundary extends React.Component {
           textAlign: 'center',
           gap: '1.5rem',
         }}>
-          <div style={{ fontSize: '3rem' }}>⚠️</div>
+          <div style={{ fontSize: '3rem' }}>{isChunkError ? '🔄' : '⚠️'}</div>
           <h1 style={{ fontSize: '1.5rem', fontWeight: 700, margin: 0 }}>
-            Something went wrong
+            {isChunkError ? 'New version available' : 'Something went wrong'}
           </h1>
           <p style={{ color: 'var(--text-secondary, #94a3b8)', maxWidth: '480px', margin: 0 }}>
-            An unexpected error occurred in the application. This has been logged for investigation.
+            {isChunkError
+              ? 'FAFLOW was updated while this tab was open. Please reload to get the latest version.'
+              : 'An unexpected error occurred in the application. This has been logged for investigation.'}
           </p>
-          {this.state.error && (
+          {!isChunkError && this.state.error && (
             <details style={{ maxWidth: '640px', width: '100%', textAlign: 'left' }}>
               <summary style={{ color: '#94a3b8', cursor: 'pointer', fontSize: '0.85rem', marginBottom: '0.5rem' }}>
                 Error Details
@@ -72,11 +103,14 @@ class ErrorBoundary extends React.Component {
           )}
           <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', justifyContent: 'center' }}>
             <button
-              onClick={() => window.location.reload()}
+              onClick={() => {
+                sessionStorage.removeItem(CHUNK_ERROR_KEY)
+                window.location.href = window.location.href.split('?')[0] + '?v=' + Date.now()
+              }}
               style={{
-                background: 'rgba(255,255,255,0.1)',
+                background: isChunkError ? 'var(--accent, #6366f1)' : 'rgba(255,255,255,0.1)',
                 color: '#fff',
-                border: '1px solid rgba(255,255,255,0.2)',
+                border: isChunkError ? 'none' : '1px solid rgba(255,255,255,0.2)',
                 borderRadius: '0.5rem',
                 padding: '0.75rem 1.5rem',
                 fontSize: '0.9rem',
@@ -84,23 +118,25 @@ class ErrorBoundary extends React.Component {
                 cursor: 'pointer',
               }}
             >
-              🔄 Reload Page
+              🔄 {isChunkError ? 'Reload Now' : 'Reload Page'}
             </button>
-            <button
-              onClick={this.handleReset}
-              style={{
-                background: 'var(--accent, #6366f1)',
-                color: '#fff',
-                border: 'none',
-                borderRadius: '0.5rem',
-                padding: '0.75rem 1.5rem',
-                fontSize: '0.9rem',
-                fontWeight: 600,
-                cursor: 'pointer',
-              }}
-            >
-              Return to Dashboard
-            </button>
+            {!isChunkError && (
+              <button
+                onClick={this.handleReset}
+                style={{
+                  background: 'var(--accent, #6366f1)',
+                  color: '#fff',
+                  border: 'none',
+                  borderRadius: '0.5rem',
+                  padding: '0.75rem 1.5rem',
+                  fontSize: '0.9rem',
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                }}
+              >
+                Return to Dashboard
+              </button>
+            )}
           </div>
         </div>
       )
@@ -109,5 +145,4 @@ class ErrorBoundary extends React.Component {
     return this.props.children
   }
 }
-
 export default ErrorBoundary
