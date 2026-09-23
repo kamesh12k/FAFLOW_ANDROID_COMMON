@@ -182,8 +182,9 @@ export default function App() {
                 <Route path="/principal/attendance" element={<AdminAttendance />} />
                 <Route path="/principal/student-attendance" element={<PrincipalStudentAttendance />} />
                 <Route path="/principal/class-timetable" element={<ClasswiseTimetable />} />
-                <Route path="/principal/duties" element={<DutyManagement readOnly={true} />} />
+                <Route path="/principal/duties" element={<DutyManagement />} />
                 <Route path="/principal/campus-structure" element={<CampusStructureBuilder readOnly={true} />} />
+                <Route path="/principal/settings" element={<Settings />} />
               </Route>
             </Route>
           </Route>

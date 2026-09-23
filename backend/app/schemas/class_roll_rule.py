@@ -120,6 +120,7 @@ class BulkStudentImportResultOut(BaseModel):
     created_students: int
     created_enrollments: int
     updated_enrollments: int
+    total_enrolled: int = 0
     skipped_count: int
     message: str
 

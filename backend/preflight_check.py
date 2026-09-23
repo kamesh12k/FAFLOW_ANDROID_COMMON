@@ -39,9 +39,13 @@ def main():
     # 2. Can every route module actually import without error?
     def check_imports():
         from app.routes import (
-            auth, teachers, timetable, leaves, credits, notifications,
-            departments, subjects, classes, rooms, day_order, admin,
-            academic_calendar,
+            academic_calendar, admin, announcements, attendance, auth, backup,
+            campus_duties, campus_operations, campus_structure, class_roll_rules,
+            classes, credits, data_retention, day_order, departments, geofences,
+            governance, governance_rules, intelligence, leaves, manager,
+            notifications, policy, principal, rooms, staff, student_attendance,
+            subjects, substitutions, system_control, teacher_substitution,
+            teachers, timetable
         )
     all_ok &= check("Importing all route modules", check_imports)
 

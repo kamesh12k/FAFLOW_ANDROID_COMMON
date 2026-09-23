@@ -153,13 +153,8 @@ function CampusOperationsModePanel({ isSuperAdmin, modeConfig, onModeChange, loa
     }
   }
 
-  const title = activeDepartmentId
-    ? `Campus Operations Mode (${activeDepartmentName})`
-    : "Default Campus Operations Mode"
-
-  const description = activeDepartmentId
-    ? `Controls how much the system does automatically for ${activeDepartmentName} leaves`
-    : "Controls the default fallback mode when a department has not set its own mode"
+  const title = "Campus Operations Mode"
+  const description = "Institution-wide leave and substitution execution mode (Manual, Assisted, Flexible, Autonomous). Managed centrally by the Principal and System Admin — applies uniformly to all departments."
 
   return (
     <SettingsSection
@@ -173,6 +168,15 @@ function CampusOperationsModePanel({ isSuperAdmin, modeConfig, onModeChange, loa
       ) : (
         <>
           {error && <div className="px-6 pb-3"><ErrorAlert message={error} /></div>}
+
+          {!isSuperAdmin && (
+            <div className="mx-6 mt-4 p-4 rounded-2xl bg-slate-50 border border-slate-200 text-slate-700 text-[13px] leading-snug flex items-start gap-2.5">
+              <span className="text-base">ℹ️</span>
+              <div>
+                <span className="font-semibold">Central Institutional Governance:</span> Only the <span className="font-bold text-slate-900">Principal</span> and <span className="font-bold text-slate-900">System Administrator</span> have rights to change the Campus Operations Mode. Any mode change is automatically applied institution-wide for all departments.
+              </div>
+            </div>
+          )}
           
           {modeConfig.is_overridden && (
             <div className="mx-6 mt-4 p-4 rounded-2xl bg-amber-50 border border-amber-100 text-amber-800 text-[13px] leading-snug flex items-start gap-2.5">
@@ -1894,7 +1898,9 @@ function ClearHistoryPanel() {
 
 export default function AdminSettings() {
   const navigate = useNavigate()
-  const { isSuperAdmin, isSystemAdmin } = useAuth()
+  const { isSuperAdmin, isSystemAdmin, user } = useAuth()
+  const isPrincipal = user?.role === 'principal'
+  const canChangeCampusMode = isSystemAdmin || isPrincipal
   const { activeDepartmentId } = useDepartment()
   
   const [loading, setLoading] = useState(true)
@@ -2003,7 +2009,7 @@ export default function AdminSettings() {
       </SettingsSection>
 
       <CampusOperationsModePanel 
-        isSuperAdmin={isSuperAdmin || isSystemAdmin} 
+        isSuperAdmin={canChangeCampusMode} 
         modeConfig={modeConfig} 
         onModeChange={handleModeChange} 
         loading={loading}

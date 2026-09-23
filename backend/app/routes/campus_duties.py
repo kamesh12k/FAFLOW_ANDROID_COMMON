@@ -19,8 +19,10 @@ from app.schemas.campus_duty import (
     DutyOverrideRequest, DutyLockRequest, DutyReplaceRequest,
     DutyCandidateOut, DutyCandidatesResponse, DutyDashboardMetricsOut,
     DutyRulesOut, DutyRulesUpdate, DutyRulesImpactPreview,
-    AutonomousDutyActivateRequest, AutonomousDutyActivateResponse
+    AutonomousDutyActivateRequest, AutonomousDutyActivateResponse,
+    Next6DayOrdersResponse, AutonomousDutyToggleRequest
 )
+from app.services.system_setting_service import get_setting, set_setting
 
 router = APIRouter(prefix="/campus-duties", tags=["Campus Duties"])
 
@@ -52,7 +54,7 @@ def list_areas(
 @router.post("/areas", response_model=CampusAreaOut, status_code=status.HTTP_201_CREATED)
 def create_area(
     data: CampusAreaCreate,
-    current_user: User = Depends(require_admin),
+    current_user: User = Depends(require_admin_or_principal),
     db: Session = Depends(get_db)
 ):
     return CampusDutyService.create_area(db, data, user_id=current_user.id)
@@ -70,7 +72,7 @@ def list_break_periods(
 @router.post("/break-periods", response_model=DutyBreakPeriodOut, status_code=status.HTTP_201_CREATED)
 def create_break_period(
     data: DutyBreakPeriodCreate,
-    current_user: User = Depends(require_admin),
+    current_user: User = Depends(require_admin_or_principal),
     db: Session = Depends(get_db)
 ):
     return CampusDutyService.create_break_period(db, data, user_id=current_user.id)
@@ -89,7 +91,7 @@ def get_duty_rules(
 @router.put("/rules")
 def update_duty_rules(
     data: DutyRulesUpdate,
-    current_user: User = Depends(require_admin),
+    current_user: User = Depends(require_admin_or_principal),
     db: Session = Depends(get_db),
     tenant_dept_id: Optional[int] = Depends(get_tenant_department_id)
 ):
@@ -122,6 +124,7 @@ def list_duties(
     target_date: Optional[date] = Query(None),
     date_from: Optional[date] = Query(None),
     date_to: Optional[date] = Query(None),
+    day_order: Optional[int] = Query(None),
     duty_type: Optional[str] = Query(None),
     limit: Optional[int] = Query(None),
     current_user: User = Depends(get_current_user),
@@ -136,6 +139,7 @@ def list_duties(
         target_date=target_date,
         date_from=date_from,
         date_to=date_to,
+        day_order=day_order,
         duty_type=duty_type,
         department_id=dept_id
     )
@@ -147,7 +151,7 @@ def list_duties(
 @router.post("", response_model=CampusDutyOut, status_code=status.HTTP_201_CREATED)
 def create_duty(
     data: CampusDutyCreate,
-    current_user: User = Depends(require_admin),
+    current_user: User = Depends(require_admin_or_principal),
     db: Session = Depends(get_db),
     tenant_dept_id: Optional[int] = Depends(get_tenant_department_id)
 ):
@@ -163,7 +167,7 @@ def create_duty(
 @router.post("/generate-discipline", response_model=List[CampusDutyOut])
 def generate_discipline_duties(
     data: DutyGenerateRequest,
-    current_user: User = Depends(require_admin),
+    current_user: User = Depends(require_admin_or_principal),
     db: Session = Depends(get_db),
     tenant_dept_id: Optional[int] = Depends(get_tenant_department_id)
 ):
@@ -175,7 +179,7 @@ def generate_discipline_duties(
 @router.post("/generate-wing-duties", response_model=List[CampusDutyOut])
 def generate_wing_duties(
     data: WingDutyGenerateRequest,
-    current_user: User = Depends(require_admin),
+    current_user: User = Depends(require_admin_or_principal),
     db: Session = Depends(get_db),
     tenant_dept_id: Optional[int] = Depends(get_tenant_department_id)
 ):
@@ -197,7 +201,7 @@ def generate_wing_duties(
 @router.post("/generate-exam-duties", response_model=List[CampusDutyOut])
 def generate_exam_duties(
     data: ExamDutyGenerateRequest,
-    current_user: User = Depends(require_admin),
+    current_user: User = Depends(require_admin_or_principal),
     db: Session = Depends(get_db),
     tenant_dept_id: Optional[int] = Depends(get_tenant_department_id)
 ):
@@ -232,7 +236,7 @@ def get_duty_detail(
 @router.get("/{duty_id}/candidates", response_model=DutyCandidatesResponse)
 def get_candidates(
     duty_id: int,
-    current_user: User = Depends(require_admin),
+    current_user: User = Depends(require_admin_or_principal),
     db: Session = Depends(get_db)
 ):
     """Returns ranked eligible faculty candidates with explainable score justifications."""
@@ -242,7 +246,7 @@ def get_candidates(
 @router.post("/{duty_id}/auto-assign", response_model=CampusDutyOut)
 def auto_assign_duty(
     duty_id: int,
-    current_user: User = Depends(require_admin),
+    current_user: User = Depends(require_admin_or_principal),
     db: Session = Depends(get_db)
 ):
     duty = CampusDutyService.auto_assign_duty(db, duty_id, user_id=current_user.id)
@@ -273,6 +277,66 @@ def autonomous_activate_duties(
     )
 
 
+@router.get("/next-6-day-orders", response_model=Next6DayOrdersResponse)
+def get_next_6_day_orders(
+    start_date: Optional[date] = Query(None),
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """
+    Returns the next 6 working day orders with coverage stats and current autonomous toggle status.
+    """
+    enabled_val = get_setting(db, "autonomous_duty_schedule_enabled", default="false")
+    is_enabled = (enabled_val or "").strip().lower() in ("true", "1", "yes")
+    base_date = start_date or date.today()
+    day_orders = CampusDutyService.get_next_6_day_orders(db, start_date=base_date, num_day_orders=6)
+    return {
+        "autonomous_enabled": is_enabled,
+        "start_date": str(base_date),
+        "day_orders": day_orders
+    }
+
+
+@router.post("/autonomous-toggle")
+def toggle_autonomous_duty_schedule(
+    data: AutonomousDutyToggleRequest,
+    current_user: User = Depends(require_admin_or_principal),
+    db: Session = Depends(get_db)
+):
+    """
+    Toggles the autonomous 6-day duty schedule mode for the institution.
+    When enabled, automatically generates duties and assigns staff for the next 6 day orders.
+    """
+    if data.enabled:
+        set_setting(db, "autonomous_duty_schedule_enabled", "true")
+        start = data.start_date or date.today()
+        activation_result = CampusDutyService.autonomous_activate_duties(
+            db,
+            target_date=start,
+            activate_discipline=data.activate_discipline,
+            activate_wing=data.activate_wing,
+            num_day_orders=data.num_day_orders,
+            user_id=current_user.id
+        )
+        day_orders = CampusDutyService.get_next_6_day_orders(db, start_date=start, num_day_orders=data.num_day_orders)
+        db.commit()
+        return {
+            "success": True,
+            "enabled": True,
+            "message": activation_result.get("message", "Autonomous 6-day duty schedule generated and activated successfully."),
+            "activation": activation_result,
+            "day_orders": day_orders
+        }
+    else:
+        set_setting(db, "autonomous_duty_schedule_enabled", "false")
+        db.commit()
+        return {
+            "success": True,
+            "enabled": False,
+            "message": "Autonomous 6-day duty schedule has been turned off."
+        }
+
+
 @router.post("/auto-assign-all")
 def auto_assign_all_for_date(
     data: DutyAutoAssignRequest,
@@ -289,7 +353,7 @@ def auto_assign_all_for_date(
 def manual_assign_teacher(
     duty_id: int,
     data: DutyManualAssignRequest,
-    current_user: User = Depends(require_admin),
+    current_user: User = Depends(require_admin_or_principal),
     db: Session = Depends(get_db)
 ):
     assignment = CampusDutyService.manual_assign(db, duty_id, teacher_id=data.teacher_id, user_id=current_user.id, role=data.role)
@@ -301,7 +365,7 @@ def manual_assign_teacher(
 def override_duty_assignment(
     assignment_id: int,
     data: DutyOverrideRequest,
-    current_user: User = Depends(require_admin),
+    current_user: User = Depends(require_admin_or_principal),
     db: Session = Depends(get_db)
 ):
     assignment = CampusDutyService.override_assignment(db, assignment_id, new_teacher_id=data.new_teacher_id, user_id=current_user.id, reason=data.reason)
@@ -313,7 +377,7 @@ def override_duty_assignment(
 def set_duty_lock(
     duty_id: int,
     data: DutyLockRequest,
-    current_user: User = Depends(require_admin),
+    current_user: User = Depends(require_admin_or_principal),
     db: Session = Depends(get_db)
 ):
     duty = CampusDutyService.set_lock_duty(db, duty_id, lock=data.lock, user_id=current_user.id, reason=data.reason)
@@ -324,7 +388,7 @@ def set_duty_lock(
 def replace_duty_teacher(
     assignment_id: int,
     data: DutyReplaceRequest,
-    current_user: User = Depends(require_admin),
+    current_user: User = Depends(require_admin_or_principal),
     db: Session = Depends(get_db)
 ):
     replacement = CampusDutyService.replace_unavailable_teacher(db, assignment_id, user_id=current_user.id, reason=data.reason)

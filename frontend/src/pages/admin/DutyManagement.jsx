@@ -1,11 +1,13 @@
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useCallback } from 'react'
 import { campusDutiesApi, departmentsApi } from '../../api/services'
 import { Card, Spinner, ErrorAlert, Modal, Badge } from '../../components/ui'
 import { useAuth } from '../../context/AuthContext'
 
 export default function DutyManagement({ readOnly = false }) {
   const { user } = useAuth()
-  const [activeTab, setActiveTab] = useState('today') // today, upcoming, discipline, wing, exam, history
+  const isPrincipalOrAdmin = user?.role === 'system_admin' || user?.is_system_admin || user?.role === 'principal'
+
+  const [activeTab, setActiveTab] = useState('today') // today, upcoming, discipline, wing, exam, all
   const [selectedDate, setSelectedDate] = useState(() => new Date().toISOString().split('T')[0])
   const [duties, setDuties] = useState([])
   const [metrics, setMetrics] = useState(null)
@@ -14,6 +16,13 @@ export default function DutyManagement({ readOnly = false }) {
   const [loading, setLoading] = useState(true)
   const [actionLoading, setActionLoading] = useState(false)
   const [error, setError] = useState(null)
+
+  // 6 Day Orders Autonomous Schedule State
+  const [autonomousEnabled, setAutonomousEnabled] = useState(false)
+  const [dayOrders, setDayOrders] = useState([])
+  const [selectedDayOrderIndex, setSelectedDayOrderIndex] = useState(0) // 0..5 or -1 for all
+  const [togglingAutonomous, setTogglingAutonomous] = useState(false)
+  const [autonomousResult, setAutonomousResult] = useState(null)
 
   // Candidate Picker Modal
   const [candidateModalDuty, setCandidateModalDuty] = useState(null)
@@ -36,13 +45,38 @@ export default function DutyManagement({ readOnly = false }) {
     required_teachers: 1
   })
 
-  // Load initial data
+  // Load next 6 day orders & autonomous setting status
+  const fetchDayOrders = useCallback(async () => {
+    try {
+      const res = await campusDutiesApi.getNext6DayOrders()
+      const data = res?.data
+      if (data) {
+        setAutonomousEnabled(Boolean(data.autonomous_enabled))
+        setDayOrders(data.day_orders || [])
+      }
+    } catch (err) {
+      console.error('Failed to load next 6 day orders:', err)
+    }
+  }, [])
+
+  useEffect(() => {
+    fetchDayOrders()
+  }, [fetchDayOrders])
+
+  // Load duties & metrics
   const fetchData = async () => {
     setLoading(true)
     setError(null)
     try {
+      const params = {}
+      if (selectedDayOrderIndex === -1 && dayOrders.length > 0) {
+        params.date_from = dayOrders[0].date
+        params.date_to = dayOrders[dayOrders.length - 1].date
+      } else if (activeTab === 'today') {
+        params.target_date = selectedDate
+      }
       const [dutiesRes, metricsRes, areasRes, bpRes] = await Promise.all([
-        campusDutiesApi.listDuties({ target_date: activeTab === 'today' ? selectedDate : undefined }),
+        campusDutiesApi.listDuties(params),
         campusDutiesApi.getMetrics({ target_date: selectedDate }),
         campusDutiesApi.getAreas(),
         campusDutiesApi.getBreakPeriods()
@@ -60,24 +94,79 @@ export default function DutyManagement({ readOnly = false }) {
 
   useEffect(() => {
     fetchData()
-  }, [activeTab, selectedDate])
+  }, [activeTab, selectedDate, selectedDayOrderIndex])
 
   // Filtered duties
   const filteredDuties = useMemo(() => {
+    if (selectedDayOrderIndex === -1) {
+      if (activeTab === 'discipline') return duties.filter(d => d.duty_type === 'DISCIPLINE_DUTY')
+      if (activeTab === 'wing') return duties.filter(d => d.duty_type === 'WING_DUTY')
+      if (activeTab === 'exam') return duties.filter(d => d.duty_type === 'EXAM_DUTY')
+      return duties
+    }
     if (activeTab === 'today') {
       return duties.filter(d => d.duty_date === selectedDate)
     } else if (activeTab === 'upcoming') {
       const todayStr = new Date().toISOString().split('T')[0]
       return duties.filter(d => d.duty_date > todayStr)
     } else if (activeTab === 'discipline') {
-      return duties.filter(d => d.duty_type === 'DISCIPLINE_DUTY')
+      return duties.filter(d => d.duty_type === 'DISCIPLINE_DUTY' && (selectedDate ? d.duty_date === selectedDate : true))
     } else if (activeTab === 'wing') {
-      return duties.filter(d => d.duty_type === 'WING_DUTY')
+      return duties.filter(d => d.duty_type === 'WING_DUTY' && (selectedDate ? d.duty_date === selectedDate : true))
     } else if (activeTab === 'exam') {
-      return duties.filter(d => d.duty_type === 'EXAM_DUTY')
+      return duties.filter(d => d.duty_type === 'EXAM_DUTY' && (selectedDate ? d.duty_date === selectedDate : true))
     }
     return duties
-  }, [duties, activeTab, selectedDate])
+  }, [duties, activeTab, selectedDate, selectedDayOrderIndex])
+
+  // Autonomous 6-Day Order Toggle Handler
+  const handleToggleAutonomous = async () => {
+    if (!isPrincipalOrAdmin) {
+      alert('Only the Principal and System Administrator have the authority to toggle the Autonomous Duty Schedule.')
+      return
+    }
+    const targetState = !autonomousEnabled
+    if (targetState) {
+      const proceed = window.confirm(
+        'Turn ON Autonomous 6-Day Order Duty Scheduling?\n\n' +
+        'FAFLOW will automatically generate discipline and wing duties for the next 6 Day Orders and auto-assign staff without timetable conflicts.'
+      )
+      if (!proceed) return
+    }
+    setTogglingAutonomous(true)
+    setError(null)
+    try {
+      const res = await campusDutiesApi.toggleAutonomousSchedule({
+        enabled: targetState,
+        start_date: selectedDate,
+        num_day_orders: 6,
+        activate_discipline: true,
+        activate_wing: true,
+      })
+      setAutonomousEnabled(targetState)
+      if (res?.data?.activation) {
+        setAutonomousResult(res.data.activation)
+      } else {
+        setAutonomousResult(null)
+      }
+      await Promise.all([fetchData(), fetchDayOrders()])
+    } catch (err) {
+      setError(err?.response?.data?.detail || 'Failed to toggle autonomous duty schedule.')
+    } finally {
+      setTogglingAutonomous(false)
+    }
+  }
+
+  // Day Order Selection Handler
+  const handleSelectDayOrder = (index) => {
+    setSelectedDayOrderIndex(index)
+    if (index >= 0 && dayOrders[index]) {
+      setSelectedDate(dayOrders[index].date)
+      if (activeTab !== 'today') {
+        setActiveTab('today')
+      }
+    }
+  }
 
   // Handlers
   const handleGenerateDiscipline = async () => {
@@ -305,6 +394,146 @@ export default function DutyManagement({ readOnly = false }) {
         )}
       </div>
 
+      {/* Autonomous 6-Day Order Duty Schedule Governance Banner & Toggle */}
+      <div className="bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 border border-slate-800 rounded-3xl p-5 text-white shadow-xl flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div className="space-y-1">
+          <div className="flex items-center gap-2">
+            <span className="text-xl">⚡</span>
+            <h2 className="text-base font-black tracking-tight text-white">Autonomous 6-Day Order Duty Schedule</h2>
+            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-indigo-500/20 text-indigo-300 border border-indigo-400/30 uppercase tracking-wider">
+              {isPrincipalOrAdmin ? 'Principal & Admin Governance' : 'Institutional Automation'}
+            </span>
+          </div>
+          <p className="text-xs text-slate-300 max-w-2xl leading-relaxed">
+            When enabled, FAFLOW automatically generates complete discipline and wing supervision duties across the next 6 Day Orders and auto-assigns available faculty without timetable conflicts.
+          </p>
+        </div>
+
+        <div className="flex items-center gap-3 shrink-0">
+          <span className="text-xs font-bold text-slate-300">
+            Status: {autonomousEnabled ? <span className="text-emerald-400">ACTIVE · ON</span> : <span className="text-slate-400">OFF</span>}
+          </span>
+          <button
+            onClick={handleToggleAutonomous}
+            disabled={togglingAutonomous || !isPrincipalOrAdmin || readOnly}
+            title={!isPrincipalOrAdmin ? 'Only Principal or System Admin can toggle this setting' : 'Toggle 6-Day Order Autonomous Scheduling'}
+            className={`relative inline-flex h-7 w-14 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 ${
+              autonomousEnabled ? 'bg-indigo-600' : 'bg-slate-700'
+            } ${(!isPrincipalOrAdmin || readOnly) ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
+          >
+            <span
+              className={`inline-block h-5 w-5 transform rounded-full bg-white transition-transform ${
+                autonomousEnabled ? 'translate-x-8' : 'translate-x-1'
+              } flex items-center justify-center text-[10px]`}
+            >
+              {togglingAutonomous ? '⌛' : (autonomousEnabled ? '✓' : '✕')}
+            </span>
+          </button>
+        </div>
+      </div>
+
+      {/* Autonomous Activation Result Notification */}
+      {autonomousResult && (
+        <div className="p-4 bg-emerald-50 border border-emerald-200 rounded-2xl flex items-center justify-between gap-4 text-emerald-900 shadow-sm">
+          <div className="flex items-center gap-3">
+            <span className="text-2xl">🎉</span>
+            <div>
+              <p className="font-extrabold text-sm text-emerald-950">
+                6-Day Duty Schedule Generated ({autonomousResult.schedule_from} → {autonomousResult.schedule_to})
+              </p>
+              <p className="text-xs text-emerald-700 mt-0.5">
+                {autonomousResult.discipline_duties_count} discipline duties + {autonomousResult.wing_duties_count} wing duties created across {autonomousResult.num_day_orders} Day Orders. {autonomousResult.total_assigned} faculty auto-assigned ({autonomousResult.total_unfilled} unfilled).
+              </p>
+            </div>
+          </div>
+          <button
+            onClick={() => setAutonomousResult(null)}
+            className="text-xs font-bold text-emerald-700 hover:text-emerald-900 px-2 py-1 rounded-lg hover:bg-emerald-100"
+          >
+            ✕ Dismiss
+          </button>
+        </div>
+      )}
+
+      {/* 6 Day Orders Navigation Bar */}
+      {dayOrders.length > 0 && (
+        <div className="space-y-2">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-black text-slate-700 uppercase tracking-wider flex items-center gap-1.5">
+              <span>📅</span> Next 6 Working Day Orders
+            </span>
+            <span className="text-[11px] font-semibold text-slate-400">
+              Select any Day Order to inspect and customize duties
+            </span>
+          </div>
+
+          <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-2">
+            {dayOrders.map((doItem, idx) => {
+              const isSelected = selectedDayOrderIndex === idx
+              const hasUnfilled = doItem.unfilled_duties > 0
+              const isFilled = doItem.total_duties > 0 && doItem.unfilled_duties === 0
+              return (
+                <button
+                  key={doItem.date}
+                  onClick={() => handleSelectDayOrder(idx)}
+                  className={`p-3 rounded-2xl border text-left transition-all relative ${
+                    isSelected
+                      ? 'border-indigo-600 bg-indigo-50/80 shadow-md ring-2 ring-indigo-500/20'
+                      : 'border-slate-200/80 bg-white hover:border-slate-300 hover:bg-slate-50 shadow-sm'
+                  }`}
+                >
+                  <div className="flex items-center justify-between">
+                    <span className={`text-xs font-black uppercase ${isSelected ? 'text-indigo-900' : 'text-slate-800'}`}>
+                      DO {doItem.day_order ?? (idx + 1)}
+                    </span>
+                    {doItem.is_today && (
+                      <span className="text-[9px] font-extrabold px-1.5 py-0.5 rounded bg-primary-100 text-primary-700">
+                        Today
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-[11px] font-semibold text-slate-500 mt-0.5">
+                    {doItem.formatted_date} · {doItem.day_name.slice(0, 3)}
+                  </p>
+                  <div className="mt-2 flex items-center justify-between text-[10px] font-bold">
+                    <span className="text-slate-500">{doItem.total_duties} duties</span>
+                    {isFilled ? (
+                      <span className="text-emerald-700 bg-emerald-100 px-1.5 py-0.5 rounded font-extrabold">✓ Full</span>
+                    ) : hasUnfilled ? (
+                      <span className="text-amber-700 bg-amber-100 px-1.5 py-0.5 rounded font-extrabold">⚠️ {doItem.unfilled_duties} open</span>
+                    ) : (
+                      <span className="text-slate-400">Empty</span>
+                    )}
+                  </div>
+                </button>
+              )
+            })}
+
+            {/* All 6 Days Option */}
+            <button
+              onClick={() => handleSelectDayOrder(-1)}
+              className={`p-3 rounded-2xl border text-left transition-all flex flex-col justify-between ${
+                selectedDayOrderIndex === -1
+                  ? 'border-indigo-600 bg-indigo-50/80 shadow-md ring-2 ring-indigo-500/20'
+                  : 'border-slate-200/80 bg-white hover:border-slate-300 hover:bg-slate-50 shadow-sm'
+              }`}
+            >
+              <div>
+                <span className={`text-xs font-black uppercase ${selectedDayOrderIndex === -1 ? 'text-indigo-900' : 'text-slate-800'}`}>
+                  All 6 Day Orders
+                </span>
+                <p className="text-[11px] font-semibold text-slate-500 mt-0.5">
+                  Full 6-day window
+                </p>
+              </div>
+              <span className="text-[10px] font-bold text-indigo-600 mt-2">
+                Unified Overview →
+              </span>
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Top Metrics Cards */}
       {metrics && (
         <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-3">
@@ -400,9 +629,16 @@ export default function DutyManagement({ readOnly = false }) {
                 {/* Card Header */}
                 <div className="flex items-start justify-between gap-2">
                   <div>
-                    <span className="inline-block px-2 py-0.5 rounded-md text-[10px] font-black uppercase tracking-wider bg-indigo-50 text-indigo-700 border border-indigo-100">
-                      {d.duty_type.replace('_', ' ')}
-                    </span>
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                      <span className="inline-block px-2 py-0.5 rounded-md text-[10px] font-black uppercase tracking-wider bg-indigo-50 text-indigo-700 border border-indigo-100">
+                        {d.duty_type.replace('_', ' ')}
+                      </span>
+                      {d.day_order && (
+                        <span className="inline-block px-2 py-0.5 rounded-md text-[10px] font-black uppercase tracking-wider bg-slate-100 text-slate-700 border border-slate-200">
+                          DO {d.day_order}
+                        </span>
+                      )}
+                    </div>
                     <h3 className="font-extrabold text-sm text-slate-900 mt-1.5 leading-snug">{d.title}</h3>
                     <p className="text-[11px] font-semibold text-slate-500 mt-0.5">
                       {d.start_time.substring(0, 5)} – {d.end_time.substring(0, 5)} · {d.duty_date}

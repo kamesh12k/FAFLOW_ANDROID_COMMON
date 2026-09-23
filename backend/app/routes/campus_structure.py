@@ -3,9 +3,10 @@ from sqlalchemy.orm import Session
 from typing import List, Optional
 
 from app.database import get_db
-from app.core.dependencies import get_current_user, require_admin
+from app.core.dependencies import get_current_user, require_admin, require_principal_or_system_admin
 from app.models.user import User
 from app.services.campus_structure_service import CampusStructureService
+from app.services.campus_duty_service import CampusDutyService
 from app.schemas.campus_structure import (
     CampusBlockCreate, CampusBlockUpdate, CampusBlockOut,
     CampusFloorCreate, CampusFloorUpdate, CampusFloorOut,
@@ -18,7 +19,8 @@ from app.schemas.campus_structure import (
     DuplicateBlockRequest, DuplicateBlockResponse,
     CampusStructureTreeOut, CampusStructureMetricsOut,
     CampusSearchResponse,
-    CampusStructureImportValidationOut, CampusStructureImportCommitOut
+    CampusStructureImportValidationOut, CampusStructureImportCommitOut,
+    BlockDutyConfigIn, BlockDutyConfigResultOut
 )
 
 router = APIRouter(prefix="/campus-structure", tags=["Campus Structure Builder"])
@@ -194,6 +196,27 @@ def bulk_assign_block_department(
         db, block_id=block_id, department_id=data.department_id, clear_department=data.clear_department, user_id=current_user.id
     )
     return {"updated_count": count, "message": f"Successfully updated {count} room(s) in block."}
+
+
+# ── Block Duties: Configure & Auto-Assign ─────────────────────────────────────
+
+@router.post("/blocks/{block_id}/duties/configure-and-assign", response_model=BlockDutyConfigResultOut)
+def configure_and_assign_block_duties(
+    block_id: int,
+    data: BlockDutyConfigIn,
+    current_user: User = Depends(require_principal_or_system_admin),
+    db: Session = Depends(get_db)
+):
+    """Configures discipline and wing duties for a campus block with specified teacher count,
+    and automatically assigns teachers belonging to that block's respected department(s)
+    using preset rules (attendance, preceding free periods, conflict-free timetable, load fairness).
+    Strictly restricted to Principal and System Admin only."""
+    return CampusDutyService.configure_and_assign_block_duties(
+        db=db,
+        block_id=block_id,
+        data=data,
+        current_user=current_user
+    )
 
 
 # ── Import & Export ───────────────────────────────────────────────────────────

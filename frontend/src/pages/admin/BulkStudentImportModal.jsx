@@ -10,6 +10,20 @@ export default function BulkStudentImportModal({ isOpen, onClose, selectedClass,
   const [error, setError] = useState('')
   const [preview, setPreview] = useState(null)
   const [success, setSuccess] = useState('')
+  const [importedResult, setImportedResult] = useState(null)
+
+  const handleReset = () => {
+    setContent('')
+    setPreview(null)
+    setImportedResult(null)
+    setError('')
+    setSuccess('')
+  }
+
+  const handleModalClose = () => {
+    handleReset()
+    onClose()
+  }
 
   const handlePreview = async () => {
     if (!content.trim()) {
@@ -19,6 +33,7 @@ export default function BulkStudentImportModal({ isOpen, onClose, selectedClass,
     setLoading(true)
     setError('')
     setSuccess('')
+    setImportedResult(null)
     try {
       const res = await classRollRulesApi.previewImport(selectedClass.id, content)
       setPreview(res.data)
@@ -35,6 +50,7 @@ export default function BulkStudentImportModal({ isOpen, onClose, selectedClass,
     setError('')
     try {
       const res = await classRollRulesApi.commitImport(selectedClass.id, { rows: preview.rows })
+      setImportedResult(res.data)
       setSuccess(res.data.message)
       setPreview(null)
       setContent('')
@@ -57,17 +73,63 @@ export default function BulkStudentImportModal({ isOpen, onClose, selectedClass,
   }
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title={`Bulk Student Import: ${selectedClass?.name || ''} - ${selectedClass?.section || ''}`} maxWidth="max-w-3xl">
+    <Modal isOpen={isOpen} onClose={handleModalClose} title={`Bulk Student Import: ${selectedClass?.name || ''} - ${selectedClass?.section || ''}`} maxWidth="max-w-3xl">
       <div className="space-y-4">
         {error && <ErrorAlert message={error} onClose={() => setError('')} />}
-        {success && (
-          <div className="p-3 bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-xl text-xs font-bold flex items-center gap-2">
-            <CheckCircleIcon className="w-4 h-4 text-emerald-600" />
-            {success}
-          </div>
-        )}
 
-        {!preview ? (
+        {/* 1. Success Completion Screen */}
+        {importedResult ? (
+          <div className="space-y-5 py-2">
+            <div className="p-4 bg-emerald-50 border border-emerald-200 rounded-2xl flex items-start gap-3">
+              <div className="w-9 h-9 rounded-xl bg-emerald-600 text-white flex items-center justify-center font-bold text-lg shrink-0 shadow-sm">
+                ✓
+              </div>
+              <div>
+                <h4 className="text-sm font-black text-emerald-900">Import & Enrollment Completed</h4>
+                <p className="text-xs text-emerald-800 mt-0.5 font-medium leading-relaxed">
+                  {importedResult.message}
+                </p>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-3 gap-3">
+              <div className="p-4 bg-slate-50 border border-slate-200 rounded-2xl text-center">
+                <div className="text-[10px] uppercase font-bold text-slate-500 tracking-wider">Total Enrolled</div>
+                <div className="text-2xl font-black text-slate-900 mt-1">
+                  {importedResult.total_enrolled || (importedResult.created_enrollments + importedResult.updated_enrollments)}
+                </div>
+                <div className="text-[10px] text-slate-500 mt-0.5 font-medium">In {selectedClass?.name} - {selectedClass?.section}</div>
+              </div>
+              <div className="p-4 bg-indigo-50 border border-indigo-200 rounded-2xl text-center">
+                <div className="text-[10px] uppercase font-bold text-indigo-700 tracking-wider">New Profiles</div>
+                <div className="text-2xl font-black text-indigo-800 mt-1">{importedResult.created_students}</div>
+                <div className="text-[10px] text-indigo-600 mt-0.5 font-medium">Created in database</div>
+              </div>
+              <div className="p-4 bg-blue-50 border border-blue-200 rounded-2xl text-center">
+                <div className="text-[10px] uppercase font-bold text-blue-700 tracking-wider">Existing Linked</div>
+                <div className="text-2xl font-black text-blue-800 mt-1">{importedResult.updated_enrollments}</div>
+                <div className="text-[10px] text-blue-600 mt-0.5 font-medium">Assigned to this class</div>
+              </div>
+            </div>
+
+            <div className="flex justify-end gap-3 pt-3 border-t border-slate-100">
+              <button
+                type="button"
+                onClick={handleReset}
+                className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold transition-all"
+              >
+                Import More Students
+              </button>
+              <button
+                type="button"
+                onClick={handleModalClose}
+                className="px-5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition-all shadow-md shadow-emerald-200"
+              >
+                Done (View Class Roster)
+              </button>
+            </div>
+          </div>
+        ) : !preview ? (
           <div className="space-y-4">
             <div className="text-xs text-slate-500 font-medium">
               Paste or upload a CSV / list of students with <span className="font-bold text-slate-700">Roll Number</span> and <span className="font-bold text-slate-700">Student Name</span>.

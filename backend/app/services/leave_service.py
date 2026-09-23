@@ -30,6 +30,43 @@ def _get_same_day_cancel_cutoff_hour(db: Session) -> int:
         return SAME_DAY_CANCEL_CUTOFF_HOUR
 
 
+SAME_DAY_APPLY_CUTOFF_TIME = "09:00"  # default 09:00 AM
+
+
+def _get_same_day_apply_cutoff_time(db: Session) -> str:
+    """Returns the configured same-day leave application cutoff time (default: '09:00')."""
+    try:
+        from app.services import governance_rule_service
+        return governance_rule_service.get_rule_str(db, "leave_same_day_apply_cutoff_time")
+    except Exception:
+        return SAME_DAY_APPLY_CUTOFF_TIME
+
+
+def assert_not_past_same_day_cutoff_or_400(db: Session, target_date_val: date | str) -> None:
+    """Blocks teachers from applying for leave on the current day after the configured cutoff time."""
+    from app.core.timezone import get_ist_now
+    now = get_ist_now()
+    today_str = now.strftime("%Y-%m-%d")
+    date_str = target_date_val.strftime("%Y-%m-%d") if isinstance(target_date_val, date) else str(target_date_val)
+    if date_str == today_str:
+        cutoff_str = _get_same_day_apply_cutoff_time(db)
+        try:
+            parts = cutoff_str.split(":")
+            cutoff_hour = int(parts[0])
+            cutoff_minute = int(parts[1]) if len(parts) > 1 else 0
+        except Exception:
+            cutoff_hour, cutoff_minute = 9, 0
+
+        current_minute_of_day = now.hour * 60 + now.minute
+        cutoff_minute_of_day = cutoff_hour * 60 + cutoff_minute
+        if current_minute_of_day >= cutoff_minute_of_day:
+            formatted_time = f"{cutoff_hour:02d}:{cutoff_minute:02d}"
+            raise HTTPException(
+                status_code=400,
+                detail=f"Same-day leave application is not permitted after {formatted_time} as per institutional policy. Please select tomorrow or a later date."
+            )
+
+
 def should_auto_approve_leave(db: Session, department_id: int | None = None) -> bool:
     from app.services.substitution_service import get_mode
     return get_mode(db, department_id) == "autonomous"
@@ -41,6 +78,7 @@ def submit_leave(teacher_id: int, data: LeaveCreate, db: Session) -> LeaveReques
     day — per spec, holidays must never generate leave requests, substitute
     assignments, or credit transactions."""
     calendar_day = day_order_service.assert_working_day_or_400(db, data.date)
+    assert_not_past_same_day_cutoff_or_400(db, data.date)
 
     # Idempotency / duplicate protection: prevent duplicate submissions for the same period
     existing_leave = (
@@ -143,6 +181,7 @@ def submit_leave_batch(teacher_id: int, data: LeaveBatchCreate, db: Session) -> 
     )
     try:
         calendar_day = day_order_service.assert_working_day_or_400(db, data.date)
+        assert_not_past_same_day_cutoff_or_400(db, data.date)
         logger.debug("submit_leave_batch: resolved day_order=%s for date=%s", calendar_day.day_order, data.date)
     except HTTPException:
         raise

@@ -1,7 +1,7 @@
 import json
 import logging
 from datetime import date, time, datetime, timedelta, timezone
-from typing import List, Optional, Dict, Any, Tuple
+from typing import List, Optional, Dict, Any, Tuple, Set
 from sqlalchemy.orm import Session, joinedload
 from sqlalchemy import func, desc, or_, and_
 
@@ -495,6 +495,7 @@ class CampusDutyService:
         target_date: Optional[date] = None,
         date_from: Optional[date] = None,
         date_to: Optional[date] = None,
+        day_order: Optional[int] = None,
         duty_type: Optional[str] = None,
         department_id: Optional[int] = None,
         teacher_id: Optional[int] = None
@@ -518,6 +519,8 @@ class CampusDutyService:
         elif date_to:
             q = q.filter(CampusDuty.duty_date <= date_to)
 
+        if day_order is not None:
+            q = q.filter(CampusDuty.day_order == day_order)
         if duty_type:
             q = q.filter(CampusDuty.duty_type == duty_type)
         if department_id is not None:
@@ -548,13 +551,19 @@ class CampusDutyService:
     # ── Candidate Scoring & Explainable Engine ────────────────────────────────
 
     @staticmethod
-    def evaluate_candidates(db: Session, duty_id: int) -> DutyCandidatesResponse:
+    def evaluate_candidates(
+        db: Session,
+        duty_id: int,
+        allowed_department_ids: Optional[Set[int]] = None
+    ) -> DutyCandidatesResponse:
         duty = CampusDutyService.get_duty(db, duty_id)
         rules = CampusDutyService.get_rules(db, duty.department_id)
 
         # Base teacher query
         teacher_q = db.query(User).filter(User.role == Role.teacher, User.is_active == True)
-        if not rules.cross_department_assignment and duty.department_id:
+        if allowed_department_ids:
+            teacher_q = teacher_q.filter(User.department_id.in_(list(allowed_department_ids)))
+        elif not rules.cross_department_assignment and duty.department_id:
             teacher_q = teacher_q.filter(User.department_id == duty.department_id)
         teachers = teacher_q.all()
 
@@ -729,6 +738,23 @@ class CampusDutyService:
                     block_name = duty.room.block.name if duty.room.block else "Block"
                     reasons.append(f"Structural proximity: Faculty department is in same block ({block_name}) (+20 pts)")
 
+            # Respected Block Department preference for Wing & Discipline Duties
+            if is_eligible and (duty.area and duty.area.block_id):
+                duty_block_id = duty.area.block_id
+                is_block_department = False
+                if t.department_id:
+                    from app.models.campus_structure import CampusBlock
+                    blk = db.query(CampusBlock).filter(CampusBlock.id == duty_block_id).first()
+                    if blk and blk.department_id == t.department_id:
+                        is_block_department = True
+                    elif db.query(Room).filter(Room.block_id == duty_block_id, Room.department_id == t.department_id).first():
+                        is_block_department = True
+
+                if is_block_department:
+                    score += 25.0
+                    b_name = duty.area.building_or_block or "Block"
+                    reasons.append(f"Respected block department faculty ({b_name}) (+25 pts)")
+
             final_score = max(0.0, min(100.0, round(score, 1)))
 
             dept_name = t.department if isinstance(t.department, str) else (t.department.name if t.department else None)
@@ -762,7 +788,12 @@ class CampusDutyService:
     # ── Assignment Actions ───────────────────────────────────────────────────
 
     @staticmethod
-    def auto_assign_duty(db: Session, duty_id: int, user_id: Optional[int] = None) -> CampusDuty:
+    def auto_assign_duty(
+        db: Session,
+        duty_id: int,
+        user_id: Optional[int] = None,
+        allowed_department_ids: Optional[Set[int]] = None
+    ) -> CampusDuty:
         duty = db.query(CampusDuty).with_for_update().filter(CampusDuty.id == duty_id).first()
         if not duty:
             raise DomainException("Duty not found", status_code=404)
@@ -770,7 +801,7 @@ class CampusDutyService:
         if duty.is_locked:
             raise DomainException(f"Cannot auto-assign: Duty '{duty.title}' is locked by administrator ({duty.lock_reason or 'Protected'})", status_code=409)
 
-        cand_resp = CampusDutyService.evaluate_candidates(db, duty_id)
+        cand_resp = CampusDutyService.evaluate_candidates(db, duty_id, allowed_department_ids=allowed_department_ids)
         eligible_candidates = [c for c in cand_resp.candidates if c.is_eligible]
 
         active_assignments = [
@@ -875,6 +906,60 @@ class CampusDutyService:
         }
 
     @staticmethod
+    def get_next_6_day_orders(
+        db: Session,
+        start_date: Optional[date] = None,
+        num_day_orders: int = 6
+    ) -> List[Dict[str, Any]]:
+        """Walks forward from start_date to collect `num_day_orders` working calendar days,
+        skipping Sundays and blocked calendar days (holidays/events). Returns metadata and duty counts."""
+        base_date = start_date or date.today()
+        collected_dates: List[date] = []
+        cursor = base_date
+        max_search = num_day_orders * 4
+        for _ in range(max_search):
+            if cursor.weekday() < 6:  # Mon-Sat (0-5)
+                cal_day = db.query(CalendarDay).filter(CalendarDay.date == cursor).first()
+                if not cal_day or not cal_day.blocks_operations:
+                    collected_dates.append(cursor)
+            if len(collected_dates) == num_day_orders:
+                break
+            cursor += timedelta(days=1)
+
+        result = []
+        for d in collected_dates:
+            d_order = CampusDutyService.get_day_order_for_date(db, d)
+            duties = db.query(CampusDuty).filter(
+                CampusDuty.duty_date == d,
+                CampusDuty.status.in_([DutyStatus.PUBLISHED, DutyStatus.DRAFT])
+            ).all()
+
+            total_duties = len(duties)
+            total_assigned = 0
+            total_unfilled = 0
+            for duty in duties:
+                active_assignments = [
+                    a for a in duty.assignments
+                    if a.status in (AssignmentStatus.ASSIGNED, AssignmentStatus.PROPOSED)
+                ]
+                if len(active_assignments) >= duty.required_teachers:
+                    total_assigned += 1
+                else:
+                    total_unfilled += 1
+
+            result.append({
+                "date": str(d),
+                "day_order": d_order,
+                "day_name": d.strftime("%A"),
+                "formatted_date": d.strftime("%b %d"),
+                "total_duties": total_duties,
+                "filled_duties": total_assigned,
+                "unfilled_duties": total_unfilled,
+                "is_today": d == date.today()
+            })
+        return result
+
+    @staticmethod
     def autonomous_activate_duties(
         db: Session,
         target_date: Optional[date] = None,
@@ -894,10 +979,12 @@ class CampusDutyService:
         # Walk forward from start_date to collect `num_day_orders` working days
         collected_dates: List[date] = []
         cursor = start_date
-        max_search = num_day_orders * 3  # guard against infinite loops
+        max_search = num_day_orders * 4  # guard against infinite loops
         for _ in range(max_search):
             if cursor.weekday() < 6:  # Mon-Sat (0-5)
-                collected_dates.append(cursor)
+                cal_day = db.query(CalendarDay).filter(CalendarDay.date == cursor).first()
+                if not cal_day or not cal_day.blocks_operations:
+                    collected_dates.append(cursor)
             if len(collected_dates) == num_day_orders:
                 break
             cursor += timedelta(days=1)
@@ -963,6 +1050,7 @@ class CampusDutyService:
             "total_wing": total_wing,
             "total_assigned": total_assigned,
         })
+        db.commit()
 
         return {
             "success": True,
@@ -1400,3 +1488,228 @@ class CampusDutyService:
             assignments=assignments_out,
             created_at=duty.created_at
         )
+
+    # ── Block Duties Configuration & Auto-Assignment ─────────────────────────
+
+    @staticmethod
+    def configure_and_assign_block_duties(
+        db: Session,
+        block_id: int,
+        data: Any,
+        current_user: User
+    ) -> Any:
+        """Configures discipline and wing duties for a campus block and automatically assigns
+        teachers belonging to that block's respected department(s) according to preset rules.
+        Exclusively controlled by Principal and System Admin."""
+        from app.models.campus_structure import CampusBlock, CampusFloor
+        from app.schemas.campus_structure import BlockDutyConfigResultOut, BlockDutyAssignmentItem
+
+        block = db.query(CampusBlock).options(
+            joinedload(CampusBlock.department),
+            joinedload(CampusBlock.floors).joinedload(CampusFloor.rooms).joinedload(Room.department)
+        ).filter(CampusBlock.id == block_id).first()
+
+        if not block:
+            raise DomainException(f"Campus block with ID {block_id} not found", status_code=404)
+
+        # 1. Determine all respected department(s) for this block
+        respected_depts: Dict[int, str] = {}
+        if block.department_id and block.department:
+            respected_depts[block.department_id] = block.department.name
+
+        for fl in block.floors:
+            for rm in fl.rooms:
+                if rm.department_id and rm.department:
+                    respected_depts[rm.department_id] = rm.department.name
+
+        allowed_dept_ids: Optional[Set[int]] = None
+        if getattr(data, "enforce_block_department_only", True) and respected_depts:
+            allowed_dept_ids = set(respected_depts.keys())
+
+        primary_dept_id = block.department_id or (list(respected_depts.keys())[0] if respected_depts else None)
+
+        # 2. Determine target dates and day orders
+        target_dates: List[Tuple[date, Optional[int]]] = []
+        if getattr(data, "scope", "SPECIFIC_DATE") == "NEXT_6_DAY_ORDERS":
+            next_6 = CampusDutyService.get_next_6_day_orders(db)
+            target_dates = [(item.calendar_date, item.day_order) for item in next_6]
+        else:
+            t_date = data.target_date or date.today()
+            d_order = CampusDutyService.get_day_order_for_date(db, t_date)
+            target_dates = [(t_date, d_order)]
+
+        # 3. Break periods for discipline duties
+        break_periods = []
+        if data.discipline_duty_enabled:
+            bp_q = db.query(DutyBreakPeriod).filter(DutyBreakPeriod.is_active == True)
+            if data.break_period_ids:
+                bp_q = bp_q.filter(DutyBreakPeriod.id.in_(data.break_period_ids))
+            break_periods = bp_q.all()
+            if not break_periods:
+                CampusDutyService.ensure_default_break_periods(db, primary_dept_id)
+                break_periods = db.query(DutyBreakPeriod).filter(DutyBreakPeriod.is_active == True).all()
+
+        target_duties: List[CampusDuty] = []
+
+        # 4. Generate / Configure Duties for each date
+        for d_date, d_order in target_dates:
+            # A. Wing Duties (Floor / Corridor)
+            if data.wing_duty_enabled:
+                for fl in sorted(block.floors, key=lambda f: f.display_order):
+                    area_code = f"WING_{block.code}_{fl.floor_number}".upper()
+                    area = db.query(CampusArea).filter(CampusArea.code == area_code).first()
+                    if not area:
+                        area = CampusArea(
+                            name=f"{block.name} - {fl.floor_name}",
+                            code=area_code,
+                            duty_type=DutyType.WING_DUTY.value,
+                            block_id=block.id,
+                            floor_id=fl.id,
+                            building_or_block=block.name,
+                            floor=fl.floor_name,
+                            required_teachers=data.teachers_per_wing,
+                            department_id=primary_dept_id,
+                            is_active=True
+                        )
+                        db.add(area)
+                        db.flush()
+
+                    title = f"Wing Duty - {block.name} ({fl.floor_name})"
+                    duty = db.query(CampusDuty).filter(
+                        CampusDuty.duty_date == d_date,
+                        CampusDuty.duty_type == DutyType.WING_DUTY,
+                        CampusDuty.title == title,
+                        CampusDuty.status.in_([DutyStatus.PUBLISHED, DutyStatus.DRAFT])
+                    ).first()
+
+                    if duty:
+                        duty.required_teachers = data.teachers_per_wing
+                        duty.day_order = d_order
+                        if not duty.department_id and primary_dept_id:
+                            duty.department_id = primary_dept_id
+                    else:
+                        duty = CampusDuty(
+                            duty_type=DutyType.WING_DUTY,
+                            title=title,
+                            duty_date=d_date,
+                            start_time=time(9, 20),
+                            end_time=time(16, 15),
+                            area_id=area.id,
+                            department_id=primary_dept_id,
+                            day_order=d_order,
+                            required_teachers=data.teachers_per_wing,
+                            status=DutyStatus.PUBLISHED,
+                            created_by_user_id=current_user.id
+                        )
+                        db.add(duty)
+                        db.flush()
+
+                    target_duties.append(duty)
+
+            # B. Discipline Duties
+            if data.discipline_duty_enabled:
+                for bp in break_periods:
+                    area_code = f"DISC_{block.code}_{bp.id}".upper()
+                    area = db.query(CampusArea).filter(CampusArea.code == area_code).first()
+                    if not area:
+                        area = CampusArea(
+                            name=f"Discipline Zone - {block.name} ({bp.name})",
+                            code=area_code,
+                            duty_type=DutyType.DISCIPLINE_DUTY.value,
+                            block_id=block.id,
+                            building_or_block=block.name,
+                            required_teachers=data.teachers_per_discipline,
+                            department_id=primary_dept_id,
+                            is_active=True
+                        )
+                        db.add(area)
+                        db.flush()
+
+                    title = f"Discipline Duty - {block.name} ({bp.name})"
+                    duty = db.query(CampusDuty).filter(
+                        CampusDuty.duty_date == d_date,
+                        CampusDuty.duty_type == DutyType.DISCIPLINE_DUTY,
+                        CampusDuty.title == title,
+                        CampusDuty.status.in_([DutyStatus.PUBLISHED, DutyStatus.DRAFT])
+                    ).first()
+
+                    if duty:
+                        duty.required_teachers = data.teachers_per_discipline
+                        duty.day_order = d_order
+                        if not duty.department_id and primary_dept_id:
+                            duty.department_id = primary_dept_id
+                    else:
+                        duty = CampusDuty(
+                            duty_type=DutyType.DISCIPLINE_DUTY,
+                            title=title,
+                            duty_date=d_date,
+                            start_time=bp.start_time,
+                            end_time=bp.end_time,
+                            break_period_id=bp.id,
+                            area_id=area.id,
+                            department_id=primary_dept_id,
+                            day_order=d_order,
+                            required_teachers=data.teachers_per_discipline,
+                            status=DutyStatus.PUBLISHED,
+                            created_by_user_id=current_user.id
+                        )
+                        db.add(duty)
+                        db.flush()
+
+                    target_duties.append(duty)
+
+        db.commit()
+
+        # 5. Execute Auto-Assignment on each configured duty
+        assigned_items: List[BlockDutyAssignmentItem] = []
+        for d in target_duties:
+            db.refresh(d)
+            if not d.is_locked:
+                updated_duty = CampusDutyService.auto_assign_duty(
+                    db, d.id, user_id=current_user.id, allowed_department_ids=allowed_dept_ids
+                )
+                for a in updated_duty.assignments:
+                    if a.status in (AssignmentStatus.ASSIGNED, AssignmentStatus.PROPOSED):
+                        t_dept = a.teacher.department if isinstance(a.teacher.department, str) else (a.teacher.department_rel.name if getattr(a.teacher, "department_rel", None) else "General")
+                        fl_name = updated_duty.area.floor if updated_duty.area else ""
+                        assigned_items.append(BlockDutyAssignmentItem(
+                            duty_id=updated_duty.id,
+                            duty_title=updated_duty.title,
+                            duty_type=updated_duty.duty_type.value if hasattr(updated_duty.duty_type, 'value') else str(updated_duty.duty_type),
+                            area_or_floor=fl_name or (updated_duty.area.name if updated_duty.area else block.name),
+                            duty_date=updated_duty.duty_date,
+                            day_order=updated_duty.day_order,
+                            teacher_id=a.teacher_id,
+                            teacher_name=a.teacher.name or a.teacher.username,
+                            teacher_email=a.teacher.email or "",
+                            department_name=t_dept,
+                            reasons=a.selection_reason or [],
+                            score=a.score or 0.0
+                        ))
+
+        unfilled_total = sum(
+            max(0, d.required_teachers - len([a for a in d.assignments if a.status in (AssignmentStatus.ASSIGNED, AssignmentStatus.PROPOSED)]))
+            for d in target_duties
+        )
+
+        dept_names_list = list(respected_depts.values()) if respected_depts else ["General"]
+        CampusDutyService._log_audit(db, current_user.id, "BLOCK_DUTIES_CONFIGURED_AND_ASSIGNED", {
+            "block_id": block.id,
+            "block_name": block.name,
+            "duties_count": len(target_duties),
+            "teachers_assigned": len(assigned_items),
+            "unfilled": unfilled_total
+        }, department_id=primary_dept_id)
+
+        return BlockDutyConfigResultOut(
+            block_id=block.id,
+            block_name=block.name,
+            block_code=block.code,
+            departments=dept_names_list,
+            total_duties_configured=len(target_duties),
+            total_teachers_assigned=len(assigned_items),
+            unfilled_slots=unfilled_total,
+            assignments=assigned_items,
+            message=f"Configured {len(target_duties)} duties for {block.name}. Assigned {len(assigned_items)} teachers from respected department(s) ({', '.join(dept_names_list)})."
+        )
+

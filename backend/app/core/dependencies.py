@@ -72,6 +72,23 @@ def require_admin_or_principal(
     return current_user
 
 
+def require_principal_or_system_admin(
+    current_user: User = Depends(require_credentials_set)
+) -> User:
+    """Restricts access strictly to the Principal and System Admin."""
+    is_principal = current_user.role == Role.principal
+    is_sys_admin = (
+        current_user.role == Role.system_admin or
+        (current_user.role == Role.admin and getattr(current_user, "admin_level", None) in (AdminLevel.super_admin, None))
+    )
+    if not (is_principal or is_sys_admin):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Principal or System Admin access required"
+        )
+    return current_user
+
+
 def require_super_admin(current_user: User = Depends(require_credentials_set)) -> User:
     if current_user.role == Role.system_admin:
         return current_user

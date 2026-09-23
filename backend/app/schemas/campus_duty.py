@@ -317,3 +317,28 @@ class AutonomousDutyActivateResponse(BaseModel):
     total_unfilled: int
     per_day_order: List[DayOrderSummary] = []
     message: str
+
+
+class Next6DayOrderItem(BaseModel):
+    date: str
+    day_order: Optional[int] = None
+    day_name: str
+    formatted_date: str
+    total_duties: int = 0
+    filled_duties: int = 0
+    unfilled_duties: int = 0
+    is_today: bool = False
+
+
+class Next6DayOrdersResponse(BaseModel):
+    autonomous_enabled: bool = False
+    start_date: str
+    day_orders: List[Next6DayOrderItem] = []
+
+
+class AutonomousDutyToggleRequest(BaseModel):
+    enabled: bool
+    start_date: Optional[date] = None
+    num_day_orders: int = 6
+    activate_discipline: bool = True
+    activate_wing: bool = True

@@ -58,6 +58,7 @@ BASELINE_RULES: Dict[str, str] = {
     "intelligence_min_sample_sessions": "3",
     "periods_per_day": "5",
     "day_order_max": "6",
+    "leave_same_day_apply_cutoff_time": "09:00",
 }
 
 # Security hard limits — enforced regardless of DB values
@@ -518,4 +519,5 @@ def get_public_config(db: Session) -> Dict[str, Any]:
         "student_attendance_submission_window_minutes": get_rule_int(db, "student_attendance_submission_window_minutes"),
         "periods_per_day": get_rule_int(db, "periods_per_day"),
         "day_order_max": get_rule_int(db, "day_order_max"),
+        "leave_same_day_apply_cutoff_time": get_rule_str(db, "leave_same_day_apply_cutoff_time"),
     }

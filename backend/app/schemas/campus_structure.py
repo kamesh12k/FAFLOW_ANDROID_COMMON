@@ -1,5 +1,5 @@
 from pydantic import BaseModel, Field, field_validator
-from datetime import datetime
+from datetime import datetime, date
 from typing import List, Optional, Dict, Any
 from app.models.room import RoomType
 
@@ -333,3 +333,44 @@ class CampusStructureImportCommitOut(BaseModel):
     rooms_created: int
     rooms_updated: int
     message: str
+
+
+# ── Block Duty Configuration & Auto-Assignment ───────────────────────────────
+
+class BlockDutyAssignmentItem(BaseModel):
+    duty_id: int
+    duty_title: str
+    duty_type: str
+    area_or_floor: str
+    duty_date: date
+    day_order: Optional[int] = None
+    teacher_id: int
+    teacher_name: str
+    teacher_email: str
+    department_name: Optional[str] = None
+    reasons: List[str] = []
+    score: float
+
+
+class BlockDutyConfigIn(BaseModel):
+    target_date: Optional[date] = None
+    scope: str = "SPECIFIC_DATE"  # "SPECIFIC_DATE" or "NEXT_6_DAY_ORDERS"
+    wing_duty_enabled: bool = True
+    teachers_per_wing: int = Field(default=1, ge=1, le=10)
+    discipline_duty_enabled: bool = True
+    teachers_per_discipline: int = Field(default=2, ge=1, le=10)
+    break_period_ids: Optional[List[int]] = None
+    enforce_block_department_only: bool = True
+
+
+class BlockDutyConfigResultOut(BaseModel):
+    block_id: int
+    block_name: str
+    block_code: str
+    departments: List[str]
+    total_duties_configured: int
+    total_teachers_assigned: int
+    unfilled_slots: int
+    assignments: List[BlockDutyAssignmentItem]
+    message: str
+

@@ -263,3 +263,42 @@ class TestBulkApproveAndReject:
         results = bulk_reject([l1.id, l2.id, l1.id], db_session)
         assert len(results) == 2
         assert all(r.status == LeaveStatus.rejected for r in results)
+
+
+class TestSameDayApplyCutoff:
+    def test_same_day_leave_before_9am_allowed(self, db_session, test_teacher):
+        today = date(2026, 9, 24)
+        create_calendar_day(db_session, today, DayType.working, day_order=1)
+        data = LeaveCreate(date=today, period_number=1, reason="Doctor appointment")
+
+        with patch("app.core.timezone.get_ist_now") as mock_now:
+            from datetime import datetime
+            mock_now.return_value = datetime(2026, 9, 24, 8, 30)
+            leave = submit_leave(test_teacher.id, data, db_session)
+            assert leave.status == LeaveStatus.pending
+
+    def test_same_day_leave_after_9am_blocked(self, db_session, test_teacher):
+        today = date(2026, 9, 24)
+        create_calendar_day(db_session, today, DayType.working, day_order=1)
+        data = LeaveCreate(date=today, period_number=1, reason="Late sick note")
+
+        with patch("app.core.timezone.get_ist_now") as mock_now:
+            from datetime import datetime
+            mock_now.return_value = datetime(2026, 9, 24, 9, 15)
+            with pytest.raises(HTTPException) as exc:
+                submit_leave(test_teacher.id, data, db_session)
+            assert exc.value.status_code == 400
+            assert "09:00" in exc.value.detail
+
+    def test_future_leave_after_9am_allowed(self, db_session, test_teacher):
+        today = date(2026, 9, 24)
+        tomorrow = date(2026, 9, 25)
+        create_calendar_day(db_session, tomorrow, DayType.working, day_order=2)
+        data = LeaveCreate(date=tomorrow, period_number=1, reason="Planned leave")
+
+        with patch("app.core.timezone.get_ist_now") as mock_now:
+            from datetime import datetime
+            mock_now.return_value = datetime(2026, 9, 24, 11, 45)
+            leave = submit_leave(test_teacher.id, data, db_session)
+            assert leave.status == LeaveStatus.pending
+

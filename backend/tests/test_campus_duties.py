@@ -275,3 +275,185 @@ def test_manual_override_and_replacement(db_session, duty_setup):
     # Verify old assignment status is OVERRIDDEN
     db_session.refresh(assignment)
     assert assignment.status == AssignmentStatus.OVERRIDDEN
+
+
+def test_get_next_6_day_orders_and_autonomous_toggle(db_session, duty_setup):
+    from datetime import date
+    today = date.today()
+
+    # Verify get_next_6_day_orders returns 6 working day orders
+    day_orders = CampusDutyService.get_next_6_day_orders(db_session, start_date=today, num_day_orders=6)
+    assert len(day_orders) == 6
+    for do in day_orders:
+        assert "date" in do
+        assert "day_order" in do
+        assert "day_name" in do
+        assert "total_duties" in do
+        assert "filled_duties" in do
+        assert "unfilled_duties" in do
+
+    # Autonomous activation for 6 day orders
+    res = CampusDutyService.autonomous_activate_duties(
+        db_session,
+        target_date=today,
+        activate_discipline=True,
+        activate_wing=False,
+        num_day_orders=6,
+        user_id=1
+    )
+    assert res["success"] is True
+    assert res["num_day_orders"] == 6
+    assert len(res["per_day_order"]) == 6
+    assert res["discipline_duties_count"] >= 1
+
+    # Check that day_orders now reflects created duties
+    updated_day_orders = CampusDutyService.get_next_6_day_orders(db_session, start_date=today, num_day_orders=6)
+    first_day = updated_day_orders[0]
+    assert first_day["total_duties"] >= 1
+
+
+def test_configure_and_assign_block_duties_by_respected_department(db_session, duty_setup):
+    from datetime import date
+    from app.models.campus_structure import CampusBlock, CampusFloor
+    from app.models.room import Room
+    from app.schemas.campus_structure import BlockDutyConfigIn
+
+    dept_b = duty_setup["dept"]  # CSE
+    teachers = duty_setup["teachers"]
+
+    admin_user = User(
+        name="Principal Dr. Smith",
+        username="principal_smith",
+        email="principal@faflow.edu",
+        password_hash="test_hash_principal",
+        role=Role.principal,
+        is_active=True
+    )
+    db_session.add(admin_user)
+
+    # Create Department Mech and teacher
+    mech_dept = Department(name="Mechanical Engineering", code="MECH")
+    db_session.add(mech_dept)
+    db_session.flush()
+
+    mech_teacher = User(
+        name="Mech Faculty",
+        username="mech_fac_1",
+        email="mech@faflow.edu",
+        password_hash="test_hash_mech",
+        role=Role.teacher,
+        department_id=mech_dept.id,
+        is_active=True
+    )
+    db_session.add(mech_teacher)
+    db_session.flush()
+
+    att = StaffAttendanceRecord(
+        user_id=mech_teacher.id,
+        attendance_date=date.today(),
+        check_in_time=datetime.now(timezone.utc),
+        check_out_time=None
+    )
+    db_session.add(att)
+    db_session.flush()
+
+    # Create Block B with floors and rooms mapped to CSE
+    block_b = CampusBlock(
+        name="B Block",
+        code="BLOCK-B",
+        floors_count=2,
+        department_id=dept_b.id,
+        is_active=True
+    )
+    db_session.add(block_b)
+    db_session.flush()
+
+    floor_g = CampusFloor(block_id=block_b.id, floor_number=0, floor_name="Ground Floor", display_order=0)
+    floor_1 = CampusFloor(block_id=block_b.id, floor_number=1, floor_name="First Floor", display_order=1)
+    db_session.add_all([floor_g, floor_1])
+    db_session.flush()
+
+    room_g1 = Room(room_number="B-G01", block_id=block_b.id, floor_id=floor_g.id, department_id=dept_b.id)
+    room_11 = Room(room_number="B-101", block_id=block_b.id, floor_id=floor_1.id, department_id=dept_b.id)
+    db_session.add_all([room_g1, room_11])
+    db_session.commit()
+
+    config = BlockDutyConfigIn(
+        target_date=date.today(),
+        scope="SPECIFIC_DATE",
+        wing_duty_enabled=True,
+        teachers_per_wing=1,
+        discipline_duty_enabled=True,
+        teachers_per_discipline=1,
+        enforce_block_department_only=True
+    )
+
+    result = CampusDutyService.configure_and_assign_block_duties(
+        db=db_session,
+        block_id=block_b.id,
+        data=config,
+        current_user=admin_user
+    )
+
+    assert result.block_id == block_b.id
+    assert result.total_duties_configured >= 2  # At least 2 wing duties + discipline duties
+    assert result.total_teachers_assigned >= 1
+
+    # Verify that all assigned teachers belong strictly to the block's respected department (dept_b)
+    block_dept_names = result.departments
+    assert dept_b.name in block_dept_names
+
+    for assignment in result.assignments:
+        assert assignment.department_name == dept_b.name
+        # Mech faculty should never be assigned to Block B
+        assert assignment.teacher_id != mech_teacher.id
+
+
+def test_configure_block_duties_route_rbac(client, db_session, duty_setup, auth_headers_admin, auth_headers_teacher):
+    from app.models.campus_structure import CampusBlock, CampusFloor
+
+    dept_b = duty_setup["dept"]
+    block = CampusBlock(
+        name="C Block",
+        code="BLOCK-C",
+        floors_count=1,
+        department_id=dept_b.id,
+        is_active=True
+    )
+    db_session.add(block)
+    db_session.flush()
+
+    fl = CampusFloor(block_id=block.id, floor_number=0, floor_name="Ground Floor", display_order=0)
+    db_session.add(fl)
+    db_session.commit()
+
+    payload = {
+        "target_date": str(date.today()),
+        "scope": "SPECIFIC_DATE",
+        "wing_duty_enabled": True,
+        "teachers_per_wing": 1,
+        "discipline_duty_enabled": False,
+        "teachers_per_discipline": 1,
+        "enforce_block_department_only": True
+    }
+
+    # As regular teacher -> 403 Forbidden
+    resp_teacher = client.post(
+        f"/campus-structure/blocks/{block.id}/duties/configure-and-assign",
+        json=payload,
+        headers=auth_headers_teacher
+    )
+    assert resp_teacher.status_code == 403
+
+    # As Admin / Principal -> 200 OK
+    resp_admin = client.post(
+        f"/campus-structure/blocks/{block.id}/duties/configure-and-assign",
+        json=payload,
+        headers=auth_headers_admin
+    )
+    assert resp_admin.status_code == 200
+    data = resp_admin.json()
+    assert data["block_id"] == block.id
+    assert data["total_duties_configured"] >= 1
+
+

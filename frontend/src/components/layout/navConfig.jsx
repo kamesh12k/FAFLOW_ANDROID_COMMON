@@ -161,6 +161,7 @@ export const PRINCIPAL_NAV = [
       { to: '/principal/duties', label: 'Campus Duties', icon: <DoorIcon /> },
       { to: '/principal/campus-structure', label: 'Campus Structure', icon: <DoorIcon /> },
       { to: '/principal/class-timetable', label: 'Classwise Timetable', icon: <CalIcon /> },
+      { to: '/principal/settings', label: 'Settings & Campus Mode', icon: <DocIcon /> },
     ],
   },
 ]

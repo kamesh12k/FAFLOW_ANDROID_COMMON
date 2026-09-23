@@ -263,24 +263,39 @@ def set_mode(db: Session, mode: str, actor: User, tenant_department_id: int | No
     set_setting(db, "campus_operations_mode", mode, tenant_department_id)
     if mode == "flexible":
         set_setting(db, "teacher_self_management_enabled", "true", tenant_department_id)
+    
+    # When mode is set globally (tenant_department_id is None), remove any department-specific overrides
+    # so that every department, teacher, and administrator immediately synchronizes to the exact same campus mode!
+    if tenant_department_id is None:
+        db.query(SystemSetting).filter(
+            SystemSetting.key == "campus_operations_mode",
+            SystemSetting.department_id != None
+        ).delete(synchronize_session=False)
+        if mode == "flexible":
+            db.query(SystemSetting).filter(
+                SystemSetting.key == "teacher_self_management_enabled",
+                SystemSetting.department_id != None
+            ).delete(synchronize_session=False)
+
     log_audit_event(db, actor.id, "campus_operations.mode_change", "system_setting", None, {"mode": mode})
     db.commit()
     return mode
 
 
 def get_emergency_window_hours(db: Session, tenant_department_id: int | None = None) -> int:
-    """Returns the emergency window in hours from governance rules (default: 2).
-    Falls back to SystemSetting then to hardcoded 2 if both unavailable."""
+    """Returns the emergency window in hours from system settings or governance rules (default: 2)."""
+    val = get_setting(db, "emergency_window_hours", None, tenant_department_id)
+    if val is not None:
+        try:
+            return int(val)
+        except (ValueError, TypeError):
+            pass
     try:
         from app.services import governance_rule_service
         return governance_rule_service.get_rule_int(db, "emergency_window_hours")
     except Exception:
         pass
-    val = get_setting(db, "emergency_window_hours", "2", tenant_department_id)
-    try:
-        return int(val)
-    except (ValueError, TypeError):
-        return 2
+    return 2
 
 
 # ---------- Preferences ----------

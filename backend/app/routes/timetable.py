@@ -103,7 +103,7 @@ def get_timetable(
     tenant_department_id: int | None = Depends(get_tenant_department_id),
 ):
     """Query timetable slots by class, teacher, department, or day order."""
-    return timetable_service.list_slots(
+    slots = timetable_service.list_slots(
         db=db,
         class_id=class_id,
         teacher_id=teacher_id,
@@ -111,6 +111,7 @@ def get_timetable(
         day_order=day_order,
         tenant_department_id=tenant_department_id,
     )
+    return [TimetableSlotOut.from_orm_slot(s) for s in slots]
 
 
 @router.get("/teacher/{teacher_id}", response_model=list[TimetableSlotOut])

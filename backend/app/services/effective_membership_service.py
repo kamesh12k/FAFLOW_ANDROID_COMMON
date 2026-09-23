@@ -122,17 +122,29 @@ class EffectiveMembershipService:
             matched_students = db.query(Student).filter(Student.roll_number.in_(list(target_roll_set))).all()
             students_by_roll = {s.roll_number.strip().upper(): s for s in matched_students}
 
-        # Also fallback: if no rule exists yet, query direct class_id students for legacy/backward compatibility
-        if not rule and not target_roll_set:
-            legacy_students = (
-                db.query(Student)
-                .filter(Student.class_id == class_id, Student.is_active == True)
-                .order_by(Student.roll_number)
-                .all()
+        # Also incorporate directly enrolled students (from StudentEnrollment or direct class_id)
+        # ensuring imported students always appear on class roster unless explicitly excluded
+        direct_students = (
+            db.query(Student)
+            .filter(Student.class_id == class_id, Student.is_active == True)
+            .all()
+        )
+        enrolled_ay_students = (
+            db.query(Student)
+            .join(StudentEnrollment, StudentEnrollment.student_id == Student.id)
+            .filter(
+                StudentEnrollment.class_id == class_id,
+                StudentEnrollment.academic_year_id == ay.id,
+                StudentEnrollment.status == "active",
+                Student.is_active == True
             )
-            for s in legacy_students:
-                students_by_roll[s.roll_number.strip().upper()] = s
-                target_roll_set.add(s.roll_number.strip().upper())
+            .all()
+        )
+        for s in (direct_students + enrolled_ay_students):
+            r = s.roll_number.strip().upper()
+            if r not in exclude_rolls_set:
+                target_roll_set.add(r)
+                students_by_roll[r] = s
 
         # 4. Check for missing students (expected in range or included, but not found in DB)
         missing_rolls: List[str] = []
@@ -149,7 +161,12 @@ class EffectiveMembershipService:
         for r in sorted(list(target_roll_set)):
             student = students_by_roll.get(r)
             if student and student.is_active:
-                src = "ADDITIONAL" if r in include_rolls_set else "PRIMARY_RANGE"
+                if r in include_rolls_set:
+                    src = "ADDITIONAL"
+                elif r in expected_rolls:
+                    src = "PRIMARY_RANGE"
+                else:
+                    src = "ENROLLED"
                 resolved_items.append(
                     EffectiveStudentItem(
                         id=student.id,

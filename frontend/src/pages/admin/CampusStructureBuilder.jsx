@@ -513,7 +513,7 @@ function FloorNode({ floor, onBulkAssignDept, onEditRoom, onRefresh, readOnly })
   )
 }
 
-function BlockNode({ block, onEdit, onDelete, onDuplicate, onAddFloor, onGenerateRooms, onBulkAssignDept, onEditRoom, onRefresh, readOnly }) {
+function BlockNode({ block, onEdit, onDelete, onDuplicate, onAddFloor, onGenerateRooms, onBulkAssignDept, onEditRoom, onRefresh, onConfigureDuties, canManageDuties, readOnly }) {
   const [open, setOpen] = useState(true)
   const floors = block.floors || []
   const roomCount = floors.reduce((acc, f) => acc + (f.rooms?.length || 0), 0)
@@ -533,7 +533,18 @@ function BlockNode({ block, onEdit, onDelete, onDuplicate, onAddFloor, onGenerat
           <div className="min-w-0">
             <div className="flex items-center gap-2">
               <p className="text-white font-bold text-sm truncate">{block.name}</p>
-              <span className="px-1.5 py-0.2 rounded text-[9px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+              <span
+                onClick={(e) => {
+                  if (canManageDuties && onConfigureDuties) {
+                    e.stopPropagation()
+                    onConfigureDuties(block)
+                  }
+                }}
+                className={`px-1.5 py-0.2 rounded text-[9px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 ${
+                  canManageDuties ? 'cursor-pointer hover:bg-emerald-500/30' : ''
+                }`}
+                title={canManageDuties ? "Click to configure & auto-assign block duties" : "Discipline Zone"}
+              >
                 🛡️ Discipline Zone
               </span>
             </div>
@@ -554,6 +565,15 @@ function BlockNode({ block, onEdit, onDelete, onDuplicate, onAddFloor, onGenerat
         </button>
         {!readOnly && (
           <div className="flex items-center gap-1 shrink-0">
+            {canManageDuties && onConfigureDuties && (
+              <button
+                onClick={() => onConfigureDuties(block)}
+                title="Configure discipline & wing duties and auto-assign respected department teachers"
+                className="px-2.5 py-1 rounded-lg text-[11px] font-bold bg-amber-500 hover:bg-amber-400 text-slate-950 border border-amber-400/60 shadow-sm transition-all flex items-center gap-1"
+              >
+                🛡️ Block Duties
+              </button>
+            )}
             <button onClick={() => onBulkAssignDept(block)} title="Bulk assign department to all rooms in this block"
               className="px-2 py-1 rounded-lg text-[11px] font-bold bg-slate-700 hover:bg-slate-600 text-slate-200 border border-slate-600 transition-all">
               + Dept
@@ -1220,6 +1240,347 @@ function AddFloorModal({ block, onClose, onSuccess }) {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// Block Duty Configuration & Auto-Assignment Modal (Principal & System Admin)
+// ─────────────────────────────────────────────────────────────────────────────
+function BlockDutyConfigModal({ block, onClose, onSuccess }) {
+  const [scope, setScope] = useState('SPECIFIC_DATE') // 'SPECIFIC_DATE' | 'NEXT_6_DAY_ORDERS'
+  const [targetDate, setTargetDate] = useState(() => new Date().toISOString().split('T')[0])
+  const [wingDutyEnabled, setWingDutyEnabled] = useState(true)
+  const [teachersPerWing, setTeachersPerWing] = useState(1)
+  const [disciplineDutyEnabled, setDisciplineDutyEnabled] = useState(true)
+  const [teachersPerDiscipline, setTeachersPerDiscipline] = useState(2)
+  const [enforceDeptOnly, setEnforceDeptOnly] = useState(true)
+
+  const [saving, setSaving] = useState(false)
+  const [error, setError] = useState('')
+  const [result, setResult] = useState(null)
+
+  const depts = block?.associated_departments || []
+  const floors = block?.floors || []
+
+  const handleSaveAndAssign = async () => {
+    setSaving(true)
+    setError('')
+    try {
+      const payload = {
+        target_date: scope === 'SPECIFIC_DATE' ? targetDate : null,
+        scope: scope,
+        wing_duty_enabled: wingDutyEnabled,
+        teachers_per_wing: Number(teachersPerWing),
+        discipline_duty_enabled: disciplineDutyEnabled,
+        teachers_per_discipline: Number(teachersPerDiscipline),
+        enforce_block_department_only: enforceDeptOnly,
+      }
+      const res = await campusStructureApi.configureBlockDuties(block.id, payload)
+      setResult(res.data)
+      if (onSuccess) onSuccess()
+    } catch (e) {
+      setError(formatError(e, 'Failed to configure and assign block duties'))
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  return (
+    <div className="space-y-4">
+      {error && <div className="p-3 bg-rose-50 border border-rose-200 rounded-xl text-xs font-semibold text-rose-700">{error}</div>}
+
+      {/* Block Information & Respected Department Header */}
+      <div className="p-3.5 bg-gradient-to-r from-slate-900 to-indigo-950 rounded-2xl text-white shadow-sm border border-indigo-900/50">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2.5">
+            <div className="w-9 h-9 rounded-xl bg-indigo-600 flex items-center justify-center font-black text-sm">
+              {(block.prefix || block.code || block.name || 'B').charAt(0).toUpperCase()}
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <h3 className="font-black text-sm tracking-tight">{block.name}</h3>
+                <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">
+                  {block.code || block.prefix}
+                </span>
+              </div>
+              <p className="text-[11px] text-slate-300">
+                {floors.length} Floor{floors.length !== 1 ? 's' : ''} · Wing & Discipline Duties
+              </p>
+            </div>
+          </div>
+          <span className="px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider bg-amber-500/20 text-amber-300 border border-amber-500/30">
+            Principal / SysAdmin Controls
+          </span>
+        </div>
+
+        {/* Respected Departments */}
+        <div className="mt-3 pt-2.5 border-t border-indigo-900/60">
+          <div className="text-[10px] font-black uppercase tracking-wider text-indigo-300 mb-1">
+            Respected Department(s) for this Block:
+          </div>
+          <div className="flex items-center gap-1.5 flex-wrap">
+            {depts.length > 0 ? (
+              depts.map(d => (
+                <span key={d.id} className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-xs font-bold bg-indigo-500/30 text-indigo-100 border border-indigo-400/40">
+                  🏢 {d.name} {d.code ? `(${d.code})` : ''} · {d.room_count} rooms
+                </span>
+              ))
+            ) : block.department_name ? (
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-xs font-bold bg-indigo-500/30 text-indigo-100 border border-indigo-400/40">
+                🏢 {block.department_name}
+              </span>
+            ) : (
+              <span className="text-xs text-amber-300 italic font-medium">
+                ⚠️ No specific department mapped to rooms yet (system-wide teachers will be evaluated)
+              </span>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {result ? (
+        /* Results View */
+        <div className="space-y-4 py-1">
+          <div className="p-3.5 bg-emerald-50 border border-emerald-200 rounded-2xl flex items-start gap-3">
+            <div className="w-8 h-8 rounded-xl bg-emerald-600 text-white flex items-center justify-center font-bold text-base shrink-0">
+              ✓
+            </div>
+            <div>
+              <h4 className="text-sm font-black text-emerald-950">Duties Successfully Configured & Assigned</h4>
+              <p className="text-xs text-emerald-800 mt-0.5">{result.message}</p>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-3 gap-2.5">
+            <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl text-center">
+              <div className="text-[10px] uppercase font-bold text-slate-500">Configured Duties</div>
+              <div className="text-xl font-black text-slate-900 mt-0.5">{result.total_duties_configured}</div>
+            </div>
+            <div className="p-3 bg-indigo-50 border border-indigo-200 rounded-xl text-center">
+              <div className="text-[10px] uppercase font-bold text-indigo-700">Assigned Staff</div>
+              <div className="text-xl font-black text-indigo-800 mt-0.5">{result.total_teachers_assigned}</div>
+            </div>
+            <div className="p-3 bg-amber-50 border border-amber-200 rounded-xl text-center">
+              <div className="text-[10px] uppercase font-bold text-amber-700">Unfilled Slots</div>
+              <div className="text-xl font-black text-amber-800 mt-0.5">{result.unfilled_slots}</div>
+            </div>
+          </div>
+
+          {result.assignments && result.assignments.length > 0 && (
+            <div>
+              <p className="text-xs font-bold text-slate-700 mb-1.5">Assigned Respected Department Faculty:</p>
+              <div className="border border-slate-200 rounded-xl overflow-hidden max-h-56 overflow-y-auto">
+                <table className="w-full text-left text-xs border-collapse">
+                  <thead className="bg-slate-50 sticky top-0 border-b border-slate-200 text-[10px] font-bold uppercase text-slate-500">
+                    <tr>
+                      <th className="py-2 px-3">Duty Title</th>
+                      <th className="py-2 px-3">Area / Floor</th>
+                      <th className="py-2 px-3">Assigned Faculty</th>
+                      <th className="py-2 px-3">Department</th>
+                      <th className="py-2 px-3">Match Score</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100">
+                    {result.assignments.map((a, i) => (
+                      <tr key={i} className="hover:bg-slate-50">
+                        <td className="py-2 px-3 font-semibold text-slate-900">{a.duty_title}</td>
+                        <td className="py-2 px-3 text-slate-600">{a.area_or_floor}</td>
+                        <td className="py-2 px-3 font-bold text-indigo-700">{a.teacher_name}</td>
+                        <td className="py-2 px-3">
+                          <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-indigo-50 text-indigo-700 border border-indigo-200">
+                            {a.department_name}
+                          </span>
+                        </td>
+                        <td className="py-2 px-3 text-emerald-700 font-bold">{a.score} pts</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+
+          <div className="flex justify-end gap-2 pt-2 border-t border-slate-100">
+            <button
+              onClick={() => setResult(null)}
+              className="px-3.5 py-2 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100"
+            >
+              Configure Again
+            </button>
+            <button
+              onClick={onClose}
+              className="px-5 py-2 rounded-xl text-xs font-bold bg-indigo-600 hover:bg-indigo-700 text-white shadow-sm"
+            >
+              Done (Close)
+            </button>
+          </div>
+        </div>
+      ) : (
+        /* Configuration Form */
+        <div className="space-y-4">
+          {/* Scope Selector */}
+          <div>
+            <label className="block text-xs font-bold text-slate-700 mb-1.5">Schedule Scope</label>
+            <div className="grid grid-cols-2 gap-2">
+              <button
+                type="button"
+                onClick={() => setScope('SPECIFIC_DATE')}
+                className={`p-2.5 rounded-xl border text-left text-xs font-bold transition-all ${
+                  scope === 'SPECIFIC_DATE'
+                    ? 'bg-indigo-50 border-indigo-300 text-indigo-900 shadow-sm'
+                    : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'
+                }`}
+              >
+                <div>📅 Specific Date</div>
+                <div className="text-[10px] font-normal text-slate-500 mt-0.5">Assign duties for a single day</div>
+              </button>
+              <button
+                type="button"
+                onClick={() => setScope('NEXT_6_DAY_ORDERS')}
+                className={`p-2.5 rounded-xl border text-left text-xs font-bold transition-all ${
+                  scope === 'NEXT_6_DAY_ORDERS'
+                    ? 'bg-indigo-50 border-indigo-300 text-indigo-900 shadow-sm'
+                    : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'
+                }`}
+              >
+                <div>🔄 Next 6 Day Orders</div>
+                <div className="text-[10px] font-normal text-slate-500 mt-0.5">Full cycle rotation (Day 1 - 6)</div>
+              </button>
+            </div>
+          </div>
+
+          {scope === 'SPECIFIC_DATE' && (
+            <div>
+              <label className="block text-xs font-bold text-slate-700 mb-1">Target Date</label>
+              <input
+                type="date"
+                value={targetDate}
+                onChange={e => setTargetDate(e.target.value)}
+                className="w-full p-2.5 text-xs font-medium border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500"
+              />
+            </div>
+          )}
+
+          {/* Duty Types & Required Teachers */}
+          <div className="p-3.5 bg-slate-50 border border-slate-200 rounded-2xl space-y-3">
+            <div className="text-xs font-black uppercase tracking-wider text-slate-600">Duty Requirements</div>
+
+            {/* Wing Duties */}
+            <div className="p-3 bg-white border border-slate-200 rounded-xl space-y-2">
+              <div className="flex items-center justify-between">
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={wingDutyEnabled}
+                    onChange={e => setWingDutyEnabled(e.target.checked)}
+                    className="w-4 h-4 text-indigo-600 rounded border-slate-300 focus:ring-indigo-500"
+                  />
+                  <span className="text-xs font-bold text-slate-800">Wing / Corridor Duties</span>
+                </label>
+                <span className="text-[10px] font-semibold text-slate-500">{floors.length} Floor(s) in Block</span>
+              </div>
+
+              {wingDutyEnabled && (
+                <div className="flex items-center justify-between pt-2 border-t border-slate-100">
+                  <div className="text-[11px] text-slate-600 font-medium">Teachers required per wing / floor:</div>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="number"
+                      min={1}
+                      max={5}
+                      value={teachersPerWing}
+                      onChange={e => setTeachersPerWing(Math.max(1, parseInt(e.target.value) || 1))}
+                      className="w-16 p-1.5 text-center text-xs font-bold border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500"
+                    />
+                    <span className="text-[10px] text-slate-500 font-bold">
+                      (= {teachersPerWing * floors.length} total)
+                    </span>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Discipline Duties */}
+            <div className="p-3 bg-white border border-slate-200 rounded-xl space-y-2">
+              <div className="flex items-center justify-between">
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={disciplineDutyEnabled}
+                    onChange={e => setDisciplineDutyEnabled(e.target.checked)}
+                    className="w-4 h-4 text-indigo-600 rounded border-slate-300 focus:ring-indigo-500"
+                  />
+                  <span className="text-xs font-bold text-slate-800">Discipline Duties</span>
+                </label>
+                <span className="text-[10px] font-semibold text-slate-500">Break & Dispersal Intervals</span>
+              </div>
+
+              {disciplineDutyEnabled && (
+                <div className="flex items-center justify-between pt-2 border-t border-slate-100">
+                  <div className="text-[11px] text-slate-600 font-medium">Teachers required per interval duty:</div>
+                  <input
+                    type="number"
+                    min={1}
+                    max={10}
+                    value={teachersPerDiscipline}
+                    onChange={e => setTeachersPerDiscipline(Math.max(1, parseInt(e.target.value) || 1))}
+                    className="w-16 p-1.5 text-center text-xs font-bold border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500"
+                  />
+                </div>
+              )}
+            </div>
+
+            {/* Enforce Department */}
+            <div className="pt-1">
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={enforceDeptOnly}
+                  onChange={e => setEnforceDeptOnly(e.target.checked)}
+                  className="w-4 h-4 text-indigo-600 rounded border-slate-300 focus:ring-indigo-500"
+                />
+                <span className="text-xs font-bold text-slate-700">
+                  Strictly assign only teachers belonging to this block's respected department(s)
+                </span>
+              </label>
+            </div>
+          </div>
+
+          {/* Preset Rules Box */}
+          <div className="p-3 bg-indigo-50/70 border border-indigo-200/80 rounded-xl space-y-1">
+            <div className="text-[10px] font-black uppercase tracking-wider text-indigo-900">
+              ⚡ Preset Auto-Assignment Rules (Applied on Save):
+            </div>
+            <ul className="text-[11px] text-indigo-900 space-y-0.5 list-disc pl-4 font-medium">
+              <li>Assigned to <span className="font-bold">respected block department teachers</span> with priority scoring.</li>
+              <li>Requires verified <span className="font-bold">check-in attendance</span> (no checked-out staff).</li>
+              <li>Prioritizes teachers with a <span className="font-bold">free period immediately before the break</span> (+15 bonus).</li>
+              <li>Prevents overlapping timetable classes, substitutions, and concurrent duties.</li>
+              <li>Maintains balanced weekly duty rotation across faculty members.</li>
+            </ul>
+          </div>
+
+          {/* Actions */}
+          <div className="flex justify-end gap-2 pt-2 border-t border-slate-100">
+            <button
+              type="button"
+              onClick={onClose}
+              className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold"
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              disabled={saving || (!wingDutyEnabled && !disciplineDutyEnabled)}
+              onClick={handleSaveAndAssign}
+              className="px-5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold transition-all shadow-md shadow-indigo-200 disabled:opacity-50 flex items-center gap-2"
+            >
+              {saving ? <><Spinner size="sm" /> Auto-Assigning...</> : 'Save & Auto-Assign Staff'}
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // Block Create/Edit Modal
 // ─────────────────────────────────────────────────────────────────────────────
 const BLOCK_COLORS = ['#4F46E5','#0EA5E9','#10B981','#F59E0B','#EF4444','#8B5CF6','#EC4899','#14B8A6']
@@ -1672,8 +2033,9 @@ function SearchPanel() {
 // Main Page
 // ─────────────────────────────────────────────────────────────────────────────
 export default function CampusStructureBuilder({ readOnly = false }) {
-  const { isAdmin, isSystemAdmin } = useAuth()
-  const canEdit = !readOnly && (isAdmin || isSystemAdmin)
+  const { user, isAdmin, isSystemAdmin, isPrincipal } = useAuth()
+  const canEdit = !readOnly && (isAdmin || isSystemAdmin || isPrincipal)
+  const canManageDuties = isPrincipal || isSystemAdmin || user?.role === 'principal' || user?.role === 'system_admin' || (user?.role === 'admin' && (!user?.admin_level || user?.admin_level === 'super_admin'))
 
   const [activeTab, setActiveTab] = useState('tree')
   const [tree, setTree] = useState(null)
@@ -1684,6 +2046,7 @@ export default function CampusStructureBuilder({ readOnly = false }) {
   // Modals
   const [wizardOpen, setWizardOpen] = useState(false)
   const [blockModal, setBlockModal] = useState(null) // null | block | 'new'
+  const [dutyModal, setDutyModal] = useState(null) // null | block
   const [floorModal, setFloorModal] = useState(null) // null | block
   const [generateModal, setGenerateModal] = useState(null) // null | block
   const [bulkDeptModal, setBulkDeptModal] = useState(null) // null | { target, type: 'floor' | 'block' }
@@ -1914,6 +2277,8 @@ export default function CampusStructureBuilder({ readOnly = false }) {
                   key={block.id}
                   block={block}
                   readOnly={!canEdit}
+                  canManageDuties={canManageDuties}
+                  onConfigureDuties={b => setDutyModal(b)}
                   onEdit={b => setBlockModal(b)}
                   onDelete={b => setDeleteConfirm(b)}
                   onDuplicate={handleDuplicate}
@@ -1949,6 +2314,22 @@ export default function CampusStructureBuilder({ readOnly = false }) {
           <BlockModal
             block={blockModal === 'new' ? null : blockModal}
             onClose={() => setBlockModal(null)}
+            onSuccess={fetchData}
+          />
+        )}
+      </Modal>
+
+      {/* Block Duties Configuration & Auto-Assignment Modal (Principal & System Admin Only) */}
+      <Modal
+        isOpen={dutyModal !== null}
+        onClose={() => setDutyModal(null)}
+        title={`🛡️ Block Duty Assignment & Auto-Scheduling — ${dutyModal?.name || ''}`}
+        maxWidth="max-w-3xl"
+      >
+        {dutyModal && (
+          <BlockDutyConfigModal
+            block={dutyModal}
+            onClose={() => setDutyModal(null)}
             onSuccess={fetchData}
           />
         )}

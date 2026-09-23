@@ -261,14 +261,19 @@ def list_slots(
     tenant_department_id: int | None = None,
 ) -> list[TimetableSlot]:
     dept = tenant_department_id or department_id
-    q = db.query(TimetableSlot)
+    q = db.query(TimetableSlot).options(
+        joinedload(TimetableSlot.subject),
+        joinedload(TimetableSlot.class_),
+        joinedload(TimetableSlot.room),
+        joinedload(TimetableSlot.teacher),
+    )
     if class_id is not None:
         q = q.filter(TimetableSlot.class_id == class_id)
     if teacher_id is not None:
         q = q.filter(TimetableSlot.teacher_id == teacher_id)
     if day_order is not None:
         q = q.filter(TimetableSlot.day_order == day_order)
-    if dept is not None:
+    if dept is not None and class_id is None:
         q = q.join(User, TimetableSlot.teacher_id == User.id).filter(User.department_id == dept)
     return q.order_by(TimetableSlot.day_order, TimetableSlot.period_number).all()
 

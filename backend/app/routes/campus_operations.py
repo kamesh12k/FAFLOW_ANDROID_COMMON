@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 from datetime import date, timedelta
 
 from app.database import get_db
-from app.core.dependencies import require_admin, require_super_admin, require_teacher, get_current_user, get_tenant_department_id
+from app.core.dependencies import require_admin, require_super_admin, require_teacher, get_current_user, get_tenant_department_id, require_admin_or_principal
 from app.models.user import User, Role
 from app.models.department import Department
 from app.models.leave import LeaveRequest, LeaveStatus, AlterAssignment, AssignmentType
@@ -59,12 +59,21 @@ def get_mode(
 @router.put("/mode", response_model=CampusOperationsModeOut)
 def set_mode(
     data: CampusOperationsModeSet,
-    admin: User = Depends(require_admin),
+    admin: User = Depends(require_admin_or_principal),
     db: Session = Depends(get_db),
     tenant_department_id: int | None = Depends(get_tenant_department_id),
 ):
-    """Switching modes or overriding them system-wide."""
+    """Switching modes or overriding them system-wide.
+    Only the Principal and System Admin have rights to change the campus mode.
+    When changed, it applies campus-wide so everyone has the same mode."""
     is_sys_admin = admin.is_system_admin
+    is_principal = admin.role == Role.principal
+
+    if not (is_sys_admin or is_principal):
+        raise HTTPException(
+            status_code=403,
+            detail="Only the Principal and System Admin have rights to change the campus mode"
+        )
     
     if data.global_override is not None:
         if not is_sys_admin:
@@ -72,12 +81,13 @@ def set_mode(
         substitution_service.set_global_override(db, data.global_override, admin)
         
     if data.mode is not None:
-        substitution_service.set_mode(db, data.mode, admin, tenant_department_id)
+        # Principal and System Admin set the mode globally for all departments and users
+        substitution_service.set_mode(db, data.mode, admin, tenant_department_id=None)
         
     db.commit()
     
-    effective_mode = substitution_service.get_mode(db, tenant_department_id)
-    configured_mode = substitution_service.get_configured_mode(db, tenant_department_id)
+    effective_mode = substitution_service.get_mode(db, tenant_department_id=None)
+    configured_mode = substitution_service.get_configured_mode(db, tenant_department_id=None)
     global_override = substitution_service.get_global_override(db)
     is_overridden = global_override in substitution_service.VALID_MODES
     
@@ -110,15 +120,14 @@ def update_my_preferences(
 @router.get("/preferences/{teacher_id}", response_model=SubstitutionPreferenceOut)
 def get_teacher_preferences(
     teacher_id: int,
-    _admin: User = Depends(require_admin),
+    _admin: User = Depends(require_admin_or_principal),
     db: Session = Depends(get_db),
     tenant_department_id: int | None = Depends(get_tenant_department_id),
 ):
-    """Admin view of any teacher's preferences — read-only; a teacher's
-    own preferences belong to them, admins can see but not edit them
-    here. Disabling/adjusting a teacher's auto-assignment eligibility as
-    an admin action goes through the Teachers screen, not this endpoint."""
-    if tenant_department_id is not None:
+    """Admin or Principal view of any teacher's preferences — read-only; a teacher's
+    own preferences belong to them, admins/principals can see but not edit them
+    here."""
+    if _admin.role not in (Role.system_admin, Role.principal) and tenant_department_id is not None:
         teacher = db.query(User).filter(User.id == teacher_id).first()
         if not teacher or teacher.department_id != tenant_department_id:
             raise HTTPException(status_code=403, detail="Access denied: teacher belongs to another department")

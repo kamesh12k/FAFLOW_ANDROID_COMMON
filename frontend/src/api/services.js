@@ -403,6 +403,7 @@ export const campusStructureApi = {
   bulkAssign: (data) => api.post('/campus-structure/rooms/bulk-assign', data),
   bulkAssignFloorDepartment: (floorId, data) => api.post(`/campus-structure/floors/${floorId}/bulk-assign-department`, data),
   bulkAssignBlockDepartment: (blockId, data) => api.post(`/campus-structure/blocks/${blockId}/bulk-assign-department`, data),
+  configureBlockDuties: (blockId, data) => api.post(`/campus-structure/blocks/${blockId}/duties/configure-and-assign`, data),
 
   // Export / Import
   exportCsv: () => api.get('/campus-structure/export', { responseType: 'blob' }),
@@ -426,8 +427,10 @@ export const campusDutiesApi = {
   generateDiscipline: (data) => api.post('/campus-duties/generate-discipline', data),
   generateWingDuties: (data) => api.post('/campus-duties/generate-wing-duties', data),
   generateExamDuties: (data) => api.post('/campus-duties/generate-exam-duties', data),
-  // Autonomous 6-day-order schedule generation
+  // Autonomous 6-day-order schedule generation & governance toggle
   autonomousActivate: (data) => api.post('/campus-duties/autonomous-activate', data),
+  getNext6DayOrders: (params) => api.get('/campus-duties/next-6-day-orders', { params }),
+  toggleAutonomousSchedule: (data) => api.post('/campus-duties/autonomous-toggle', data),
   getCandidates: (dutyId) => api.get(`/campus-duties/${dutyId}/candidates`),
   autoAssign: (dutyId) => api.post(`/campus-duties/${dutyId}/auto-assign`),
   autoAssignAll: (data) => api.post('/campus-duties/auto-assign-all', data),

@@ -167,6 +167,8 @@ class StudentImportService:
                 created_students += 1
             else:
                 student.class_id = cls.id
+                if cls.department_id:
+                    student.department_id = cls.department_id
                 student.is_active = True
                 if name:
                     student.name = name
@@ -205,10 +207,18 @@ class StudentImportService:
 
         db.commit()
 
+        total_enrolled = created_enrollments + updated_enrollments
+        msg_parts = [f"Successfully enrolled {total_enrolled} students into {cls.name} - {cls.section}."]
+        if created_students > 0:
+            msg_parts.append(f"{created_students} new student profile(s) created.")
+        if updated_enrollments > 0:
+            msg_parts.append(f"{updated_enrollments} existing student profile(s) linked.")
+
         return BulkStudentImportResultOut(
             created_students=created_students,
             created_enrollments=created_enrollments,
             updated_enrollments=updated_enrollments,
+            total_enrolled=total_enrolled,
             skipped_count=skipped,
-            message=f"Successfully imported {created_students} new students and updated {created_enrollments + updated_enrollments} enrollments."
+            message=" ".join(msg_parts)
         )

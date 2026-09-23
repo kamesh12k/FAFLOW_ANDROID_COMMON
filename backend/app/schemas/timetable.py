@@ -63,6 +63,7 @@ class TimetableSlotOut(BaseModel):
     class_name: str | None = None
     class_section: str | None = None
     room_number: str | None = None
+    teacher_name: str | None = None
 
     model_config = {"from_attributes": False}
 
@@ -82,6 +83,7 @@ class TimetableSlotOut(BaseModel):
             class_name=slot.class_.name if slot.class_ else None,
             class_section=slot.class_.section if slot.class_ else None,
             room_number=slot.room.room_number if slot.room else None,
+            teacher_name=slot.teacher.name if slot.teacher else None,
         )
 
 

@@ -191,3 +191,4 @@ class PublicGovernanceConfigOut(BaseModel):
     student_attendance_submission_window_minutes: int
     periods_per_day: int
     day_order_max: int
+    leave_same_day_apply_cutoff_time: str = "09:00"
