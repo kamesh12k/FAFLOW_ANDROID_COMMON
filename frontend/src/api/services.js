@@ -242,6 +242,8 @@ export const policyEnforcementApi = {
 
 export const leavePoliciesApi = {
   getActive: () => api.get('/leave-policies/active'),
+  getById: (id) => api.get(`/leave-policies/${id}`),
+  update: (id, data) => api.put(`/leave-policies/${id}`, data),
   validate: (data) => api.post('/leaves/validate', data),
 }
 

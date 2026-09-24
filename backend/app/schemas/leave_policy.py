@@ -17,8 +17,23 @@ class LeavePolicyOut(BaseModel):
     document_required: bool = False
     is_on_duty: bool = False
     is_active: bool = True
+    advisory_allowed: Optional[str] = "ADVISORY"
 
     model_config = {"from_attributes": True}
+
+
+class LeavePolicyUpdate(BaseModel):
+    name: Optional[str] = None
+    description: Optional[str] = None
+    entitlement: Optional[float] = None
+    period: Optional[str] = None
+    monthly_limit: Optional[float] = None
+    semester_limit: Optional[float] = None
+    approval_required: Optional[bool] = None
+    document_required: Optional[bool] = None
+    is_on_duty: Optional[bool] = None
+    is_active: Optional[bool] = None
+    advisory_allowed: Optional[str] = None
 
 
 class TeacherPolicyBalanceOut(BaseModel):

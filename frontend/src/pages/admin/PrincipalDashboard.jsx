@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 import { BRAND_CONFIG } from '../../config/branding'
-import { campusDutiesApi, roomsApi, policyEnforcementApi } from '../../api/services'
+import { campusDutiesApi, roomsApi, policyEnforcementApi, leavePoliciesApi } from '../../api/services'
 import api from '../../api/client'
 import { Spinner, Card, StatCard, Table, Badge } from '../../components/ui'
 import { UsersIcon } from '../../components/icons'
@@ -663,6 +663,56 @@ function PolicyEnforcementSection() {
   const [error, setError] = useState('')
   const [successMsg, setSuccessMsg] = useState('')
 
+  // Individual policy editing
+  const [editingPolicy, setEditingPolicy] = useState(null)
+  const [editFormData, setEditFormData] = useState({
+    name: '',
+    advisory_allowed: 'ADVISORY',
+    entitlement: '',
+    monthly_limit: '',
+    document_required: false,
+    description: '',
+  })
+  const [savingPolicy, setSavingPolicy] = useState(false)
+
+  const openEditPolicy = (pol) => {
+    setEditingPolicy(pol)
+    setEditFormData({
+      name: pol.policy_name || '',
+      advisory_allowed: pol.advisory_allowed || 'ADVISORY',
+      entitlement: pol.entitlement !== undefined && pol.entitlement !== null ? pol.entitlement : 12,
+      monthly_limit: pol.monthly_limit !== undefined && pol.monthly_limit !== null ? pol.monthly_limit : '',
+      document_required: !!pol.document_required,
+      description: pol.description || '',
+    })
+  }
+
+  const handleSavePolicy = async (e) => {
+    if (e) e.preventDefault()
+    if (!editingPolicy) return
+    setSavingPolicy(true)
+    setError('')
+    setSuccessMsg('')
+    try {
+      const payload = {
+        name: editFormData.name,
+        advisory_allowed: editFormData.advisory_allowed,
+        entitlement: parseFloat(editFormData.entitlement) || 0,
+        monthly_limit: editFormData.monthly_limit === '' || editFormData.monthly_limit === null ? null : parseFloat(editFormData.monthly_limit),
+        document_required: editFormData.document_required,
+        description: editFormData.description,
+      }
+      await leavePoliciesApi.update(editingPolicy.policy_id, payload)
+      setEditingPolicy(null)
+      setSuccessMsg(`Leave policy "${editFormData.name}" updated successfully.`)
+      loadData()
+    } catch (err) {
+      setError(err.response?.data?.detail || 'Failed to update leave policy')
+    } finally {
+      setSavingPolicy(false)
+    }
+  }
+
   const loadData = useCallback(() => {
     setLoading(true)
     setError('')
@@ -910,6 +960,154 @@ function PolicyEnforcementSection() {
         </div>
       )}
 
+      {/* Edit Policy Configuration Modal */}
+      {editingPolicy && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl border border-slate-200 space-y-4">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center font-bold text-lg border border-indigo-100">
+                  ⚙️
+                </div>
+                <div>
+                  <h3 className="text-base font-black text-slate-900">
+                    Edit Leave Policy: {editingPolicy.policy_name}
+                  </h3>
+                  <p className="text-xs text-slate-500 font-semibold">Code: {editingPolicy.policy_code}</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setEditingPolicy(null)}
+                className="text-slate-400 hover:text-slate-600 text-lg font-bold p-1"
+              >
+                ✕
+              </button>
+            </div>
+
+            <form onSubmit={handleSavePolicy} className="space-y-4">
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1">
+                  Policy Name
+                </label>
+                <input
+                  type="text"
+                  value={editFormData.name}
+                  onChange={(e) => setEditFormData({ ...editFormData, name: e.target.value })}
+                  required
+                  className="w-full text-xs p-2.5 border border-slate-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1">
+                  Enforcement Rule Mode
+                </label>
+                <select
+                  value={editFormData.advisory_allowed}
+                  onChange={(e) => setEditFormData({ ...editFormData, advisory_allowed: e.target.value })}
+                  className="w-full text-xs p-2.5 border border-slate-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:outline-none bg-white font-medium"
+                >
+                  <option value="ADVISORY">
+                    Dynamic (Follows Campus Gate: Currently {isStrict ? 'Strict' : 'Advisory'})
+                  </option>
+                  <option value="STRICT">
+                    Strict Enforcement (Always Block Violations)
+                  </option>
+                  <option value="INFORMATIONAL">
+                    Informational Only (Never Block Submission)
+                  </option>
+                </select>
+                <p className="text-[11px] text-slate-500 mt-1">
+                  {editFormData.advisory_allowed === 'ADVISORY' &&
+                    'Honors the campus-wide master switch. When gate is Strict, it blocks. When gate is Advisory, it allows with warnings.'}
+                  {editFormData.advisory_allowed === 'STRICT' &&
+                    'Always strictly blocks any request exceeding entitlement or monthly limits, regardless of the campus switch.'}
+                  {editFormData.advisory_allowed === 'INFORMATIONAL' &&
+                    'Leaves are never blocked for this category; faculty and HOD are merely notified.'}
+                </p>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">
+                    Annual Entitlement (Days)
+                  </label>
+                  <input
+                    type="number"
+                    step="0.5"
+                    min="0"
+                    value={editFormData.entitlement}
+                    onChange={(e) => setEditFormData({ ...editFormData, entitlement: e.target.value })}
+                    required
+                    className="w-full text-xs p-2.5 border border-slate-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">
+                    Monthly Limit (Days / Mo)
+                  </label>
+                  <input
+                    type="number"
+                    step="0.5"
+                    min="0"
+                    placeholder="Unlimited"
+                    value={editFormData.monthly_limit}
+                    onChange={(e) => setEditFormData({ ...editFormData, monthly_limit: e.target.value })}
+                    className="w-full text-xs p-2.5 border border-slate-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+                  />
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2 p-3 bg-slate-50 rounded-xl border border-slate-200">
+                <input
+                  type="checkbox"
+                  id="docRequired"
+                  checked={editFormData.document_required}
+                  onChange={(e) => setEditFormData({ ...editFormData, document_required: e.target.checked })}
+                  className="w-4 h-4 text-indigo-600 rounded focus:ring-indigo-500"
+                />
+                <label htmlFor="docRequired" className="text-xs font-bold text-slate-700 cursor-pointer">
+                  Require supporting document (e.g. medical proof)
+                </label>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1">
+                  Description / Guidance
+                </label>
+                <textarea
+                  rows={2}
+                  value={editFormData.description}
+                  onChange={(e) => setEditFormData({ ...editFormData, description: e.target.value })}
+                  placeholder="Optional notes or eligibility criteria..."
+                  className="w-full text-xs p-2.5 border border-slate-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+                />
+              </div>
+
+              <div className="flex justify-end gap-3 pt-3 border-t border-slate-100">
+                <button
+                  type="button"
+                  onClick={() => setEditingPolicy(null)}
+                  disabled={savingPolicy}
+                  className="px-4 py-2 text-xs font-bold text-slate-600 hover:bg-slate-100 rounded-xl"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={savingPolicy}
+                  className="px-5 py-2 text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl shadow-md transition-colors"
+                >
+                  {savingPolicy ? 'Saving...' : 'Save Policy Changes'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
       {/* Audit Trail & Policy Breakdown */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
@@ -918,23 +1116,62 @@ function PolicyEnforcementSection() {
             <span className="text-xs text-slate-400 font-semibold">{report?.policy_breakdown?.length || 0} Policies</span>
           </h3>
           <div className="space-y-3">
-            {(report?.policy_breakdown || []).map((pol) => (
-              <div key={pol.policy_id} className="p-3.5 bg-slate-50 rounded-xl border border-slate-200/80 flex items-center justify-between gap-4">
-                <div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs font-black text-slate-800">{pol.policy_name}</span>
-                    <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-slate-200 text-slate-700">{pol.policy_code}</span>
+            {(report?.policy_breakdown || []).map((pol) => {
+              const isDynamic = pol.advisory_allowed === 'ADVISORY'
+              const isStrictRule = pol.advisory_allowed === 'STRICT'
+              const isInformational = pol.advisory_allowed === 'INFORMATIONAL'
+
+              return (
+                <div key={pol.policy_id} className="p-3.5 bg-slate-50 hover:bg-slate-100/70 transition-colors rounded-xl border border-slate-200/80 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                  <div className="space-y-1 flex-1">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="text-xs font-black text-slate-800">{pol.policy_name}</span>
+                      <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-slate-200 text-slate-700">{pol.policy_code}</span>
+                      {isStrictRule && (
+                        <span className="text-[10px] font-extrabold px-2 py-0.5 rounded bg-rose-100 text-rose-700 border border-rose-200">
+                          Strict (Always Blocks)
+                        </span>
+                      )}
+                      {isInformational && (
+                        <span className="text-[10px] font-extrabold px-2 py-0.5 rounded bg-blue-100 text-blue-700 border border-blue-200">
+                          Informational Only
+                        </span>
+                      )}
+                      {isDynamic && (
+                        <span className={`text-[10px] font-extrabold px-2 py-0.5 rounded border ${
+                          isStrict
+                            ? 'bg-amber-100 text-amber-800 border-amber-200'
+                            : 'bg-emerald-100 text-emerald-800 border-emerald-200'
+                        }`}>
+                          Dynamic ({isStrict ? 'Strict Gate Active' : 'Advisory Gate Active'})
+                        </span>
+                      )}
+                    </div>
+                    <div className="flex flex-wrap items-center gap-x-2.5 text-[11px] text-slate-500">
+                      <span>Entitlement: <strong className="text-slate-700">{pol.entitlement ?? '12'} d</strong></span>
+                      <span>·</span>
+                      <span>Monthly: <strong className="text-slate-700">{pol.monthly_limit ? `${pol.monthly_limit} d/mo` : 'No limit'}</strong></span>
+                      <span>·</span>
+                      <span>Doc: <strong className="text-slate-700">{pol.document_required ? 'Required' : 'Optional'}</strong></span>
+                    </div>
                   </div>
-                  <span className="text-[11px] text-slate-500 mt-0.5 block">
-                    Rule mode: <strong className="text-slate-700">{pol.advisory_allowed}</strong>
-                  </span>
+                  <div className="flex items-center justify-between sm:justify-end gap-3 pt-2 sm:pt-0 border-t sm:border-t-0 border-slate-200">
+                    <div className="text-left sm:text-right">
+                      <div className="text-xs font-black text-slate-800">{pol.month_total} requests</div>
+                      <div className="text-[10px] text-amber-600 font-semibold">{pol.month_violations} with warning · {pol.month_exceptions} exceptions</div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => openEditPolicy(pol)}
+                      className="px-2.5 py-1 text-xs font-bold text-indigo-600 hover:text-indigo-800 bg-white hover:bg-indigo-50 border border-indigo-200 rounded-lg transition-colors flex items-center gap-1 shadow-sm shrink-0"
+                      title={`Configure ${pol.policy_name}`}
+                    >
+                      ✏️ Edit
+                    </button>
+                  </div>
                 </div>
-                <div className="text-right">
-                  <div className="text-xs font-black text-slate-800">{pol.month_total} requests</div>
-                  <div className="text-[10px] text-amber-600 font-semibold">{pol.month_violations} with warning · {pol.month_exceptions} exceptions</div>
-                </div>
-              </div>
-            ))}
+              )
+            })}
           </div>
         </div>
 

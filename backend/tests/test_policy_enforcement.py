@@ -218,3 +218,54 @@ def test_leave_submission_enforcement_flow(client, auth_headers_teacher, auth_he
     assert leave_data["policy_enforcement_mode"] == "ADVISORY"
     assert leave_data["policy_warning_acknowledged"] is True
 
+
+def test_edit_leave_policy_endpoint(client, db_session, auth_headers_principal, auth_headers_teacher):
+    # Create test policy
+    policy = LeavePolicy(
+        code="EDIT_TEST",
+        name="Editable Policy",
+        entitlement=10.0,
+        monthly_limit=2.0,
+        document_required=False,
+        advisory_allowed="ADVISORY",
+        period="YEAR",
+        is_active=True,
+    )
+    db_session.add(policy)
+    db_session.commit()
+    db_session.refresh(policy)
+
+    # 1. Teachers cannot edit policy (403 Forbidden)
+    res_teacher = client.put(
+        f"/api/leave-policies/{policy.id}",
+        headers=auth_headers_teacher,
+        json={"advisory_allowed": "STRICT", "entitlement": 15.0},
+    )
+    assert res_teacher.status_code == 403
+
+    # 2. Principal can edit policy
+    res_principal = client.put(
+        f"/api/leave-policies/{policy.id}",
+        headers=auth_headers_principal,
+        json={
+            "advisory_allowed": "STRICT",
+            "entitlement": 14.0,
+            "monthly_limit": 1.5,
+            "document_required": True,
+            "description": "Updated by Principal",
+        },
+    )
+    assert res_principal.status_code == 200
+    updated = res_principal.json()
+    assert updated["advisory_allowed"] == "STRICT"
+    assert updated["entitlement"] == 14.0
+    assert updated["monthly_limit"] == 1.5
+    assert updated["document_required"] is True
+    assert updated["description"] == "Updated by Principal"
+
+    # 3. Verify GET returns updated data
+    res_get = client.get(f"/api/leave-policies/{policy.id}", headers=auth_headers_principal)
+    assert res_get.status_code == 200
+    assert res_get.json()["advisory_allowed"] == "STRICT"
+
+

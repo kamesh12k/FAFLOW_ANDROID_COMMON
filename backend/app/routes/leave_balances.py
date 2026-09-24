@@ -12,8 +12,11 @@ from app.core.dependencies import (
     get_tenant_department_id,
 )
 from app.models.user import User, Role
+from app.models.leave_policy import LeavePolicy
+from app.services.admin_service import log_audit_event
 from app.schemas.leave_policy import (
     LeavePolicyOut,
+    LeavePolicyUpdate,
     TeacherPolicyBalanceOut,
     LeaveValidationRequest,
     LeaveValidationOut,
@@ -38,6 +41,62 @@ def get_active_policies(
 ):
     """Returns all active institutional leave policies (AL, IL, ML, WL, VL, OOD)."""
     return leave_policy_service.get_active_policies(db)
+
+
+@router.get("/leave-policies/{policy_id}", response_model=LeavePolicyOut)
+def get_policy_detail(
+    policy_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """Returns details for a specific leave policy."""
+    policy = db.query(LeavePolicy).filter(LeavePolicy.id == policy_id).first()
+    if not policy:
+        raise HTTPException(status_code=404, detail="Leave policy not found.")
+    return policy
+
+
+@router.put("/leave-policies/{policy_id}", response_model=LeavePolicyOut)
+def update_leave_policy(
+    policy_id: int,
+    payload: LeavePolicyUpdate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_principal_or_system_admin),
+):
+    """
+    Updates leave policy configuration (entitlement, monthly limits, advisory_allowed mode, doc required).
+    Restricted to Principal and System Admin.
+    """
+    policy = db.query(LeavePolicy).filter(LeavePolicy.id == policy_id).first()
+    if not policy:
+        raise HTTPException(status_code=404, detail="Leave policy not found.")
+
+    update_data = payload.model_dump(exclude_unset=True)
+    if "advisory_allowed" in update_data and update_data["advisory_allowed"]:
+        mode_val = update_data["advisory_allowed"].strip().upper()
+        if mode_val not in ("ADVISORY", "STRICT", "INFORMATIONAL"):
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="advisory_allowed must be one of: 'ADVISORY', 'STRICT', or 'INFORMATIONAL'",
+            )
+        update_data["advisory_allowed"] = mode_val
+
+    for field, val in update_data.items():
+        setattr(policy, field, val)
+
+    db.commit()
+    db.refresh(policy)
+
+    log_audit_event(
+        db,
+        current_user.id,
+        "leave_policy.updated",
+        "leave_policy",
+        policy.id,
+        {"code": policy.code, "updated_fields": list(update_data.keys()), "values": update_data},
+    )
+
+    return policy
 
 
 # ── Teacher Leave Balances (Self) ──────────────────────────────────────────
