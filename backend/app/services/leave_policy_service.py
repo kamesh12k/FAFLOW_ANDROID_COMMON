@@ -400,19 +400,48 @@ def validate_leave_application(
     warnings = [v["message"] for v in eval_res["violations"] if v["severity"] != "BLOCK"]
     block_reason = next((v["message"] for v in eval_res["violations"] if v["severity"] == "BLOCK"), None)
 
+    bal_remaining = float(eval_res["balance"]["remaining"]) if eval_res.get("balance") else 0.0
+    proj_remaining = float(eval_res.get("projected_balance", 0.0))
+    monthly_exceeded = any(v.get("rule_code") == "MONTHLY_LIMIT_EXCEEDED" for v in eval_res["violations"])
+    doc_required = bool(policy.document_required) if policy else False
+
+    android_violations = []
+    for v in eval_res["violations"]:
+        android_violations.append({
+            "policy_id": policy.id if policy else None,
+            "policy_code": policy.code if policy else None,
+            "policy_name": policy.name if policy else None,
+            "violation_type": v.get("rule_code", ""),
+            "message": v.get("message", ""),
+            "advisory_allowed": eval_res.get("mode") == "ADVISORY" or v.get("severity") != "BLOCK",
+        })
+
+    primary_msg = block_reason if not eval_res["can_submit"] else (warnings[0] if warnings else f"{policy.name if policy else 'Policy'} validated successfully")
+
     return LeaveValidationOut(
+        allowed=eval_res["can_submit"],
+        message=primary_msg,
+        policy_code=policy.code if policy else "",
+        policy_name=policy.name if policy else "",
+        remaining_before=bal_remaining,
+        projected_remaining=proj_remaining,
+        monthly_limit_reached=monthly_exceeded,
+        requires_document=doc_required,
+        enforcement_mode=eval_res.get("mode", "STRICT"),
+        requires_warning=eval_res.get("requires_warning", False),
+        violations=android_violations,
         leave_policy=eval_res["leave_policy"],
         balance=eval_res["balance"],
         request=eval_res["request"],
-        projected_balance=eval_res["projected_balance"],
+        projected_balance=proj_remaining,
         monthly_policy=eval_res["monthly_policy"],
         semester_policy={
             "limit": policy.semester_limit,
-        } if policy.semester_limit else None,
+        } if policy and policy.semester_limit else None,
         policy={
-            "approval_required": policy.approval_required,
-            "document_required": policy.document_required,
-            "is_on_duty": policy.is_on_duty,
+            "approval_required": policy.approval_required if policy else True,
+            "document_required": doc_required,
+            "is_on_duty": policy.is_on_duty if policy else False,
         },
         validation={
             "allowed": eval_res["can_submit"],

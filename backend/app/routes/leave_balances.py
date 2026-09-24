@@ -35,6 +35,7 @@ router = APIRouter(tags=["Leave Policies & Balances"])
 # ── Active Leave Policies ──────────────────────────────────────────────────
 
 @router.get("/leave-policies/active", response_model=List[LeavePolicyOut])
+@router.get("/leave-balances/policies", response_model=List[LeavePolicyOut])
 def get_active_policies(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
@@ -148,6 +149,7 @@ def get_my_policy_balance(
 # ── Leave Pre-Submission Dynamic Validator ─────────────────────────────────
 
 @router.post("/leaves/validate", response_model=LeaveValidationOut)
+@router.post("/leave-balances/validate", response_model=LeaveValidationOut)
 def validate_leave_pre_submission(
     payload: LeaveValidationRequest,
     db: Session = Depends(get_db),
@@ -158,10 +160,11 @@ def validate_leave_pre_submission(
     Evaluates requested duration against leave entitlement, monthly limits, and document rules.
     Does NOT deduct any balance.
     """
+    target_date = getattr(payload, "target_date", None) or payload.date
     return leave_policy_service.validate_leave_application(
         db=db,
         teacher_id=current_user.id,
-        target_date=payload.target_date,
+        target_date=target_date,
         policy_id=payload.policy_id,
         policy_code=payload.policy_code,
         whole_day=payload.whole_day,

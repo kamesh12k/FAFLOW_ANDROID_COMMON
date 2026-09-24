@@ -60,17 +60,33 @@ class LeaveValidationRequest(BaseModel):
     date: date
     whole_day: bool = False
     period_numbers: Optional[List[int]] = None
+    days: Optional[float] = 1.0
+    consecutive_days: Optional[int] = 1
 
 
 class LeaveValidationOut(BaseModel):
-    leave_policy: Dict[str, Any]
-    balance: Dict[str, Any]
-    request: Dict[str, Any]
-    projected_balance: float
-    monthly_policy: Dict[str, Any]
+    # Top-level attributes for Android DTO compatibility
+    allowed: bool = True
+    message: Optional[str] = None
+    policy_code: str = ""
+    policy_name: str = ""
+    remaining_before: float = 0.0
+    projected_remaining: float = 0.0
+    monthly_limit_reached: bool = False
+    requires_document: bool = False
+    enforcement_mode: str = "STRICT"
+    requires_warning: bool = False
+    violations: List[Dict[str, Any]] = []
+
+    # Nested structures for Web UI compatibility
+    leave_policy: Dict[str, Any] = {}
+    balance: Dict[str, Any] = {}
+    request: Dict[str, Any] = {}
+    projected_balance: float = 0.0
+    monthly_policy: Dict[str, Any] = {}
     semester_policy: Optional[Dict[str, Any]] = None
-    policy: Dict[str, Any]
-    validation: Dict[str, Any]
+    policy: Dict[str, Any] = {}
+    validation: Dict[str, Any] = {}
 
 
 class LeaveBalanceTransactionOut(BaseModel):
