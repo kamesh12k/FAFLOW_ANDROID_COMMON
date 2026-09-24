@@ -34,7 +34,7 @@ from app.routes import (
     campus_operations, teacher_substitution, substitutions, principal, manager, staff,
     backup, governance, data_retention, geofences, attendance, system_control,
     student_attendance, intelligence, class_roll_rules, announcements, policy,
-    campus_duties, campus_structure, governance_rules,
+    campus_duties, campus_structure, governance_rules, leave_balances, policy_enforcement,
 )
 from app.services.admin_service import bootstrap_default_super_admin
 from app.services.governance_service import bootstrap_governance_user
@@ -255,6 +255,37 @@ def sync_table_constraints_and_columns():
                                 WHERE table_schema = 'public' AND table_name = 'users' AND column_name = 'onboarding_completed'
                             ) THEN
                                 ALTER TABLE users ADD COLUMN onboarding_completed BOOLEAN NOT NULL DEFAULT FALSE;
+                            END IF;
+                        END IF;
+
+                        -- Leave requests columns for Leave Policies
+                        IF EXISTS (
+                            SELECT 1 FROM information_schema.tables 
+                            WHERE table_schema = 'public' AND table_name = 'leave_requests'
+                        ) THEN
+                            IF NOT EXISTS (
+                                SELECT 1 FROM information_schema.columns
+                                WHERE table_schema = 'public' AND table_name = 'leave_requests' AND column_name = 'leave_policy_id'
+                            ) THEN
+                                ALTER TABLE leave_requests ADD COLUMN leave_policy_id INTEGER REFERENCES leave_policies(id) ON DELETE SET NULL;
+                            END IF;
+                            IF NOT EXISTS (
+                                SELECT 1 FROM information_schema.columns
+                                WHERE table_schema = 'public' AND table_name = 'leave_requests' AND column_name = 'consumed_at'
+                            ) THEN
+                                ALTER TABLE leave_requests ADD COLUMN consumed_at TIMESTAMP WITH TIME ZONE;
+                            END IF;
+                            IF NOT EXISTS (
+                                SELECT 1 FROM information_schema.columns
+                                WHERE table_schema = 'public' AND table_name = 'leave_requests' AND column_name = 'document_url'
+                            ) THEN
+                                ALTER TABLE leave_requests ADD COLUMN document_url TEXT;
+                            END IF;
+                            IF NOT EXISTS (
+                                SELECT 1 FROM information_schema.columns
+                                WHERE table_schema = 'public' AND table_name = 'leave_requests' AND column_name = 'ood_details'
+                            ) THEN
+                                ALTER TABLE leave_requests ADD COLUMN ood_details JSONB;
                             END IF;
                         END IF;
                     END $$;
@@ -545,6 +576,8 @@ ROUTERS = [
     policy.router,
     campus_duties.router,
     campus_structure.router,
+    leave_balances.router,
+    policy_enforcement.router,
 ]
 
 for r in ROUTERS:

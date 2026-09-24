@@ -64,5 +64,9 @@ DEFAULT_SYSTEM_SETTINGS = {
     "intelligence_min_sample_sessions": "3",
     "intelligence_student_shortage_threshold": "75",
     "intelligence_late_submission_minutes": "15",
+    # Leave Policy Enforcement Mode: "STRICT" = violations block submission;
+    # "ADVISORY" = violations produce warnings and HOD review, never a block.
+    # Controlled only by Principal / System Admin via /policy-settings/enforcement-mode.
+    "policy_enforcement_mode": "STRICT",
 }
 

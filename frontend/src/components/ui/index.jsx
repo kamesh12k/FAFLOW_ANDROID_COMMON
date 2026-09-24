@@ -15,13 +15,18 @@ export function StatusBadge({ status }) {
   const styles = {
     pending: 'bg-amber-50 text-amber-700 border-amber-200/60',
     approved: 'bg-emerald-50 text-emerald-700 border-emerald-200/60',
+    approved_with_exception: 'bg-amber-50 text-amber-800 border-amber-300 font-bold',
     rejected: 'bg-red-50 text-red-700 border-red-200/60',
     cancelled: 'bg-slate-50 text-slate-600 border-slate-200/60',
   }
+  const labels = {
+    approved_with_exception: 'Approved w/ Exception',
+  }
   const cls = styles[status] || 'bg-gray-50 text-gray-700 border-gray-200'
+  const text = labels[status] || (status ? (status.charAt(0).toUpperCase() + status.slice(1).replace(/_/g, ' ')) : '')
   return (
     <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold border ${cls}`}>
-      {status.charAt(0).toUpperCase() + status.slice(1)}
+      {text}
     </span>
   )
 }

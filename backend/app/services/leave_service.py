@@ -9,7 +9,8 @@ from app.models.timetable import TimetableSlot
 from app.models.user import User, Role
 from app.schemas.leave import LeaveCreate, LeaveBatchCreate, FreeTeacherOut, CancelImpactOut, AdminLeaveCreate
 from app.services.credit_service import apply_credit_change
-from app.services import day_order_service, notification_service, substitution_service
+from app.services import day_order_service, notification_service, substitution_service, leave_policy_service
+from app.services.leave_consumption_service import reverse_consumed_leave
 from app.services.admin_service import log_audit_event
 
 from app.services.system_setting_service import get_setting
@@ -112,6 +113,29 @@ def submit_leave(teacher_id: int, data: LeaveCreate, db: Session) -> LeaveReques
             raise HTTPException(status_code=404, detail="Proposed substitute teacher not found or inactive")
         proposed_sub_name = proposed_sub_teacher.name
 
+    # Institutional Leave Policy evaluation (Strict blocks vs Advisory warnings)
+    eval_res = leave_policy_service.evaluate_leave_policy(
+        db=db,
+        teacher_id=teacher_id,
+        target_date=data.date,
+        policy_id=getattr(data, "leave_policy_id", None),
+        policy_code=getattr(data, "leave_type", None),
+        whole_day=False,
+        period_numbers=[data.period_number],
+    )
+    if not eval_res["can_submit"]:
+        block_msg = next((v["message"] for v in eval_res["violations"] if v["severity"] == "BLOCK"), "Leave request violates institutional leave policy.")
+        raise HTTPException(
+            status_code=422,
+            detail=block_msg,
+        )
+    if eval_res["requires_warning"] and not getattr(data, "policy_warning_acknowledged", False):
+        raise HTTPException(
+            status_code=422,
+            detail="Policy warning acknowledgement is required before submitting.",
+        )
+    leave_policy_id = eval_res["leave_policy"].get("id") if eval_res["leave_policy"] else None
+
     leave = LeaveRequest(
         teacher_id=teacher_id,
         date=data.date,
@@ -120,6 +144,16 @@ def submit_leave(teacher_id: int, data: LeaveCreate, db: Session) -> LeaveReques
         reason=data.reason,
         status=status,
         proposed_substitute_id=proposed_sub_id,
+        leave_policy_id=leave_policy_id,
+        document_url=getattr(data, "document_url", None),
+        ood_details=getattr(data, "ood_details", None),
+        policy_compliant=eval_res["compliant"],
+        policy_violation=not eval_res["compliant"],
+        policy_enforcement_mode=eval_res["mode"],
+        policy_warning_acknowledged=bool(getattr(data, "policy_warning_acknowledged", False)),
+        policy_warning_acknowledged_at=datetime.now() if getattr(data, "policy_warning_acknowledged", False) else None,
+        policy_evaluation_snapshot=eval_res,
+        policy_version_id=leave_policy_id,
     )
     substitution_service.mark_emergency_if_applicable(db, leave)
     db.add(leave)
@@ -221,6 +255,29 @@ def submit_leave_batch(teacher_id: int, data: LeaveBatchCreate, db: Session) -> 
     logger.debug("submit_leave_batch: submitting %d period(s) %s for teacher_id=%s", len(periods), periods, teacher_id)
 
     try:
+        # Institutional Leave Policy evaluation (Strict blocks vs Advisory warnings)
+        eval_res = leave_policy_service.evaluate_leave_policy(
+            db=db,
+            teacher_id=teacher_id,
+            target_date=data.date,
+            policy_id=getattr(data, "leave_policy_id", None),
+            policy_code=getattr(data, "leave_type", None),
+            whole_day=data.whole_day,
+            period_numbers=periods,
+        )
+        if not eval_res["can_submit"]:
+            block_msg = next((v["message"] for v in eval_res["violations"] if v["severity"] == "BLOCK"), "Leave request violates institutional leave policy.")
+            raise HTTPException(
+                status_code=422,
+                detail=block_msg,
+            )
+        if eval_res["requires_warning"] and not getattr(data, "policy_warning_acknowledged", False):
+            raise HTTPException(
+                status_code=422,
+                detail="Policy warning acknowledgement is required before submitting.",
+            )
+        leave_policy_id = eval_res["leave_policy"].get("id") if eval_res["leave_policy"] else None
+
         batch_id = uuid.uuid4()
         leaves = []
         teacher = db.query(User).filter(User.id == teacher_id).first()
@@ -268,6 +325,16 @@ def submit_leave_batch(teacher_id: int, data: LeaveBatchCreate, db: Session) -> 
                 status=status,
                 batch_id=batch_id,
                 proposed_substitute_id=period_sub_id,
+                leave_policy_id=leave_policy_id,
+                document_url=getattr(data, "document_url", None),
+                ood_details=getattr(data, "ood_details", None),
+                policy_compliant=eval_res["compliant"],
+                policy_violation=not eval_res["compliant"],
+                policy_enforcement_mode=eval_res["mode"],
+                policy_warning_acknowledged=bool(getattr(data, "policy_warning_acknowledged", False)),
+                policy_warning_acknowledged_at=datetime.now() if getattr(data, "policy_warning_acknowledged", False) else None,
+                policy_evaluation_snapshot=eval_res,
+                policy_version_id=leave_policy_id,
             )
             substitution_service.mark_emergency_if_applicable(db, leave)
             db.add(leave)
@@ -492,6 +559,102 @@ def approve_leave(
     free_teachers = detect_free_teachers(
         leave.day_order, leave.period_number, leave.teacher_id, db,
         tenant_department_id=leave.teacher.department_id
+    )
+    return leave, free_teachers
+
+
+def approve_leave_with_exception(
+    leave_id: int,
+    db: Session,
+    hod_acknowledged: bool,
+    exception_reason: str,
+    tenant_department_id: int | None = None,
+    actor_id: int | None = None,
+) -> tuple[LeaveRequest, list[FreeTeacherOut]]:
+    """Approves a policy-violating leave request in Advisory mode with mandatory HOD acknowledgement & reason."""
+    if not hod_acknowledged:
+        raise HTTPException(
+            status_code=422,
+            detail="HOD policy exception acknowledgement is required.",
+        )
+    if not exception_reason or len(exception_reason.strip()) < 3:
+        raise HTTPException(
+            status_code=422,
+            detail="A non-empty exception reason must be provided (minimum 3 characters).",
+        )
+
+    leave = _get_leave_or_404(leave_id, db, tenant_department_id, for_update=True)
+
+    if leave.status != LeaveStatus.pending:
+        raise HTTPException(status_code=400, detail="Only pending requests can be approved with exception")
+
+    day_order_service.assert_working_day_or_400(db, leave.date)
+
+    now = datetime.now()
+    leave.status = LeaveStatus.approved_with_exception
+    leave.exception_reason = exception_reason.strip()
+    leave.exception_approved_by_id = actor_id
+    leave.exception_approved_at = now
+
+    if leave.proposed_substitute_id:
+        substitute = db.query(User).filter(
+            User.id == leave.proposed_substitute_id,
+            User.role == Role.teacher,
+            User.is_active == True,
+        ).first()
+        if not substitute:
+            raise HTTPException(
+                status_code=409,
+                detail=f"Period {leave.period_number}: Proposed substitute teacher not found or is no longer active",
+            )
+        if substitute.id == leave.teacher_id:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Period {leave.period_number}: A teacher cannot be their own substitute",
+            )
+        # Calculate compatibility score snapshot
+        subject, dept_name = substitution_service._subject_and_department_for_leave(db, leave)
+        scored_cand = substitution_service.score_candidate(db, substitute, leave, subject, dept_name)
+        comp_score = float(scored_cand.score) if scored_cand else None
+
+        substitution_service.create_assignment(
+            db=db,
+            leave=leave,
+            substitute=substitute,
+            assignment_type=AssignmentType.teacher_assigned,
+            score=comp_score,
+            actor_id=actor_id,
+        )
+        db.commit()
+        db.refresh(leave)
+    else:
+        db.commit()
+        db.refresh(leave)
+
+        substitution_service.auto_process_approved_leave(db, leave)
+        db.refresh(leave)
+
+    log_audit_event(
+        db,
+        actor_id,
+        "leave.approved_with_exception",
+        "leave_request",
+        leave.id,
+        {"exception_reason": exception_reason.strip()},
+    )
+
+    notification_service.create_notification(
+        db, leave.teacher_id,
+        title="Leave Approved with Policy Exception",
+        body=f"Your leave for {leave.date} (Day Order {leave.day_order}, period {leave.period_number}) was approved with an exception by HOD. Reason: {exception_reason.strip()}",
+        event_type="leave_approved",
+        related_leave_id=leave.id,
+    )
+    db.commit()
+
+    free_teachers = detect_free_teachers(
+        leave.day_order, leave.period_number, leave.teacher_id, db,
+        tenant_department_id=leave.teacher.department_id if leave.teacher else None
     )
     return leave, free_teachers
 
@@ -983,7 +1146,7 @@ def cancel_leave_by_teacher(
     if leave.teacher_id != teacher_id:
         raise HTTPException(status_code=403, detail="You can only cancel your own leave requests")
 
-    if leave.status in (LeaveStatus.rejected, LeaveStatus.cancelled):
+    if leave.status in (LeaveStatus.rejected, LeaveStatus.cancelled, LeaveStatus.expired):
         raise HTTPException(status_code=400, detail=f"Cannot cancel a leave that is already {leave.status.value}")
 
     if now is None:
@@ -999,6 +1162,10 @@ def cancel_leave_by_teacher(
             status_code=400,
             detail="Same-day leave cancellation is only available before 10:00 AM. Please contact an administrator.",
         )
+
+    # If the leave was already consumed, reverse the consumption in the dedicated leave balance ledger
+    if leave.status == LeaveStatus.consumed:
+        reverse_consumed_leave(db, leave, "Cancelled by teacher", actor_id=teacher_id)
 
     # Determine cancellation type for audit
     if leave.date > today:
@@ -1050,8 +1217,12 @@ def cancel_leave_by_admin(
     required for the audit trail."""
     leave = _get_leave_or_404(leave_id, db, tenant_department_id)
 
-    if leave.status in (LeaveStatus.rejected, LeaveStatus.cancelled):
+    if leave.status in (LeaveStatus.rejected, LeaveStatus.cancelled, LeaveStatus.expired):
         raise HTTPException(status_code=400, detail=f"Cannot cancel a leave that is already {leave.status.value}")
+
+    # If the leave was already consumed, reverse the consumption in the dedicated leave balance ledger
+    if leave.status == LeaveStatus.consumed:
+        reverse_consumed_leave(db, leave, reason, actor_id=admin.id)
 
     displaced_sub_id = _reverse_assignment_if_exists(leave, db)
 

@@ -1,5 +1,5 @@
 import { useEffect, useState, useMemo } from 'react'
-import { leavesApi, adminApi, departmentsApi } from '../../api/services'
+import { leavesApi, adminApi, departmentsApi, leaveBalancesApi } from '../../api/services'
 import { Spinner, StatusBadge, Modal, EmptyState, AssignmentTypeBadge } from '../../components/ui'
 import {
   SwapIcon,
@@ -166,11 +166,156 @@ export default function AdminLeaves() {
   const [dateFilter, setDateFilter] = useState('')
   const [toast, setToast] = useState(null) // { type: 'success'|'error', message, undo }
 
+  // Staff Leave Balances Tab State
+  const [activeView, setActiveView] = useState('queue') // 'queue' | 'balances'
+  const [balancesData, setBalancesData] = useState([])
+  const [loadingBalances, setLoadingBalances] = useState(false)
+  const [selectedDeptId, setSelectedDeptId] = useState('')
+  const [academicYear, setAcademicYear] = useState('2026-2027')
+  const [balanceSearch, setBalanceSearch] = useState('')
+  const [activePolicies, setActivePolicies] = useState([])
+  const [adjustModal, setAdjustModal] = useState(null) // { teacher, policy_id, days, reason, loading, error }
+  const [teacherLedgerModal, setTeacherLedgerModal] = useState(null) // { teacher, transactions, loading }
+  const [exceptionModal, setExceptionModal] = useState(null) // { group, reason, acknowledged, error, loading }
+
+  const openExceptionModal = (group) => {
+    setExceptionModal({
+      group,
+      reason: '',
+      acknowledged: false,
+      error: null,
+      loading: false,
+    })
+  }
+
+  const handleApproveWithException = async () => {
+    if (!exceptionModal || !exceptionModal.group) return
+    if (!exceptionModal.acknowledged) {
+      setExceptionModal(prev => ({ ...prev, error: 'You must acknowledge the policy exception before approving.' }))
+      return
+    }
+    if (!exceptionModal.reason || exceptionModal.reason.trim().length < 3) {
+      setExceptionModal(prev => ({ ...prev, error: 'A valid reason for the exception is required (minimum 3 characters).' }))
+      return
+    }
+
+    setExceptionModal(prev => ({ ...prev, loading: true, error: null }))
+    const group = exceptionModal.group
+    const pendingReqs = group.requests.filter(r => r.status === 'pending')
+
+    try {
+      const results = []
+      for (const req of pendingReqs) {
+        const res = await leavesApi.approveWithException(req.id, {
+          hod_acknowledged: true,
+          exception_reason: exceptionModal.reason.trim(),
+        })
+        results.push(res.data?.leave || res.data)
+      }
+      setExceptionModal(null)
+      const updatedList = await load()
+      setToast({
+        type: 'success',
+        message: `Approved leave with policy exception for ${group.teacher?.name || 'teacher'} (${group.date})`,
+      })
+
+      const unassigned = results.find(r => !r.alter_assignment)
+      if (unassigned) {
+        const freshGroup = groupLeaves(updatedList).find(g => g.key === group.key)
+        if (freshGroup) {
+          openSubModal(freshGroup, freshGroup.requests.find(r => r.id === unassigned.id))
+        }
+      }
+    } catch (err) {
+      setExceptionModal(prev => ({
+        ...prev,
+        loading: false,
+        error: err.response?.data?.detail || 'Failed to approve with exception.',
+      }))
+    }
+  }
+
   useEffect(() => {
     if (!toast) return
     const timer = setTimeout(() => setToast(null), 6000)
     return () => clearTimeout(timer)
   }, [toast])
+
+  const loadBalances = (deptId = selectedDeptId, ay = academicYear) => {
+    setLoadingBalances(true)
+    leaveBalancesApi.getDepartmentOverview(deptId ? Number(deptId) : undefined, ay)
+      .then(r => setBalancesData(r.data || []))
+      .catch(err => setToast({ type: 'error', message: err.response?.data?.detail || 'Failed to load staff leave balances.' }))
+      .finally(() => setLoadingBalances(false))
+  }
+
+  useEffect(() => {
+    leaveBalancesApi.getActivePolicies()
+      .then(r => setActivePolicies(r.data || []))
+      .catch(() => {})
+  }, [])
+
+  useEffect(() => {
+    if (activeView === 'balances') {
+      loadBalances(selectedDeptId, academicYear)
+    }
+  }, [activeView, selectedDeptId, academicYear])
+
+  const handleAdjustSubmit = async (e) => {
+    if (e && e.preventDefault) e.preventDefault()
+    if (!adjustModal || !adjustModal.teacher) return
+    if (!adjustModal.policy_id) {
+      setAdjustModal(prev => ({ ...prev, error: 'Please select a leave policy.' }))
+      return
+    }
+    const daysNum = parseFloat(adjustModal.days)
+    if (isNaN(daysNum) || daysNum === 0) {
+      setAdjustModal(prev => ({ ...prev, error: 'Please enter a valid non-zero adjustment (+/- days).' }))
+      return
+    }
+    if (!adjustModal.reason || !adjustModal.reason.trim()) {
+      setAdjustModal(prev => ({ ...prev, error: 'Reason is required for administrative audit trail.' }))
+      return
+    }
+    setAdjustModal(prev => ({ ...prev, loading: true, error: null }))
+    try {
+      await leaveBalancesApi.adjustBalance({
+        teacher_id: adjustModal.teacher.teacher_id,
+        policy_id: Number(adjustModal.policy_id),
+        days: daysNum,
+        reason: adjustModal.reason.trim(),
+        academic_year: academicYear,
+      })
+      setToast({ type: 'success', message: `Adjusted balance for ${adjustModal.teacher.teacher_name}.` })
+      setAdjustModal(null)
+      loadBalances(selectedDeptId, academicYear)
+    } catch (err) {
+      setAdjustModal(prev => ({ ...prev, loading: false, error: err.response?.data?.detail || 'Failed to adjust balance.' }))
+    }
+  }
+
+  const openTeacherLedger = (teacher) => {
+    setTeacherLedgerModal({ teacher, transactions: [], loading: true })
+    leaveBalancesApi.getTeacherLedger(teacher.teacher_id)
+      .then(r => setTeacherLedgerModal(prev => prev ? { ...prev, transactions: r.data || [], loading: false } : null))
+      .catch(() => {
+        setToast({ type: 'error', message: 'Failed to load teacher leave ledger.' })
+        setTeacherLedgerModal(null)
+      })
+  }
+
+  const filteredBalances = useMemo(() => {
+    let list = balancesData || []
+    if (balanceSearch.trim()) {
+      const q = balanceSearch.toLowerCase()
+      list = list.filter(t =>
+        t.teacher_name?.toLowerCase().includes(q) ||
+        t.department_name?.toLowerCase().includes(q) ||
+        t.email?.toLowerCase().includes(q)
+      )
+    }
+    return list
+  }, [balancesData, balanceSearch])
 
   const loadCandidates = async (request, filters = candidateFilters) => {
     const params = { include_cross_department: filters.crossDepartment, only_handles_class: filters.handlesClass }
@@ -196,7 +341,11 @@ export default function AdminLeaves() {
           day_order: l.day_order,
           is_emergency: false,
           status: l.status,
-          requests: []
+          requests: [],
+          policy_violation: false,
+          policy_evaluation_snapshot: null,
+          exception_reason: null,
+          policy_enforcement_mode: null,
         }
       }
       if (!map[key].requests.some(r => r.id === l.id)) {
@@ -204,6 +353,18 @@ export default function AdminLeaves() {
       }
       if (l.is_emergency) {
         map[key].is_emergency = true
+      }
+      if (l.policy_violation) {
+        map[key].policy_violation = true
+      }
+      if (l.policy_evaluation_snapshot) {
+        map[key].policy_evaluation_snapshot = l.policy_evaluation_snapshot
+      }
+      if (l.exception_reason) {
+        map[key].exception_reason = l.exception_reason
+      }
+      if (l.policy_enforcement_mode) {
+        map[key].policy_enforcement_mode = l.policy_enforcement_mode
       }
     })
 
@@ -228,8 +389,10 @@ export default function AdminLeaves() {
     return {
       all: allGroupedLeaves.length,
       pending: allGroupedLeaves.filter(g => g.status === 'pending').length,
-      needs_sub: allGroupedLeaves.filter(g => g.status === 'approved' && g.requests.some(r => !r.alter_assignment)).length,
-      approved: allGroupedLeaves.filter(g => g.status === 'approved').length,
+      needs_sub: allGroupedLeaves.filter(g => (g.status === 'approved' || g.status === 'approved_with_exception') && g.requests.some(r => !r.alter_assignment)).length,
+      policy_warning: allGroupedLeaves.filter(g => g.requests.some(r => r.policy_violation)).length,
+      exception_approved: allGroupedLeaves.filter(g => g.status === 'approved_with_exception').length,
+      approved: allGroupedLeaves.filter(g => g.status === 'approved' || g.status === 'approved_with_exception').length,
       rejected: allGroupedLeaves.filter(g => g.status === 'rejected' || g.status === 'cancelled').length,
     }
   }, [allGroupedLeaves])
@@ -240,9 +403,13 @@ export default function AdminLeaves() {
     if (filterTab === 'pending') {
       list = list.filter(g => g.status === 'pending')
     } else if (filterTab === 'needs_sub') {
-      list = list.filter(g => g.status === 'approved' && g.requests.some(r => !r.alter_assignment))
+      list = list.filter(g => (g.status === 'approved' || g.status === 'approved_with_exception') && g.requests.some(r => !r.alter_assignment))
+    } else if (filterTab === 'policy_warning') {
+      list = list.filter(g => g.requests.some(r => r.policy_violation))
+    } else if (filterTab === 'exception_approved') {
+      list = list.filter(g => g.status === 'approved_with_exception')
     } else if (filterTab === 'approved') {
-      list = list.filter(g => g.status === 'approved')
+      list = list.filter(g => g.status === 'approved' || g.status === 'approved_with_exception')
     } else if (filterTab === 'rejected') {
       list = list.filter(g => g.status === 'rejected' || g.status === 'cancelled')
     }
@@ -743,12 +910,281 @@ export default function AdminLeaves() {
         </div>
       )}
 
-      {/* Header with Title & Clear History */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-        <div>
-          <h1 className="text-xl font-black text-gray-900 tracking-tight">Leave Requests Queue</h1>
-          <p className="text-xs text-gray-500 mt-0.5">Approve or reject faculty leave requests and allocate classroom substitutes.</p>
+      {/* Top Level Nav Switcher: Queue vs Staff Balances */}
+      <div className="flex items-center justify-between border-b border-gray-200 pb-3">
+        <div className="flex items-center gap-2 p-1 bg-slate-100 rounded-xl">
+          <button
+            type="button"
+            onClick={() => setActiveView('queue')}
+            className={`px-4 py-2 rounded-lg text-xs font-bold transition cursor-pointer ${
+              activeView === 'queue'
+                ? 'bg-white text-slate-900 shadow-xs'
+                : 'text-slate-600 hover:text-slate-900'
+            }`}
+          >
+            Leave Requests Queue
+          </button>
+          <button
+            type="button"
+            onClick={() => setActiveView('balances')}
+            className={`px-4 py-2 rounded-lg text-xs font-bold transition flex items-center gap-1.5 cursor-pointer ${
+              activeView === 'balances'
+                ? 'bg-white text-slate-900 shadow-xs'
+                : 'text-slate-600 hover:text-slate-900'
+            }`}
+          >
+            <span>Staff Leave Balances</span>
+            <span className="text-[10px] bg-indigo-50 text-indigo-700 font-bold px-1.5 py-0.5 rounded border border-indigo-200">
+              Policies
+            </span>
+          </button>
         </div>
+      </div>
+
+      {activeView === 'balances' ? (
+        <div className="space-y-4">
+          {/* Header */}
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+            <div>
+              <h2 className="text-xl font-black text-gray-900 tracking-tight">Staff Leave Balances</h2>
+              <p className="text-xs text-gray-500 mt-0.5">
+                Monitor institutional leave entitlements, track consumption, and issue audited balance adjustments.
+              </p>
+            </div>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => loadBalances(selectedDeptId, academicYear)}
+                disabled={loadingBalances}
+                className="px-3 py-1.5 rounded-lg border border-slate-300 text-slate-700 bg-white hover:bg-slate-50 text-xs font-semibold shadow-xs flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+              >
+                <span>{loadingBalances ? 'Refreshing…' : '↻ Refresh'}</span>
+              </button>
+            </div>
+          </div>
+
+          {/* Filter Bar */}
+          <div className="card p-3 bg-white border border-gray-200 rounded-xl flex flex-col sm:flex-row items-center gap-2.5 shadow-xs">
+            <div className="relative flex-1 w-full">
+              <SearchIcon className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
+              <input
+                type="text"
+                value={balanceSearch}
+                onChange={e => setBalanceSearch(e.target.value)}
+                placeholder="Search staff by name, department, or email…"
+                className="input !py-1.5 pl-9 text-xs w-full"
+              />
+            </div>
+
+            {/* Department Filter */}
+            <select
+              value={selectedDeptId}
+              onChange={e => setSelectedDeptId(e.target.value)}
+              className="px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs font-semibold text-slate-700 focus:outline-none focus:border-primary-600 w-full sm:w-auto"
+            >
+              <option value="">All My Assigned Departments</option>
+              {allDepartments.map(d => (
+                <option key={d.id} value={d.id}>{d.name}</option>
+              ))}
+            </select>
+
+            {/* Academic Year Filter */}
+            <div className="flex items-center gap-1.5 w-full sm:w-auto">
+              <span className="text-[10px] font-bold uppercase text-slate-400">AY:</span>
+              <input
+                type="text"
+                value={academicYear}
+                onChange={e => setAcademicYear(e.target.value)}
+                placeholder="2026-2027"
+                className="input !py-1.5 text-xs w-28 font-mono font-bold"
+              />
+            </div>
+          </div>
+
+          {/* Quick Metrics Bar */}
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            <div className="p-3 bg-white rounded-xl border border-slate-200 shadow-xs">
+              <span className="text-[10px] uppercase font-bold text-slate-500 block">Staff Monitored</span>
+              <span className="text-xl font-black text-slate-900 mt-0.5 block">{filteredBalances.length}</span>
+              <span className="text-[10px] text-slate-400">Faculty members</span>
+            </div>
+            <div className="p-3 bg-white rounded-xl border border-slate-200 shadow-xs">
+              <span className="text-[10px] uppercase font-bold text-slate-500 block">Total Entitlement</span>
+              <span className="text-xl font-black text-slate-900 mt-0.5 block">
+                {filteredBalances.reduce((sum, t) => sum + (t.total_entitled || 0), 0)}d
+              </span>
+              <span className="text-[10px] text-slate-400">Allocated for AY {academicYear}</span>
+            </div>
+            <div className="p-3 bg-white rounded-xl border border-slate-200 shadow-xs">
+              <span className="text-[10px] uppercase font-bold text-slate-500 block">Consumed Leave</span>
+              <span className="text-xl font-black text-rose-700 mt-0.5 block">
+                {filteredBalances.reduce((sum, t) => sum + (t.total_consumed || 0), 0)}d
+              </span>
+              <span className="text-[10px] text-slate-400">Actually taken to date</span>
+            </div>
+            <div className="p-3 bg-white rounded-xl border border-slate-200 shadow-xs">
+              <span className="text-[10px] uppercase font-bold text-slate-500 block">Total Remaining</span>
+              <span className="text-xl font-black text-emerald-700 mt-0.5 block">
+                {filteredBalances.reduce((sum, t) => sum + (t.total_remaining || 0), 0)}d
+              </span>
+              <span className="text-[10px] text-slate-400">Available across staff</span>
+            </div>
+          </div>
+
+          {/* Balances Matrix Table */}
+          <div className="card overflow-hidden bg-white border border-gray-200 rounded-xl shadow-xs">
+            {loadingBalances ? (
+              <div className="flex justify-center py-16"><Spinner /></div>
+            ) : filteredBalances.length === 0 ? (
+              <div className="py-12">
+                <EmptyState message="No staff leave balances found for the selected criteria." />
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full text-left text-xs border-collapse">
+                  <thead className="bg-slate-50/90 text-slate-600 border-b border-slate-200 text-[10px] font-bold uppercase tracking-wider select-none">
+                    <tr>
+                      <th className="py-3 px-4">Faculty Member</th>
+                      <th className="py-3 px-2 text-center" title="Applied Leave (12/yr)">AL</th>
+                      <th className="py-3 px-2 text-center" title="Informed Leave (2/sem)">IL</th>
+                      <th className="py-3 px-2 text-center" title="Medical Leave (5/yr)">ML</th>
+                      <th className="py-3 px-2 text-center" title="Wedding Leave (5/event)">WL</th>
+                      <th className="py-3 px-2 text-center" title="Vacation Leave (10/yr)">VL</th>
+                      <th className="py-3 px-2 text-center" title="Official On Duty (10/yr)">OOD</th>
+                      <th className="py-3 px-3 text-right">Leave Remaining</th>
+                      <th className="py-3 px-3 text-center bg-indigo-50/50" title="Substitution Workload Credits">
+                        Workload Credits
+                      </th>
+                      <th className="py-3 px-4 text-right">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100">
+                    {filteredBalances.map(t => {
+                      const getBal = (code) => t.balances?.find(b => b.policy_code === code)
+                      const al = getBal('AL')
+                      const il = getBal('IL')
+                      const ml = getBal('ML')
+                      const wl = getBal('WL')
+                      const vl = getBal('VL')
+                      const ood = getBal('OOD')
+
+                      return (
+                        <tr key={t.teacher_id} className="hover:bg-slate-50/70 transition-colors">
+                          <td className="py-3 px-4 whitespace-nowrap">
+                            <span className="font-bold text-slate-900 block">{t.teacher_name}</span>
+                            <span className="text-[10px] text-slate-400">
+                              {t.department_name || 'Department Staff'} &middot; {t.email || ''}
+                            </span>
+                          </td>
+
+                          {/* AL */}
+                          <td className="py-3 px-2 text-center whitespace-nowrap">
+                            <span className={`font-mono font-bold ${al && al.remaining === 0 ? 'text-rose-600' : 'text-slate-800'}`}>
+                              {al ? al.remaining : '—'}
+                            </span>
+                            <span className="text-[9px] text-slate-400">/{al ? al.entitlement : '12'}</span>
+                          </td>
+
+                          {/* IL */}
+                          <td className="py-3 px-2 text-center whitespace-nowrap">
+                            <span className={`font-mono font-bold ${il && il.remaining === 0 ? 'text-rose-600' : 'text-slate-800'}`}>
+                              {il ? il.remaining : '—'}
+                            </span>
+                            <span className="text-[9px] text-slate-400">/{il ? il.entitlement : '2'}</span>
+                          </td>
+
+                          {/* ML */}
+                          <td className="py-3 px-2 text-center whitespace-nowrap">
+                            <span className={`font-mono font-bold ${ml && ml.remaining === 0 ? 'text-rose-600' : 'text-slate-800'}`}>
+                              {ml ? ml.remaining : '—'}
+                            </span>
+                            <span className="text-[9px] text-slate-400">/{ml ? ml.entitlement : '5'}</span>
+                          </td>
+
+                          {/* WL */}
+                          <td className="py-3 px-2 text-center whitespace-nowrap">
+                            <span className={`font-mono font-bold ${wl && wl.remaining === 0 ? 'text-rose-600' : 'text-slate-800'}`}>
+                              {wl ? wl.remaining : '—'}
+                            </span>
+                            <span className="text-[9px] text-slate-400">/{wl ? wl.entitlement : '5'}</span>
+                          </td>
+
+                          {/* VL */}
+                          <td className="py-3 px-2 text-center whitespace-nowrap">
+                            <span className={`font-mono font-bold ${vl && vl.remaining === 0 ? 'text-rose-600' : 'text-slate-800'}`}>
+                              {vl ? vl.remaining : '—'}
+                            </span>
+                            <span className="text-[9px] text-slate-400">/{vl ? vl.entitlement : '10'}</span>
+                          </td>
+
+                          {/* OOD */}
+                          <td className="py-3 px-2 text-center whitespace-nowrap">
+                            <span className={`font-mono font-bold ${ood && ood.remaining === 0 ? 'text-rose-600' : 'text-slate-800'}`}>
+                              {ood ? ood.remaining : '—'}
+                            </span>
+                            <span className="text-[9px] text-slate-400">/{ood ? ood.entitlement : '10'}</span>
+                          </td>
+
+                          {/* Total Balance */}
+                          <td className="py-3 px-3 text-right whitespace-nowrap">
+                            <span className="font-mono font-bold text-slate-900 text-sm">{t.total_remaining}d</span>
+                            <span className="text-[10px] text-slate-400 block font-semibold">of {t.total_entitled}d</span>
+                          </td>
+
+                          {/* Workload Substitution Credits */}
+                          <td className="py-3 px-3 text-center bg-indigo-50/30 whitespace-nowrap">
+                            <span className={`font-mono font-bold text-xs px-2 py-0.5 rounded ${
+                              t.substitution_credits > 0 ? 'text-emerald-700 bg-emerald-50 border border-emerald-200' :
+                              t.substitution_credits < 0 ? 'text-rose-700 bg-rose-50 border border-rose-200' :
+                              'text-slate-600 bg-slate-100'
+                            }`}>
+                              {t.substitution_credits > 0 ? `+${t.substitution_credits}` : t.substitution_credits} pts
+                            </span>
+                          </td>
+
+                          {/* Actions */}
+                          <td className="py-3 px-4 text-right whitespace-nowrap">
+                            <div className="flex items-center justify-end gap-1.5">
+                              <button
+                                type="button"
+                                onClick={() => openTeacherLedger(t)}
+                                className="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-semibold transition cursor-pointer"
+                              >
+                                Ledger
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => setAdjustModal({
+                                  teacher: t,
+                                  policy_id: activePolicies[0]?.id || 1,
+                                  days: '',
+                                  reason: '',
+                                  loading: false,
+                                  error: null
+                                })}
+                                className="px-2.5 py-1 bg-primary-50 hover:bg-primary-100 text-primary-700 border border-primary-200 rounded-lg text-xs font-bold transition cursor-pointer"
+                              >
+                                Adjust
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      )
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        </div>
+      ) : (
+        <>
+          {/* Header with Title & Clear History */}
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+            <div>
+              <h1 className="text-xl font-black text-gray-900 tracking-tight">Leave Requests Queue</h1>
+              <p className="text-xs text-gray-500 mt-0.5">Approve or reject faculty leave requests and allocate classroom substitutes.</p>
+            </div>
         <div className="flex items-center gap-2 flex-wrap">
           {selected.size === 0 && (
             <button
@@ -778,6 +1214,8 @@ export default function AdminLeaves() {
           { id: 'all', label: 'All Requests', count: counts.all },
           { id: 'pending', label: 'Pending Review', count: counts.pending, badgeColor: 'bg-amber-100 text-amber-800' },
           { id: 'needs_sub', label: 'Needs Substitute', count: counts.needs_sub, badgeColor: 'bg-rose-100 text-rose-800' },
+          { id: 'policy_warning', label: 'Policy Warnings', count: counts.policy_warning, badgeColor: 'bg-amber-100 text-amber-800' },
+          { id: 'exception_approved', label: 'Exceptions Approved', count: counts.exception_approved, badgeColor: 'bg-purple-100 text-purple-800' },
           { id: 'approved', label: 'Approved', count: counts.approved, badgeColor: 'bg-emerald-100 text-emerald-800' },
           { id: 'rejected', label: 'Rejected', count: counts.rejected, badgeColor: 'bg-gray-100 text-gray-700' },
         ].map(tab => {
@@ -871,7 +1309,7 @@ export default function AdminLeaves() {
               <tbody className="divide-y divide-slate-100">
                 {groupedLeavesList.map(group => {
                   const firstReq = group.requests[0]
-                  const approved = group.requests.filter(r => r.status === 'approved')
+                  const approved = group.requests.filter(r => r.status === 'approved' || r.status === 'approved_with_exception')
                   const covered = approved.filter(r => r.alter_assignment)
                   const subsNames = [...new Set(covered.map(r => r.alter_assignment.substitute?.name))].filter(Boolean)
                   const proposedSubs = [...new Set(group.requests.map(r => r.proposed_substitute?.name).filter(Boolean))]
@@ -886,7 +1324,20 @@ export default function AdminLeaves() {
                         )}
                       </td>
                       <td className="px-4 py-3 font-bold text-slate-900 truncate max-w-[180px] text-xs sm:text-sm">
-                        {group.teacher?.name}
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          <span>{group.teacher?.name}</span>
+                          {group.policy_violation && (
+                            <span
+                              title={
+                                group.policy_evaluation_snapshot?.violations?.map(v => v.message).join('; ') ||
+                                'Policy warning acknowledged by faculty under Advisory Mode'
+                              }
+                              className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-md bg-amber-100 text-amber-800 border border-amber-300"
+                            >
+                              ⚠️ Policy Warning
+                            </span>
+                          )}
+                        </div>
                       </td>
                       <td className="px-4 py-3 whitespace-nowrap">
                         <span className="font-bold text-slate-900 block text-xs">{group.date}</span>
@@ -897,6 +1348,18 @@ export default function AdminLeaves() {
                       </td>
                       <td className="px-4 py-3 whitespace-nowrap">
                         <StatusBadge status={group.status} />
+                        {group.status === 'approved_with_exception' && (
+                          <div className="mt-1">
+                            <span className="inline-block text-[10px] font-extrabold uppercase px-1.5 py-0.5 rounded bg-purple-100 text-purple-800 border border-purple-200">
+                              Approved with Exception
+                            </span>
+                            {group.exception_reason && (
+                              <p className="text-[10px] text-slate-500 max-w-[160px] truncate mt-0.5 font-medium" title={group.exception_reason}>
+                                Reason: {group.exception_reason}
+                              </p>
+                            )}
+                          </div>
+                        )}
                       </td>
                       <td className="px-4 py-3">
                         {approved.length > 0 ? (
@@ -932,13 +1395,24 @@ export default function AdminLeaves() {
                         <div className="flex items-center justify-end gap-1.5">
                           {group.status === 'pending' && (
                             <>
-                              <button
-                                onClick={() => handleApproveGroup(group)}
-                                disabled={!!actionLoading}
-                                className="text-xs px-2.5 py-1 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-lg transition disabled:opacity-50 cursor-pointer shadow-xs"
-                              >
-                                {actionLoading === group.key + '_approve' ? '…' : 'Approve'}
-                              </button>
+                              {group.policy_violation ? (
+                                <button
+                                  onClick={() => openExceptionModal(group)}
+                                  disabled={!!actionLoading}
+                                  className="text-xs px-2.5 py-1 bg-amber-600 hover:bg-amber-700 text-white font-bold rounded-lg transition disabled:opacity-50 cursor-pointer shadow-xs flex items-center gap-1"
+                                >
+                                  <span>⚠️</span>
+                                  <span>{actionLoading === group.key + '_approve' ? '…' : 'Approve with Exception'}</span>
+                                </button>
+                              ) : (
+                                <button
+                                  onClick={() => handleApproveGroup(group)}
+                                  disabled={!!actionLoading}
+                                  className="text-xs px-2.5 py-1 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-lg transition disabled:opacity-50 cursor-pointer shadow-xs"
+                                >
+                                  {actionLoading === group.key + '_approve' ? '…' : 'Approve'}
+                                </button>
+                              )}
                               <button
                                 onClick={() => handleRejectGroup(group)}
                                 disabled={!!actionLoading}
@@ -948,7 +1422,7 @@ export default function AdminLeaves() {
                               </button>
                             </>
                           )}
-                          {group.status === 'approved' && hasUnassigned && (
+                          {(group.status === 'approved' || group.status === 'approved_with_exception') && hasUnassigned && (
                             <button
                               onClick={() => openSubModal(group)}
                               className="text-xs px-2.5 py-1 bg-primary-600 hover:bg-primary-700 text-white font-semibold rounded-lg transition cursor-pointer shadow-xs"
@@ -956,7 +1430,7 @@ export default function AdminLeaves() {
                               Assign Sub
                             </button>
                           )}
-                          {group.status === 'approved' && !hasUnassigned && approved.length > 0 && (
+                          {(group.status === 'approved' || group.status === 'approved_with_exception') && !hasUnassigned && approved.length > 0 && (
                             <button
                               onClick={() => openSubModal(group)}
                               title="Swap substitute"
@@ -985,6 +1459,8 @@ export default function AdminLeaves() {
           </div>
         )}
       </div>
+    </>
+  )}
 
       {/* substitution modal with period selector */}
       <Modal
@@ -1496,6 +1972,249 @@ export default function AdminLeaves() {
           </div>
         </div>
       )}
+
+      {/* ── Admin Balance Adjustment Modal ── */}
+      <Modal
+        open={!!adjustModal}
+        onClose={() => setAdjustModal(null)}
+        title={adjustModal ? `Adjust Leave Balance: ${adjustModal.teacher?.teacher_name}` : 'Adjust Balance'}
+      >
+        {adjustModal && (
+          <form onSubmit={handleAdjustSubmit} className="space-y-4 text-xs sm:text-sm text-slate-700">
+            {adjustModal.error && (
+              <div className="p-3 bg-rose-50 border border-rose-200 text-rose-700 rounded-xl text-xs font-semibold">
+                {adjustModal.error}
+              </div>
+            )}
+
+            <div className="space-y-1">
+              <label className="font-bold text-slate-700 text-xs">Leave Policy</label>
+              <select
+                value={adjustModal.policy_id}
+                onChange={e => setAdjustModal(prev => ({ ...prev, policy_id: e.target.value }))}
+                className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs font-semibold text-slate-900 focus:outline-none focus:border-primary-600"
+              >
+                {activePolicies.map(p => (
+                  <option key={p.id} value={p.id}>{p.name} ({p.code}) — {p.entitlement_days}d/{p.entitlement_period === 'SEMESTER' ? 'sem' : 'yr'}</option>
+                ))}
+              </select>
+            </div>
+
+            <div className="space-y-1">
+              <label className="font-bold text-slate-700 text-xs">Days Adjustment (+ to add, - to deduct)</label>
+              <input
+                type="number"
+                step="0.5"
+                placeholder="e.g. 1.0 or -1.0"
+                value={adjustModal.days}
+                onChange={e => setAdjustModal(prev => ({ ...prev, days: e.target.value }))}
+                className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs font-semibold text-slate-900 focus:outline-none focus:border-primary-600"
+                required
+              />
+              <span className="text-[10px] text-slate-400 block">Positive adds leave entitlement; negative deducts entitlement.</span>
+            </div>
+
+            <div className="space-y-1">
+              <label className="font-bold text-slate-700 text-xs">Administrative Reason (Required for Audit Trail)</label>
+              <textarea
+                rows={2}
+                placeholder="Reason for balance modification (e.g. Compensatory credit granted by Principal)…"
+                value={adjustModal.reason}
+                onChange={e => setAdjustModal(prev => ({ ...prev, reason: e.target.value }))}
+                className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs font-semibold text-slate-900 focus:outline-none focus:border-primary-600"
+                required
+              />
+            </div>
+
+            <div className="flex justify-end gap-2 pt-2 border-t border-slate-100">
+              <button
+                type="button"
+                onClick={() => setAdjustModal(null)}
+                className="px-4 py-2 border border-slate-300 text-slate-700 rounded-lg text-xs font-semibold hover:bg-slate-50 cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                disabled={adjustModal.loading}
+                className="px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg text-xs font-bold disabled:opacity-50 cursor-pointer"
+              >
+                {adjustModal.loading ? 'Saving Adjustment…' : 'Confirm Balance Adjustment'}
+              </button>
+            </div>
+          </form>
+        )}
+      </Modal>
+
+      {/* ── Teacher Leave Ledger Modal ── */}
+      <Modal
+        open={!!teacherLedgerModal}
+        onClose={() => setTeacherLedgerModal(null)}
+        title={teacherLedgerModal ? `Leave Ledger: ${teacherLedgerModal.teacher?.teacher_name}` : 'Leave Ledger'}
+        size="lg"
+      >
+        {teacherLedgerModal && (
+          <div className="space-y-4">
+            <p className="text-xs text-slate-500">
+              Complete administrative ledger of leave allocations, consumptions, and reversals.
+            </p>
+
+            {teacherLedgerModal.loading ? (
+              <div className="py-12 text-center">
+                <Spinner size="md" />
+                <p className="text-xs text-slate-400 mt-2">Loading transactions…</p>
+              </div>
+            ) : teacherLedgerModal.transactions?.length === 0 ? (
+              <div className="p-8 text-center bg-slate-50 rounded-xl border border-slate-200 text-xs text-slate-500">
+                No leave transactions recorded for this teacher yet.
+              </div>
+            ) : (
+              <div className="overflow-x-auto border border-slate-200 rounded-xl">
+                <table className="w-full text-left text-xs border-collapse">
+                  <thead className="bg-slate-50 text-[10px] font-bold uppercase tracking-wider text-slate-500 border-b border-slate-200">
+                    <tr>
+                      <th className="py-2.5 px-3">Date</th>
+                      <th className="py-2.5 px-3">Policy</th>
+                      <th className="py-2.5 px-3">Type</th>
+                      <th className="py-2.5 px-3 text-right">Change</th>
+                      <th className="py-2.5 px-3 text-right">Balance</th>
+                      <th className="py-2.5 px-3">Reason</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100">
+                    {teacherLedgerModal.transactions?.map(tx => (
+                      <tr key={tx.id} className="hover:bg-slate-50/60">
+                        <td className="py-2 px-3 text-slate-600 whitespace-nowrap">
+                          {tx.created_at ? tx.created_at.split('T')[0] : '—'}
+                        </td>
+                        <td className="py-2 px-3 font-bold text-slate-900 whitespace-nowrap">
+                          <span className="font-mono text-[10px] bg-slate-100 px-1.5 py-0.5 rounded border border-slate-200">
+                            {tx.policy_code || 'AL'}
+                          </span>
+                        </td>
+                        <td className="py-2 px-3 whitespace-nowrap">
+                          <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                            tx.transaction_type === 'CONSUMED'
+                              ? 'bg-rose-50 text-rose-700 border border-rose-200'
+                              : tx.transaction_type === 'REVERSAL'
+                              ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                              : tx.transaction_type === 'OPENING_BALANCE'
+                              ? 'bg-blue-50 text-blue-700 border border-blue-200'
+                              : 'bg-slate-100 text-slate-700 border border-slate-200'
+                          }`}>
+                            {tx.transaction_type}
+                          </span>
+                        </td>
+                        <td className={`py-2 px-3 text-right font-mono font-bold whitespace-nowrap ${
+                          tx.days > 0 ? 'text-emerald-700' : 'text-rose-700'
+                        }`}>
+                          {tx.days > 0 ? `+${tx.days}` : tx.days}d
+                        </td>
+                        <td className="py-2 px-3 text-right font-mono font-semibold text-slate-700 whitespace-nowrap">
+                          {tx.balance_after}d
+                        </td>
+                        <td className="py-2 px-3 text-slate-600 max-w-xs truncate" title={tx.reason}>
+                          {tx.reason || '—'}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+
+            <div className="flex justify-end pt-2">
+              <button
+                type="button"
+                onClick={() => setTeacherLedgerModal(null)}
+                className="px-4 py-2 bg-slate-900 text-white rounded-lg text-xs font-semibold hover:bg-slate-800 cursor-pointer"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        )}
+      </Modal>
+
+      {/* Policy Exception Approval Modal */}
+      <Modal
+        open={!!exceptionModal}
+        onClose={() => setExceptionModal(null)}
+        title="Approve Leave with Policy Exception"
+        size="md"
+      >
+        {exceptionModal && (
+          <div className="space-y-4">
+            <div className="p-3.5 bg-amber-50 border border-amber-200 rounded-xl space-y-2">
+              <div className="flex items-center gap-2 text-amber-800 font-bold text-xs uppercase tracking-wider">
+                <AlertTriangleIcon className="w-4 h-4 text-amber-600" />
+                <span>Policy Violation Warning Notice</span>
+              </div>
+              <p className="text-xs text-amber-900 leading-relaxed">
+                This leave application for <strong>{exceptionModal.group.teacher?.name}</strong> on <strong>{exceptionModal.group.date}</strong> violates configured institutional leave policies.
+              </p>
+              {exceptionModal.group.policy_evaluation_snapshot?.violations?.length > 0 && (
+                <ul className="list-disc list-inside text-xs text-amber-800 font-medium space-y-1 pt-1 bg-white/70 p-2.5 rounded-lg border border-amber-200/60">
+                  {exceptionModal.group.policy_evaluation_snapshot.violations.map((v, i) => (
+                    <li key={i}>{v.message}</li>
+                  ))}
+                </ul>
+              )}
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="block text-xs font-bold text-slate-700 uppercase tracking-wide">
+                HOD Exception Justification <span className="text-rose-600">*</span>
+              </label>
+              <textarea
+                value={exceptionModal.reason}
+                onChange={e => setExceptionModal(prev => ({ ...prev, reason: e.target.value, error: null }))}
+                placeholder="Enter justification for overriding policy (e.g. Emergency family circumstance, special waiver granted by department)..."
+                rows={3}
+                className="w-full text-xs font-medium p-2.5 rounded-xl border border-slate-200 focus:outline-none focus:border-amber-500 bg-white"
+              />
+              <p className="text-[10px] text-slate-400">
+                This reason will be recorded in the audit trail alongside your approval credentials.
+              </p>
+            </div>
+
+            <label className="flex items-start gap-2.5 p-3 rounded-xl bg-slate-50 border border-slate-200 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={exceptionModal.acknowledged}
+                onChange={e => setExceptionModal(prev => ({ ...prev, acknowledged: e.target.checked, error: null }))}
+                className="mt-0.5 rounded border-slate-300 text-amber-600 focus:ring-amber-500"
+              />
+              <span className="text-xs font-semibold text-slate-700 leading-snug">
+                I acknowledge that this leave request violates institutional policy and approve it as an authorized departmental exception.
+              </span>
+            </label>
+
+            {exceptionModal.error && (
+              <p className="text-xs text-rose-600 font-bold">{exceptionModal.error}</p>
+            )}
+
+            <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-100">
+              <button
+                type="button"
+                onClick={() => setExceptionModal(null)}
+                disabled={exceptionModal.loading}
+                className="px-3.5 py-2 text-xs font-bold text-slate-600 hover:bg-slate-100 rounded-xl transition cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleApproveWithException}
+                disabled={exceptionModal.loading || !exceptionModal.acknowledged || !exceptionModal.reason.trim()}
+                className="px-4 py-2 text-xs font-bold text-white bg-amber-600 hover:bg-amber-700 disabled:opacity-40 rounded-xl transition shadow-xs cursor-pointer flex items-center gap-1.5"
+              >
+                {exceptionModal.loading ? 'Approving…' : 'Approve with Exception'}
+              </button>
+            </div>
+          </div>
+        )}
+      </Modal>
     </div>
   )
 }

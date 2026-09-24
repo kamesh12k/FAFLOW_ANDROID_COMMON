@@ -14,9 +14,10 @@ from app.schemas.leave import (
     AlterAssignmentCreate, AlterAssignmentOut, FreeTeacherOut,
     OverrideSubstituteRequest, LockAssignmentRequest,
     AdminCancelRequest, CancelImpactOut, AdminLeaveCreate,
+    ApproveWithExceptionRequest, LeavePolicyEvalRequest, PolicyEvaluationResult,
 )
 from app.schemas.substitution import RecommendationOut
-from app.services import leave_service, substitution_service
+from app.services import leave_service, substitution_service, leave_policy_service
 
 router = APIRouter(prefix="/leaves", tags=["Leaves"])
 logger = logging.getLogger(__name__)
@@ -74,6 +75,31 @@ def my_leaves(
     return leave_service.get_teacher_leaves(current_user.id, db)
 
 
+@router.post("/evaluate-policy", response_model=PolicyEvaluationResult)
+def evaluate_leave_policy_endpoint(
+    data: LeavePolicyEvalRequest,
+    current_user: User = Depends(require_teacher),
+    db: Session = Depends(get_db),
+):
+    """
+    Pre-submission policy evaluation endpoint.
+    Returns structured evaluation with compliant status, violations list,
+    mode (STRICT/ADVISORY), can_submit, and whether warning/HOD review is required.
+    Used by Web and Android clients before leave submission.
+    """
+    periods = data.period_numbers or ([data.period_number] if data.period_number else None)
+    result = leave_policy_service.evaluate_leave_policy(
+        db=db,
+        teacher_id=current_user.id,
+        target_date=data.date,
+        policy_id=data.policy_id,
+        policy_code=data.policy_code,
+        whole_day=data.whole_day,
+        period_numbers=periods,
+    )
+    return result
+
+
 @router.patch("/{leave_id}/approve")
 def approve_leave(
     leave_id: int,
@@ -82,6 +108,31 @@ def approve_leave(
     tenant_department_id: int | None = Depends(get_tenant_department_id),
 ):
     leave, free_teachers = leave_service.approve_leave(leave_id, db, tenant_department_id, actor_id=_admin.id)
+    return {
+        "leave": LeaveOut.model_validate(leave),
+        "free_teachers": free_teachers,
+    }
+
+
+@router.patch("/{leave_id}/approve-with-exception")
+def approve_leave_with_exception_endpoint(
+    leave_id: int,
+    data: ApproveWithExceptionRequest,
+    _admin: User = Depends(require_admin),
+    db: Session = Depends(get_db),
+    tenant_department_id: int | None = Depends(get_tenant_department_id),
+):
+    """
+    Approves a policy-violating leave request in Advisory mode with mandatory HOD acknowledgement & reason.
+    """
+    leave, free_teachers = leave_service.approve_leave_with_exception(
+        leave_id=leave_id,
+        db=db,
+        hod_acknowledged=data.hod_acknowledged,
+        exception_reason=data.exception_reason,
+        tenant_department_id=tenant_department_id,
+        actor_id=_admin.id,
+    )
     return {
         "leave": LeaveOut.model_validate(leave),
         "free_teachers": free_teachers,

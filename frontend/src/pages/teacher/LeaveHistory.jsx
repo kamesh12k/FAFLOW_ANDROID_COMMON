@@ -1,6 +1,6 @@
 import { useEffect, useState, useMemo } from 'react'
 import { Link } from 'react-router-dom'
-import { leavesApi } from '../../api/services'
+import { leavesApi, leaveBalancesApi } from '../../api/services'
 import { Spinner, StatusBadge, EmptyState, Modal } from '../../components/ui'
 import { PlusIcon, SearchIcon, FilterIcon, XCircleIcon, AlertTriangleIcon } from '../../components/icons'
 
@@ -33,6 +33,12 @@ export default function LeaveHistory() {
   const [actionLoading, setActionLoading] = useState(null)
   const [error, setError] = useState('')
 
+  // Leave Balances & Ledger Modal State
+  const [leaveBalancesSummary, setLeaveBalancesSummary] = useState(null)
+  const [leaveLedgerModal, setLeaveLedgerModal] = useState(false)
+  const [leaveLedger, setLeaveLedger] = useState([])
+  const [loadingLedger, setLoadingLedger] = useState(false)
+
   // Filters & search
   const [statusFilter, setStatusFilter] = useState('all')
   const [dayOrderFilter, setDayOrderFilter] = useState('all')
@@ -41,10 +47,25 @@ export default function LeaveHistory() {
 
   const load = () => {
     setLoading(true)
-    return leavesApi.myLeaves()
-      .then(r => setLeaves(r.data))
+    return Promise.all([
+      leavesApi.myLeaves().then(r => setLeaves(r.data)),
+      leaveBalancesApi.getMyBalances().then(r => setLeaveBalancesSummary(r.data)).catch(() => {}),
+    ])
       .catch(() => setError('Failed to load leave history.'))
       .finally(() => setLoading(false))
+  }
+
+  const openLeaveLedger = () => {
+    setLeaveLedgerModal(true)
+    setLoadingLedger(true)
+    if (leaveBalancesSummary?.teacher_id) {
+      leaveBalancesApi.getTeacherLedger(leaveBalancesSummary.teacher_id)
+        .then(r => setLeaveLedger(r.data || []))
+        .catch(err => console.error('Failed to load leave ledger:', err))
+        .finally(() => setLoadingLedger(false))
+    } else {
+      setLoadingLedger(false)
+    }
   }
 
   useEffect(() => { load() }, [])
@@ -91,6 +112,7 @@ export default function LeaveHistory() {
 
   const counts = useMemo(() => {
     const total = leaves.length
+    const consumed = leaves.filter(l => l.status === 'consumed').length
     const approved = leaves.filter(l => l.status === 'approved').length
     const pending = leaves.filter(l => l.status === 'pending').length
     const rejected = leaves.filter(l => l.status === 'rejected').length
@@ -98,6 +120,7 @@ export default function LeaveHistory() {
 
     // Unique days count
     const totalDays = new Set(leaves.map(l => l.date)).size
+    const consumedDays = new Set(leaves.filter(l => l.status === 'consumed').map(l => l.date)).size
     const approvedDays = new Set(leaves.filter(l => l.status === 'approved').map(l => l.date)).size
     const pendingDays = new Set(leaves.filter(l => l.status === 'pending').map(l => l.date)).size
     const rejectedDays = new Set(leaves.filter(l => l.status === 'rejected').map(l => l.date)).size
@@ -105,11 +128,13 @@ export default function LeaveHistory() {
 
     return {
       total,
+      consumed,
       approved,
       pending,
       rejected,
       cancelled,
       totalDays,
+      consumedDays,
       approvedDays,
       pendingDays,
       rejectedDays,
@@ -157,12 +182,16 @@ export default function LeaveHistory() {
           status: leave.status,
           reason: leave.reason,
           is_emergency: leave.is_emergency,
+          leave_policy: leave.leave_policy,
+          leave_type: leave.leave_type,
           leaves: [],
         })
       }
       const group = map.get(key)
       group.leaves.push(leave)
       if (leave.is_emergency) group.is_emergency = true
+      if (leave.leave_policy && !group.leave_policy) group.leave_policy = leave.leave_policy
+      if (leave.leave_type && !group.leave_type) group.leave_type = leave.leave_type
     }
     const list = Array.from(map.values()).map(group => {
       group.leaves.sort((a, b) => a.period_number - b.period_number)
@@ -204,12 +233,72 @@ export default function LeaveHistory() {
         </div>
       )}
 
+      {/* ── Institutional Leave Balances Banner ── */}
+      {leaveBalancesSummary && (
+        <div className="bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 text-white rounded-2xl p-4 sm:p-5 shadow-sm border border-slate-800">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-white/10">
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                <h2 className="text-xs font-bold uppercase tracking-wider text-slate-200">
+                  Institutional Leave Balances
+                </h2>
+                <span className="text-[10px] text-slate-400 font-mono">
+                  AY {leaveBalancesSummary.academic_year || '2026-2027'}
+                </span>
+              </div>
+              <p className="text-[11px] text-slate-400 mt-0.5">
+                Balances deduct <strong className="text-white">only upon consumption</strong> on the scheduled leave date. Independent of substitution credits.
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={openLeaveLedger}
+              className="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/10 hover:bg-white/20 text-white text-xs font-bold border border-white/10 transition self-start sm:self-auto cursor-pointer"
+            >
+              <span>View Balance Ledger</span>
+              <span>→</span>
+            </button>
+          </div>
+
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-2 mt-3">
+            {(leaveBalancesSummary.balances || []).map(b => (
+              <div
+                key={b.code}
+                className="bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl p-2.5 transition"
+              >
+                <div className="flex items-center justify-between">
+                  <span className="text-[11px] font-bold text-slate-200 truncate" title={b.name}>
+                    {b.code}
+                  </span>
+                  <span className="text-[9px] font-mono text-slate-400 uppercase">
+                    {b.period === 'SEMESTER' ? 'Sem' : 'Yr'}
+                  </span>
+                </div>
+                <div className="mt-1 flex items-baseline justify-between">
+                  <span className="text-lg font-black text-white font-mono">
+                    {b.remaining}
+                  </span>
+                  <span className="text-[10px] text-slate-400">
+                    / {b.entitlement}d
+                  </span>
+                </div>
+                <span className="text-[9px] text-slate-400 truncate block mt-0.5" title={b.name}>
+                  {b.name}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* ── Status Summary Counter Bar (Enterprise Tabs) ── */}
-      <div className="grid grid-cols-2 sm:grid-cols-5 gap-2.5">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2.5">
         {[
           { key: 'all', label: 'All Requests', count: counts.total, daysCount: counts.totalDays, color: 'text-slate-900', border: 'hover:border-slate-300' },
           { key: 'pending', label: 'Pending', count: counts.pending, daysCount: counts.pendingDays, color: 'text-amber-700', border: 'hover:border-amber-300' },
           { key: 'approved', label: 'Approved', count: counts.approved, daysCount: counts.approvedDays, color: 'text-emerald-700', border: 'hover:border-emerald-300' },
+          { key: 'consumed', label: 'Consumed', count: counts.consumed, daysCount: counts.consumedDays, color: 'text-indigo-700', border: 'hover:border-indigo-300' },
           { key: 'rejected', label: 'Rejected', count: counts.rejected, daysCount: counts.rejectedDays, color: 'text-rose-700', border: 'hover:border-rose-300' },
           { key: 'cancelled', label: 'Cancelled', count: counts.cancelled, daysCount: counts.cancelledDays, color: 'text-slate-600', border: 'hover:border-slate-300' },
         ].map(item => {
@@ -219,7 +308,7 @@ export default function LeaveHistory() {
               key={item.key}
               type="button"
               onClick={() => setStatusFilter(item.key)}
-              className={`p-3 rounded-xl border text-left transition flex flex-col justify-between ${
+              className={`p-3 rounded-xl border text-left transition flex flex-col justify-between cursor-pointer ${
                 isActive
                   ? 'bg-slate-900 border-slate-900 text-white shadow-xs'
                   : `bg-white border-slate-200 text-slate-700 ${item.border}`
@@ -419,7 +508,31 @@ export default function LeaveHistory() {
                         </td>
 
                         <td className="px-3 py-3.5 whitespace-nowrap">
-                          <StatusBadge status={dayGroup.status} />
+                          <div className="flex flex-col gap-1">
+                            <StatusBadge status={dayGroup.status} />
+                            {(dayGroup.leave_policy || dayGroup.leave_type) && (
+                              <span className="inline-block text-[10px] font-bold text-slate-700 bg-slate-100 border border-slate-200 px-1.5 py-0.5 rounded max-w-fit">
+                                {dayGroup.leave_policy ? `${dayGroup.leave_policy.name} (${dayGroup.leave_policy.code})` : dayGroup.leave_type.toUpperCase()}
+                              </span>
+                            )}
+                            {dayGroup.status === 'consumed' ? (
+                              <span className="inline-block text-[10px] font-bold text-rose-700 bg-rose-50 border border-rose-200 px-1.5 py-0.5 rounded max-w-fit">
+                                -{dayGroup.leaves.length} per deducted
+                              </span>
+                            ) : dayGroup.status === 'approved' ? (
+                              <span className="inline-block text-[10px] font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200 px-1.5 py-0.5 rounded max-w-fit">
+                                Deducts on date
+                              </span>
+                            ) : dayGroup.status === 'pending' ? (
+                              <span className="inline-block text-[10px] text-amber-700 bg-amber-50 border border-amber-200 px-1.5 py-0.5 rounded max-w-fit">
+                                Pending approval
+                              </span>
+                            ) : (
+                              <span className="inline-block text-[10px] text-slate-400 max-w-fit">
+                                No balance change
+                              </span>
+                            )}
+                          </div>
                         </td>
 
                         <td className="px-4 py-3.5 text-right whitespace-nowrap">
@@ -485,7 +598,19 @@ export default function LeaveHistory() {
                           Applied {new Date(dayGroup.created_at).toLocaleDateString()}
                         </span>
                       </div>
-                      <StatusBadge status={dayGroup.status} />
+                      <div className="flex flex-col items-end gap-1">
+                        <StatusBadge status={dayGroup.status} />
+                        {(dayGroup.leave_policy || dayGroup.leave_type) && (
+                          <span className="text-[10px] font-bold text-slate-700 bg-slate-100 border border-slate-200 px-1.5 py-0.5 rounded">
+                            {dayGroup.leave_policy ? dayGroup.leave_policy.code : dayGroup.leave_type.toUpperCase()}
+                          </span>
+                        )}
+                        {dayGroup.status === 'consumed' && (
+                          <span className="text-[9px] font-bold text-rose-700 bg-rose-50 border border-rose-200 px-1.5 py-0.2 rounded">
+                            -{dayGroup.leaves.length} per deducted
+                          </span>
+                        )}
+                      </div>
                     </div>
 
                     <div className="flex flex-wrap items-center gap-1.5">
@@ -824,6 +949,94 @@ export default function LeaveHistory() {
             </div>
           )
         })()}
+      </Modal>
+
+      {/* ── Leave Balance Ledger Audit Modal ── */}
+      <Modal
+        open={leaveLedgerModal}
+        onClose={() => setLeaveLedgerModal(false)}
+        title="Institutional Leave Balance Ledger"
+        size="lg"
+      >
+        <div className="space-y-4">
+          <p className="text-xs text-slate-500">
+            Complete, immutable audit trail of institutional leave allocations, consumptions, and reversals for academic year {leaveBalancesSummary?.academic_year || '2026-2027'}.
+          </p>
+
+          {loadingLedger ? (
+            <div className="py-12 text-center">
+              <Spinner size="md" />
+              <p className="text-xs text-slate-400 mt-2">Loading leave ledger transactions…</p>
+            </div>
+          ) : leaveLedger.length === 0 ? (
+            <div className="p-8 text-center bg-slate-50 rounded-xl border border-slate-200 text-xs text-slate-500">
+              No leave balance transactions recorded yet.
+            </div>
+          ) : (
+            <div className="overflow-x-auto border border-slate-200 rounded-xl">
+              <table className="w-full text-left text-xs border-collapse">
+                <thead className="bg-slate-50 text-[10px] font-bold uppercase tracking-wider text-slate-500 border-b border-slate-200">
+                  <tr>
+                    <th className="py-2.5 px-3">Date</th>
+                    <th className="py-2.5 px-3">Policy</th>
+                    <th className="py-2.5 px-3">Type</th>
+                    <th className="py-2.5 px-3 text-right">Change</th>
+                    <th className="py-2.5 px-3 text-right">Balance</th>
+                    <th className="py-2.5 px-3">Reason</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {leaveLedger.map(tx => (
+                    <tr key={tx.id} className="hover:bg-slate-50/60">
+                      <td className="py-2 px-3 text-slate-600 whitespace-nowrap">
+                        {tx.created_at ? tx.created_at.split('T')[0] : '—'}
+                      </td>
+                      <td className="py-2 px-3 font-bold text-slate-900 whitespace-nowrap">
+                        <span className="font-mono text-[10px] bg-slate-100 px-1.5 py-0.5 rounded border border-slate-200">
+                          {tx.policy_code || 'AL'}
+                        </span>
+                      </td>
+                      <td className="py-2 px-3 whitespace-nowrap">
+                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                          tx.transaction_type === 'CONSUMED'
+                            ? 'bg-rose-50 text-rose-700 border border-rose-200'
+                            : tx.transaction_type === 'REVERSAL'
+                            ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                            : tx.transaction_type === 'OPENING_BALANCE'
+                            ? 'bg-blue-50 text-blue-700 border border-blue-200'
+                            : 'bg-slate-100 text-slate-700 border border-slate-200'
+                        }`}>
+                          {tx.transaction_type}
+                        </span>
+                      </td>
+                      <td className={`py-2 px-3 text-right font-mono font-bold whitespace-nowrap ${
+                        tx.days > 0 ? 'text-emerald-700' : 'text-rose-700'
+                      }`}>
+                        {tx.days > 0 ? `+${tx.days}` : tx.days}d
+                      </td>
+                      <td className="py-2 px-3 text-right font-mono font-semibold text-slate-700 whitespace-nowrap">
+                        {tx.balance_after}d
+                      </td>
+                      <td className="py-2 px-3 text-slate-600 max-w-xs truncate" title={tx.reason}>
+                        {tx.reason || '—'}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+
+          <div className="flex justify-end pt-2">
+            <button
+              type="button"
+              onClick={() => setLeaveLedgerModal(false)}
+              className="px-4 py-2 bg-slate-900 text-white rounded-lg text-xs font-semibold hover:bg-slate-800 cursor-pointer"
+            >
+              Close
+            </button>
+          </div>
+        </div>
       </Modal>
     </div>
   )

@@ -229,6 +229,31 @@ export const leavesApi = {
   cancelImpact: (id) => api.get(`/leaves/${id}/cancel-impact`),
   adminCreate: (data) => api.post('/leaves/admin-create', data),
   slotCandidates: (params) => api.get('/leaves/slot-candidates', { params }),
+  evaluatePolicy: (data) => api.post('/leaves/evaluate-policy', data),
+  approveWithException: (id, data) => api.patch(`/leaves/${id}/approve-with-exception`, data),
+}
+
+export const policyEnforcementApi = {
+  getMode: () => api.get('/policy-settings/enforcement-mode'),
+  setMode: (data) => api.patch('/policy-settings/enforcement-mode', data),
+  getAudit: () => api.get('/policy-settings/enforcement-mode/audit'),
+  getComplianceReport: () => api.get('/policy-settings/enforcement-mode/compliance-report'),
+}
+
+export const leavePoliciesApi = {
+  getActive: () => api.get('/leave-policies/active'),
+  validate: (data) => api.post('/leaves/validate', data),
+}
+
+export const leaveBalancesApi = {
+  getMyBalances: (academicYear) => api.get('/leave-balances/me', { params: academicYear ? { academic_year: academicYear } : {} }),
+  getMyPolicyBalance: (leaveType, academicYear) => api.get(`/leave-balances/me/${leaveType}`, { params: academicYear ? { academic_year: academicYear } : {} }),
+  getDepartmentOverview: (params) => api.get('/leave-balances/department', { params }),
+  getDepartmentTeacherDetail: (teacherId, academicYear) => api.get(`/leave-balances/department/${teacherId}`, { params: academicYear ? { academic_year: academicYear } : {} }),
+  getTeacherLedger: (teacherId, params) => api.get(`/leave-balances/${teacherId}/ledger`, { params }),
+  adjustBalance: (teacherId, data) => api.post(`/leave-balances/${teacherId}/adjust`, data),
+  consumeLeave: (leaveId) => api.post(`/leaves/${leaveId}/consume`),
+  consumeDueLeaves: () => api.post('/leaves/consume-due'),
 }
 
 export const campusOperationsApi = {

@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 import { BRAND_CONFIG } from '../../config/branding'
-import { campusDutiesApi, roomsApi } from '../../api/services'
+import { campusDutiesApi, roomsApi, policyEnforcementApi } from '../../api/services'
 import api from '../../api/client'
 import { Spinner, Card, StatCard, Table, Badge } from '../../components/ui'
 import { UsersIcon } from '../../components/icons'
@@ -651,6 +651,327 @@ function ClassroomAvailability() {
   )
 }
 
+function PolicyEnforcementSection() {
+  const [modeData, setModeData] = useState(null)
+  const [auditLogs, setAuditLogs] = useState([])
+  const [report, setReport] = useState(null)
+  const [loading, setLoading] = useState(true)
+  const [updating, setUpdating] = useState(false)
+  const [modalOpen, setModalOpen] = useState(false)
+  const [targetMode, setTargetMode] = useState('')
+  const [reason, setReason] = useState('')
+  const [error, setError] = useState('')
+  const [successMsg, setSuccessMsg] = useState('')
+
+  const loadData = useCallback(() => {
+    setLoading(true)
+    setError('')
+    Promise.all([
+      policyEnforcementApi.getMode(),
+      policyEnforcementApi.getAudit(),
+      policyEnforcementApi.getComplianceReport(),
+    ])
+      .then(([modeRes, auditRes, reportRes]) => {
+        setModeData(modeRes.data)
+        setAuditLogs(auditRes.data || [])
+        setReport(reportRes.data)
+      })
+      .catch(err => {
+        setError(err.response?.data?.detail || 'Failed to load policy enforcement data')
+      })
+      .finally(() => setLoading(false))
+  }, [])
+
+  useEffect(() => {
+    loadData()
+  }, [loadData])
+
+  const initiateToggle = (newMode) => {
+    setTargetMode(newMode)
+    setReason('')
+    setModalOpen(true)
+  }
+
+  const handleConfirmToggle = async () => {
+    setUpdating(true)
+    setError('')
+    setSuccessMsg('')
+    try {
+      await policyEnforcementApi.setMode({ mode: targetMode, reason })
+      setModalOpen(false)
+      setSuccessMsg(`Successfully updated policy enforcement mode to ${targetMode}`)
+      loadData()
+    } catch (err) {
+      setError(err.response?.data?.detail || 'Failed to update enforcement mode')
+    } finally {
+      setUpdating(false)
+    }
+  }
+
+  if (loading) {
+    return (
+      <div className="flex justify-center py-12">
+        <Spinner size="lg" />
+      </div>
+    )
+  }
+
+  const isStrict = modeData?.mode === 'STRICT'
+
+  return (
+    <div className="space-y-6">
+      {error && (
+        <div className="p-4 bg-rose-50 border border-rose-200 text-rose-800 rounded-xl text-sm font-medium">
+          {error}
+        </div>
+      )}
+      {successMsg && (
+        <div className="p-4 bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-xl text-sm font-medium">
+          {successMsg}
+        </div>
+      )}
+
+      {/* Main Enforcement Control Card */}
+      <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+        <div className="p-6 sm:p-8 bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-900 text-white">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+            <div>
+              <div className="flex items-center gap-2 mb-2">
+                <span className="text-xs uppercase font-extrabold tracking-wider px-2.5 py-1 rounded-md bg-white/10 text-white border border-white/10">
+                  Institution Policy Gate
+                </span>
+                {isStrict ? (
+                  <span className="text-xs font-black px-2.5 py-1 rounded-md bg-rose-500/20 text-rose-300 border border-rose-400/30 flex items-center gap-1.5">
+                    <span className="w-2 h-2 rounded-full bg-rose-400 animate-pulse"></span>
+                    STRICT ENFORCEMENT ON
+                  </span>
+                ) : (
+                  <span className="text-xs font-black px-2.5 py-1 rounded-md bg-amber-500/20 text-amber-300 border border-amber-400/30 flex items-center gap-1.5">
+                    <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse"></span>
+                    ADVISORY MODE ON
+                  </span>
+                )}
+              </div>
+              <h2 className="text-2xl font-black tracking-tight">Policy Enforcement</h2>
+              <p className="text-sm text-slate-300 max-w-2xl mt-1 leading-relaxed">
+                {isStrict
+                  ? 'STRICT: Leave requests violating policy limits or balance are blocked immediately at submission.'
+                  : 'ADVISORY: Leave requests violating policy are allowed with mandatory teacher acknowledgement & flagged for HOD exception review.'}
+              </p>
+              {modeData?.last_changed_at && (
+                <p className="text-xs text-slate-400 mt-3">
+                  Last updated on {fmtDate(modeData.last_changed_at)} at {fmtTime(modeData.last_changed_at)}
+                  {modeData.last_changed_by && ` by ${modeData.last_changed_by.name} (${modeData.last_changed_by.role})`}
+                  {modeData.last_reason && ` — Reason: "${modeData.last_reason}"`}
+                </p>
+              )}
+            </div>
+
+            {/* Toggle Switch */}
+            <div className="flex flex-col sm:flex-row items-center gap-3 bg-white/5 p-3 rounded-2xl border border-white/10 shrink-0">
+              <button
+                type="button"
+                onClick={() => initiateToggle('STRICT')}
+                disabled={isStrict || updating}
+                className={`px-5 py-2.5 rounded-xl font-black text-xs transition-all ${
+                  isStrict
+                    ? 'bg-rose-600 text-white shadow-lg shadow-rose-600/30 cursor-default'
+                    : 'text-slate-300 hover:text-white hover:bg-white/10'
+                }`}
+              >
+                STRICT ENFORCEMENT ON
+              </button>
+              <button
+                type="button"
+                onClick={() => initiateToggle('ADVISORY')}
+                disabled={!isStrict || updating}
+                className={`px-5 py-2.5 rounded-xl font-black text-xs transition-all ${
+                  !isStrict
+                    ? 'bg-amber-500 text-slate-950 shadow-lg shadow-amber-500/30 cursor-default'
+                    : 'text-slate-300 hover:text-white hover:bg-white/10'
+                }`}
+              >
+                ADVISORY MODE ON
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* Live Metrics Grid */}
+        {report && (
+          <div className="p-6 grid grid-cols-2 md:grid-cols-5 gap-4 bg-slate-50 border-t border-slate-200">
+            <div className="bg-white p-4 rounded-xl border border-slate-200">
+              <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block">Today's Leaves</span>
+              <span className="text-2xl font-black text-slate-800 mt-1 block">{report.today.total_leaves}</span>
+              <span className="text-[10px] text-slate-400 mt-0.5 block">{report.month.total_leaves} this month</span>
+            </div>
+            <div className="bg-white p-4 rounded-xl border border-slate-200">
+              <span className="text-[11px] font-bold text-emerald-600 uppercase tracking-wider block">Compliant</span>
+              <span className="text-2xl font-black text-emerald-700 mt-1 block">{report.today.compliant}</span>
+              <span className="text-[10px] text-slate-400 mt-0.5 block">{report.month.compliant} this month</span>
+            </div>
+            <div className="bg-white p-4 rounded-xl border border-slate-200">
+              <span className="text-[11px] font-bold text-amber-600 uppercase tracking-wider block">Policy Warnings</span>
+              <span className="text-2xl font-black text-amber-700 mt-1 block">{report.today.violations_or_warnings}</span>
+              <span className="text-[10px] text-slate-400 mt-0.5 block">{report.month.violations_or_warnings} this month</span>
+            </div>
+            <div className="bg-white p-4 rounded-xl border border-slate-200">
+              <span className="text-[11px] font-bold text-blue-600 uppercase tracking-wider block">Exceptions Approved</span>
+              <span className="text-2xl font-black text-blue-700 mt-1 block">{report.today.exceptions_approved}</span>
+              <span className="text-[10px] text-slate-400 mt-0.5 block">{report.month.exceptions_approved} this month</span>
+            </div>
+            <div className="bg-white p-4 rounded-xl border border-slate-200">
+              <span className="text-[11px] font-bold text-rose-600 uppercase tracking-wider block">Pending Review</span>
+              <span className="text-2xl font-black text-rose-700 mt-1 block">{report.today.pending_exceptions}</span>
+              <span className="text-[10px] text-slate-400 mt-0.5 block">Requires HOD action</span>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Confirmation Modal */}
+      {modalOpen && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl border border-slate-200 space-y-4">
+            <div className="flex items-center gap-3">
+              <div className={`p-3 rounded-xl ${targetMode === 'STRICT' ? 'bg-rose-100 text-rose-600' : 'bg-amber-100 text-amber-600'}`}>
+                ⚖️
+              </div>
+              <div>
+                <h3 className="text-lg font-black text-slate-900">
+                  Confirm Switch to {targetMode === 'STRICT' ? 'Strict Enforcement' : 'Advisory Mode'}?
+                </h3>
+                <p className="text-xs text-slate-500 mt-0.5">Institution-wide leave governance policy change</p>
+              </div>
+            </div>
+
+            <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-600 leading-relaxed space-y-2">
+              {targetMode === 'STRICT' ? (
+                <>
+                  <p className="font-bold text-slate-800">
+                    Switching to STRICT ENFORCEMENT will immediately block any faculty leave request that exceeds configured balances or monthly limits.
+                  </p>
+                  <p>
+                    Faculty will see a blocking panel at submission and cannot proceed until balances or policies permit.
+                  </p>
+                  <p className="text-slate-500 italic">
+                    Note: Existing pending requests will retain their current advisory review status.
+                  </p>
+                </>
+              ) : (
+                <>
+                  <p className="font-bold text-slate-800">
+                    Switching to ADVISORY MODE allows faculty to submit leave requests that exceed standard limits or balances.
+                  </p>
+                  <p>
+                    The teacher will receive an explicit policy disclaimer warning and must check a mandatory acknowledgement. The request will be flagged for HOD exception review.
+                  </p>
+                  <p className="text-slate-500 italic">
+                    Note: Rules configured as non-overridable (Strict) will continue to block.
+                  </p>
+                </>
+              )}
+            </div>
+
+            <div>
+              <label className="block text-xs font-bold text-slate-700 mb-1">
+                Reason / Justification (Logged in Audit Trail)
+              </label>
+              <textarea
+                value={reason}
+                onChange={(e) => setReason(e.target.value)}
+                placeholder="e.g., Annual exam period flexibility, Semester beginning audit..."
+                rows={3}
+                className="w-full text-xs p-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+              />
+            </div>
+
+            <div className="flex justify-end gap-3 pt-2">
+              <button
+                type="button"
+                onClick={() => setModalOpen(false)}
+                disabled={updating}
+                className="px-4 py-2 text-xs font-bold text-slate-600 hover:bg-slate-100 rounded-xl"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleConfirmToggle}
+                disabled={updating}
+                className={`px-5 py-2 text-xs font-bold text-white rounded-xl shadow-md transition-colors ${
+                  targetMode === 'STRICT' ? 'bg-rose-600 hover:bg-rose-700' : 'bg-amber-600 hover:bg-amber-700'
+                }`}
+              >
+                {updating ? 'Updating...' : `Confirm Switch to ${targetMode}`}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Audit Trail & Policy Breakdown */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+          <h3 className="text-base font-black text-slate-900 mb-4 flex items-center justify-between">
+            <span>Policies Active & Monthly Exceptions</span>
+            <span className="text-xs text-slate-400 font-semibold">{report?.policy_breakdown?.length || 0} Policies</span>
+          </h3>
+          <div className="space-y-3">
+            {(report?.policy_breakdown || []).map((pol) => (
+              <div key={pol.policy_id} className="p-3.5 bg-slate-50 rounded-xl border border-slate-200/80 flex items-center justify-between gap-4">
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-black text-slate-800">{pol.policy_name}</span>
+                    <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-slate-200 text-slate-700">{pol.policy_code}</span>
+                  </div>
+                  <span className="text-[11px] text-slate-500 mt-0.5 block">
+                    Rule mode: <strong className="text-slate-700">{pol.advisory_allowed}</strong>
+                  </span>
+                </div>
+                <div className="text-right">
+                  <div className="text-xs font-black text-slate-800">{pol.month_total} requests</div>
+                  <div className="text-[10px] text-amber-600 font-semibold">{pol.month_violations} with warning · {pol.month_exceptions} exceptions</div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+          <h3 className="text-base font-black text-slate-900 mb-4">
+            Toggle Audit History (Last 50 changes)
+          </h3>
+          {auditLogs.length === 0 ? (
+            <p className="text-xs text-slate-400 py-6 text-center">No mode changes recorded yet.</p>
+          ) : (
+            <div className="space-y-3 max-h-[350px] overflow-y-auto pr-1">
+              {auditLogs.map((log) => (
+                <div key={log.id} className="p-3 bg-slate-50 rounded-xl border border-slate-200/70 text-xs">
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="font-bold text-slate-800">
+                      {log.previous_mode} → <span className={log.new_mode === 'STRICT' ? 'text-rose-600' : 'text-amber-600'}>{log.new_mode}</span>
+                    </span>
+                    <span className="text-[10px] text-slate-400">{fmtDate(log.created_at)} {fmtTime(log.created_at)}</span>
+                  </div>
+                  <div className="mt-1 text-slate-500 text-[11px] flex items-center justify-between">
+                    <span>Changed by: <strong className="text-slate-700">{log.actor_name}</strong></span>
+                  </div>
+                  {log.reason && (
+                    <div className="mt-1 text-[11px] text-slate-600 italic bg-white p-2 rounded border border-slate-200">
+                      "{log.reason}"
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  )
+}
+
 // ─── Main Page ────────────────────────────────────────────────────────────────
 export default function PrincipalDashboard() {
   const { user } = useAuth()
@@ -695,6 +1016,7 @@ export default function PrincipalDashboard() {
 
   const tabs = [
     { id: 'principal', label: '📊 Overview' },
+    { id: 'policy', label: '⚖️ Policy Enforcement' },
     { id: 'duties', label: '🛡️ Campus Duties' },
     { id: 'rooms', label: '🚪 Class Availability' },
     { id: 'dean', label: '📈 Analytics' },
@@ -763,10 +1085,43 @@ export default function PrincipalDashboard() {
             </Link>
           </div>
 
+          {/* Policy Enforcement Quick Card */}
+          <div className="p-5 bg-white rounded-2xl shadow-sm border border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div className="flex items-center gap-3.5">
+              <div className="p-3 bg-indigo-50 text-indigo-700 rounded-xl border border-indigo-200">
+                <span className="text-2xl">⚖️</span>
+              </div>
+              <div>
+                <div className="flex items-center gap-2">
+                  <h3 className="text-base font-bold tracking-tight text-slate-900">Leave Policy Enforcement Mode</h3>
+                  <span className="text-[10px] font-extrabold uppercase px-2 py-0.5 rounded bg-slate-100 text-slate-600 border border-slate-200">
+                    Institution Level
+                  </span>
+                </div>
+                <p className="text-xs text-slate-500 mt-0.5">
+                  Configure whether leave policy violations block submissions (Strict) or permit them with warnings and HOD review (Advisory).
+                </p>
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={() => setActiveTab('policy')}
+              className="px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white font-bold rounded-xl text-xs transition-colors shadow-sm flex items-center justify-center gap-1.5 self-start sm:self-auto"
+            >
+              <span>Manage Policy Enforcement</span>
+              <span>→</span>
+            </button>
+          </div>
+
           <Card title="Departmental Workload & Leave Statistics">
             <Table columns={columns} data={data.departments} searchPlaceholder="Search departments..." />
           </Card>
         </div>
+      )}
+
+      {/* ── Policy Enforcement Tab ── */}
+      {activeTab === 'policy' && (
+        <PolicyEnforcementSection />
       )}
 
       {/* ── Campus Duties ── */}

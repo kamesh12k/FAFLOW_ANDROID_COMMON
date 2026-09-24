@@ -6,11 +6,53 @@ from app.schemas.user import UserOut
 from app.schemas.validators import validate_period_number
 
 
+class PolicyViolationItem(BaseModel):
+    rule_code: str
+    severity: str  # BLOCK | WARNING | INFO
+    message: str
+    limit: float | None = None
+    used: float | None = None
+    requested: float | None = None
+
+
+class PolicyEvaluationResult(BaseModel):
+    compliant: bool
+    mode: str  # STRICT | ADVISORY
+    can_submit: bool
+    requires_warning: bool
+    requires_hod_review: bool
+    violations: list[PolicyViolationItem] = []
+    leave_policy: dict | None = None
+    balance: dict | None = None
+    request: dict | None = None
+    projected_balance: float | None = None
+    monthly_policy: dict | None = None
+
+
+class LeavePolicyEvalRequest(BaseModel):
+    date: date
+    policy_id: int | None = None
+    policy_code: str | None = None
+    period_number: int | None = None
+    period_numbers: list[int] | None = None
+    whole_day: bool = False
+
+
+class ApproveWithExceptionRequest(BaseModel):
+    hod_acknowledged: bool
+    exception_reason: str
+
+
 class LeaveCreate(BaseModel):
     date: date
     period_number: int
     reason: str
+    leave_policy_id: int | None = None
+    leave_type: str | None = None
     proposed_substitute_id: int | None = None
+    document_url: str | None = None
+    ood_details: dict | None = None
+    policy_warning_acknowledged: bool = False
 
     @field_validator("period_number")
     @classmethod
@@ -28,8 +70,13 @@ class LeaveBatchCreate(BaseModel):
     whole_day: bool = False
     period_numbers: list[int] | None = None
     reason: str
+    leave_policy_id: int | None = None
+    leave_type: str | None = None
     proposed_substitute_id: int | None = None
     period_substitutes: dict[int, int] | None = None
+    document_url: str | None = None
+    ood_details: dict | None = None
+    policy_warning_acknowledged: bool = False
 
     @field_validator("period_numbers")
     @classmethod
@@ -61,18 +108,46 @@ class AlterAssignmentOut(BaseModel):
 class LeaveOut(BaseModel):
     id: int
     teacher_id: int
+    leave_policy_id: int | None = None
     date: date
     day_order: int
     period_number: int
     reason: str
     status: LeaveStatus
     created_at: datetime
+    consumed_at: datetime | None = None
     batch_id: UUID | None
     is_emergency: bool
     proposed_substitute_id: int | None = None
     proposed_substitute: UserOut | None = None
+    document_url: str | None = None
+    ood_details: dict | None = None
+    policy_compliant: bool | None = None
+    policy_violation: bool | None = None
+    policy_enforcement_mode: str | None = None
+    policy_warning_acknowledged: bool = False
+    policy_warning_acknowledged_at: datetime | None = None
+    policy_evaluation_snapshot: dict | None = None
+    policy_version_id: int | None = None
+    exception_reason: str | None = None
+    exception_approved_by_id: int | None = None
+    exception_approved_at: datetime | None = None
     teacher: UserOut
     alter_assignment: AlterAssignmentOut | None = None
+
+    @computed_field
+    @property
+    def leave_policy_code(self) -> str | None:
+        if hasattr(self, 'leave_policy') and self.leave_policy:
+            return self.leave_policy.code
+        return None
+
+    @computed_field
+    @property
+    def leave_policy_name(self) -> str | None:
+        if hasattr(self, 'leave_policy') and self.leave_policy:
+            return self.leave_policy.name
+        return None
 
     @computed_field
     @property

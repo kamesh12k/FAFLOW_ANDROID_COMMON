@@ -1,8 +1,8 @@
 import { useEffect, useState, useMemo } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
-import { creditsApi, teachersApi, leavesApi } from '../../api/services'
-import { Spinner, EmptyState } from '../../components/ui'
+import { creditsApi, teachersApi, leavesApi, leaveBalancesApi } from '../../api/services'
+import { Spinner, EmptyState, Modal } from '../../components/ui'
 import { SearchIcon, SwapIcon, PlusIcon, PrinterIcon, DownloadIcon, CalIcon } from '../../components/icons'
 
 function formatDateTime(isoStr) {
@@ -33,6 +33,12 @@ export default function MyCredits() {
   const [transactions, setTransactions] = useState([])
   const [loading, setLoading] = useState(true)
 
+  // Leave Balances state
+  const [leaveSummary, setLeaveSummary] = useState(null)
+  const [leaveLedgerModal, setLeaveLedgerModal] = useState(false)
+  const [leaveLedger, setLeaveLedger] = useState([])
+  const [loadingLedger, setLoadingLedger] = useState(false)
+
   // Filter & Search states
   const [activeTypeTab, setActiveTypeTab] = useState('all') // 'all', 'earned', 'deducted', 'adjustments'
   const [searchQuery, setSearchQuery] = useState('')
@@ -45,13 +51,24 @@ export default function MyCredits() {
       teachersApi.credits(user.id),
       creditsApi.myTransactions(),
       leavesApi.myLeaves().catch(() => ({ data: [] })),
+      leaveBalancesApi.getMyBalances().catch(() => ({ data: null })),
     ])
-      .then(([b, t]) => {
+      .then(([b, t, , lSummary]) => {
         setBalance(b.data.balance || 0)
         setTransactions(t.data || [])
+        setLeaveSummary(lSummary?.data || null)
       })
       .finally(() => setLoading(false))
   }, [user.id])
+
+  const openLeaveLedger = () => {
+    setLeaveLedgerModal(true)
+    setLoadingLedger(true)
+    leaveBalancesApi.getTeacherLedger(user.id)
+      .then(r => setLeaveLedger(r.data || []))
+      .catch(err => console.error('Failed to load leave ledger:', err))
+      .finally(() => setLoadingLedger(false))
+  }
 
   // Process transaction stats
   const stats = useMemo(() => {
@@ -322,86 +339,136 @@ export default function MyCredits() {
         </div>
       </div>
 
-      {/* ── Current Credit Balance Panel ── */}
-      <div className="bg-white rounded-2xl border border-slate-200 p-5 sm:p-6 shadow-xs">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div className="space-y-1">
-            <span className="text-[10px] sm:text-xs font-bold uppercase tracking-wider text-slate-500 block">
-              Current Credit Balance
-            </span>
-            <div className="flex items-baseline gap-2">
-              <span className={`text-3xl sm:text-4xl font-bold tracking-tight font-mono ${
-                balance >= 0 ? 'text-slate-900' : 'text-rose-600'
-              }`}>
-                {balance >= 0 ? `+${balance}` : balance}
-              </span>
-              <span className="text-sm font-semibold text-slate-500">
-                Credit{Math.abs(balance) === 1 ? '' : 's'}
+      {/* ── TWO INDEPENDENT LEDGER PANELS: SUBSTITUTION CREDITS vs LEAVE BALANCES ── */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        {/* PANEL 1: SUBSTITUTION CREDITS (WORKLOAD) */}
+        <div className="bg-white rounded-2xl border border-slate-200 p-5 sm:p-6 shadow-xs flex flex-col justify-between space-y-4">
+          <div>
+            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+              <div className="flex items-center gap-2">
+                <span className="w-2.5 h-2.5 rounded-full bg-amber-500" />
+                <h2 className="text-xs font-bold uppercase tracking-wider text-slate-800">
+                  Substitution Credits
+                </h2>
+              </div>
+              <span className="text-[10px] font-bold text-amber-800 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded-full">
+                Workload Ledger
               </span>
             </div>
-            <p className="text-xs text-slate-500 font-medium">
-              Current institutional credit balance
+
+            <div className="mt-4 flex items-baseline justify-between">
+              <div>
+                <span className="text-[10px] uppercase font-bold text-slate-400 block tracking-tight">
+                  Net Workload Balance
+                </span>
+                <div className="flex items-baseline gap-2 mt-0.5">
+                  <span className={`text-3xl sm:text-4xl font-black font-mono tracking-tight ${
+                    balance >= 0 ? 'text-slate-900' : 'text-rose-600'
+                  }`}>
+                    {balance >= 0 ? `+${balance}` : balance}
+                  </span>
+                  <span className="text-xs font-bold text-slate-500">
+                    Credits
+                  </span>
+                </div>
+              </div>
+
+              <div className="text-right">
+                <span className="text-[10px] text-slate-400 block uppercase font-bold">Faculty Account</span>
+                <span className="text-xs font-mono font-bold text-slate-700">#{user.id}</span>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-2 mt-4 pt-3 border-t border-slate-100 text-xs">
+              <div className="p-2.5 rounded-xl bg-emerald-50/70 border border-emerald-100">
+                <span className="text-[10px] uppercase font-bold text-emerald-800 block">Earned Coverage</span>
+                <span className="text-base font-bold font-mono text-emerald-700 mt-0.5 block">
+                  +{stats.earned}
+                </span>
+                <span className="text-[10px] text-emerald-600 block mt-0.5">Covered for colleagues</span>
+              </div>
+
+              <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-200/80">
+                <span className="text-[10px] uppercase font-bold text-slate-600 block">Deductions</span>
+                <span className="text-base font-bold font-mono text-slate-800 mt-0.5 block">
+                  -{stats.deducted}
+                </span>
+                <span className="text-[10px] text-slate-500 block mt-0.5">Colleagues covered for you</span>
+              </div>
+            </div>
+          </div>
+
+          <p className="text-[10px] text-slate-400 leading-tight">
+            *Used strictly for substitution workload balancing. Not linked to institutional leave entitlement balances.
+          </p>
+        </div>
+
+        {/* PANEL 2: LEAVE BALANCES (INSTITUTIONAL ENTITLEMENTS) */}
+        <div className="bg-white rounded-2xl border border-slate-200 p-5 sm:p-6 shadow-xs flex flex-col justify-between space-y-4">
+          <div>
+            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+              <div className="flex items-center gap-2">
+                <span className="w-2.5 h-2.5 rounded-full bg-primary-600" />
+                <h2 className="text-xs font-bold uppercase tracking-wider text-slate-800">
+                  Leave Balances
+                </h2>
+              </div>
+              <button
+                type="button"
+                onClick={openLeaveLedger}
+                className="text-[11px] font-bold text-primary-700 hover:text-primary-800 bg-primary-50 hover:bg-primary-100 border border-primary-200 px-2.5 py-1 rounded-lg transition"
+              >
+                View Leave Ledger →
+              </button>
+            </div>
+
+            <p className="text-[11px] text-slate-500 mt-2">
+              Your institutional entitlement balances per leave policy for academic year {leaveSummary?.academic_year || '2026-2027'}.
             </p>
+
+            {/* Policy Balances Grid */}
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 mt-3">
+              {(leaveSummary?.balances || [
+                { code: 'AL', name: 'Applied Leave', remaining: 12, entitlement: 12 },
+                { code: 'IL', name: 'Informed Leave', remaining: 2, entitlement: 2 },
+                { code: 'ML', name: 'Medical Leave', remaining: 5, entitlement: 5 },
+                { code: 'WL', name: 'Wedding Leave', remaining: 5, entitlement: 5 },
+                { code: 'VL', name: 'Vacation Leave', remaining: 10, entitlement: 10 },
+                { code: 'OOD', name: 'Official On Duty', remaining: 10, entitlement: 10 },
+              ]).map(b => (
+                <div key={b.code} className="p-2.5 rounded-xl bg-slate-50 border border-slate-200/70 text-xs">
+                  <div className="flex items-center justify-between">
+                    <span className="font-bold text-slate-800 text-[11px] truncate max-w-[80px]" title={b.name}>
+                      {b.code}
+                    </span>
+                    <span className="text-[9px] font-mono text-slate-400 uppercase">
+                      {b.period === 'SEMESTER' ? 'Sem' : 'Yr'}
+                    </span>
+                  </div>
+                  <div className="mt-1 flex items-baseline justify-between">
+                    <span className="font-black text-slate-900 text-sm">
+                      {b.remaining}
+                    </span>
+                    <span className="text-[10px] text-slate-400 font-semibold">
+                      / {b.entitlement}d
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
 
-          <div className="sm:text-right text-xs text-slate-400">
-            <span>Faculty Account ID: #{user.id}</span>
+          <div className="p-2.5 rounded-xl bg-indigo-50/60 border border-indigo-100 flex items-center justify-between text-xs text-indigo-900">
+            <span className="text-[11px] font-medium">
+              Need to request time off?
+            </span>
+            <Link
+              to="/teacher/leave/apply"
+              className="font-bold text-primary-700 hover:underline text-[11px]"
+            >
+              Apply Leave →
+            </Link>
           </div>
-        </div>
-      </div>
-
-      {/* ── Summary Metrics Grid ── */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-        {/* Metric 1: Current Balance */}
-        <div className="bg-white rounded-xl border border-slate-200 p-4 shadow-xs space-y-1">
-          <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 block">
-            Current Balance
-          </span>
-          <span className={`text-xl font-bold font-mono block ${balance >= 0 ? 'text-slate-900' : 'text-rose-600'}`}>
-            {balance >= 0 ? `+${balance}` : balance}
-          </span>
-          <span className="text-[11px] text-slate-400 block truncate">
-            {balance >= 0 ? 'Active positive balance' : 'Negative balance'}
-          </span>
-        </div>
-
-        {/* Metric 2: Credits Earned */}
-        <div className="bg-white rounded-xl border border-slate-200 p-4 shadow-xs space-y-1">
-          <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 block">
-            Credits Earned
-          </span>
-          <span className="text-xl font-bold font-mono text-emerald-700 block">
-            +{stats.earned}
-          </span>
-          <span className="text-[11px] text-slate-400 block truncate">
-            From covered classes
-          </span>
-        </div>
-
-        {/* Metric 3: Credits Deducted */}
-        <div className="bg-white rounded-xl border border-slate-200 p-4 shadow-xs space-y-1">
-          <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 block">
-            Credits Deducted
-          </span>
-          <span className="text-xl font-bold font-mono text-slate-800 block">
-            -{stats.deducted}
-          </span>
-          <span className="text-[11px] text-slate-400 block truncate">
-            From leave periods
-          </span>
-        </div>
-
-        {/* Metric 4: Adjustments */}
-        <div className="bg-white rounded-xl border border-slate-200 p-4 shadow-xs space-y-1">
-          <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 block">
-            Adjustments
-          </span>
-          <span className="text-xl font-bold font-mono text-slate-800 block">
-            {stats.adjustments}
-          </span>
-          <span className="text-[11px] text-slate-400 block truncate">
-            Administrative revisions
-          </span>
         </div>
       </div>
 
@@ -739,6 +806,95 @@ export default function MyCredits() {
           </>
         )}
       </div>
+
+      {/* ── Leave Balance Ledger Audit Modal ── */}
+      {leaveLedgerModal && (
+        <Modal
+          isOpen={leaveLedgerModal}
+          onClose={() => setLeaveLedgerModal(false)}
+          title="Institutional Leave Balance Ledger"
+        >
+          <div className="space-y-4">
+            <p className="text-xs text-slate-500">
+              Complete, immutable audit trail of leave entitlement allocations, consumptions, and reversals.
+            </p>
+
+            {loadingLedger ? (
+              <div className="py-12 text-center">
+                <Spinner size="md" />
+                <p className="text-xs text-slate-400 mt-2">Loading leave ledger transactions…</p>
+              </div>
+            ) : leaveLedger.length === 0 ? (
+              <div className="p-8 text-center bg-slate-50 rounded-xl border border-slate-200 text-xs text-slate-500">
+                No leave balance transactions recorded yet.
+              </div>
+            ) : (
+              <div className="overflow-x-auto border border-slate-200 rounded-xl">
+                <table className="w-full text-left text-xs border-collapse">
+                  <thead className="bg-slate-50 text-[10px] font-bold uppercase tracking-wider text-slate-500 border-b border-slate-200">
+                    <tr>
+                      <th className="py-2.5 px-3">Date</th>
+                      <th className="py-2.5 px-3">Policy</th>
+                      <th className="py-2.5 px-3">Type</th>
+                      <th className="py-2.5 px-3 text-right">Change</th>
+                      <th className="py-2.5 px-3 text-right">Balance</th>
+                      <th className="py-2.5 px-3">Reason</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100">
+                    {leaveLedger.map(tx => (
+                      <tr key={tx.id} className="hover:bg-slate-50/60">
+                        <td className="py-2 px-3 text-slate-600 whitespace-nowrap">
+                          {tx.created_at ? tx.created_at.split('T')[0] : '—'}
+                        </td>
+                        <td className="py-2 px-3 font-bold text-slate-900 whitespace-nowrap">
+                          <span className="font-mono text-[10px] bg-slate-100 px-1.5 py-0.5 rounded border border-slate-200">
+                            {tx.policy_code || 'AL'}
+                          </span>
+                        </td>
+                        <td className="py-2 px-3 whitespace-nowrap">
+                          <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                            tx.transaction_type === 'CONSUMED'
+                              ? 'bg-rose-50 text-rose-700 border border-rose-200'
+                              : tx.transaction_type === 'REVERSAL'
+                              ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                              : tx.transaction_type === 'OPENING_BALANCE'
+                              ? 'bg-blue-50 text-blue-700 border border-blue-200'
+                              : 'bg-slate-100 text-slate-700 border border-slate-200'
+                          }`}>
+                            {tx.transaction_type}
+                          </span>
+                        </td>
+                        <td className={`py-2 px-3 text-right font-mono font-bold whitespace-nowrap ${
+                          tx.days > 0 ? 'text-emerald-700' : 'text-rose-700'
+                        }`}>
+                          {tx.days > 0 ? `+${tx.days}` : tx.days}d
+                        </td>
+                        <td className="py-2 px-3 text-right font-mono font-semibold text-slate-700 whitespace-nowrap">
+                          {tx.balance_after}d
+                        </td>
+                        <td className="py-2 px-3 text-slate-600 max-w-xs truncate" title={tx.reason}>
+                          {tx.reason || '—'}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+
+            <div className="flex justify-end pt-2">
+              <button
+                type="button"
+                onClick={() => setLeaveLedgerModal(false)}
+                className="px-4 py-2 bg-slate-900 text-white rounded-lg text-xs font-semibold hover:bg-slate-800"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </Modal>
+      )}
     </div>
   )
 }

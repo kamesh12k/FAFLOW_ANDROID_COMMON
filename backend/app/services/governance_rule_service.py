@@ -232,6 +232,9 @@ def get_rule_value(db: Session, key: str) -> str:
     return cache.get(key, BASELINE_RULES.get(key, ""))
 
 
+get_rule_str = get_rule_value
+
+
 def get_rule_int(db: Session, key: str) -> int:
     """Returns a rule as an integer. Falls back gracefully."""
     try:

@@ -23,7 +23,14 @@ def require_hod_or_principal(current_user: User = Depends(get_current_user)) -> 
 
 
 def resolve_department_scope(current_user: User, requested_dept_id: Optional[int]) -> Optional[int]:
-    """Resolves department filter; allows Principal, Governance, and HODs to filter by department or view institutional campus-wide."""
+    """Resolves department filter; restricts HODs/managers to their own department while allowing Principal and Governance campus-wide access."""
+    if current_user.role in (Role.admin, Role.manager):
+        if requested_dept_id is not None and requested_dept_id != current_user.department_id:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Department administrators are restricted to their own department's intelligence."
+            )
+        return current_user.department_id
     return requested_dept_id
 
 

@@ -1,7 +1,7 @@
 import { useEffect, useState, useMemo } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
-import { leavesApi, timetableApi, academicCalendarApi, creditsApi, teachersApi, attendanceApi } from '../../api/services'
+import { leavesApi, timetableApi, academicCalendarApi, creditsApi, teachersApi, attendanceApi, policyEnforcementApi } from '../../api/services'
 import { DayTypeBadge, CreditChip, Card, Timeline } from '../../components/ui'
 import { PlusIcon, CalIcon, DocIcon } from '../../components/icons'
 
@@ -74,6 +74,14 @@ export default function TeacherDashboard() {
 
   const [todayAttendance, setTodayAttendance] = useState(null)
   const [attendanceLoading, setAttendanceLoading] = useState(true)
+
+  const [enforcementMode, setEnforcementMode] = useState(null)
+
+  useEffect(() => {
+    policyEnforcementApi.getMode()
+      .then(res => setEnforcementMode(res?.data || null))
+      .catch(() => setEnforcementMode(null))
+  }, [])
 
   // Stage 0: Staff Attendance (today shift status)
   useEffect(() => {
@@ -290,6 +298,36 @@ export default function TeacherDashboard() {
             </div>
           </Link>
         </div>
+
+        {/* Policy Enforcement Mode Indicator Banner */}
+        {enforcementMode && (
+          <div className={`rounded-2xl border p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xs ${
+            enforcementMode.mode === 'STRICT'
+              ? 'bg-slate-50 border-slate-200 text-slate-800'
+              : 'bg-amber-50/80 border-amber-200 text-amber-900'
+          }`}>
+            <div className="flex items-center gap-3">
+              <span className={`px-2.5 py-1 rounded-lg text-xs font-black uppercase tracking-wider shrink-0 ${
+                enforcementMode.mode === 'STRICT'
+                  ? 'bg-rose-100 text-rose-800 border border-rose-200'
+                  : 'bg-amber-200/90 text-amber-900 border border-amber-300'
+              }`}>
+                {enforcementMode.mode === 'STRICT' ? 'Strict Enforcement Active' : 'Advisory Mode Active'}
+              </span>
+              <p className="text-xs font-medium">
+                {enforcementMode.mode === 'STRICT'
+                  ? 'Institutional policy requires full compliance. Leave requests exceeding balance or quota are blocked.'
+                  : 'Policy violations will generate an advisory warning with mandatory acknowledgement before HOD review.'}
+              </p>
+            </div>
+            <Link
+              to="/teacher/leave/apply"
+              className="text-xs font-bold text-primary-600 hover:text-primary-700 whitespace-nowrap self-start sm:self-auto"
+            >
+              Apply Leave →
+            </Link>
+          </div>
+        )}
 
         {/* Main content grid */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">

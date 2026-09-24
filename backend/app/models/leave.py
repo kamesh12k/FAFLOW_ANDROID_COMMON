@@ -1,5 +1,5 @@
 from sqlalchemy import Column, Integer, String, Boolean, Float, ForeignKey, Enum, Date, DateTime, func, CheckConstraint
-from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy.dialects.postgresql import UUID, JSONB
 from sqlalchemy.orm import relationship
 import enum
 
@@ -9,8 +9,12 @@ from app.database import Base
 class LeaveStatus(str, enum.Enum):
     pending = "pending"
     approved = "approved"
+    approved_with_exception = "approved_with_exception"  # policy violation approved by HOD in Advisory mode
+    consumed = "consumed"
     rejected = "rejected"
     cancelled = "cancelled"
+    draft = "draft"
+    expired = "expired"
 
 
 class AssignmentType(str, enum.Enum):
@@ -34,27 +38,45 @@ class LeaveRequest(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     teacher_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    leave_policy_id = Column(Integer, ForeignKey("leave_policies.id", ondelete="SET NULL"), nullable=True, index=True)
     date = Column(Date, nullable=False)
     day_order = Column(Integer, nullable=False)
     period_number = Column(Integer, nullable=False)  # 1-5
     reason = Column(String(500), nullable=False)
     status = Column(Enum(LeaveStatus, name="leave_status", create_type=False), default=LeaveStatus.pending, nullable=False)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
+    consumed_at = Column(DateTime(timezone=True), nullable=True)
     batch_id = Column(UUID(as_uuid=True), nullable=True)
 
     # True when this leave was submitted inside the emergency window (see
     # substitution_service.EMERGENCY_WINDOW_HOURS) — i.e. too close to the
-    # affected class for the normal approval delay to be safe. Computed
-    # once at submission time and stored, rather than recalculated later,
-    # because "how close to class was this submitted" should reflect the
-    # moment of submission even if someone looks at the record days after.
+    # affected class for the normal approval delay to be safe.
     is_emergency = Column(Boolean, default=False, nullable=False)
     proposed_substitute_id = Column(Integer, ForeignKey("users.id", ondelete="SET NULL"), nullable=True, index=True)
+    document_url = Column(String(500), nullable=True)
+    ood_details = Column(JSONB, nullable=True)
+
+    # ── Policy Enforcement Snapshot (immutable after submission) ─────────────
+    # Stores a point-in-time record of policy evaluation so historical audits
+    # are never recalculated against a changed policy version.
+    policy_compliant = Column(Boolean, nullable=True)
+    policy_violation = Column(Boolean, nullable=True)
+    policy_enforcement_mode = Column(String(20), nullable=True)  # "STRICT" | "ADVISORY" at submission time
+    policy_warning_acknowledged = Column(Boolean, default=False, nullable=False)
+    policy_warning_acknowledged_at = Column(DateTime(timezone=True), nullable=True)
+    policy_evaluation_snapshot = Column(JSONB, nullable=True)   # full PolicyEvaluationResult dict
+    policy_version_id = Column(Integer, ForeignKey("leave_policies.id", ondelete="SET NULL"), nullable=True)
+    # ── HOD Exception Fields (populated when status = approved_with_exception) ─
+    exception_reason = Column(String(500), nullable=True)
+    exception_approved_by_id = Column(Integer, ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
+    exception_approved_at = Column(DateTime(timezone=True), nullable=True)
 
     teacher = relationship("User", back_populates="leave_requests", foreign_keys=[teacher_id])
+    leave_policy = relationship("LeavePolicy", back_populates="leave_requests", foreign_keys=[leave_policy_id])
     proposed_substitute = relationship("User", foreign_keys=[proposed_substitute_id])
     alter_assignment = relationship("AlterAssignment", back_populates="leave_request", uselist=False)
     credit_transactions = relationship("CreditTransaction", back_populates="related_leave")
+    exception_approved_by = relationship("User", foreign_keys=[exception_approved_by_id])
 
     __table_args__ = (
         CheckConstraint("period_number BETWEEN 1 AND 5", name="chk_leave_period_number"),
@@ -92,3 +114,18 @@ class AlterAssignment(Base):
 
     leave_request = relationship("LeaveRequest", back_populates="alter_assignment")
     substitute = relationship("User", back_populates="alter_assignments", foreign_keys=[substitute_teacher_id])
+
+
+class PolicyEnforcementAudit(Base):
+    """Immutable audit trail for every institution-level enforcement mode toggle.
+    Written once at toggle time; never updated or deleted."""
+    __tablename__ = "policy_enforcement_audit"
+
+    id = Column(Integer, primary_key=True, index=True)
+    actor_user_id = Column(Integer, ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
+    previous_mode = Column(String(20), nullable=False)   # STRICT | ADVISORY
+    new_mode = Column(String(20), nullable=False)         # STRICT | ADVISORY
+    reason = Column(String(500), nullable=True)           # optional justification entered by actor
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+    actor = relationship("User", foreign_keys=[actor_user_id])

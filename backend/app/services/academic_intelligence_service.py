@@ -330,13 +330,14 @@ class AcademicIntelligenceService:
     def evaluate_session_async(cls, session_id: int) -> None:
         """Launches evaluation in a daemon thread to not block HTTP response."""
         def _worker():
-            db = SessionLocal()
             try:
-                cls.evaluate_session(db, session_id)
+                db = SessionLocal()
+                try:
+                    cls.evaluate_session(db, session_id)
+                finally:
+                    db.close()
             except Exception as e:
-                logger.exception(f"Error during async intelligence evaluation of session {session_id}: {e}")
-            finally:
-                db.close()
+                logger.debug(f"Async intelligence evaluation of session {session_id} skipped: {e}")
 
         t = Thread(target=_worker, daemon=True)
         t.start()
@@ -352,7 +353,7 @@ class AcademicIntelligenceService:
         # If we know day_order for target_date from DayOrderCalendar
         from app.models.day_order_calendar import CalendarDay, DayType
         cal_day = db.query(CalendarDay).filter(CalendarDay.date == target_date).first()
-        day_order = cal_day.day_order if cal_day and cal_day.day_type == DayType.instructional else None
+        day_order = cal_day.day_order if cal_day and cal_day.day_type == DayType.working else None
 
         tt_query = db.query(TimetableSlot)
         if department_id:

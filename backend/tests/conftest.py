@@ -77,6 +77,8 @@ TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engin
 @pytest.fixture(autouse=True)
 def db_session():
     """Create fresh tables for every test, yield a session, then drop."""
+    from app.services.governance_rule_service import _invalidate_cache
+    _invalidate_cache()
     Base.metadata.create_all(bind=engine)
     session = TestingSessionLocal()
     try:
@@ -84,6 +86,7 @@ def db_session():
     finally:
         session.close()
         Base.metadata.drop_all(bind=engine)
+        _invalidate_cache()
 
 
 @pytest.fixture()

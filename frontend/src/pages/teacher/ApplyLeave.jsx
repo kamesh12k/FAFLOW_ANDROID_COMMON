@@ -1,6 +1,6 @@
 import { useEffect, useState, useMemo } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
-import { leavesApi, academicCalendarApi, campusOperationsApi, timetableApi } from '../../api/services'
+import { leavesApi, academicCalendarApi, campusOperationsApi, timetableApi, leavePoliciesApi, leaveBalancesApi, teachersApi } from '../../api/services'
 import { useAuth } from '../../context/AuthContext'
 import { ErrorAlert, Spinner } from '../../components/ui'
 import { CheckCircleIcon } from '../../components/icons'
@@ -241,6 +241,49 @@ export default function ApplyLeave() {
   const [expandedPeriod, setExpandedPeriod] = useState(null)
   const navigate = useNavigate()
 
+  // ── Leave Policies & Separate Balance State ──
+  const [policies, setPolicies] = useState([])
+  const [balances, setBalances] = useState([])
+  const [substitutionCreditBalance, setSubstitutionCreditBalance] = useState(0)
+  const [loadingPolicies, setLoadingPolicies] = useState(true)
+  const [selectedPolicyId, setSelectedPolicyId] = useState(null)
+  const [policyValidation, setPolicyValidation] = useState(null)
+  const [validatingPolicy, setValidatingPolicy] = useState(false)
+  const [policyWarningAcknowledged, setPolicyWarningAcknowledged] = useState(false)
+  const [documentUrl, setDocumentUrl] = useState('')
+  const [oodDetails, setOodDetails] = useState({
+    purpose: '',
+    programme: '',
+    organizer: '',
+    venue: '',
+    travelDates: '',
+    estimatedExpense: '',
+  })
+
+  // Load Policies & Balances
+  useEffect(() => {
+    setLoadingPolicies(true)
+    Promise.all([
+      leavePoliciesApi.getActive(),
+      leaveBalancesApi.getMyBalances().catch(() => ({ data: { balances: [], substitution_credit_balance: 0 } })),
+    ])
+      .then(([polRes, balRes]) => {
+        const polList = polRes.data || []
+        const balData = balRes.data || {}
+        setPolicies(polList)
+        setBalances(balData.balances || [])
+        setSubstitutionCreditBalance(balData.substitution_credit_balance ?? 0)
+        if (polList.length > 0) {
+          const defaultPol = polList.find(p => p.code === 'AL') || polList[0]
+          setSelectedPolicyId(defaultPol.id)
+        }
+      })
+      .catch(err => {
+        console.error('Failed to load leave policies/balances:', err)
+      })
+      .finally(() => setLoadingPolicies(false))
+  }, [])
+
   useEffect(() => {
     campusOperationsApi.getMode()
       .then(r => setCampusMode(r.data?.mode || 'assisted'))
@@ -387,6 +430,52 @@ export default function ApplyLeave() {
     return () => { isMounted = false }
   }, [campusMode, form.date, isBlocked, activePeriodNumbers.join(',')])
 
+  const selectedPolicy = useMemo(
+    () => policies.find(p => p.id === selectedPolicyId) || null,
+    [policies, selectedPolicyId]
+  )
+
+  const selectedPolicyBalance = useMemo(
+    () => balances.find(b => b.policy_id === selectedPolicyId) || null,
+    [balances, selectedPolicyId]
+  )
+
+  // ── Dynamic Pre-Submission Policy Intelligence Validator ──
+  useEffect(() => {
+    setPolicyWarningAcknowledged(false)
+    if (!selectedPolicyId || !form.date || isBlocked) {
+      setPolicyValidation(null)
+      return
+    }
+
+    setValidatingPolicy(true)
+    leavesApi.evaluatePolicy({
+      date: form.date,
+      policy_id: selectedPolicyId,
+      whole_day: form.mode === 'whole_day',
+      period_numbers: form.mode === 'whole_day' ? (activePeriodNumbers.length ? activePeriodNumbers : null) : form.period_numbers,
+    })
+      .then(res => {
+        const evalData = res.data
+        const blockReason = evalData.violations?.find(v => v.severity === 'BLOCK')?.message || null
+        const warningMsgs = evalData.violations?.filter(v => v.severity !== 'BLOCK').map(v => v.message) || []
+        setPolicyValidation({
+          validation: {
+            allowed: evalData.can_submit,
+            reason: blockReason,
+            warnings: warningMsgs,
+            evaluation: evalData,
+          },
+          projected_balance: evalData.projected_balance,
+        })
+      })
+      .catch(err => {
+        console.error('Failed to validate leave policy application:', err)
+        setPolicyValidation(null)
+      })
+      .finally(() => setValidatingPolicy(false))
+  }, [selectedPolicyId, form.date, form.mode, isBlocked, activePeriodNumbers.join(','), form.period_numbers.join(',')])
+
   const togglePeriod = (p) => {
     setForm(f => {
       const exists = f.period_numbers.includes(p)
@@ -399,6 +488,11 @@ export default function ApplyLeave() {
     e.preventDefault()
     setError('')
 
+    if (!selectedPolicyId) {
+      setError('Please select a leave policy first.')
+      return
+    }
+
     if (!form.date) {
       setError('Please select a leave date.')
       return
@@ -406,6 +500,26 @@ export default function ApplyLeave() {
 
     if (isBlocked) {
       setError(`${form.date} is marked as ${calendarInfo?.day_type?.replace('_', ' ') || 'non-working'} — leave cannot be requested for this date.`)
+      return
+    }
+
+    // Policy Rule Enforcements
+    const evaluation = policyValidation?.validation?.evaluation
+    const isBlockedByPolicy = evaluation ? !evaluation.can_submit : (policyValidation && !policyValidation.validation?.allowed)
+    const isAdvisoryWarning = evaluation ? (evaluation.mode === 'ADVISORY' && !evaluation.compliant && evaluation.can_submit) : false
+
+    if (isBlockedByPolicy) {
+      setError(policyValidation?.validation?.reason || 'This leave request is blocked by institutional policy under Strict Enforcement mode.')
+      return
+    }
+
+    if (isAdvisoryWarning && !policyWarningAcknowledged) {
+      setError('You must read and acknowledge the policy warning before submitting.')
+      return
+    }
+
+    if (selectedPolicy?.document_required && !documentUrl.trim()) {
+      setError(`Supporting documentation is required for ${selectedPolicy.name}. Please attach or enter document details.`)
       return
     }
 
@@ -429,8 +543,18 @@ export default function ApplyLeave() {
 
     setLoading(true)
     try {
+      const isOod = Boolean(selectedPolicy?.is_on_duty || selectedPolicy?.code === 'OOD')
+      const basePayload = {
+        leave_policy_id: selectedPolicyId,
+        leave_type: selectedPolicy?.code,
+        document_url: documentUrl.trim() || null,
+        ood_details: isOod ? oodDetails : null,
+        policy_warning_acknowledged: isAdvisoryWarning ? policyWarningAcknowledged : false,
+      }
+
       if (form.mode === 'whole_day') {
         const payload = {
+          ...basePayload,
           date: form.date,
           whole_day: true,
           reason: form.reason.trim(),
@@ -442,6 +566,7 @@ export default function ApplyLeave() {
       } else if (form.period_numbers.length === 1) {
         const p = form.period_numbers[0]
         const payload = {
+          ...basePayload,
           date: form.date,
           period_number: p,
           reason: form.reason.trim(),
@@ -452,6 +577,7 @@ export default function ApplyLeave() {
         await leavesApi.apply(payload)
       } else {
         const payload = {
+          ...basePayload,
           date: form.date,
           period_numbers: form.period_numbers,
           reason: form.reason.trim(),
@@ -608,11 +734,254 @@ export default function ApplyLeave() {
           </div>
 
           <form onSubmit={handleSubmit} className="divide-y divide-slate-100">
-            {/* 1. Date Selection */}
+            {/* ── STEP 1: SELECT LEAVE POLICY ── */}
+            <div className="p-5 sm:p-6 space-y-3 bg-slate-50/40">
+              <div className="flex items-center justify-between">
+                <div>
+                  <label className="text-xs font-bold uppercase tracking-wider text-slate-800 block">
+                    1. Select Leave Policy
+                  </label>
+                  <p className="text-[11px] text-slate-500 mt-0.5">
+                    Choose the institutional leave entitlement policy for this application.
+                  </p>
+                </div>
+                {loadingPolicies && (
+                  <span className="inline-flex items-center gap-1 text-[11px] text-slate-400">
+                    <Spinner size="xs" /> Loading policies…
+                  </span>
+                )}
+              </div>
+
+              {/* Policy Selection Cards Grid */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5 pt-1">
+                {policies.map(pol => {
+                  const bal = balances.find(b => b.policy_id === pol.id)
+                  const isSelected = selectedPolicyId === pol.id
+                  const remaining = bal ? bal.remaining : pol.entitlement
+                  const entitlement = bal ? bal.entitlement : pol.entitlement
+                  const isExhausted = remaining <= 0
+
+                  return (
+                    <div
+                      key={pol.id}
+                      onClick={() => setSelectedPolicyId(pol.id)}
+                      className={`relative p-3 rounded-xl border text-left transition-all cursor-pointer select-none ${
+                        isSelected
+                          ? 'bg-primary-50/60 border-primary-500 ring-2 ring-primary-500/20 shadow-xs'
+                          : isExhausted
+                          ? 'bg-slate-50/80 border-slate-200 opacity-60 hover:opacity-100'
+                          : 'bg-white border-slate-200/90 hover:border-slate-300 hover:bg-slate-50/60 shadow-2xs'
+                      }`}
+                    >
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center gap-1.5 flex-wrap">
+                            <span className="text-xs font-bold text-slate-900 truncate">
+                              {pol.name}
+                            </span>
+                            <span className="text-[10px] font-mono font-bold px-1.5 py-0.2 rounded bg-slate-100 text-slate-700 border border-slate-200">
+                              {pol.code}
+                            </span>
+                          </div>
+                          <p className="text-[10px] text-slate-500 mt-0.5 truncate">
+                            {pol.period === 'YEAR' ? 'Annual Policy' : 'Per Semester'}
+                            {pol.monthly_limit ? ` · Max ${pol.monthly_limit}/mo` : ''}
+                          </p>
+                        </div>
+
+                        {/* Radio Check Circle */}
+                        <div className={`w-4 h-4 rounded-full border flex items-center justify-center shrink-0 mt-0.5 ${
+                          isSelected
+                            ? 'border-primary-600 bg-primary-600 text-white'
+                            : 'border-slate-300 bg-white'
+                        }`}>
+                          {isSelected && <span className="w-1.5 h-1.5 rounded-full bg-white" />}
+                        </div>
+                      </div>
+
+                      {/* Remaining vs Entitlement Pill */}
+                      <div className="mt-2.5 pt-2 border-t border-slate-100 flex items-center justify-between text-[11px]">
+                        <span className="text-slate-500 font-medium">Remaining:</span>
+                        <span className={`font-bold ${isExhausted ? 'text-rose-600' : 'text-slate-900'}`}>
+                          {remaining} / {entitlement} days
+                        </span>
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            </div>
+
+            {/* ── STEP 2: DYNAMIC LIVE POLICY INTELLIGENCE CARD ── */}
+            {selectedPolicy && (
+              <div className="p-5 sm:p-6 space-y-3 bg-white">
+                <div className="flex items-center justify-between flex-wrap gap-2">
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-bold uppercase tracking-wider text-slate-700">
+                      Policy Status & Projection
+                    </span>
+                    <span className="text-[11px] font-bold text-primary-700 bg-primary-50 px-2 py-0.5 rounded-md border border-primary-200">
+                      {selectedPolicy.name} ({selectedPolicy.code})
+                    </span>
+                  </div>
+                  {validatingPolicy && (
+                    <span className="inline-flex items-center gap-1 text-[10px] text-primary-600 font-medium">
+                      <Spinner size="xs" /> Evaluating rules…
+                    </span>
+                  )}
+                </div>
+
+                {/* 4-Stat Metric Strip */}
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+                  <div className="p-2.5 rounded-lg bg-slate-50 border border-slate-200/80">
+                    <span className="text-[10px] uppercase font-bold text-slate-400 block tracking-tight">Available</span>
+                    <span className="text-sm font-black text-slate-900 block mt-0.5">
+                      {selectedPolicyBalance?.remaining ?? selectedPolicy.entitlement} <span className="text-[10px] font-medium text-slate-500">days</span>
+                    </span>
+                  </div>
+                  <div className="p-2.5 rounded-lg bg-slate-50 border border-slate-200/80">
+                    <span className="text-[10px] uppercase font-bold text-slate-400 block tracking-tight">Entitlement</span>
+                    <span className="text-sm font-black text-slate-900 block mt-0.5">
+                      {selectedPolicyBalance?.entitlement ?? selectedPolicy.entitlement} <span className="text-[10px] font-medium text-slate-500">days</span>
+                    </span>
+                  </div>
+                  <div className="p-2.5 rounded-lg bg-slate-50 border border-slate-200/80">
+                    <span className="text-[10px] uppercase font-bold text-slate-400 block tracking-tight">Consumed</span>
+                    <span className="text-sm font-black text-slate-900 block mt-0.5">
+                      {selectedPolicyBalance?.consumed ?? 0} <span className="text-[10px] font-medium text-slate-500">days</span>
+                    </span>
+                  </div>
+                  <div className="p-2.5 rounded-lg bg-slate-50 border border-slate-200/80">
+                    <span className="text-[10px] uppercase font-bold text-slate-400 block tracking-tight">This Request</span>
+                    <span className="text-sm font-black text-primary-700 block mt-0.5">
+                      {policyValidation?.request?.duration ?? 1} <span className="text-[10px] font-medium text-slate-500">day</span>
+                    </span>
+                  </div>
+                </div>
+
+                {/* Projected Balance & Monthly Policy Details */}
+                <div className="p-3 rounded-xl bg-slate-900 text-white space-y-2 text-xs">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
+                    <span className="text-[11px] font-medium text-slate-300">
+                      Projected balance after consumption:
+                    </span>
+                    <span className="text-sm font-black text-emerald-400">
+                      {policyValidation?.projected_balance ?? ((selectedPolicyBalance?.remaining ?? selectedPolicy.entitlement) - 1)} days
+                    </span>
+                  </div>
+                  <p className="text-[10px] text-slate-400 leading-tight">
+                    *Balance is deducted only when this leave is actually consumed. Pending or rejected requests do not deduct balance.
+                  </p>
+
+                  {/* Monthly Limit Info */}
+                  {selectedPolicy.monthly_limit && (
+                    <div className="pt-2 border-t border-slate-800 flex flex-wrap items-center justify-between gap-2 text-[11px]">
+                      <span className="text-slate-300">
+                        Monthly Policy: Max <strong>{selectedPolicy.monthly_limit} day/month</strong>
+                      </span>
+                      <span className="text-slate-300">
+                        Used this month: <strong>{policyValidation?.monthly_policy?.consumed ?? selectedPolicyBalance?.monthly_consumed ?? 0}d</strong> · Remaining: <strong>{policyValidation?.monthly_policy?.remaining ?? selectedPolicy.monthly_limit}d</strong>
+                      </span>
+                    </div>
+                  )}
+                </div>
+
+                {/* Policy Validation Messages & Warning Banners */}
+                {(() => {
+                  const evalData = policyValidation?.validation?.evaluation
+                  const isBlocked = evalData ? !evalData.can_submit : (policyValidation && !policyValidation.validation?.allowed)
+                  const isWarning = evalData ? (evalData.mode === 'ADVISORY' && !evalData.compliant && evalData.can_submit) : false
+
+                  if (isBlocked) {
+                    return (
+                      <div className="p-4 rounded-xl bg-rose-50 border-2 border-rose-300 text-xs text-rose-950 space-y-2">
+                        <div className="flex items-center gap-2">
+                          <span className="text-base">🚫</span>
+                          <strong className="font-black uppercase tracking-wide text-xs text-rose-900">
+                            Leave Request Blocked — Strict Enforcement
+                          </strong>
+                        </div>
+                        <p className="font-semibold text-rose-800">
+                          {policyValidation.validation?.reason || 'This leave request exceeds configured policy limits and is blocked by institutional policy.'}
+                        </p>
+                        {evalData?.violations && evalData.violations.length > 0 && (
+                          <div className="bg-white/80 p-2.5 rounded-lg border border-rose-200 space-y-1">
+                            <span className="text-[10px] font-bold uppercase text-rose-900 block">Violations:</span>
+                            {evalData.violations.map((v, idx) => (
+                              <div key={idx} className="text-rose-800 flex items-start gap-1.5 font-medium">
+                                <span>•</span>
+                                <span>{v.message}</span>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    )
+                  }
+
+                  if (isWarning) {
+                    return (
+                      <div className="p-4 rounded-xl bg-amber-50 border-2 border-amber-300 text-xs text-amber-950 space-y-3">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <span className="text-base">⚠️</span>
+                            <strong className="font-black uppercase tracking-wide text-xs text-amber-900">
+                              Policy Warning — Advisory Mode Active
+                            </strong>
+                          </div>
+                          <span className="text-[10px] font-extrabold uppercase px-2 py-0.5 rounded bg-amber-200 text-amber-900 border border-amber-300">
+                            Requires HOD Review
+                          </span>
+                        </div>
+                        <p className="font-medium text-amber-800 leading-relaxed">
+                          This request exceeds standard policy limits. Under Advisory Mode, you may still proceed, but your request will be marked with a policy exception flag for mandatory HOD review.
+                        </p>
+                        {evalData?.violations && evalData.violations.length > 0 && (
+                          <div className="bg-white/90 p-2.5 rounded-lg border border-amber-200 space-y-1">
+                            <span className="text-[10px] font-bold uppercase text-amber-900 block">Policy Advisory Warnings:</span>
+                            {evalData.violations.map((v, idx) => (
+                              <div key={idx} className="text-amber-900 font-semibold flex items-start gap-1.5">
+                                <span>•</span>
+                                <span>{v.message}</span>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                        <label className="flex items-start gap-2.5 p-3 bg-white rounded-lg border border-amber-300 cursor-pointer hover:bg-amber-50/50 transition">
+                          <input
+                            type="checkbox"
+                            checked={policyWarningAcknowledged}
+                            onChange={(e) => setPolicyWarningAcknowledged(e.target.checked)}
+                            className="mt-0.5 h-4 w-4 rounded border-amber-400 text-amber-600 focus:ring-amber-500"
+                          />
+                          <span className="text-xs font-bold text-amber-950 select-none">
+                            I understand this request violates configured policy limits and confirm submission with mandatory HOD exception review.
+                          </span>
+                        </label>
+                      </div>
+                    )
+                  }
+
+                  return (
+                    <div className="flex items-center justify-between text-xs p-3 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800">
+                      <span className="inline-flex items-center gap-2 font-bold text-xs">
+                        <span className="w-2 h-2 rounded-full bg-emerald-500" />
+                        ✓ Compliant with {selectedPolicy.name} policy
+                      </span>
+                      <span className="text-[10px] font-extrabold uppercase tracking-wider text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded">
+                        Valid
+                      </span>
+                    </div>
+                  )
+                })()}
+              </div>
+            )}
+
+            {/* 2. Date Selection */}
             <div className="p-5 sm:p-6 space-y-3">
               <div className="flex items-center justify-between">
                 <label className="text-xs font-bold uppercase tracking-wider text-slate-700 block">
-                  Date
+                  2. Date
                 </label>
                 {checkingDate && (
                   <span className="inline-flex items-center gap-1 text-[11px] text-slate-400">
@@ -1047,20 +1416,155 @@ export default function ApplyLeave() {
               </div>
             </div>
 
-            {/* Inline Review & Submit Footer */}
-            <div className="p-5 sm:p-6 bg-slate-50/60 space-y-4">
-              <div className="flex items-center justify-between gap-3 text-xs text-slate-600 bg-white p-3 rounded-lg border border-slate-200">
-                <div className="space-y-0.5">
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">Request Summary</span>
-                  <span className="font-semibold text-slate-800">
-                    {formatReadableDate(form.date)} {calendarInfo?.day_order ? `· Day Order ${calendarInfo.day_order}` : ''}
+            {/* ── SUPPORTING DOCUMENTATION (Policy-driven) ── */}
+            {selectedPolicy?.document_required && (
+              <div className="p-5 sm:p-6 space-y-2.5 bg-amber-50/40 border-t border-amber-200/60">
+                <div className="flex items-center justify-between">
+                  <label className="text-xs font-bold uppercase tracking-wider text-amber-900 block">
+                    Supporting Documentation Required
+                  </label>
+                  <span className="text-[10px] font-bold text-amber-700 bg-amber-100 border border-amber-300 px-2 py-0.5 rounded-full">
+                    Mandatory for {selectedPolicy.code}
                   </span>
                 </div>
-                <div className="text-right">
-                  <span className="font-bold text-primary-700 block">{formattedPeriodString}</span>
-                  <span className="text-[11px] text-slate-500 truncate max-w-[160px] block">{form.reason || 'No reason set'}</span>
+                <p className="text-[11px] text-amber-800 leading-snug">
+                  Institutional policy requires supporting documentation for {selectedPolicy.name}. Please attach or enter document reference URL.
+                </p>
+                <input
+                  type="text"
+                  required
+                  placeholder="Paste certificate URL, document link, or reference number (e.g. MC-2026-981)"
+                  value={documentUrl}
+                  onChange={e => setDocumentUrl(e.target.value)}
+                  className="w-full px-3.5 py-2 bg-white border border-amber-300 rounded-lg text-xs sm:text-sm text-slate-900 focus:outline-none focus:border-amber-600 transition"
+                />
+              </div>
+            )}
+
+            {/* ── OFFICIAL ON DUTY (OOD) WORKFLOW DETAILS ── */}
+            {(selectedPolicy?.is_on_duty || selectedPolicy?.code === 'OOD') && (
+              <div className="p-5 sm:p-6 space-y-3 bg-blue-50/40 border-t border-blue-200/60">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <label className="text-xs font-bold uppercase tracking-wider text-blue-900 block">
+                      Official On Duty (OOD) Details
+                    </label>
+                    <p className="text-[11px] text-blue-700 mt-0.5">
+                      Enter official institutional deputation / duty information.
+                    </p>
+                  </div>
+                  <span className="text-[10px] font-bold text-blue-700 bg-blue-100 border border-blue-300 px-2 py-0.5 rounded-full">
+                    On Duty Workflow
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                  <div>
+                    <label className="text-[10px] uppercase font-bold text-slate-500 block">Purpose</label>
+                    <input
+                      type="text"
+                      placeholder="e.g. Conference / External Examiner / Workshop"
+                      value={oodDetails.purpose}
+                      onChange={e => setOodDetails({ ...oodDetails, purpose: e.target.value })}
+                      className="w-full mt-1 px-3 py-2 bg-white border border-slate-300 rounded-lg text-xs"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-[10px] uppercase font-bold text-slate-500 block">Programme / Event</label>
+                    <input
+                      type="text"
+                      placeholder="e.g. National Symposium on Cybernetics"
+                      value={oodDetails.programme}
+                      onChange={e => setOodDetails({ ...oodDetails, programme: e.target.value })}
+                      className="w-full mt-1 px-3 py-2 bg-white border border-slate-300 rounded-lg text-xs"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-[10px] uppercase font-bold text-slate-500 block">Institution / Organizer</label>
+                    <input
+                      type="text"
+                      placeholder="e.g. IIT Madras"
+                      value={oodDetails.organizer}
+                      onChange={e => setOodDetails({ ...oodDetails, organizer: e.target.value })}
+                      className="w-full mt-1 px-3 py-2 bg-white border border-slate-300 rounded-lg text-xs"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-[10px] uppercase font-bold text-slate-500 block">Venue / City</label>
+                    <input
+                      type="text"
+                      placeholder="e.g. Chennai"
+                      value={oodDetails.venue}
+                      onChange={e => setOodDetails({ ...oodDetails, venue: e.target.value })}
+                      className="w-full mt-1 px-3 py-2 bg-white border border-slate-300 rounded-lg text-xs"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-[10px] uppercase font-bold text-slate-500 block">Travel Dates</label>
+                    <input
+                      type="text"
+                      placeholder="e.g. 24 Sep - 26 Sep"
+                      value={oodDetails.travelDates}
+                      onChange={e => setOodDetails({ ...oodDetails, travelDates: e.target.value })}
+                      className="w-full mt-1 px-3 py-2 bg-white border border-slate-300 rounded-lg text-xs"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-[10px] uppercase font-bold text-slate-500 block">Estimated Expenditure (INR)</label>
+                    <input
+                      type="text"
+                      placeholder="e.g. 3500"
+                      value={oodDetails.estimatedExpense}
+                      onChange={e => setOodDetails({ ...oodDetails, estimatedExpense: e.target.value })}
+                      className="w-full mt-1 px-3 py-2 bg-white border border-slate-300 rounded-lg text-xs"
+                    />
+                  </div>
                 </div>
               </div>
+            )}
+
+            {/* Inline Review & Submit Footer */}
+            <div className="p-5 sm:p-6 bg-slate-50/60 space-y-4">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs text-slate-600 bg-white p-3.5 rounded-lg border border-slate-200">
+                <div className="space-y-0.5">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">Request Summary</span>
+                  <span className="font-semibold text-slate-800 block">
+                    {formatReadableDate(form.date)} {calendarInfo?.day_order ? `· Day Order ${calendarInfo.day_order}` : ''}
+                  </span>
+                  <span className="text-[11px] text-primary-700 font-bold">
+                    Policy: {selectedPolicy?.name || 'AL'} ({selectedPolicy?.code}) · Projected: {policyValidation?.projected_balance ?? (selectedPolicyBalance ? selectedPolicyBalance.remaining - 1 : '—')}d
+                  </span>
+                </div>
+                <div className="sm:text-right">
+                  <span className="font-bold text-primary-700 block">{formattedPeriodString}</span>
+                  <span className="text-[11px] text-slate-500 truncate max-w-[200px] block">{form.reason || 'No reason set'}</span>
+                </div>
+              </div>
+
+              {/* Policy Validation Warning before Submit */}
+              {(() => {
+                const evalData = policyValidation?.validation?.evaluation
+                const isBlocked = evalData ? !evalData.can_submit : (policyValidation && !policyValidation.validation?.allowed)
+                const isWarning = evalData ? (evalData.mode === 'ADVISORY' && !evalData.compliant && evalData.can_submit) : false
+
+                if (isBlocked) {
+                  return (
+                    <div className="p-3 rounded-lg bg-rose-50 border border-rose-200 text-rose-800 text-xs flex items-center gap-2">
+                      <AlertTriangleIcon className="w-4 h-4 text-rose-600 shrink-0" />
+                      <span>Leave application blocked by policy under Strict Enforcement mode.</span>
+                    </div>
+                  )
+                }
+                if (isWarning && !policyWarningAcknowledged) {
+                  return (
+                    <div className="p-3 rounded-lg bg-amber-50 border border-amber-200 text-amber-800 text-xs flex items-center gap-2">
+                      <AlertTriangleIcon className="w-4 h-4 text-amber-600 shrink-0" />
+                      <span>Please acknowledge the policy warning above before submitting your request.</span>
+                    </div>
+                  )
+                }
+                return null
+              })()}
 
               <div className="flex items-center justify-between gap-3">
                 <Link
@@ -1072,14 +1576,23 @@ export default function ApplyLeave() {
 
                 <button
                   type="submit"
-                  disabled={loading || isBlocked}
-                  className="px-5 py-2 bg-primary-600 hover:bg-primary-700 active:bg-primary-800 text-white text-xs sm:text-sm font-bold rounded-lg transition shadow-xs flex items-center gap-2"
+                  disabled={
+                    loading ||
+                    isBlocked ||
+                    (policyValidation?.validation?.evaluation ? !policyValidation.validation.evaluation.can_submit : (policyValidation && !policyValidation.validation?.allowed)) ||
+                    (policyValidation?.validation?.evaluation?.mode === 'ADVISORY' && !policyValidation.validation.evaluation.compliant && !policyWarningAcknowledged)
+                  }
+                  className="px-5 py-2.5 bg-primary-600 hover:bg-primary-700 active:bg-primary-800 disabled:opacity-40 disabled:cursor-not-allowed text-white text-xs sm:text-sm font-bold rounded-lg transition shadow-xs flex items-center gap-2"
                 >
                   {loading ? (
                     <>
                       <Spinner size="xs" />
                       <span>Submitting…</span>
                     </>
+                  ) : policyValidation?.validation?.evaluation && !policyValidation.validation.evaluation.can_submit ? (
+                    <span>Blocked: Exceeds Limit</span>
+                  ) : policyValidation?.validation?.evaluation?.mode === 'ADVISORY' && !policyValidation.validation.evaluation.compliant && !policyWarningAcknowledged ? (
+                    <span>Acknowledge Warning to Submit</span>
                   ) : (
                     <span>Submit Leave Request</span>
                   )}
@@ -1089,8 +1602,57 @@ export default function ApplyLeave() {
           </form>
         </div>
 
-        {/* ── Right Column (Contextual Panel: DATE INFORMATION) ── */}
+        {/* ── Right Column (Contextual Panel: LEAVE BALANCE & DATE INFO) ── */}
         <div className="lg:col-span-4 space-y-4">
+          {/* Leave Balances & Substitution Credits Card */}
+          <div className="bg-white rounded-xl border border-slate-200 p-5 shadow-xs space-y-4">
+            <div className="border-b border-slate-100 pb-3 flex items-center justify-between">
+              <h2 className="text-xs font-bold uppercase tracking-wider text-slate-700">
+                Leave Balance & Credits
+              </h2>
+              <span className="text-[10px] font-semibold text-slate-400">Independent</span>
+            </div>
+
+            {/* Selected Leave Policy Balance */}
+            <div className="p-3 bg-slate-50 rounded-lg border border-slate-200/80 space-y-2">
+              <div className="flex justify-between items-center">
+                <span className="text-xs font-bold text-slate-900">{selectedPolicy?.name || 'Leave Policy'}</span>
+                <span className="text-[10px] font-mono font-bold px-1.5 py-0.5 bg-slate-200 text-slate-700 rounded">
+                  {selectedPolicy?.code}
+                </span>
+              </div>
+              <div className="grid grid-cols-2 gap-2 text-xs pt-1">
+                <div>
+                  <span className="text-[10px] text-slate-500 block uppercase">Current Balance</span>
+                  <span className="font-bold text-slate-800 text-sm">
+                    {selectedPolicyBalance?.remaining ?? '—'} <span className="text-xs font-normal text-slate-500">/ {selectedPolicyBalance?.entitlement ?? '—'} d</span>
+                  </span>
+                </div>
+                <div>
+                  <span className="text-[10px] text-slate-500 block uppercase">Projected Balance</span>
+                  <span className={`font-bold text-sm ${policyValidation && !policyValidation.validation?.allowed ? 'text-rose-600' : 'text-emerald-700'}`}>
+                    {policyValidation?.projected_balance ?? (selectedPolicyBalance ? selectedPolicyBalance.remaining - 1 : '—')} <span className="text-xs font-normal text-slate-500">d</span>
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* Substitution Credits (Workload) - Explicitly separated */}
+            <div className="p-3 bg-amber-50/50 rounded-lg border border-amber-200/60 space-y-1 text-xs">
+              <div className="flex justify-between items-center">
+                <span className="text-xs font-bold text-amber-900">Substitution Credits</span>
+                <span className="text-[10px] text-amber-700 font-semibold">Workload Ledger</span>
+              </div>
+              <p className="text-[11px] text-slate-600">
+                Current substitution workload balance: <strong className="text-slate-900">{substitutionCreditBalance > 0 ? `+${substitutionCreditBalance}` : substitutionCreditBalance}</strong>.
+              </p>
+              <p className="text-[10px] text-slate-400 italic">
+                *Separate from institutional leave balance. Leave entitlement is never deducted from substitution credits.
+              </p>
+            </div>
+          </div>
+
+          {/* Date Information Card */}
           <div className="bg-white rounded-xl border border-slate-200 p-5 shadow-xs space-y-4">
             <div className="border-b border-slate-100 pb-3">
               <h2 className="text-xs font-bold uppercase tracking-wider text-slate-700">
