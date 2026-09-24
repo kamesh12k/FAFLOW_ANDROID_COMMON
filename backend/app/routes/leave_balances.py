@@ -116,13 +116,21 @@ def get_my_leave_balances(
     policy_balances = leave_policy_service.get_teacher_balances(db, current_user.id, ay)
     sub_balance = leave_policy_service.get_teacher_substitution_credit_balance(db, current_user.id)
 
+    total_ent = sum(b.entitlement for b in policy_balances)
+    total_con = sum(b.consumed for b in policy_balances)
+    total_rem = sum(b.remaining for b in policy_balances)
+
     return TeacherLeaveBalanceSummaryOut(
         teacher_id=current_user.id,
         teacher_name=current_user.name,
         department=current_user.department or (current_user.tenant_department.name if getattr(current_user, "tenant_department", None) else None),
         academic_year=ay,
         balances=policy_balances,
+        substitution_credits=sub_balance,
         substitution_credit_balance=sub_balance,
+        total_entitled=total_ent,
+        total_consumed=total_con,
+        total_remaining=total_rem,
     )
 
 

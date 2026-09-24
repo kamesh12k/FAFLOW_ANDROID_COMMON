@@ -9,12 +9,16 @@ class LeavePolicyOut(BaseModel):
     name: str
     description: Optional[str] = None
     entitlement: float
+    entitlement_days: float = 0.0
     period: str
+    entitlement_period: str = "YEAR"
     monthly_limit: Optional[float] = None
+    max_per_month: Optional[int] = None
     semester_limit: Optional[float] = None
     annual_limit: Optional[float] = None
     approval_required: bool = True
     document_required: bool = False
+    requires_document: bool = False
     is_on_duty: bool = False
     is_active: bool = True
     advisory_allowed: Optional[str] = "ADVISORY"
@@ -37,21 +41,29 @@ class LeavePolicyUpdate(BaseModel):
 
 
 class TeacherPolicyBalanceOut(BaseModel):
+    id: int = 0
     policy_id: int
     code: str
+    policy_code: str = ""
     name: str
+    policy_name: str = ""
     description: Optional[str] = None
     period: str
     entitlement: float
     consumed: float
+    pending: float = 0.0
     remaining: float
     monthly_limit: Optional[float] = None
+    max_per_month: Optional[int] = None
     monthly_consumed: float = 0.0
     monthly_remaining: Optional[float] = None
     semester_limit: Optional[float] = None
     approval_required: bool = True
     document_required: bool = False
+    requires_document: bool = False
     is_on_duty: bool = False
+
+    model_config = {"from_attributes": True}
 
 
 class LeaveValidationRequest(BaseModel):
@@ -108,10 +120,18 @@ class LeaveBalanceTransactionOut(BaseModel):
 class TeacherLeaveBalanceSummaryOut(BaseModel):
     teacher_id: int
     teacher_name: str
+    department: Optional[str] = None
     department_id: Optional[int] = None
     department_name: Optional[str] = None
+    academic_year: str = ""
     substitution_credits: int = 0
+    substitution_credit_balance: int = 0
     balances: List[TeacherPolicyBalanceOut] = []
+    total_entitled: float = 0.0
+    total_consumed: float = 0.0
+    total_remaining: float = 0.0
+
+    model_config = {"from_attributes": True}
 
 
 class DepartmentLeaveBalanceOverviewOut(BaseModel):

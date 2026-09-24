@@ -1,3 +1,4 @@
+from typing import Optional
 from sqlalchemy import Column, Integer, String, Float, Boolean, ForeignKey, DateTime, Text, func, UniqueConstraint
 from sqlalchemy.orm import relationship
 import enum
@@ -41,6 +42,22 @@ class LeavePolicy(Base):
     balances = relationship("TeacherLeaveBalance", back_populates="policy")
     transactions = relationship("LeaveBalanceTransaction", back_populates="policy")
     leave_requests = relationship("LeaveRequest", back_populates="leave_policy", foreign_keys="[LeaveRequest.leave_policy_id]")
+
+    @property
+    def entitlement_days(self) -> float:
+        return float(self.entitlement) if self.entitlement is not None else 0.0
+
+    @property
+    def entitlement_period(self) -> str:
+        return self.period or "YEAR"
+
+    @property
+    def requires_document(self) -> bool:
+        return bool(self.document_required)
+
+    @property
+    def max_per_month(self) -> Optional[int]:
+        return int(self.monthly_limit) if self.monthly_limit is not None else None
 
 
 class TeacherLeaveBalance(Base):

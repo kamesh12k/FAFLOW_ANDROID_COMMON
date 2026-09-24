@@ -159,20 +159,26 @@ def get_teacher_balances(
 
         results.append(
             TeacherPolicyBalanceOut(
+                id=bal.id,
                 policy_id=pol.id,
                 code=pol.code,
+                policy_code=pol.code,
                 name=pol.name,
+                policy_name=pol.name,
                 description=pol.description,
                 period=pol.period,
                 entitlement=bal.entitlement,
                 consumed=bal.consumed,
+                pending=0.0,
                 remaining=bal.remaining,
                 monthly_limit=pol.monthly_limit,
+                max_per_month=int(pol.monthly_limit) if pol.monthly_limit is not None else None,
                 monthly_consumed=monthly_consumed_float,
                 monthly_remaining=monthly_rem,
                 semester_limit=pol.semester_limit,
                 approval_required=pol.approval_required,
                 document_required=pol.document_required,
+                requires_document=pol.document_required,
                 is_on_duty=pol.is_on_duty,
             )
         )
