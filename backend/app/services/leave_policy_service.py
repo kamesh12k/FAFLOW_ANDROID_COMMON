@@ -614,3 +614,10 @@ def get_department_leave_overview(
         staff_summaries=staff_summaries,
         policies=[LeavePolicyOut.model_validate(p) for p in policies],
     )
+
+
+def get_teacher_substitution_credit_balance(db: Session, teacher_id: int) -> int:
+    """Returns the teacher's current substitution credit balance (default 0)."""
+    credit = db.query(TeacherCredit).filter(TeacherCredit.teacher_id == teacher_id).first()
+    return credit.balance if credit else 0
+
