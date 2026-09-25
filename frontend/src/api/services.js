@@ -384,6 +384,7 @@ export const attendanceApi = {
   getToday: () => api.get('/attendance/today'),
   getMyHistory: (params) => api.get('/attendance/my', { params }),
   getSupervisorLiveStatus: () => api.get('/attendance/admin/live-status'),
+  deleteRecord: (id) => api.delete(`/attendance/admin/record/${id}`),
 }
 export const studentAttendanceApi = {
   getTodaySchedule: (date) => api.get('/student-attendance/today', { params: date ? { target_date: date } : {} }),

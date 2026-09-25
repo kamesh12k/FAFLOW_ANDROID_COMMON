@@ -71,3 +71,14 @@ def get_supervisor_live_status(
 ):
     """Supervisor/HOD endpoint for real-time institutional staff shift and presence tracking."""
     return AttendanceService.get_supervisor_live_status(db, current_user, department_id=department_id)
+
+
+@router.delete("/admin/record/{record_id}", status_code=status.HTTP_200_OK)
+def delete_attendance_record(
+    record_id: int,
+    current_user: User = Depends(require_supervisor),
+    db: Session = Depends(get_db)
+):
+    """Supervisor/Administrator endpoint to delete an individual attendance record (for testing and administrative correction)."""
+    return AttendanceService.delete_record(db, record_id, current_user)
+

@@ -2,6 +2,7 @@ import pytest
 import uuid
 from app.core.exceptions import DomainException
 from app.models.campus_geofence import CampusGeofence
+from app.models.staff_attendance import StaffAttendanceRecord
 from app.schemas.attendance import AttendanceCheckInRequest, AttendanceCheckOutRequest
 from app.schemas.geofence import GeofenceCreate
 from app.services.attendance_service import AttendanceService
@@ -329,5 +330,64 @@ def test_check_in_no_geofences_fails_closed(db_session, test_teacher):
     with pytest.raises(DomainException) as exc:
         AttendanceService.check_in(db_session, test_teacher, req)
     assert "no active campus geofence configured" in str(exc.value.detail).lower()
+
+
+def test_delete_attendance_record_service_and_audit(db_session, test_teacher, test_admin, active_campus_geofence):
+    """Verifies that an admin can delete an individual attendance record and an audit log is created."""
+    check_in_req = AttendanceCheckInRequest(
+        idempotency_key=str(uuid.uuid4()),
+        latitude=11.016844,
+        longitude=76.955833,
+        accuracy_meters=5.0,
+        face_similarity_score=0.89,
+        liveness_verified=True,
+        verification_method="FACE_ON_DEVICE"
+    )
+    record = AttendanceService.check_in(db_session, test_teacher, check_in_req)
+    record_id = record.id
+
+    # Verify deletion by admin
+    result = AttendanceService.delete_record(db_session, record_id, test_admin)
+    assert result["success"] is True
+    assert result["details"]["record_id"] == record_id
+
+    # Verify record no longer exists
+    assert db_session.query(StaffAttendanceRecord).filter(StaffAttendanceRecord.id == record_id).first() is None
+
+
+def test_delete_attendance_record_not_found(db_session, test_admin):
+    """Verifies that attempting to delete a non-existent attendance record raises a 404 error."""
+    with pytest.raises(DomainException) as exc:
+        AttendanceService.delete_record(db_session, 999999, test_admin)
+    assert exc.value.status_code == 404
+
+
+def test_delete_attendance_record_api_endpoint_rbac(client, auth_headers_teacher, auth_headers_admin, db_session, test_teacher, test_admin, active_campus_geofence):
+    """Verifies that teacher is forbidden (403) from deleting attendance records, while admin succeeds (200)."""
+    check_in_req = AttendanceCheckInRequest(
+        idempotency_key=str(uuid.uuid4()),
+        latitude=11.016844,
+        longitude=76.955833,
+        accuracy_meters=5.0,
+        face_similarity_score=0.91,
+        liveness_verified=True,
+        verification_method="FACE_ON_DEVICE"
+    )
+    record = AttendanceService.check_in(db_session, test_teacher, check_in_req)
+    record_id = record.id
+
+    # 1. Teacher attempt -> 403 Forbidden
+    res_teacher = client.delete(f"/attendance/admin/record/{record_id}", headers=auth_headers_teacher)
+    assert res_teacher.status_code == 403
+
+    # 2. Admin attempt -> 200 OK
+    res_admin = client.delete(f"/attendance/admin/record/{record_id}", headers=auth_headers_admin)
+    assert res_admin.status_code == 200
+    assert res_admin.json()["success"] is True
+
+    # 3. Subsequent delete -> 404 Not Found
+    res_subsequent = client.delete(f"/attendance/admin/record/{record_id}", headers=auth_headers_admin)
+    assert res_subsequent.status_code == 404
+
 
 

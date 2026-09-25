@@ -357,6 +357,36 @@ class AttendanceService:
         )
 
     @staticmethod
+    def delete_record(db: Session, record_id: int, current_user: User) -> dict:
+        """Deletes an individual staff attendance record (for testing and manual administrative adjustment)."""
+        record = db.query(StaffAttendanceRecord).options(
+            joinedload(StaffAttendanceRecord.user)
+        ).filter(StaffAttendanceRecord.id == record_id).first()
+        if not record:
+            raise DomainException("Attendance record not found", status_code=404)
+
+        # Department scoping: institution-wide roles can delete any record; HODs/managers are restricted to their department
+        if current_user.role not in {Role.system_admin, Role.governance, Role.principal, Role.admin}:
+            if current_user.department_id and record.user and record.user.department_id != current_user.department_id:
+                raise DomainException("Unauthorized: Cannot delete attendance record from another department", status_code=403)
+
+        staff_name = record.user.name if (record.user and getattr(record.user, "name", None)) else (record.user.username if record.user else str(record.user_id))
+        details = {
+            "record_id": record.id,
+            "user_id": record.user_id,
+            "staff_name": staff_name,
+            "attendance_date": str(record.attendance_date),
+            "check_in_time": str(record.check_in_time) if record.check_in_time else None,
+            "check_out_time": str(record.check_out_time) if record.check_out_time else None,
+        }
+
+        db.delete(record)
+        db.commit()
+
+        AttendanceService._log_audit(db, current_user.id, "DELETE_ATTENDANCE_RECORD", details)
+        return {"success": True, "message": "Attendance record deleted successfully", "details": details}
+
+    @staticmethod
     def _to_dto(record: StaffAttendanceRecord) -> AttendanceRecordOut:
         staff_name = None
         if record.user:
@@ -381,3 +411,4 @@ class AttendanceService:
             working_hours=record.working_hours,
             is_synced=True
         )
+

@@ -1,7 +1,7 @@
 import { useEffect, useState, useMemo, useCallback } from 'react'
 import { attendanceApi, departmentsApi } from '../../api/services'
 import { getApiErrorMessage } from '../../api/client'
-import { Spinner, ErrorAlert, EmptyState } from '../../components/ui'
+import { Spinner, ErrorAlert, EmptyState, Modal, Button } from '../../components/ui'
 
 export default function AdminAttendance() {
   const [liveData, setLiveData] = useState(null)
@@ -14,6 +14,24 @@ export default function AdminAttendance() {
   const [error, setError] = useState('')
   const [lastRefreshed, setLastRefreshed] = useState(null)
   const [autoRefresh, setAutoRefresh] = useState(true)
+  const [recordToDelete, setRecordToDelete] = useState(null)
+  const [deleting, setDeleting] = useState(false)
+  const [deleteError, setDeleteError] = useState('')
+
+  const handleDeleteRecord = async () => {
+    if (!recordToDelete) return
+    setDeleting(true)
+    setDeleteError('')
+    try {
+      await attendanceApi.deleteRecord(recordToDelete.id)
+      setRecordToDelete(null)
+      await loadData(true)
+    } catch (err) {
+      setDeleteError(getApiErrorMessage(err, 'Failed to delete attendance record.'))
+    } finally {
+      setDeleting(false)
+    }
+  }
 
   const loadData = useCallback(async (isSilent = false) => {
     if (isSilent) setRefreshing(true)
@@ -258,7 +276,8 @@ export default function AdminAttendance() {
                   <th className="px-5 py-3">Duration</th>
                   <th className="px-5 py-3">Campus Perimeter</th>
                   <th className="px-5 py-3">Biometric & Liveness</th>
-                  <th className="px-5 py-3 text-right">Status</th>
+                  <th className="px-5 py-3 text-center">Status</th>
+                  <th className="px-5 py-3 text-right">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100 font-medium">
@@ -301,7 +320,7 @@ export default function AdminAttendance() {
                           )}
                         </div>
                       </td>
-                      <td className="px-5 py-3.5 text-right">
+                      <td className="px-5 py-3.5 text-center">
                         {isPresent && (
                           <span className="inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-bold bg-emerald-100 text-emerald-800">
                             Present
@@ -312,6 +331,22 @@ export default function AdminAttendance() {
                             Completed
                           </span>
                         )}
+                      </td>
+                      <td className="px-5 py-3.5 text-right">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setRecordToDelete(rec)
+                            setDeleteError('')
+                          }}
+                          className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold text-rose-600 hover:text-rose-700 bg-rose-50 hover:bg-rose-100/80 border border-rose-200 transition-colors shadow-sm"
+                          title={`Delete record #${rec.id}`}
+                        >
+                          <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                          </svg>
+                          <span>Delete</span>
+                        </button>
                       </td>
                     </tr>
                   )
@@ -328,6 +363,78 @@ export default function AdminAttendance() {
           </div>
         )}
       </div>
+
+      {/* Delete Record Confirmation Modal */}
+      <Modal
+        open={Boolean(recordToDelete)}
+        onClose={() => {
+          if (!deleting) {
+            setRecordToDelete(null)
+            setDeleteError('')
+          }
+        }}
+        title="Delete Attendance Record"
+        size="md"
+      >
+        <div className="space-y-4">
+          {deleteError && (
+            <div className="p-3 text-xs bg-rose-50 text-rose-700 border border-rose-200 rounded-xl">
+              {deleteError}
+            </div>
+          )}
+
+          <p className="text-sm text-gray-600">
+            Are you sure you want to permanently delete this individual attendance entry? This action is intended for testing and manual record clearance.
+          </p>
+
+          {recordToDelete && (
+            <div className="bg-gray-50 rounded-xl p-4 border border-gray-200 space-y-2 text-xs">
+              <div className="flex justify-between items-center py-1 border-b border-gray-200/60">
+                <span className="text-gray-500 font-medium">Staff Name:</span>
+                <span className="font-bold text-gray-900">{recordToDelete.staff_name || 'Staff Member'}</span>
+              </div>
+              <div className="flex justify-between items-center py-1 border-b border-gray-200/60">
+                <span className="text-gray-500 font-medium">Record ID:</span>
+                <span className="font-mono text-gray-700">#{recordToDelete.id} (User #{recordToDelete.user_id})</span>
+              </div>
+              <div className="flex justify-between items-center py-1 border-b border-gray-200/60">
+                <span className="text-gray-500 font-medium">Date:</span>
+                <span className="font-medium text-gray-800">{recordToDelete.attendance_date || 'Today'}</span>
+              </div>
+              <div className="flex justify-between items-center py-1 border-b border-gray-200/60">
+                <span className="text-gray-500 font-medium">Check-In Time:</span>
+                <span className="font-mono text-gray-800">{formatTime(recordToDelete.check_in_time)}</span>
+              </div>
+              <div className="flex justify-between items-center py-1">
+                <span className="text-gray-500 font-medium">Check-Out Time:</span>
+                <span className="font-mono text-gray-800">{formatTime(recordToDelete.check_out_time)}</span>
+              </div>
+            </div>
+          )}
+
+          <div className="flex items-center justify-end gap-3 pt-3 border-t border-gray-100">
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={() => {
+                setRecordToDelete(null)
+                setDeleteError('')
+              }}
+              disabled={deleting}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="danger"
+              size="sm"
+              loading={deleting}
+              onClick={handleDeleteRecord}
+            >
+              Confirm Delete
+            </Button>
+          </div>
+        </div>
+      </Modal>
     </div>
   )
 }
