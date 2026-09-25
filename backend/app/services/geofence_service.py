@@ -287,20 +287,22 @@ class GeofenceService:
     def delete_geofence(db: Session, geofence_id: int, user_id: Optional[int]) -> Dict[str, str]:
         geofence = GeofenceService.get_geofence_by_id(db, geofence_id)
 
-        # Soft-delete / Deactivate to preserve historical integrity
-        geofence.is_active = False
-        geofence.updated_by = user_id
+        # Capture name before deletion for audit log
+        geofence_name = geofence.name
+        geofence_db_id = geofence.id
 
+        # Hard delete — permanently removes the perimeter from the database
         audit = AuditLog(
             actor_user_id=user_id,
-            action="DEACTIVATE_CAMPUS_GEOFENCE",
+            action="HARD_DELETE_CAMPUS_GEOFENCE",
             target_type="campus_geofence",
-            target_id=geofence.id,
-            details={"action": "soft_delete_deactivate", "name": geofence.name}
+            target_id=geofence_db_id,
+            details={"action": "hard_delete", "name": geofence_name}
         )
         db.add(audit)
+        db.delete(geofence)
         db.commit()
-        return {"message": f"Geofence '{geofence.name}' deactivated successfully"}
+        return {"message": f"Geofence '{geofence_name}' permanently deleted"}
 
     @staticmethod
     def test_location(db: Session, lat: float, lon: float, accuracy_meters: float = 5.0) -> Dict[str, Any]:
