@@ -93,7 +93,7 @@ class GeofenceOut(BaseModel):
     class Config:
         from_attributes = True
 
-    @root_validator(pre=False)
+    @root_validator(pre=False, skip_on_failure=True)
     def extract_polygon_vertices(cls, values):
         """Populate polygon_vertices from geometry.coordinates for polygon type geofences."""
         geo_type = values.get("type")
@@ -130,7 +130,7 @@ class GeofenceActiveOut(BaseModel):
     class Config:
         from_attributes = True
 
-    @root_validator(pre=False)
+    @root_validator(pre=False, skip_on_failure=True)
     def extract_polygon_vertices(cls, values):
         """Populate polygon_vertices from geometry.coordinates for polygon type geofences."""
         geo_type = values.get("type")
