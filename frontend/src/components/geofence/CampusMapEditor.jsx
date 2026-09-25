@@ -630,8 +630,17 @@ const CampusMapEditor = forwardRef(function CampusMapEditor(
         )
 
         existingGeofencesLayersRef.current.push(circle)
-      } else if (geo.type === 'polygon' && geo.polygon_vertices && geo.polygon_vertices.length >= 3) {
-        const latLngs = geo.polygon_vertices.map((v) => [v.latitude || v.lat, v.longitude || v.lng])
+      } else if (geo.type === 'polygon') {
+        // Support polygon_vertices (new API field) OR fallback to geometry.coordinates
+        const rawVerts =
+          geo.polygon_vertices ||
+          (geo.geometry?.coordinates || [])
+        if (rawVerts.length < 3) return
+        const latLngs = rawVerts.map((v) =>
+          Array.isArray(v)
+            ? [v[0], v[1]]
+            : [v.latitude ?? v.lat ?? 0, v.longitude ?? v.lng ?? 0]
+        )
         const poly = L.polygon(latLngs, {
           color: strokeColor,
           fillColor: fillColor,
@@ -869,8 +878,12 @@ const CampusMapEditor = forwardRef(function CampusMapEditor(
       if (geo.type === 'circle' && geo.center_latitude && geo.center_longitude) {
         bounds.extend([geo.center_latitude, geo.center_longitude])
         count++
-      } else if (geo.type === 'polygon' && geo.polygon_vertices) {
-        geo.polygon_vertices.forEach((v) => bounds.extend([v.latitude || v.lat, v.longitude || v.lng]))
+      } else if (geo.type === 'polygon') {
+        const rawVerts = geo.polygon_vertices || (geo.geometry?.coordinates || [])
+        rawVerts.forEach((v) => {
+          if (Array.isArray(v)) bounds.extend([v[0], v[1]])
+          else bounds.extend([v.latitude ?? v.lat ?? 0, v.longitude ?? v.lng ?? 0])
+        })
         count++
       }
     })

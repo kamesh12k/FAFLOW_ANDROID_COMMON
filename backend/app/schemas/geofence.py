@@ -1,6 +1,6 @@
 from datetime import datetime
 from typing import List, Optional, Any, Dict
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, Field, validator, root_validator
 
 
 class GeofenceBase(BaseModel):
@@ -78,6 +78,7 @@ class GeofenceOut(BaseModel):
     center_longitude: float
     radius_meters: Optional[float] = None
     geometry: Dict[str, Any]
+    polygon_vertices: Optional[List[Dict[str, float]]] = None
     tolerance_meters: float
     area_sq_meters: Optional[float]
     perimeter_meters: Optional[float]
@@ -92,6 +93,26 @@ class GeofenceOut(BaseModel):
     class Config:
         from_attributes = True
 
+    @root_validator(pre=False)
+    def extract_polygon_vertices(cls, values):
+        """Populate polygon_vertices from geometry.coordinates for polygon type geofences."""
+        geo_type = values.get("type")
+        geometry = values.get("geometry") or {}
+        if geo_type == "polygon" and not values.get("polygon_vertices"):
+            coords = geometry.get("coordinates", [])
+            if coords and isinstance(coords, list):
+                vertices = []
+                for pt in coords:
+                    if isinstance(pt, (list, tuple)) and len(pt) >= 2:
+                        vertices.append({"latitude": float(pt[0]), "longitude": float(pt[1])})
+                    elif isinstance(pt, dict):
+                        vertices.append({
+                            "latitude": float(pt.get("latitude", pt.get("lat", 0))),
+                            "longitude": float(pt.get("longitude", pt.get("lng", 0)))
+                        })
+                values["polygon_vertices"] = vertices
+        return values
+
 
 class GeofenceActiveOut(BaseModel):
     """Optimized payload for staff mobile location verification."""
@@ -102,11 +123,32 @@ class GeofenceActiveOut(BaseModel):
     center_longitude: float
     radius_meters: Optional[float] = None
     geometry: Dict[str, Any]
+    polygon_vertices: Optional[List[Dict[str, float]]] = None
     tolerance_meters: float
     is_active: bool
 
     class Config:
         from_attributes = True
+
+    @root_validator(pre=False)
+    def extract_polygon_vertices(cls, values):
+        """Populate polygon_vertices from geometry.coordinates for polygon type geofences."""
+        geo_type = values.get("type")
+        geometry = values.get("geometry") or {}
+        if geo_type == "polygon" and not values.get("polygon_vertices"):
+            coords = geometry.get("coordinates", [])
+            if coords and isinstance(coords, list):
+                vertices = []
+                for pt in coords:
+                    if isinstance(pt, (list, tuple)) and len(pt) >= 2:
+                        vertices.append({"latitude": float(pt[0]), "longitude": float(pt[1])})
+                    elif isinstance(pt, dict):
+                        vertices.append({
+                            "latitude": float(pt.get("latitude", pt.get("lat", 0))),
+                            "longitude": float(pt.get("longitude", pt.get("lng", 0)))
+                        })
+                values["polygon_vertices"] = vertices
+        return values
 
 
 class LocationTestRequest(BaseModel):

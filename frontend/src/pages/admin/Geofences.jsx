@@ -123,10 +123,18 @@ export default function AdminGeofences() {
       if (mapEditorRef.current) {
         mapEditorRef.current.flyTo(targetCenter.lat, targetCenter.lng, 16)
       }
-    } else if (geo.type === 'polygon' && geo.polygon_vertices) {
-      const vertices = geo.polygon_vertices.map((v) => ({
-        lat: Number(v.latitude || v.lat),
-        lng: Number(v.longitude || v.lng),
+    } else if (geo.type === 'polygon') {
+      // Prefer polygon_vertices (new API field), fall back to geometry.coordinates
+      const rawVertices =
+        geo.polygon_vertices ||
+        (geo.geometry?.coordinates || []).map((pt) =>
+          Array.isArray(pt)
+            ? { latitude: pt[0], longitude: pt[1] }
+            : pt
+        )
+      const vertices = rawVertices.map((v) => ({
+        lat: Number(v.latitude ?? v.lat ?? 0),
+        lng: Number(v.longitude ?? v.lng ?? 0),
       }))
       setPolygonVertices(vertices)
       if (vertices.length > 0) {
@@ -1210,7 +1218,11 @@ export default function AdminGeofences() {
                       ) : (
                         <div className="bg-white p-2.5 rounded-lg border border-slate-200 space-y-1 text-[10px] text-slate-700">
                           <div>
-                            Polygon Vertices: <strong>{activeGeofence.polygon_vertices?.length || 0} boundary points</strong>
+                            Polygon Vertices: <strong>
+                              {(activeGeofence.polygon_vertices?.length ||
+                                activeGeofence.geometry?.coordinates?.length ||
+                                0)} boundary points
+                            </strong>
                           </div>
                         </div>
                       )}
@@ -1286,7 +1298,11 @@ export default function AdminGeofences() {
                                 <div className="text-[10px] text-slate-500 flex items-center gap-1.5 mt-0.5">
                                   <span className="capitalize font-semibold text-indigo-600">{geo.type}</span>
                                   <span>•</span>
-                                  <span>{geo.type === 'circle' ? `${geo.radius_meters}m` : `${geo.polygon_vertices?.length || 0} pts`}</span>
+                                  <span>{geo.type === 'circle' ? `${geo.radius_meters}m` : `${
+                                    geo.polygon_vertices?.length ||
+                                    geo.geometry?.coordinates?.length ||
+                                    0
+                                  } pts`}</span>
                                 </div>
                               </div>
 
