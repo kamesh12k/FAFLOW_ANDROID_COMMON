@@ -17,8 +17,8 @@ from app.models.day_order_calendar import CalendarDay, DayType
 from app.models.leave import LeaveRequest, AlterAssignment, LeaveStatus
 from app.services.student_attendance_service import StudentAttendanceService
 from app.schemas.student_attendance import (
-    SubmitAttendanceRequest, EmergencyAttendanceRequest, AttendanceCorrectionRequest,
-    StudentStatusException, OfflineSyncBatchRequest, OfflineSyncOperation
+    CreateAttendanceSessionRequest, SubmitAttendanceRequest, EmergencyAttendanceRequest,
+    AttendanceCorrectionRequest, StudentStatusException, OfflineSyncBatchRequest, OfflineSyncOperation
 )
 
 
@@ -777,6 +777,79 @@ def test_offline_sync_with_negative_session_id(setup_attendance_context, test_te
     assert result.results[0].success is True
     assert result.results[0].session_id > 0
     assert "Attendance session" not in (result.results[0].message or "")
+
+
+def test_substitution_teacher_schedule_and_attendance_rights(client: TestClient, db_session, test_teacher, test_teacher2, setup_attendance_context):
+    """
+    Verifies that a substitution teacher:
+    1. Sees substituted classes in their today's schedule under both 'substitutions' and merged 'periods'.
+    2. Has full rights to create and submit student attendance for the substituted class.
+    3. The attendance session records the substitute as actual_teacher and original teacher as scheduled_teacher.
+    """
+    ctx = setup_attendance_context
+    today = ctx["today"]
+    cls_a = ctx["class_a"]
+
+    # Teacher 1 (test_teacher) is on leave for period 3 (Class A)
+    leave = LeaveRequest(
+        teacher_id=test_teacher.id,
+        date=today,
+        day_order=1,
+        period_number=3,
+        reason="Sick Leave",
+        status=LeaveStatus.approved
+    )
+    db_session.add(leave)
+    db_session.flush()
+
+    sub = AlterAssignment(
+        leave_request_id=leave.id,
+        substitute_teacher_id=test_teacher2.id
+    )
+    db_session.add(sub)
+    db_session.commit()
+
+    # 1. Verify get_today_teacher_schedule returns the substitution in periods
+    schedule = StudentAttendanceService.get_today_teacher_schedule(db_session, test_teacher2, today)
+    assert len(schedule.substitutions) == 1
+    assert any(p.period_number == 3 and p.is_substitution for p in schedule.periods)
+    sub_slot = next(p for p in schedule.periods if p.period_number == 3 and p.is_substitution)
+    assert sub_slot.substitution_id == sub.id
+    assert sub_slot.class_id == cls_a.id
+    assert sub_slot.scheduled_teacher_name == test_teacher.name
+
+    # 2. Substitute teacher creates/opens the session
+    create_req = CreateAttendanceSessionRequest(
+        class_id=sub_slot.class_id,
+        period_number=sub_slot.period_number,
+        attendance_date=today,
+        timetable_slot_id=sub_slot.timetable_slot_id,
+        subject_id=sub_slot.subject_id,
+        substitution_id=sub_slot.substitution_id,
+        attendance_type=AttendanceType.registered_substitution
+    )
+    sess_out = StudentAttendanceService.create_or_get_session(db_session, test_teacher2, create_req)
+    assert sess_out.id is not None
+    assert sess_out.attendance_type == AttendanceType.registered_substitution
+    assert sess_out.actual_teacher_id == test_teacher2.id
+    assert sess_out.scheduled_teacher_id == test_teacher.id
+
+    # 3. Substitute teacher submits attendance
+    submit_req = SubmitAttendanceRequest(
+        class_id=cls_a.id,
+        period_number=3,
+        attendance_date=today,
+        substitution_id=sub.id,
+        absent_roll_suffixes=["001", "003"]
+    )
+    submitted = StudentAttendanceService.submit_attendance_by_session_id(
+        db_session, sess_out.id, test_teacher2, submit_req
+    )
+    assert submitted.status in (SessionStatus.submitted, SessionStatus.submitted_late)
+    assert submitted.absent_count == 2
+    assert submitted.present_count == 8
+    assert submitted.actual_teacher_id == test_teacher2.id
+
 
 
 

@@ -384,6 +384,7 @@ class StudentAttendanceService:
             timetable_slot_id=timetable_slot_id,
             class_id=class_id,
             subject_id=subject_id,
+            period_number=period_number,
             day_order=day_order,
             scheduled_teacher_id=scheduled_teacher_id,
             actual_teacher_id=current_user.id,

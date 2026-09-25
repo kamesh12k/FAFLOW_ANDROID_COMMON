@@ -1,4 +1,4 @@
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, computed_field
 from typing import List, Optional, Dict, Any
 from datetime import date, datetime, time
 from app.models.student_attendance import AttendanceType, SessionStatus, StudentAttendanceStatus
@@ -106,6 +106,22 @@ class TeacherTodayAttendanceOut(BaseModel):
     scheduled_classes: List[TeacherClassSlotOut] = []
     substitutions: List[TeacherClassSlotOut] = []
     all_active_classes: List[Dict[str, Any]] = [] # For emergency any-class picker
+
+    @computed_field
+    @property
+    def periods(self) -> List[TeacherClassSlotOut]:
+        combined = list(self.scheduled_classes) + list(self.substitutions)
+        return sorted(combined, key=lambda s: s.period_number)
+
+    @computed_field
+    @property
+    def is_holiday(self) -> bool:
+        return self.is_blocked_date
+
+    @computed_field
+    @property
+    def holiday_reason(self) -> Optional[str]:
+        return self.block_reason
 
 
 class CreateAttendanceSessionRequest(BaseModel):

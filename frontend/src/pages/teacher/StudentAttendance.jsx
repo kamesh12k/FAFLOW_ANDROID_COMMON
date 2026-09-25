@@ -55,6 +55,22 @@ export default function StudentAttendance() {
     loadSchedule()
   }, [])
 
+  // Safely resolve all periods, combining scheduled classes + substitutions in period order
+  const periods = useMemo(() => {
+    if (!scheduleData) return []
+    if (Array.isArray(scheduleData.periods) && scheduleData.periods.length > 0) {
+      return scheduleData.periods
+    }
+    const combined = [
+      ...(scheduleData.scheduled_classes || []),
+      ...(scheduleData.substitutions || [])
+    ]
+    return combined.sort((a, b) => (a.period_number || 0) - (b.period_number || 0))
+  }, [scheduleData])
+
+  const isHoliday = Boolean(scheduleData?.is_holiday ?? scheduleData?.is_blocked_date)
+  const holidayReason = scheduleData?.holiday_reason || scheduleData?.block_reason || 'No scheduled academic sessions for today.'
+
   // Open attendance taker for a period
   const handleOpenAttendance = async (periodSlot) => {
     try {
@@ -76,8 +92,9 @@ export default function StudentAttendance() {
         startTime: periodSlot.start_time,
         endTime: periodSlot.end_time,
         slotId: periodSlot.timetable_slot_id,
-        isSubstitution: periodSlot.is_substitution,
-        substitutionId: periodSlot.substitution_id,
+        isSubstitution: Boolean(periodSlot.is_substitution),
+        substitutionId: periodSlot.substitution_id || null,
+        scheduledTeacherName: periodSlot.scheduled_teacher_name || null,
         attendanceType: periodSlot.is_substitution ? 'REGISTERED_SUBSTITUTION' : 'NORMAL'
       })
 
@@ -100,9 +117,10 @@ export default function StudentAttendance() {
       } else {
         // Create session draft / or start new session
         const createRes = await studentAttendanceApi.createSession({
-          timetable_slot_id: periodSlot.timetable_slot_id,
+          period_number: periodSlot.period_number,
+          timetable_slot_id: periodSlot.timetable_slot_id || null,
           class_id: periodSlot.class_id,
-          subject_id: periodSlot.subject_id,
+          subject_id: periodSlot.subject_id || null,
           substitution_id: periodSlot.substitution_id || null,
           attendance_type: periodSlot.is_substitution ? 'REGISTERED_SUBSTITUTION' : 'NORMAL'
         })
@@ -290,7 +308,7 @@ export default function StudentAttendance() {
               <span>{scheduleData.date}</span>
               <span className="w-1 h-1 rounded-full bg-indigo-400"></span>
               <span className="font-bold text-indigo-200">
-                {scheduleData.is_holiday ? 'Holiday' : `Day Order ${scheduleData.day_order ?? '-'}`}
+                {isHoliday ? 'Holiday' : `Day Order ${scheduleData.day_order ?? '-'}`}
               </span>
             </div>
           )}
@@ -327,11 +345,11 @@ export default function StudentAttendance() {
           <Spinner className="w-8 h-8 mx-auto text-indigo-600" />
           <p className="mt-3 text-sm text-slate-500 font-medium">Loading schedule and attendance context...</p>
         </div>
-      ) : scheduleData?.is_holiday ? (
+      ) : isHoliday ? (
         <Card className="p-8 text-center bg-amber-50/50 border-amber-200">
           <div className="text-4xl mb-2">🎉</div>
           <h2 className="text-lg font-bold text-amber-900">Today is marked as Non-Working / Holiday</h2>
-          <p className="text-sm text-amber-700 mt-1">{scheduleData.holiday_reason || 'No scheduled academic sessions for today.'}</p>
+          <p className="text-sm text-amber-700 mt-1">{holidayReason}</p>
         </Card>
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
@@ -341,7 +359,7 @@ export default function StudentAttendance() {
               <h2 className="text-base font-bold text-slate-900 flex items-center gap-2">
                 <span>Today's Classes</span>
                 <span className="text-xs bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full font-semibold">
-                  {scheduleData?.periods?.length || 0}
+                  {periods.length}
                 </span>
               </h2>
               <button
@@ -352,19 +370,26 @@ export default function StudentAttendance() {
               </button>
             </div>
 
-            {(!scheduleData?.periods || scheduleData.periods.length === 0) ? (
+            {periods.length === 0 ? (
               <Card className="p-6 text-center text-slate-500 text-sm">
                 No classes scheduled for you today.
               </Card>
             ) : (
               <div className="space-y-3">
-                {scheduleData.periods.map((slot) => {
-                  const isSelected = activeClassInfo?.slotId === slot.timetable_slot_id
+                {periods.map((slot, idx) => {
+                  const isSelected = activeClassInfo && (
+                    activeClassInfo.periodNumber === slot.period_number &&
+                    activeClassInfo.classId === slot.class_id &&
+                    (Boolean(activeClassInfo.isSubstitution) === Boolean(slot.is_substitution))
+                  )
                   const isSubmitted = slot.session_status === 'SUBMITTED' || slot.session_status === 'SUBMITTED_LATE'
+                  const slotKey = slot.timetable_slot_id
+                    ? `slot-${slot.timetable_slot_id}`
+                    : `sub-${slot.substitution_id || `${slot.period_number}-${slot.class_id}-${idx}`}`
 
                   return (
                     <div
-                      key={slot.timetable_slot_id}
+                      key={slotKey}
                       onClick={() => handleOpenAttendance(slot)}
                       className={`p-4 rounded-xl border transition-all cursor-pointer ${
                         isSelected
@@ -374,13 +399,13 @@ export default function StudentAttendance() {
                     >
                       <div className="flex items-start justify-between gap-2">
                         <div>
-                          <div className="flex items-center gap-2">
+                          <div className="flex items-center gap-2 flex-wrap">
                             <span className="px-2 py-0.5 bg-slate-100 text-slate-700 font-bold text-xs rounded-md">
                               Period {slot.period_number}
                             </span>
                             {slot.is_substitution && (
                               <span className="px-2 py-0.5 bg-purple-100 text-purple-700 font-bold text-xs rounded-md">
-                                Substitution
+                                Substitution {slot.scheduled_teacher_name ? `(${slot.scheduled_teacher_name})` : ''}
                               </span>
                             )}
                             <span className="text-xs text-slate-500 font-medium">
@@ -388,7 +413,7 @@ export default function StudentAttendance() {
                             </span>
                           </div>
                           <h3 className="text-sm font-bold text-slate-900 mt-2">
-                            {slot.class_name}
+                            {slot.class_name} {slot.section ? `(${slot.section})` : ''}
                           </h3>
                           <p className="text-xs text-slate-600 mt-0.5 font-medium">
                             {slot.subject_name}
@@ -452,7 +477,7 @@ export default function StudentAttendance() {
                         )}
                         {activeClassInfo.isSubstitution && (
                           <span className="px-2 py-0.5 bg-purple-600 text-white font-black text-xs rounded-md">
-                            SUBSTITUTION
+                            SUBSTITUTION {activeClassInfo.scheduledTeacherName ? `(for ${activeClassInfo.scheduledTeacherName})` : ''}
                           </span>
                         )}
                         <span className="text-xs text-slate-500 font-medium">
