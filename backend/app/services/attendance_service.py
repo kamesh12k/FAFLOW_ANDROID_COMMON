@@ -155,12 +155,18 @@ class AttendanceService:
 
         # 5. Record Authoritative Shift Check-In
         now_utc = datetime.now(timezone.utc)
+        effective_time = data.captured_at if data.captured_at is not None else now_utc
+        if effective_time.tzinfo is None:
+            effective_time = effective_time.replace(tzinfo=timezone.utc)
+
+        effective_date = effective_time.date()
+
         record = existing_today or StaffAttendanceRecord(
             user_id=user.id,
-            attendance_date=today
+            attendance_date=effective_date
         )
 
-        record.check_in_time = now_utc
+        record.check_in_time = effective_time
         record.status = "PRESENT"
         record.check_in_latitude = data.latitude
         record.check_in_longitude = data.longitude
@@ -171,12 +177,13 @@ class AttendanceService:
         record.verification_method = data.verification_method
         record.idempotency_key = data.idempotency_key
         record.device_reference = data.device_reference
+        record.sync_source = "OFFLINE_SYNC" if data.captured_at is not None else "DIRECT"
 
         db.add(record)
         db.commit()
         db.refresh(record)
 
-        AttendanceService._log_audit(db, user.id, "ATTENDANCE_CHECK_IN_ACCEPTED", {"record_id": record.id, "time": str(now_utc)})
+        AttendanceService._log_audit(db, user.id, "ATTENDANCE_CHECK_IN_ACCEPTED", {"record_id": record.id, "time": str(effective_time), "sync_source": record.sync_source})
         return AttendanceService._to_dto(record)
 
     @staticmethod
@@ -236,18 +243,24 @@ class AttendanceService:
                 raise DomainException(f"Staff member is already checked out for today ({today})", status_code=400)
 
         now_utc = datetime.now(timezone.utc)
-        record.check_out_time = now_utc
+        effective_time = data.captured_at if data.captured_at is not None else now_utc
+        if effective_time.tzinfo is None:
+            effective_time = effective_time.replace(tzinfo=timezone.utc)
+
+        record.check_out_time = effective_time
         record.check_out_latitude = data.latitude
         record.check_out_longitude = data.longitude
         record.check_out_accuracy = data.accuracy_meters
         record.check_out_geofence_id = geofence.id if geofence else None
         # Store checkout biometric score for audit trail
         record.face_similarity_score = data.face_similarity_score
+        if data.captured_at is not None:
+            record.sync_source = "OFFLINE_SYNC"
 
         # Calculate Working Hours
         if record.check_in_time:
             check_in_utc = record.check_in_time.replace(tzinfo=timezone.utc) if record.check_in_time.tzinfo is None else record.check_in_time
-            diff = now_utc - check_in_utc
+            diff = effective_time - check_in_utc
             total_seconds = max(0, int(diff.total_seconds()))
             hours = total_seconds // 3600
             minutes = (total_seconds % 3600) // 60

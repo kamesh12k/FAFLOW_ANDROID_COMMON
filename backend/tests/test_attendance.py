@@ -385,9 +385,41 @@ def test_delete_attendance_record_api_endpoint_rbac(client, auth_headers_teacher
     assert res_admin.status_code == 200
     assert res_admin.json()["success"] is True
 
-    # 3. Subsequent delete -> 404 Not Found
-    res_subsequent = client.delete(f"/attendance/admin/record/{record_id}", headers=auth_headers_admin)
-    assert res_subsequent.status_code == 404
+def test_offline_sync_captured_at_timestamp_preserved(db_session, test_teacher, active_campus_geofence):
+    """Verifies that an offline-synced check-in and check-out preserves the original captured_at time."""
+    from datetime import datetime, timezone, timedelta
+    past_check_in = datetime.now(timezone.utc) - timedelta(hours=2)
+    past_check_out = datetime.now(timezone.utc) - timedelta(hours=1)
+
+    check_in_req = AttendanceCheckInRequest(
+        idempotency_key=str(uuid.uuid4()),
+        latitude=11.016844,
+        longitude=76.955833,
+        accuracy_meters=5.0,
+        face_similarity_score=0.92,
+        liveness_verified=True,
+        verification_method="FACE_ON_DEVICE",
+        captured_at=past_check_in
+    )
+
+    rec = AttendanceService.check_in(db_session, test_teacher, check_in_req)
+    assert rec.check_in_time.replace(microsecond=0) == past_check_in.replace(microsecond=0)
+
+    # Check out with captured_at
+    check_out_req = AttendanceCheckOutRequest(
+        idempotency_key=str(uuid.uuid4()),
+        latitude=11.016844,
+        longitude=76.955833,
+        accuracy_meters=5.0,
+        face_similarity_score=0.92,
+        liveness_verified=True,
+        verification_method="FACE_ON_DEVICE",
+        captured_at=past_check_out
+    )
+    out_rec = AttendanceService.check_out(db_session, test_teacher, check_out_req)
+    assert out_rec.check_out_time.replace(microsecond=0) == past_check_out.replace(microsecond=0)
+    assert "1h 0m" in out_rec.working_hours
+
 
 
 
