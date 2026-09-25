@@ -78,7 +78,7 @@ class GeofenceOut(BaseModel):
     center_longitude: float
     radius_meters: Optional[float] = None
     geometry: Dict[str, Any]
-    polygon_vertices: Optional[List[Dict[str, float]]] = None
+    polygon_vertices: Optional[List[List[float]]] = None
     tolerance_meters: float
     area_sq_meters: Optional[float]
     perimeter_meters: Optional[float]
@@ -95,21 +95,22 @@ class GeofenceOut(BaseModel):
 
     @root_validator(pre=False, skip_on_failure=True)
     def extract_polygon_vertices(cls, values):
-        """Populate polygon_vertices from geometry.coordinates for polygon type geofences."""
+        """Populate polygon_vertices as [[lat, lng], ...] from geometry.coordinates for polygon type geofences."""
         geo_type = values.get("type")
         geometry = values.get("geometry") or {}
-        if geo_type == "polygon" and not values.get("polygon_vertices"):
-            coords = geometry.get("coordinates", [])
+        if geo_type == "polygon":
+            coords = geometry.get("coordinates", []) if isinstance(geometry, dict) else []
+            if not coords and values.get("polygon_vertices"):
+                coords = values.get("polygon_vertices")
             if coords and isinstance(coords, list):
                 vertices = []
                 for pt in coords:
                     if isinstance(pt, (list, tuple)) and len(pt) >= 2:
-                        vertices.append({"latitude": float(pt[0]), "longitude": float(pt[1])})
+                        vertices.append([float(pt[0]), float(pt[1])])
                     elif isinstance(pt, dict):
-                        vertices.append({
-                            "latitude": float(pt.get("latitude", pt.get("lat", 0))),
-                            "longitude": float(pt.get("longitude", pt.get("lng", 0)))
-                        })
+                        lat = float(pt.get("latitude", pt.get("lat", 0)))
+                        lng = float(pt.get("longitude", pt.get("lng", 0)))
+                        vertices.append([lat, lng])
                 values["polygon_vertices"] = vertices
         return values
 
@@ -123,7 +124,7 @@ class GeofenceActiveOut(BaseModel):
     center_longitude: float
     radius_meters: Optional[float] = None
     geometry: Dict[str, Any]
-    polygon_vertices: Optional[List[Dict[str, float]]] = None
+    polygon_vertices: Optional[List[List[float]]] = None
     tolerance_meters: float
     is_active: bool
 
@@ -132,21 +133,22 @@ class GeofenceActiveOut(BaseModel):
 
     @root_validator(pre=False, skip_on_failure=True)
     def extract_polygon_vertices(cls, values):
-        """Populate polygon_vertices from geometry.coordinates for polygon type geofences."""
+        """Populate polygon_vertices as [[lat, lng], ...] from geometry.coordinates for polygon type geofences."""
         geo_type = values.get("type")
         geometry = values.get("geometry") or {}
-        if geo_type == "polygon" and not values.get("polygon_vertices"):
-            coords = geometry.get("coordinates", [])
+        if geo_type == "polygon":
+            coords = geometry.get("coordinates", []) if isinstance(geometry, dict) else []
+            if not coords and values.get("polygon_vertices"):
+                coords = values.get("polygon_vertices")
             if coords and isinstance(coords, list):
                 vertices = []
                 for pt in coords:
                     if isinstance(pt, (list, tuple)) and len(pt) >= 2:
-                        vertices.append({"latitude": float(pt[0]), "longitude": float(pt[1])})
+                        vertices.append([float(pt[0]), float(pt[1])])
                     elif isinstance(pt, dict):
-                        vertices.append({
-                            "latitude": float(pt.get("latitude", pt.get("lat", 0))),
-                            "longitude": float(pt.get("longitude", pt.get("lng", 0)))
-                        })
+                        lat = float(pt.get("latitude", pt.get("lat", 0)))
+                        lng = float(pt.get("longitude", pt.get("lng", 0)))
+                        vertices.append([lat, lng])
                 values["polygon_vertices"] = vertices
         return values
 

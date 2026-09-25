@@ -132,10 +132,15 @@ export default function AdminGeofences() {
             ? { latitude: pt[0], longitude: pt[1] }
             : pt
         )
-      const vertices = rawVertices.map((v) => ({
-        lat: Number(v.latitude ?? v.lat ?? 0),
-        lng: Number(v.longitude ?? v.lng ?? 0),
-      }))
+      const vertices = rawVertices.map((v) => {
+        if (Array.isArray(v)) {
+          return { lat: Number(v[0]), lng: Number(v[1]) }
+        }
+        return {
+          lat: Number(v.latitude ?? v.lat ?? 0),
+          lng: Number(v.longitude ?? v.lng ?? 0),
+        }
+      })
       setPolygonVertices(vertices)
       if (vertices.length > 0) {
         setCenter({ lat: vertices[0].lat, lng: vertices[0].lng })

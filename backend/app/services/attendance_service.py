@@ -89,6 +89,10 @@ class AttendanceService:
                 if vertices and len(vertices) >= 3:
                     if is_point_in_polygon(lat, lon, vertices):
                         return True, g
+                    tolerance = g.tolerance_meters if g.tolerance_meters is not None else 15.0
+                    dist = AttendanceService._haversine_meters(lat, lon, g.center_latitude, g.center_longitude)
+                    if dist <= ((g.radius_meters or 0.0) + tolerance):
+                        return True, g
             else:
                 dist = AttendanceService._haversine_meters(lat, lon, g.center_latitude, g.center_longitude)
                 if dist <= (g.radius_meters + g.tolerance_meters):

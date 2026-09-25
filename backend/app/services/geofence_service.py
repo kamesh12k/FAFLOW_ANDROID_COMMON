@@ -343,17 +343,22 @@ class GeofenceService:
                     if dist_to_boundary < nearest_boundary_dist:
                         nearest_boundary_dist = dist_to_boundary
             elif g.type == "polygon":
-                vertices = g.geometry.get("coordinates", [])
+                vertices = g.geometry.get("coordinates", []) if g.geometry else []
                 if vertices and len(vertices) >= 3:
                     if is_point_in_polygon(lat, lon, vertices):
                         is_inside_any = True
                         nearest_boundary_dist = 0.0
                         best_geofence = g
                     else:
-                        # compute min distance to vertices
-                        poly_min_dist = min(haversine_distance_meters(lat, lon, v[0], v[1]) for v in vertices)
-                        if poly_min_dist < nearest_boundary_dist:
-                            nearest_boundary_dist = poly_min_dist
+                        tolerance = g.tolerance_meters if g.tolerance_meters is not None else 15.0
+                        if dist_to_center <= ((g.radius_meters or 0.0) + tolerance):
+                            is_inside_any = True
+                            nearest_boundary_dist = 0.0
+                            best_geofence = g
+                        else:
+                            poly_min_dist = min(haversine_distance_meters(lat, lon, v[0], v[1]) for v in vertices)
+                            if poly_min_dist < nearest_boundary_dist:
+                                nearest_boundary_dist = poly_min_dist
 
         if is_inside_any:
             status_str = "INSIDE_CAMPUS"
