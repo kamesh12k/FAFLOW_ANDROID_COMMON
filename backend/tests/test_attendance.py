@@ -403,7 +403,7 @@ def test_offline_sync_captured_at_timestamp_preserved(db_session, test_teacher, 
     )
 
     rec = AttendanceService.check_in(db_session, test_teacher, check_in_req)
-    assert rec.check_in_time.replace(microsecond=0) == past_check_in.replace(microsecond=0)
+    assert rec.check_in_time.replace(microsecond=0, tzinfo=None) == past_check_in.replace(microsecond=0, tzinfo=None)
 
     # Check out with captured_at
     check_out_req = AttendanceCheckOutRequest(
@@ -417,7 +417,7 @@ def test_offline_sync_captured_at_timestamp_preserved(db_session, test_teacher, 
         captured_at=past_check_out
     )
     out_rec = AttendanceService.check_out(db_session, test_teacher, check_out_req)
-    assert out_rec.check_out_time.replace(microsecond=0) == past_check_out.replace(microsecond=0)
+    assert out_rec.check_out_time.replace(microsecond=0, tzinfo=None) == past_check_out.replace(microsecond=0, tzinfo=None)
     assert "1h 0m" in out_rec.working_hours
 
 
