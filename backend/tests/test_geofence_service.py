@@ -129,9 +129,9 @@ def test_toggle_and_deactivate_geofence(db_session, test_admin):
     toggled = GeofenceService.toggle_geofence(db_session, geofence.id, is_active=False, user_id=test_admin.id)
     assert toggled.is_active is False
 
-    # Soft delete
+    # Hard delete
     del_res = GeofenceService.delete_geofence(db_session, geofence.id, user_id=test_admin.id)
-    assert "deactivated" in del_res["message"]
+    assert "deleted" in del_res["message"]
 
 
 def test_distance_to_polygon_meters():
