@@ -15,7 +15,7 @@ interface TimetableRepository {
 interface LeaveRepository {
     suspend fun getMyLeaves(): NetworkResult<List<LeaveRequest>>
     suspend fun getGroupedLeaves(): NetworkResult<List<LeaveHistoryDay>>
-    suspend fun applyLeave(date: String, periodNumber: Int, reason: String): NetworkResult<LeaveRequest>
+    suspend fun applyLeave(date: String, periodNumber: Int, reason: String, proposedSubstituteId: Int? = null, policyWarningAcknowledged: Boolean = false): NetworkResult<LeaveRequest>
     suspend fun cancelLeave(leaveId: Int): NetworkResult<Boolean>
     suspend fun cancelLeaves(leaveIds: List<Int>): NetworkResult<Boolean>
 }

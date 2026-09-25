@@ -30,18 +30,17 @@ class StaffLocationProvider(private val context: Context) : LocationProvider {
 
     override val isLocationPermissionGranted: Boolean
         get() {
-            val fine = ContextCompat.checkSelfPermission(
+            return ContextCompat.checkSelfPermission(
                 context,
                 Manifest.permission.ACCESS_FINE_LOCATION
             ) == PackageManager.PERMISSION_GRANTED
-
-            val coarse = ContextCompat.checkSelfPermission(
-                context,
-                Manifest.permission.ACCESS_COARSE_LOCATION
-            ) == PackageManager.PERMISSION_GRANTED
-
-            return fine || coarse
         }
+
+    val isCoarseLocationGranted: Boolean
+        get() = ContextCompat.checkSelfPermission(
+            context,
+            Manifest.permission.ACCESS_COARSE_LOCATION
+        ) == PackageManager.PERMISSION_GRANTED
 
     override val isLocationServiceEnabled: Boolean
         get() {
@@ -61,13 +60,13 @@ class StaffLocationProvider(private val context: Context) : LocationProvider {
 
     override fun getLocationUpdates(intervalMs: Long): Flow<StaffLiveLocation> = callbackFlow {
         if (!isLocationPermissionGranted) {
-            close(SecurityException("Location permission not granted"))
+            close(SecurityException("Precise location permission not granted"))
             return@callbackFlow
         }
 
         val locationRequest = LocationRequest.Builder(Priority.PRIORITY_HIGH_ACCURACY, intervalMs)
             .setMinUpdateIntervalMillis(intervalMs / 2)
-            .setWaitForAccurateLocation(true)
+            .setWaitForAccurateLocation(false)
             .build()
 
         val locationCallback = object : LocationCallback() {

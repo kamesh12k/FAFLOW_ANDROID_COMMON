@@ -178,6 +178,10 @@ def enroll_my_biometrics(
     from datetime import datetime, timezone
     current_user.has_face_enrolled = True
     current_user.face_enrolled_at = datetime.now(timezone.utc)
+    log_audit_event(
+        db, current_user.id, "biometrics.enroll", "user", current_user.id,
+        {"name": current_user.name, "email": current_user.email}
+    )
     db.commit()
     db.refresh(current_user)
     return current_user

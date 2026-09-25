@@ -31,7 +31,7 @@ object ApiConfig {
     private const val PREFS_NAME = "faflow_network_prefs"
     private const val KEY_BASE_URL = "server_base_url"
     private const val KEY_MIGRATION_VERSION = "network_config_migration_ver"
-    private const val CURRENT_MIGRATION_VERSION = 3
+    private const val CURRENT_MIGRATION_VERSION = 4
 
     // Obsolete / legacy URLs that must be migrated away from in production
     private val LEGACY_OBSOLETE_URLS = listOf(
@@ -61,37 +61,37 @@ object ApiConfig {
     }
 
     /**
-     * Determines default base URL based on build flavor and environment.
+     * Always points to live production endpoint (faflowgovernence.online).
      */
     fun getDefaultBaseUrl(): String {
-        return if (isEmulator()) {
-            EMULATOR_127_0_0_1_URL
-        } else {
-            PRODUCTION_BASE_URL
-        }
+        return if (isEmulator()) EMULATOR_10_0_2_2_URL else PRODUCTION_BASE_URL
     }
 
     /**
-     * Retrieves the persisted or default base URL with safe migration for Release builds.
+     * Retrieves the persisted or default base URL with safe migration to live server.
      */
     fun getBaseUrl(context: Context): String {
         val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
         val saved = prefs.getString(KEY_BASE_URL, null)
         val migrationVer = prefs.getInt(KEY_MIGRATION_VERSION, 0)
 
-        // Version-aware migration: ensure device is updated to live server
+        val isEmulatorDevice = isEmulator()
+        val defaultUrl = if (isEmulatorDevice) EMULATOR_10_0_2_2_URL else PRODUCTION_BASE_URL
+
+        // Version-aware migration: ensure physical devices are updated to live production server,
+        // while Android Emulators retain access to local 10.0.2.2 development host.
         val isObsolete = saved == null ||
                 LEGACY_OBSOLETE_URLS.any { saved.equals(it, ignoreCase = true) || saved.contains("onrender.com") || saved.contains("faflow.institution.edu") } ||
                 saved.contains("172.21.135.207") ||
-                (!isEmulator() && (saved.contains("10.0.2.2") || saved.contains("127.0.0.1") || saved.contains("localhost")))
+                (!isEmulatorDevice && (saved.contains("10.0.2.2") || saved.contains("127.0.0.1") || saved.contains("localhost")))
 
         if (migrationVer < CURRENT_MIGRATION_VERSION || isObsolete) {
-            saveBaseUrl(context, PRODUCTION_BASE_URL)
+            saveBaseUrl(context, defaultUrl)
             prefs.edit().putInt(KEY_MIGRATION_VERSION, CURRENT_MIGRATION_VERSION).apply()
-            return PRODUCTION_BASE_URL
+            return defaultUrl
         }
 
-        val candidate = saved ?: getDefaultBaseUrl()
+        val candidate = saved ?: defaultUrl
         return if (candidate.endsWith("/")) candidate else "$candidate/"
     }
 

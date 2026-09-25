@@ -64,27 +64,39 @@ object FaflowNotificationManager {
 
     /**
      * Checks whether an alert has already been posted to the device's system tray.
+     * Optionally scoped by userId to avoid cross-user notification suppressions.
      */
-    fun isAlreadyNotified(context: Context, notificationId: Int): Boolean {
+    fun isAlreadyNotified(context: Context, notificationId: Int, userId: Int? = null): Boolean {
         val prefs = context.getSharedPreferences(PREFS_NOTIFICATIONS, Context.MODE_PRIVATE)
-        val notified = prefs.getStringSet(KEY_NOTIFIED_IDS, emptySet()) ?: emptySet()
+        val key = if (userId != null && userId > 0) "${KEY_NOTIFIED_IDS}_$userId" else KEY_NOTIFIED_IDS
+        val notified = prefs.getStringSet(key, emptySet()) ?: emptySet()
         return notified.contains(notificationId.toString())
     }
 
     /**
      * Records a notification ID in the local cache to prevent duplicate alerts.
+     * Scoped by userId so switching accounts maintains clean tracking.
      */
-    fun markAsNotified(context: Context, notificationId: Int) {
+    fun markAsNotified(context: Context, notificationId: Int, userId: Int? = null) {
         val prefs = context.getSharedPreferences(PREFS_NOTIFICATIONS, Context.MODE_PRIVATE)
-        val notified = (prefs.getStringSet(KEY_NOTIFIED_IDS, emptySet()) ?: emptySet()).toMutableSet()
+        val key = if (userId != null && userId > 0) "${KEY_NOTIFIED_IDS}_$userId" else KEY_NOTIFIED_IDS
+        val notified = (prefs.getStringSet(key, emptySet()) ?: emptySet()).toMutableSet()
         notified.add(notificationId.toString())
         // Keep up to 200 most recent IDs to prevent unbounded cache growth
         if (notified.size > 200) {
             val pruned = notified.toList().takeLast(100).toSet()
-            prefs.edit().putStringSet(KEY_NOTIFIED_IDS, pruned).apply()
+            prefs.edit().putStringSet(key, pruned).apply()
         } else {
-            prefs.edit().putStringSet(KEY_NOTIFIED_IDS, notified).apply()
+            prefs.edit().putStringSet(key, notified).apply()
         }
+    }
+
+    /**
+     * Clears all notification history caches upon logout.
+     */
+    fun clearCache(context: Context) {
+        val prefs = context.getSharedPreferences(PREFS_NOTIFICATIONS, Context.MODE_PRIVATE)
+        prefs.edit().clear().apply()
     }
 
     /**
@@ -110,7 +122,17 @@ object FaflowNotificationManager {
         val channelId = if (isAnnouncement) CHANNEL_ID_ANNOUNCEMENTS else CHANNEL_ID_ALERTS
 
         // Deep-link intent targeting MainActivity
-        val targetRoute = if (isAnnouncement) "announcements" else "notifications"
+        val targetRoute = when {
+            isAnnouncement -> "announcements"
+            eventType?.contains("duty", ignoreCase = true) == true ||
+                eventType?.contains("discipline", ignoreCase = true) == true ||
+                eventType?.contains("exam", ignoreCase = true) == true ||
+                eventType?.contains("wing", ignoreCase = true) == true -> "my_duties"
+            eventType?.contains("substitut", ignoreCase = true) == true -> "substitution"
+            eventType?.contains("leave", ignoreCase = true) == true -> "leave_history"
+            eventType?.contains("attendance", ignoreCase = true) == true -> "attendance_check_in_out"
+            else -> "notifications"
+        }
         val intent = Intent(context, MainActivity::class.java).apply {
             flags = Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP
             putExtra("EXTRA_NOTIFICATION_ID", id)
@@ -126,7 +148,7 @@ object FaflowNotificationManager {
         )
 
         val notification = NotificationCompat.Builder(context, channelId)
-            .setSmallIcon(R.mipmap.ic_launcher)
+            .setSmallIcon(R.drawable.ic_notification_small)
             .setContentTitle(title)
             .setContentText(body)
             .setStyle(NotificationCompat.BigTextStyle().bigText(body))
@@ -144,5 +166,71 @@ object FaflowNotificationManager {
             // Android 13+ POST_NOTIFICATIONS runtime permission not yet granted
             return false
         }
+    }
+
+    /**
+     * Intelligently posts a batch of unread notifications with anti-burst protection:
+     * - If 1-2 notifications: posts them individually.
+     * - If 3+ notifications: posts the top 2 as individual alerts and consolidates the rest into an inbox summary,
+     *   preventing notification alarm fatigue and stutter.
+     */
+    fun showBatchNotifications(
+        context: Context,
+        notifications: List<com.governence.faflow.core.network.NotificationOutDto>,
+        userId: Int? = null
+    ) {
+        val newNotifications = notifications.filter { !isAlreadyNotified(context, it.id, userId) }
+        if (newNotifications.isEmpty()) return
+
+        if (newNotifications.size <= 2) {
+            for (item in newNotifications) {
+                showNotification(
+                    context = context,
+                    id = item.id,
+                    title = item.title,
+                    body = item.body,
+                    eventType = item.eventType
+                )
+                markAsNotified(context, item.id, userId)
+            }
+        } else {
+            // Anti-burst: post top 2 most recent, then summary for the rest
+            val head = newNotifications.take(2)
+            val rest = newNotifications.drop(2)
+
+            for (item in head) {
+                showNotification(
+                    context = context,
+                    id = item.id,
+                    title = item.title,
+                    body = item.body,
+                    eventType = item.eventType
+                )
+                markAsNotified(context, item.id, userId)
+            }
+
+            // Summary notification for remaining
+            val summaryTitle = "${newNotifications.size} New FAFLOW Updates"
+            val summaryBody = rest.take(3).joinToString(" • ") { it.title }
+            showNotification(
+                context = context,
+                id = 999999,
+                title = summaryTitle,
+                body = summaryBody,
+                eventType = "system_summary"
+            )
+            for (item in rest) {
+                markAsNotified(context, item.id, userId)
+            }
+        }
+    }
+
+    /**
+     * Cancels all notifications posted by FAFLOW in the device notification shade.
+     */
+    fun cancelAll(context: Context) {
+        try {
+            NotificationManagerCompat.from(context).cancelAll()
+        } catch (_: Exception) {}
     }
 }

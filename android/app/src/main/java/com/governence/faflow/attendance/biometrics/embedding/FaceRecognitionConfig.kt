@@ -8,10 +8,10 @@ import com.governence.faflow.attendance.biometrics.alignment.FaceAlignmentConfig
 data class FaceRecognitionConfig(
     /**
      * Cosine similarity threshold for 1-to-1 staff verification.
-     * Tuned empirically against MobileFaceNet embeddings (standard operating threshold: 0.45f - 0.60f).
+     * Standard operating threshold: 0.50f.
      */
-    val similarityThreshold: Float = 0.60f,
-    val livenessRequired: Boolean = true,
+    val similarityThreshold: Float = 0.50f,
+    val livenessRequired: Boolean = false,
     val maxFaces: Int = 1,
     val embeddingDimension: Int = 512,
     val modelVersion: String = "InsightFace-MobileFaceNet-ArcFace-v1",

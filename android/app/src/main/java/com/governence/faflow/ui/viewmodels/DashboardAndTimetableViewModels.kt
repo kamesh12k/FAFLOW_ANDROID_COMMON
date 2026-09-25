@@ -40,7 +40,11 @@ data class DashboardUiState(
     val todayCheckInTime: String? = null,
     val todayWorkingDuration: String? = null,
     val pendingSyncCount: Int = 0,
-    val urgentSubstituteDuties: List<com.governence.faflow.core.network.SubstituteDutyDto> = emptyList()
+    val urgentSubstituteDuties: List<com.governence.faflow.core.network.SubstituteDutyDto> = emptyList(),
+    val myCampusDuties: List<com.governence.faflow.core.network.CampusDutyDto> = emptyList(),
+    val isCampusDutiesLoading: Boolean = false,
+    val recentAnnouncements: List<com.governence.faflow.core.network.AnnouncementListItemDto> = emptyList(),
+    val isAnnouncementsLoading: Boolean = false
 )
 
 class DashboardViewModel(
@@ -50,7 +54,9 @@ class DashboardViewModel(
     private val creditRepository: CreditRepository,
     private val substitutionRepository: SubstitutionRepository,
     private val attendanceRepository: com.governence.faflow.attendance.data.AttendanceRepository? = null,
-    private val studentAttendanceRepository: com.governence.faflow.attendance.student.data.StudentAttendanceRepository? = null
+    private val studentAttendanceRepository: com.governence.faflow.attendance.student.data.StudentAttendanceRepository? = null,
+    private val campusDutyRepository: com.governence.faflow.faflow.data.CampusDutyRepositoryImpl? = null,
+    private val announcementRepository: com.governence.faflow.faflow.data.AnnouncementRepositoryImpl? = null
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(DashboardUiState())
@@ -79,22 +85,13 @@ class DashboardViewModel(
         val minutesSinceMidnight = cal.get(java.util.Calendar.HOUR_OF_DAY) * 60 + cal.get(java.util.Calendar.MINUTE)
 
         // Calculate period based on standard academic timings or server authority
-        val period = serverCurrentPeriod ?: when (minutesSinceMidnight) {
-            in (8 * 60 + 15)..(9 * 60 + 25) -> 1
-            in (9 * 60 + 25)..(10 * 60 + 20) -> 2
-            in (10 * 60 + 20)..(11 * 60 + 30) -> 3
-            in (11 * 60 + 30)..(12 * 60 + 25) -> 4
-            in (12 * 60 + 25)..(14 * 60 + 10) -> 5
-            in (14 * 60 + 10)..(15 * 60 + 5) -> 6
-            in (15 * 60 + 5)..(16 * 60) -> 7
-            in (16 * 60)..(16 * 60 + 50) -> 8
-            else -> null
-        }
+        val period = serverCurrentPeriod ?: com.governence.faflow.domain.model.InstitutionalSchedule.resolvePeriodNumber(minutesSinceMidnight)
 
         val active = if (period != null) slots.firstOrNull { it.periodNumber == period } else null
         val nextUpcoming = if (period != null) {
             slots.filter { it.periodNumber > period }.minByOrNull { it.periodNumber }
-        } else if (minutesSinceMidnight < (8 * 60 + 15)) {
+        } else if (minutesSinceMidnight < com.governence.faflow.domain.model.InstitutionalSchedule.getPeriodStartMinute(1)) {
+            // Before college starts — show first period as upcoming
             slots.minByOrNull { it.periodNumber }
         } else {
             null
@@ -119,6 +116,10 @@ class DashboardViewModel(
         )
 
         viewModelScope.launch {
+            try {
+                studentAttendanceRepository?.syncGovernanceConfig()
+            } catch (_: Exception) {}
+
             val staffId = currentStaff?.id
             if (staffId == null) {
                 _uiState.value = _uiState.value.copy(
@@ -136,6 +137,8 @@ class DashboardViewModel(
             val creditDeferred = async { creditRepository.getCreditBalance(staffId) }
             val dutyDeferred = async { substitutionRepository.getMyDuties() }
             val attendanceDeferred = async { attendanceRepository?.getTodaySummary() }
+            val campusDutiesDeferred = async { campusDutyRepository?.getMyDuties() }
+            val announcementsDeferred = async { announcementRepository?.getAnnouncements(limit = 4) }
 
             var hasConnectionError = false
             var fetchedSlots = _uiState.value.todaySlots
@@ -175,7 +178,9 @@ class DashboardViewModel(
                     }
                 }
                 is NetworkResult.Error -> {
-                    if (summaryRes.code == -1) hasConnectionError = true
+                    if (summaryRes.code == -1) {
+                        hasConnectionError = true
+                    }
                     _uiState.value = _uiState.value.copy(isSummaryLoading = false)
                 }
                 NetworkResult.Loading -> Unit
@@ -206,7 +211,6 @@ class DashboardViewModel(
                     )
                 }
                 is NetworkResult.Error -> {
-                    if (creditRes.code == -1) hasConnectionError = true
                     _uiState.value = _uiState.value.copy(isCreditsLoading = false)
                 }
                 NetworkResult.Loading -> Unit
@@ -221,10 +225,37 @@ class DashboardViewModel(
                     )
                 }
                 is NetworkResult.Error -> {
-                    if (dutyRes.code == -1) hasConnectionError = true
                     _uiState.value = _uiState.value.copy(isDutiesLoading = false)
                 }
                 NetworkResult.Loading -> Unit
+            }
+
+            // Process Campus Duties & Supervision
+            when (val cRes = campusDutiesDeferred.await()) {
+                is NetworkResult.Success -> {
+                    _uiState.value = _uiState.value.copy(
+                        myCampusDuties = cRes.data,
+                        isCampusDutiesLoading = false
+                    )
+                }
+                is NetworkResult.Error -> {
+                    _uiState.value = _uiState.value.copy(isCampusDutiesLoading = false)
+                }
+                null, NetworkResult.Loading -> Unit
+            }
+
+            // Process Announcements
+            when (val aRes = announcementsDeferred.await()) {
+                is NetworkResult.Success -> {
+                    _uiState.value = _uiState.value.copy(
+                        recentAnnouncements = aRes.data,
+                        isAnnouncementsLoading = false
+                    )
+                }
+                is NetworkResult.Error -> {
+                    _uiState.value = _uiState.value.copy(isAnnouncementsLoading = false)
+                }
+                null, NetworkResult.Loading -> Unit
             }
 
             // Fallback period resolution if slots exist

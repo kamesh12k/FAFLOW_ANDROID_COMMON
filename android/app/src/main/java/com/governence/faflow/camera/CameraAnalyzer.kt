@@ -4,6 +4,7 @@ import androidx.camera.core.ImageAnalysis
 import androidx.camera.core.ImageProxy
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -101,6 +102,14 @@ class CameraAnalyzer(
             droppedCount = droppedFramesCount.get(),
             targetFps = maxFps
         )
+    }
+
+    fun release() {
+        isCaptureLocked.set(true)
+        isProcessing.set(false)
+        try {
+            coroutineScope.cancel()
+        } catch (_: Exception) {}
     }
 }
 

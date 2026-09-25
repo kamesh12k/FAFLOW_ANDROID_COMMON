@@ -98,7 +98,7 @@ object FaflowApiClient {
         return Retrofit.Builder()
             .baseUrl(normalizedUrl)
             .client(okHttpClient)
-            .addConverterFactory(MoshiConverterFactory.create(moshi))
+            .addConverterFactory(MoshiConverterFactory.create(moshi).asLenient())
             .build()
             .create(FaflowApiService::class.java)
     }

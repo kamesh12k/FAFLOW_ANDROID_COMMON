@@ -59,6 +59,16 @@ class StudentAttendanceViewModel(
         updatePendingCount()
     }
 
+    /**
+     * Resets student attendance UI state and reloads fresh for the authenticated user.
+     */
+    fun resetSession() {
+        _uiState.value = StudentAttendanceUiState()
+        loadSchedule()
+        loadClasses()
+        updatePendingCount()
+    }
+
     fun updatePendingCount() {
         val count = repository.getPendingCount()
         _uiState.update {
@@ -67,6 +77,12 @@ class StudentAttendanceViewModel(
                 syncStatusText = if (count == 0) "✓ Synced" else "◷ Saved on device — will sync automatically ($count pending)"
             )
         }
+    }
+
+    private fun getLocalCurrentPeriod(): Int {
+        val cal = java.util.Calendar.getInstance()
+        val minutes = cal.get(java.util.Calendar.HOUR_OF_DAY) * 60 + cal.get(java.util.Calendar.MINUTE)
+        return com.governence.faflow.domain.model.InstitutionalSchedule.resolveActiveOrRecentPeriod(minutes)
     }
 
     fun loadSchedule(targetDate: String? = null, targetPeriod: Int? = null, targetClassId: Int? = null) {
@@ -84,13 +100,14 @@ class StudentAttendanceViewModel(
                     }
                     // Contextual auto-selection: select explicitly requested slot, active period, or first slot
                     if (_uiState.value.selectedSlot == null && schedule.periods.isNotEmpty()) {
+                        val activeOrRecent = schedule.currentPeriod ?: getLocalCurrentPeriod()
                         val matching = if (targetPeriod != null || targetClassId != null) {
                             schedule.periods.firstOrNull { slot ->
                                 (targetPeriod == null || slot.periodNumber == targetPeriod) &&
                                 (targetClassId == null || slot.classId == targetClassId)
-                            } ?: schedule.periods.firstOrNull { it.periodNumber == schedule.currentPeriod }
+                            } ?: schedule.periods.firstOrNull { it.periodNumber == activeOrRecent }
                         } else {
-                            schedule.periods.firstOrNull { it.periodNumber == schedule.currentPeriod }
+                            schedule.periods.firstOrNull { it.periodNumber == activeOrRecent }
                         } ?: schedule.periods.firstOrNull()
 
                         if (matching != null) {
@@ -114,12 +131,13 @@ class StudentAttendanceViewModel(
 
     fun preselectPeriod(periodNumber: Int?, classId: Int? = null) {
         val schedule = _uiState.value.schedule
+        val activeOrRecent = schedule?.currentPeriod ?: getLocalCurrentPeriod()
         if (schedule != null && schedule.periods.isNotEmpty()) {
             val matching = schedule.periods.firstOrNull { slot ->
                 (periodNumber == null || slot.periodNumber == periodNumber) &&
                 (classId == null || slot.classId == classId)
             } ?: schedule.periods.firstOrNull { it.periodNumber == periodNumber }
-              ?: schedule.periods.firstOrNull { it.periodNumber == schedule.currentPeriod }
+              ?: schedule.periods.firstOrNull { it.periodNumber == activeOrRecent }
               ?: schedule.periods.firstOrNull()
 
             if (matching != null && _uiState.value.selectedSlot?.timetableSlotId != matching.timetableSlotId) {
@@ -193,7 +211,9 @@ class StudentAttendanceViewModel(
 
     fun selectEmergencyClass(classDto: ClassOutDto) {
         viewModelScope.launch {
-            val curPeriod = _uiState.value.schedule?.currentPeriod ?: 1
+            val curPeriod = getLocalCurrentPeriod()
+            val periodTime = com.governence.faflow.domain.model.InstitutionalSchedule.getPeriodTime(curPeriod)
+            val parts = periodTime.split("–")
             _uiState.update {
                 it.copy(
                     isEmergencyModalOpen = false,
@@ -201,8 +221,8 @@ class StudentAttendanceViewModel(
                     selectedSlot = TeacherPeriodSlotDto(
                         timetableSlotId = 0,
                         periodNumber = curPeriod,
-                        startTime = "Current Period",
-                        endTime = "",
+                        startTime = parts.firstOrNull()?.trim() ?: "Period $curPeriod",
+                        endTime = parts.lastOrNull()?.trim() ?: "",
                         classId = classDto.id,
                         className = classDto.name,
                         subjectId = 0,
@@ -280,7 +300,16 @@ class StudentAttendanceViewModel(
     }
 
     fun clearAttendance() {
-        markAllPresent()
+        _uiState.update {
+            it.copy(
+                absentInput = "",
+                specialStatuses = emptyMap(),
+                searchQuery = "",
+                selectedFilter = RosterFilter.ALL,
+                errorMessage = null,
+                successMessage = "Attendance cleared. All students marked Present."
+            )
+        }
     }
 
     fun updateSearchQuery(query: String) {
@@ -293,6 +322,16 @@ class StudentAttendanceViewModel(
 
     fun openReviewSheet() {
         val state = _uiState.value
+        val slot = state.selectedSlot
+        val isSubmitted = state.activeSession?.status in listOf("SUBMITTED", "SUBMITTED_LATE", "LOCKED")
+        if (!isSubmitted && slot != null && !com.governence.faflow.domain.model.InstitutionalSchedule.hasPeriodStarted(slot.periodNumber, state.schedule?.date)) {
+            val startStr = slot.startTime?.ifBlank { com.governence.faflow.domain.model.InstitutionalSchedule.getPeriodStartTimeFormatted(slot.periodNumber) } ?: com.governence.faflow.domain.model.InstitutionalSchedule.getPeriodStartTimeFormatted(slot.periodNumber)
+            _uiState.update {
+                it.copy(errorMessage = "Attendance can only be taken after class starts (scheduled start time: $startStr)")
+            }
+            return
+        }
+
         val rawTokens = state.absentInput.split(Regex("[\\s,]+")).filter { it.isNotBlank() }
         val suffixes = rawTokens.map { it.padStart(3, '0').takeLast(3) }.distinct()
 
@@ -329,6 +368,15 @@ class StudentAttendanceViewModel(
     fun submitAttendance() {
         val state = _uiState.value
         val slot = state.selectedSlot ?: return
+
+        val isSubmitted = state.activeSession?.status in listOf("SUBMITTED", "SUBMITTED_LATE", "LOCKED")
+        if (!isSubmitted && !com.governence.faflow.domain.model.InstitutionalSchedule.hasPeriodStarted(slot.periodNumber, state.schedule?.date)) {
+            val startStr = slot.startTime?.ifBlank { com.governence.faflow.domain.model.InstitutionalSchedule.getPeriodStartTimeFormatted(slot.periodNumber) } ?: com.governence.faflow.domain.model.InstitutionalSchedule.getPeriodStartTimeFormatted(slot.periodNumber)
+            _uiState.update {
+                it.copy(errorMessage = "Attendance can only be taken after class starts (scheduled start time: $startStr)")
+            }
+            return
+        }
 
         // 1. Parse absent suffixes (last 3 digits, deduplicated)
         val rawTokens = state.absentInput.split(Regex("[\\s,]+")).filter { it.isNotBlank() }
@@ -390,7 +438,9 @@ class StudentAttendanceViewModel(
                     sessionId = sessionId,
                     classId = slot.classId,
                     absentSuffixes = suffixes,
-                    exceptions = exceptions
+                    exceptions = exceptions,
+                    periodNumber = slot.periodNumber,
+                    subjectId = slot.subjectId
                 )
                 when (res) {
                     is StudentAttendanceResult.Success -> {
@@ -398,7 +448,7 @@ class StudentAttendanceViewModel(
                             it.copy(
                                 isSubmitting = false,
                                 activeSession = res.session,
-                                successMessage = "Attendance submitted successfully! Status: ${res.session.status}"
+                                successMessage = "Attendance submitted successfully!"
                             )
                         }
                     }
@@ -406,7 +456,7 @@ class StudentAttendanceViewModel(
                         _uiState.update {
                             it.copy(
                                 isSubmitting = false,
-                                successMessage = res.message
+                                successMessage = "Attendance submitted successfully!"
                             )
                         }
                     }

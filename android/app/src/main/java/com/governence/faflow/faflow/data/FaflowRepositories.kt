@@ -3,10 +3,14 @@ package com.governence.faflow.faflow.data
 import com.governence.faflow.core.network.FaflowApiService
 import com.governence.faflow.core.network.LeaveBatchCreateDto
 import com.governence.faflow.core.network.LeaveCreateDto
+import com.governence.faflow.core.network.LeavePolicyOutDto
+import com.governence.faflow.core.network.LeaveValidationOutDto
+import com.governence.faflow.core.network.LeaveValidationRequestDto
 import com.governence.faflow.core.network.NetworkResult
 import com.governence.faflow.core.network.RecommendationOutDto
 import com.governence.faflow.core.network.SubstitutionPreferenceOutDto
 import com.governence.faflow.core.network.SubstitutionPreferenceUpdateDto
+import com.governence.faflow.core.network.TeacherLeaveBalanceSummaryDto
 import com.governence.faflow.domain.model.CreditTransaction
 import com.governence.faflow.domain.model.LeaveHistoryDay
 import com.governence.faflow.domain.model.LeaveRequest
@@ -32,11 +36,11 @@ class TimetableRepositoryImpl(
                     TimetableSlot(
                         id = dto.id,
                         teacherId = dto.teacherId,
-                        subjectName = dto.subjectName ?: "Subject ${dto.subjectId ?: ""}",
-                        subjectCode = dto.subjectCode ?: "CS-${dto.subjectId ?: ""}",
-                        className = dto.className ?: "Class ${dto.classId}",
+                        subjectName = dto.subjectName?.takeIf { it.isNotBlank() } ?: (dto.subjectId?.let { "Subject $it" } ?: "Lecture"),
+                        subjectCode = dto.subjectCode?.takeIf { it.isNotBlank() } ?: (dto.subjectId?.let { "CS-$it" } ?: "CS"),
+                        className = dto.className?.takeIf { it.isNotBlank() } ?: "Class ${dto.classId}",
                         section = dto.classSection ?: "A",
-                        roomNumber = dto.roomNumber ?: "Room ${dto.roomId ?: ""}",
+                        roomNumber = dto.roomNumber?.takeIf { it.isNotBlank() } ?: (dto.roomId?.let { "$it" } ?: "101"),
                         dayOrder = dto.dayOrder,
                         periodNumber = dto.periodNumber
                     )
@@ -91,7 +95,8 @@ class LeaveRepositoryImpl(
                         isEmergency = dto.isEmergency,
                         substituteTeacherName = dto.alterAssignment?.substituteName,
                         createdAt = dto.createdAt,
-                        batchId = dto.batchId
+                        batchId = dto.batchId,
+                        proposedSubstituteName = dto.proposedSubstitute?.name
                     )
                 }
                 NetworkResult.Success(leaves)
@@ -149,10 +154,22 @@ class LeaveRepositoryImpl(
         }
     }
 
-    override suspend fun applyLeave(date: String, periodNumber: Int, reason: String): NetworkResult<LeaveRequest> {
+    override suspend fun applyLeave(
+        date: String,
+        periodNumber: Int,
+        reason: String,
+        proposedSubstituteId: Int?,
+        policyWarningAcknowledged: Boolean
+    ): NetworkResult<LeaveRequest> {
         return try {
             val response = apiService.applyLeave(
-                LeaveCreateDto(date = date, periodNumber = periodNumber, reason = reason)
+                LeaveCreateDto(
+                    date = date,
+                    periodNumber = periodNumber,
+                    reason = reason,
+                    proposedSubstituteId = proposedSubstituteId,
+                    policyWarningAcknowledged = policyWarningAcknowledged
+                )
             )
             if (response.isSuccessful && response.body() != null) {
                 val dto = response.body()!!
@@ -166,7 +183,8 @@ class LeaveRepositoryImpl(
                     status = LeaveStatus.PENDING,
                     isEmergency = dto.isEmergency,
                     createdAt = dto.createdAt,
-                    batchId = dto.batchId
+                    batchId = dto.batchId,
+                    proposedSubstituteName = dto.proposedSubstitute?.name
                 )
                 NetworkResult.Success(req)
             } else {
@@ -177,10 +195,30 @@ class LeaveRepositoryImpl(
         }
     }
 
-    suspend fun applyLeaveBatch(date: String, periodNumbers: List<Int>, reason: String): NetworkResult<List<LeaveRequest>> {
+    suspend fun applyLeaveBatch(
+        date: String,
+        periodNumbers: List<Int>,
+        reason: String,
+        periodSubstitutes: Map<String, Int>? = null,
+        wholeDay: Boolean = false,
+        leavePolicyId: Int? = null,
+        leaveType: String? = null,
+        documentUrl: String? = null,
+        policyWarningAcknowledged: Boolean = false
+    ): NetworkResult<List<LeaveRequest>> {
         return try {
             val response = apiService.applyLeaveBatch(
-                LeaveBatchCreateDto(date = date, periodNumbers = periodNumbers, reason = reason)
+                LeaveBatchCreateDto(
+                    date = date,
+                    periodNumbers = periodNumbers,
+                    wholeDay = if (wholeDay) true else null,
+                    reason = reason,
+                    periodSubstitutes = periodSubstitutes,
+                    leavePolicyId = leavePolicyId,
+                    leaveType = leaveType,
+                    documentUrl = documentUrl,
+                    policyWarningAcknowledged = policyWarningAcknowledged
+                )
             )
             if (response.isSuccessful && response.body() != null) {
                 val list = response.body()!!.map { dto ->
@@ -194,7 +232,8 @@ class LeaveRepositoryImpl(
                         status = LeaveStatus.PENDING,
                         isEmergency = dto.isEmergency,
                         createdAt = dto.createdAt,
-                        batchId = dto.batchId
+                        batchId = dto.batchId,
+                        proposedSubstituteName = dto.proposedSubstitute?.name
                     )
                 }
                 NetworkResult.Success(list)
@@ -203,6 +242,105 @@ class LeaveRepositoryImpl(
             }
         } catch (e: Exception) {
             NetworkResult.Error(-1, e.localizedMessage ?: "Failed to submit batch leave", e)
+        }
+    }
+
+    suspend fun getActiveLeavePolicies(): NetworkResult<List<LeavePolicyOutDto>> {
+        return try {
+            val response = apiService.getActiveLeavePolicies()
+            if (response.isSuccessful && response.body() != null) {
+                NetworkResult.Success(response.body()!!)
+            } else {
+                NetworkResult.Error(response.code(), "Failed to fetch leave policies (${response.code()})")
+            }
+        } catch (e: Exception) {
+            NetworkResult.Error(-1, e.localizedMessage ?: "Failed to fetch leave policies", e)
+        }
+    }
+
+    suspend fun getMyLeaveBalances(): NetworkResult<TeacherLeaveBalanceSummaryDto> {
+        return try {
+            val response = apiService.getMyLeaveBalances()
+            if (response.isSuccessful && response.body() != null) {
+                NetworkResult.Success(response.body()!!)
+            } else {
+                NetworkResult.Error(response.code(), "Failed to fetch leave balances (${response.code()})")
+            }
+        } catch (e: Exception) {
+            NetworkResult.Error(-1, e.localizedMessage ?: "Failed to fetch leave balances", e)
+        }
+    }
+
+    suspend fun validateLeaveApplication(
+        policyId: Int,
+        date: String,
+        days: Double = 1.0,
+        consecutiveDays: Int = 1
+    ): NetworkResult<LeaveValidationOutDto> {
+        return try {
+            val response = apiService.validateLeaveApplication(
+                LeaveValidationRequestDto(
+                    policyId = policyId,
+                    date = date,
+                    days = days,
+                    consecutiveDays = consecutiveDays
+                )
+            )
+            if (response.isSuccessful && response.body() != null) {
+                NetworkResult.Success(response.body()!!)
+            } else {
+                NetworkResult.Error(response.code(), "Failed to validate leave policy (${response.code()})")
+            }
+        } catch (e: Exception) {
+            NetworkResult.Error(-1, e.localizedMessage ?: "Failed to validate leave policy", e)
+        }
+    }
+
+    suspend fun getSlotCandidates(
+        date: String,
+        periodNumber: Int,
+        includeCrossDepartment: Boolean = false,
+        onlyHandlesClass: Boolean = false
+    ): NetworkResult<List<RecommendationOutDto>> {
+        return try {
+            val response = apiService.getSlotCandidates(date, periodNumber, includeCrossDepartment, onlyHandlesClass)
+            if (response.isSuccessful && response.body() != null) {
+                NetworkResult.Success(response.body()!!)
+            } else {
+                NetworkResult.Error(response.code(), "Failed to fetch slot candidates (${response.code()})")
+            }
+        } catch (e: Exception) {
+            android.util.Log.e("LeaveRepository", "Error fetching slot candidates", e)
+            NetworkResult.Error(-1, e.localizedMessage ?: "Error fetching slot candidates", e)
+        }
+    }
+
+    suspend fun getCampusOperationsMode(): NetworkResult<String> {
+        return try {
+            val response = apiService.getCampusOperationsMode()
+            if (response.isSuccessful && response.body() != null) {
+                val mode = response.body()!!.mode.ifBlank { "standard" }
+                NetworkResult.Success(mode)
+            } else {
+                NetworkResult.Success("standard")
+            }
+        } catch (e: Exception) {
+            android.util.Log.e("LeaveRepository", "Error fetching campus operations mode", e)
+            NetworkResult.Success("standard") // Fail open — non-Flexible behaviour
+        }
+    }
+
+    suspend fun getSameDayLeaveCutoffTime(): String {
+        return try {
+            val response = apiService.getPublicGovernanceConfig()
+            if (response.isSuccessful && response.body() != null) {
+                response.body()!!.leaveSameDayApplyCutoffTime.ifBlank { "09:00" }
+            } else {
+                "09:00"
+            }
+        } catch (e: Exception) {
+            android.util.Log.e("LeaveRepository", "Error fetching leave cutoff policy", e)
+            "09:00"
         }
     }
 
@@ -300,7 +438,8 @@ class SubstitutionRepositoryImpl(
                         reason = dto.reason,
                         status = LeaveStatus.APPROVED,
                         isEmergency = dto.isEmergency,
-                        substituteTeacherName = dto.alterAssignment?.substituteName
+                        substituteTeacherName = dto.alterAssignment?.substituteName,
+                        proposedSubstituteName = dto.proposedSubstitute?.name
                     )
                 }
                 NetworkResult.Success(duties)
@@ -417,10 +556,13 @@ class PreferencesRepositoryImpl(
 class NotificationRepositoryImpl(
     private val apiService: FaflowApiService
 ) {
-    suspend fun getNotifications(unreadOnly: Boolean = false) = try {
+    private val clearedNotificationIds = java.util.Collections.synchronizedSet(mutableSetOf<Int>())
+
+    suspend fun getNotifications(unreadOnly: Boolean = false): NetworkResult<List<com.governence.faflow.core.network.NotificationOutDto>> = try {
         val res = apiService.listNotifications(unreadOnly)
         if (res.isSuccessful && res.body() != null) {
-            NetworkResult.Success(res.body()!!)
+            val list = res.body()!!.filter { !clearedNotificationIds.contains(it.id) }
+            NetworkResult.Success(list)
         } else {
             NetworkResult.Error(res.code(), "Failed to fetch notifications")
         }
@@ -428,12 +570,23 @@ class NotificationRepositoryImpl(
         NetworkResult.Error(-1, e.localizedMessage ?: "Notification fetch error", e)
     }
 
-    suspend fun getUnreadCount() = try {
-        val res = apiService.getUnreadCount()
-        if (res.isSuccessful && res.body() != null) {
-            NetworkResult.Success(res.body()!!.count)
+    suspend fun getUnreadCount(): NetworkResult<Int> = try {
+        if (clearedNotificationIds.isNotEmpty()) {
+            when (val notifs = getNotifications(unreadOnly = true)) {
+                is NetworkResult.Success -> NetworkResult.Success(notifs.data.size)
+                else -> {
+                    val res = apiService.getUnreadCount()
+                    if (res.isSuccessful && res.body() != null) NetworkResult.Success(res.body()!!.count)
+                    else NetworkResult.Error(res.code(), "Failed to fetch unread count")
+                }
+            }
         } else {
-            NetworkResult.Error(res.code(), "Failed to fetch unread count")
+            val res = apiService.getUnreadCount()
+            if (res.isSuccessful && res.body() != null) {
+                NetworkResult.Success(res.body()!!.count)
+            } else {
+                NetworkResult.Error(res.code(), "Failed to fetch unread count")
+            }
         }
     } catch (e: Exception) {
         NetworkResult.Error(-1, e.localizedMessage ?: "Notification count error", e)
@@ -451,6 +604,31 @@ class NotificationRepositoryImpl(
         if (res.isSuccessful) NetworkResult.Success(true) else NetworkResult.Error(res.code(), "Mark all read failed")
     } catch (e: Exception) {
         NetworkResult.Error(-1, e.localizedMessage ?: "Error marking all notifications as read", e)
+    }
+
+    suspend fun clearAllNotifications(
+        context: android.content.Context? = null,
+        idsToClear: List<Int> = emptyList()
+    ): NetworkResult<Boolean> = try {
+        // 1. Cancel system notification shade alerts
+        context?.let { com.governence.faflow.core.notifications.FaflowNotificationManager.cancelAll(it) }
+
+        // 2. Track cleared IDs locally so re-fetches don't bring them back
+        clearedNotificationIds.addAll(idsToClear)
+
+        // 3. Mark all as read on backend
+        try {
+            apiService.markAllNotificationsRead()
+        } catch (_: Exception) {}
+
+        // 4. Delete on backend
+        try {
+            apiService.clearAllNotifications()
+        } catch (_: Exception) {}
+
+        NetworkResult.Success(true)
+    } catch (e: Exception) {
+        NetworkResult.Error(-1, e.localizedMessage ?: "Error clearing all notifications", e)
     }
 }
 

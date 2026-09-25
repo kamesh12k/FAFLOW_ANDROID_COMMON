@@ -21,6 +21,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.DoneAll
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.NotificationsNone
@@ -53,6 +54,7 @@ import com.governence.faflow.ui.theme.FaflowShapes
 import com.governence.faflow.ui.theme.FaflowText1
 import com.governence.faflow.ui.theme.FaflowText2
 import com.governence.faflow.ui.theme.FaflowText3
+import com.governence.faflow.ui.theme.PrimaryBlue
 import com.governence.faflow.ui.theme.StatusError
 import com.governence.faflow.ui.viewmodels.NotificationsViewModel
 
@@ -66,6 +68,7 @@ fun NotificationsScreen(
     onNavigateToAttendance: () -> Unit = {}
 ) {
     val state by viewModel.uiState.collectAsState()
+    val context = androidx.compose.ui.platform.LocalContext.current
     var selectedFilter by androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf("ALL") }
 
     val needsAttention = state.notifications.filter { notif ->
@@ -92,21 +95,40 @@ fun NotificationsScreen(
                 canNavigateBack = true,
                 onNavigateBack = onNavigateBack,
                 actions = {
-                    if (state.unreadCount > 0) {
-                        TextButton(onClick = { viewModel.markAllRead() }) {
-                            Icon(
-                                Icons.Default.DoneAll,
-                                contentDescription = "Mark all read",
-                                tint = FaflowNavy,
-                                modifier = Modifier.size(18.dp)
-                            )
-                            Spacer(Modifier.width(4.dp))
-                            Text(
-                                "Mark all",
-                                color = FaflowNavy,
-                                fontSize = 13.sp,
-                                fontWeight = FontWeight.SemiBold
-                            )
+                    if (state.notifications.isNotEmpty()) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            if (state.unreadCount > 0) {
+                                TextButton(onClick = { viewModel.markAllRead() }) {
+                                    Icon(
+                                        Icons.Default.DoneAll,
+                                        contentDescription = "Mark All as Read",
+                                        tint = PrimaryBlue,
+                                        modifier = Modifier.size(18.dp)
+                                    )
+                                    Spacer(Modifier.width(4.dp))
+                                    Text(
+                                        "Read All",
+                                        color = PrimaryBlue,
+                                        fontSize = 13.sp,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                }
+                            }
+                            TextButton(onClick = { viewModel.clearAll(context) }) {
+                                Icon(
+                                    Icons.Default.Clear,
+                                    contentDescription = "Clear All Notifications",
+                                    tint = Color(0xFFE11D48),
+                                    modifier = Modifier.size(18.dp)
+                                )
+                                Spacer(Modifier.width(4.dp))
+                                Text(
+                                    "Clear All",
+                                    color = Color(0xFFE11D48),
+                                    fontSize = 13.sp,
+                                    fontWeight = FontWeight.Bold
+                                )
+                            }
                         }
                     }
                 }
@@ -215,7 +237,14 @@ fun NotificationsScreen(
                                     else com.governence.faflow.ui.theme.FaflowBorder,
                                     RoundedCornerShape(14.dp)
                                 )
-                                .clickable { viewModel.markRead(notif.id) }
+                                .clickable {
+                                    viewModel.markRead(notif.id)
+                                    when {
+                                        isSubstitution -> onNavigateToSubstitution()
+                                        isLeave -> onNavigateToLeaveHistory()
+                                        isAttendance -> onNavigateToAttendance()
+                                    }
+                                }
                                 .padding(16.dp)
                         ) {
                             Row(

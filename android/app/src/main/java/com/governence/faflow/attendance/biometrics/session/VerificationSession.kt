@@ -50,6 +50,8 @@ data class VerificationSession(
     var faceVerifiedTimeMs: Long? = null,
     var livenessStatus: LivenessVerificationStatus = LivenessVerificationStatus.NOT_STARTED,
     var blinkCount: Int = 0,
+    var passivePadScore: Float = 0f,
+    var presentationAttackRisk: com.governence.faflow.attendance.biometrics.liveness.PresentationAttackRisk = com.governence.faflow.attendance.biometrics.liveness.PresentationAttackRisk.LOW,
     var livenessVerifiedTimeMs: Long? = null,
     var completedTimeMs: Long? = null,
     var isCancelled: Boolean = false
@@ -61,7 +63,7 @@ data class VerificationSession(
         get() = faceStatus == FaceVerificationStatus.VERIFIED
 
     val isLivenessVerified: Boolean
-        get() = livenessStatus == LivenessVerificationStatus.VERIFIED && blinkCount >= 2
+        get() = livenessStatus == LivenessVerificationStatus.VERIFIED && presentationAttackRisk == com.governence.faflow.attendance.biometrics.liveness.PresentationAttackRisk.LOW
 
     fun markFaceVerifying() {
         if (!isCancelled && !isExpired) {
@@ -86,6 +88,18 @@ data class VerificationSession(
         if (isFaceVerified && !isCancelled && !isExpired) {
             livenessStatus = LivenessVerificationStatus.IN_PROGRESS
             blinkCount = 0
+        }
+    }
+
+    fun markPassiveLivenessVerified(
+        score: Float,
+        risk: com.governence.faflow.attendance.biometrics.liveness.PresentationAttackRisk = com.governence.faflow.attendance.biometrics.liveness.PresentationAttackRisk.LOW
+    ) {
+        if (!isCancelled && !isExpired) {
+            livenessStatus = LivenessVerificationStatus.VERIFIED
+            passivePadScore = score
+            presentationAttackRisk = risk
+            livenessVerifiedTimeMs = System.currentTimeMillis()
         }
     }
 
@@ -123,16 +137,13 @@ data class VerificationSession(
 
     /**
      * Absolute atomic condition required before attendance submission is permitted.
-     * Fails closed if session has expired, was cancelled, does not match, or either
-     * face verification or double-blink liveness is incomplete.
-     * When bypassLiveness is true, only genuine face verification is mandated.
      */
     fun canSubmitAttendance(targetSessionId: String, bypassLiveness: Boolean = false): Boolean {
         return sessionId == targetSessionId &&
                 !isCancelled &&
                 !isExpired &&
                 isFaceVerified &&
-                (bypassLiveness || (isLivenessVerified && blinkCount >= 2))
+                (bypassLiveness || isLivenessVerified)
     }
 }
 

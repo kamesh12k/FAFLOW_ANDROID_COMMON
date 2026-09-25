@@ -183,7 +183,6 @@ class MobileFirstFeatureInfusionTest {
     @Test
     fun testRoleAwareNavigationRoutes() {
         // Verify routes exist
-        assertEquals("geofence_admin", Screen.GeofenceAdmin.route)
         assertEquals("apply_leave", Screen.ApplyLeave.route)
         assertEquals("leave_history", Screen.LeaveHistory.route)
         assertEquals("credits", Screen.Credits.route)

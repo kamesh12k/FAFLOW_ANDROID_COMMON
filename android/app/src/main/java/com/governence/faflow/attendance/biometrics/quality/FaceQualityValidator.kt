@@ -30,13 +30,46 @@ enum class QualityErrorCode {
  * direct operational feedback designed for professional governance workflows.
  */
 class FaceQualityValidator(
-    private val minFaceWidthRatio: Float = 0.22f,
-    private val maxFaceWidthRatio: Float = 0.80f,
-    private val maxAngleDegrees: Float = 20.0f,
-    private val minConfidence: Float = 0.50f,
-    private val minBrightness: Float = 0.25f,
-    private val maxBrightness: Float = 0.90f
+    private val minFaceWidthRatio: Float = BIOMETRIC_MIN_FACE_WIDTH_RATIO,
+    private val maxFaceWidthRatio: Float = BIOMETRIC_MAX_FACE_WIDTH_RATIO,
+    private val maxAngleDegrees: Float = BIOMETRIC_MAX_PITCH_DEGREES,
+    private val minConfidence: Float = BIOMETRIC_MIN_CONFIDENCE,
+    private val minBrightness: Float = BIOMETRIC_MIN_BRIGHTNESS,
+    private val maxBrightness: Float = BIOMETRIC_MAX_BRIGHTNESS,
+    private val boundaryOffsetThreshold: Float = BIOMETRIC_POSITION_BOUNDARY
 ) {
+
+    companion object {
+        /**
+         * Maximum head pitch angle in degrees (forward/backward tilt).
+         * Calibrated to 28.0° (was 20.0°) to account for natural ergonomic holding angles
+         * while remaining within InsightFace Umeyama 5-point affine alignment tolerance.
+         */
+        const val BIOMETRIC_MAX_PITCH_DEGREES: Float = 28.0f
+
+        /**
+         * Maximum head yaw angle in degrees (lateral turn).
+         * Calibrated to 28.0° (was 20.0°) to accommodate natural handheld micro-movements.
+         */
+        const val BIOMETRIC_MAX_YAW_DEGREES: Float = 28.0f
+
+        /**
+         * Maximum head roll angle in degrees (in-plane ear-to-shoulder tilt).
+         */
+        const val BIOMETRIC_MAX_ROLL_DEGREES: Float = 25.0f
+
+        /**
+         * Maximum normalized distance from frame center (was 0.28f, calibrated to 0.35f).
+         * Allows single-handed phone usage without failing centering.
+         */
+        const val BIOMETRIC_POSITION_BOUNDARY: Float = 0.35f
+
+        const val BIOMETRIC_MIN_FACE_WIDTH_RATIO: Float = 0.22f
+        const val BIOMETRIC_MAX_FACE_WIDTH_RATIO: Float = 0.80f
+        const val BIOMETRIC_MIN_CONFIDENCE: Float = 0.50f
+        const val BIOMETRIC_MIN_BRIGHTNESS: Float = 0.25f
+        const val BIOMETRIC_MAX_BRIGHTNESS: Float = 0.90f
+    }
 
     fun validate(
         detections: List<FaceDetectionResult>,
@@ -80,13 +113,15 @@ class FaceQualityValidator(
         val centerDeltaX = abs(box.centerX - (frameWidth / 2f)) / frameWidth.toFloat()
         val centerDeltaY = abs(box.centerY - (frameHeight / 2f)) / frameHeight.toFloat()
 
-        if (isBorderClipped || centerDeltaX > 0.28f || centerDeltaY > 0.28f) {
+        if (isBorderClipped || centerDeltaX > boundaryOffsetThreshold || centerDeltaY > boundaryOffsetThreshold) {
             return FaceQualityCheckResult.Rejected("Center your face", QualityErrorCode.OFF_CENTER)
         }
 
         // 5. Head Pose Angle
         val quality = face.quality
-        if (abs(quality.yawAngle) > maxAngleDegrees || abs(quality.pitchAngle) > maxAngleDegrees || abs(quality.rollAngle) > maxAngleDegrees) {
+        if (abs(quality.yawAngle) > BIOMETRIC_MAX_YAW_DEGREES ||
+            abs(quality.pitchAngle) > maxAngleDegrees ||
+            abs(quality.rollAngle) > BIOMETRIC_MAX_ROLL_DEGREES) {
             return FaceQualityCheckResult.Rejected("Look directly at the camera", QualityErrorCode.TILTED_POSE)
         }
 

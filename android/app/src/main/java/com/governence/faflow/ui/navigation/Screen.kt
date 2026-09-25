@@ -44,7 +44,19 @@ sealed class Screen(val route: String) {
             return "student_attendance?period=$p&classId=$c"
         }
     }
+    data object FirstLoginSetup : Screen("first_login_setup")
+    data object Announcements : Screen("announcements")
+    data object AnnouncementDetail : Screen("announcement_detail/{announcementId}") {
+        fun createRoute(announcementId: Int): String = "announcement_detail/$announcementId"
+    }
     data object HodStudentAttendance : Screen("hod_student_attendance")
+
+    // Campus Duties & Operations
+    data object MyDuties : Screen("my_duties")
+    data object DutyDetail : Screen("duty_detail/{dutyId}") {
+        fun createRoute(dutyId: Int): String = "duty_detail/$dutyId"
+    }
+    data object CampusStructure : Screen("campus_structure")
 
     // HOD Dedicated Screens
     data object HodDashboard : Screen("hod_dashboard")
@@ -53,7 +65,6 @@ sealed class Screen(val route: String) {
     data object HodFacultyDirectory : Screen("hod_faculty_directory")
     data object HodDepartmentTimetable : Screen("hod_department_timetable")
     data object HodAttendance : Screen("hod_attendance")
-    data object GeofenceAdmin : Screen("geofence_admin")
 }
 
 sealed class BottomNavItem(

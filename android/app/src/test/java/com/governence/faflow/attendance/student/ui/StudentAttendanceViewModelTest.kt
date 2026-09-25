@@ -45,9 +45,9 @@ class StudentAttendanceViewModelTest {
     private val sampleSchedule = TeacherTodayScheduleDto(
         date = "2026-09-18",
         dayOrder = 3,
-        isHoliday = false,
+        isBlockedDate = false,
         currentPeriod = 2,
-        periods = listOf(
+        directPeriods = listOf(
             TeacherPeriodSlotDto(
                 timetableSlotId = 1,
                 periodNumber = 1,
@@ -91,12 +91,12 @@ class StudentAttendanceViewModelTest {
         }
 
         override suspend fun getOrCreateSession(
-            slotId: Int,
+            slotId: Int?,
             classId: Int,
-            subjectId: Int,
+            subjectId: Int?,
             substitutionId: Int?,
             isSubstitution: Boolean
-        ): AttendanceSessionDto {
+        ): AttendanceSessionDto? {
             return AttendanceSessionDto(
                 id = 55,
                 attendanceDate = "2026-09-18",
@@ -119,7 +119,9 @@ class StudentAttendanceViewModelTest {
             sessionId: Int,
             classId: Int,
             absentSuffixes: List<String>,
-            exceptions: List<StudentExceptionItemDto>
+            exceptions: List<StudentExceptionItemDto>,
+            periodNumber: Int?,
+            subjectId: Int?
         ): StudentAttendanceResult {
             submittedAbsent = absentSuffixes
             submittedExceptions = exceptions

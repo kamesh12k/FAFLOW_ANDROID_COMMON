@@ -20,7 +20,8 @@ data class StaffFaceEnrollment(
     val modelVersion: String,
     val alignmentVersion: String,
     val createdAt: Long,
-    val updatedAt: Long
+    val updatedAt: Long,
+    val templates: List<FloatArray> = emptyList()
 ) {
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
@@ -44,7 +45,8 @@ interface FaceEnrollmentRepository {
         staffName: String,
         embedding: FloatArray,
         modelVersion: String = FaceRecognitionConfig.DEFAULT.modelVersion,
-        alignmentVersion: String = FaceAlignmentConfig.ALIGNMENT_VERSION
+        alignmentVersion: String = FaceAlignmentConfig.ALIGNMENT_VERSION,
+        templates: List<FloatArray> = emptyList()
     ): Boolean
 
     suspend fun getEnrollment(staffId: String): StaffFaceEnrollment?
@@ -76,12 +78,22 @@ class LocalFaceEnrollmentRepository(
         staffName: String,
         embedding: FloatArray,
         modelVersion: String,
-        alignmentVersion: String
+        alignmentVersion: String,
+        templates: List<FloatArray>
     ): Boolean = withContext(Dispatchers.IO) {
         try {
             val jsonArray = JSONArray()
             for (f in embedding) {
                 jsonArray.put(f.toDouble())
+            }
+
+            val templatesArray = JSONArray()
+            for (tmpl in templates) {
+                val tmplArr = JSONArray()
+                for (f in tmpl) {
+                    tmplArr.put(f.toDouble())
+                }
+                templatesArray.put(tmplArr)
             }
 
             val now = System.currentTimeMillis()
@@ -92,6 +104,9 @@ class LocalFaceEnrollmentRepository(
                 put("staffId", staffId)
                 put("staffName", staffName)
                 put("embedding", jsonArray)
+                if (templates.isNotEmpty()) {
+                    put("templates", templatesArray)
+                }
                 put("modelVersion", modelVersion)
                 put("alignmentVersion", alignmentVersion)
                 put("createdAt", createdAt)
@@ -117,6 +132,21 @@ class LocalFaceEnrollmentRepository(
                 embedding[i] = jsonArray.getDouble(i).toFloat()
             }
 
+            val parsedTemplates = mutableListOf<FloatArray>()
+            val rawTemplates = json.optJSONArray("templates")
+            if (rawTemplates != null) {
+                for (i in 0 until rawTemplates.length()) {
+                    val subArr = rawTemplates.optJSONArray(i)
+                    if (subArr != null && subArr.length() > 0) {
+                        val t = FloatArray(subArr.length())
+                        for (j in 0 until subArr.length()) {
+                            t[j] = subArr.getDouble(j).toFloat()
+                        }
+                        parsedTemplates.add(t)
+                    }
+                }
+            }
+
             StaffFaceEnrollment(
                 staffId = json.getString("staffId"),
                 staffName = json.getString("staffName"),
@@ -124,7 +154,8 @@ class LocalFaceEnrollmentRepository(
                 modelVersion = json.optString("modelVersion", FaceRecognitionConfig.DEFAULT.modelVersion),
                 alignmentVersion = json.optString("alignmentVersion", FaceAlignmentConfig.ALIGNMENT_VERSION),
                 createdAt = json.optLong("createdAt", 0L),
-                updatedAt = json.optLong("updatedAt", 0L)
+                updatedAt = json.optLong("updatedAt", 0L),
+                templates = parsedTemplates
             )
         } catch (_: Exception) {
             null

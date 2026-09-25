@@ -111,10 +111,16 @@ class AttendancePipelineOrchestrator(
 
         when (verificationState) {
             is StaffBiometricVerificationState.Verified -> {
-                val staffUserId = targetStaffId.toIntOrNull() ?: 1
-                val lat = currentLocation?.latitude ?: 13.0827
-                val lng = currentLocation?.longitude ?: 80.2707
-                val accuracy = currentLocation?.accuracyMeters?.toDouble() ?: 5.0
+                val staffUserId = targetStaffId.toIntOrNull()
+                if (staffUserId == null || staffUserId <= 0) {
+                    return@withContext AttendancePipelineResult.PipelineError("Staff identity could not be verified: invalid staff ID")
+                }
+                if (currentLocation == null) {
+                    return@withContext AttendancePipelineResult.GeofenceRejected("Location coordinates could not be acquired.")
+                }
+                val lat = currentLocation.latitude
+                val lng = currentLocation.longitude
+                val accuracy = currentLocation.accuracyMeters.toDouble()
 
                 val submissionResult = if (isCheckIn) {
                     attendanceRepository.checkIn(

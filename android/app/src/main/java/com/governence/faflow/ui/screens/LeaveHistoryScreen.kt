@@ -84,15 +84,10 @@ import com.governence.faflow.ui.theme.StatusWarning
 import com.governence.faflow.ui.viewmodels.LeaveViewModel
 import java.text.SimpleDateFormat
 import java.util.Calendar
+import com.governence.faflow.domain.model.InstitutionalSchedule
 import java.util.Locale
 
-private val PERIOD_TIME_MAP = mapOf(
-    1 to "8:00–9:00",
-    2 to "9:00–10:00",
-    3 to "10:15–11:15",
-    4 to "11:15–12:15",
-    5 to "1:00–2:00"
-)
+private val PERIOD_TIME_MAP = InstitutionalSchedule.PERIOD_TIMES
 
 private fun formatDisplayDate(isoStr: String): String {
     return try {
@@ -407,9 +402,16 @@ fun LeaveHistoryScreen(
                                 )
                                 if (!period.substituteTeacherName.isNullOrBlank()) {
                                     Text(
-                                        text = "Cover: ${period.substituteTeacherName}",
+                                        text = "Official Cover: ${period.substituteTeacherName}",
                                         fontSize = 11.sp,
                                         color = StatusSuccess,
+                                        fontWeight = FontWeight.Medium
+                                    )
+                                } else if (!period.proposedSubstituteName.isNullOrBlank()) {
+                                    Text(
+                                        text = "Proposed: ${period.proposedSubstituteName} (Awaiting HOD)",
+                                        fontSize = 11.sp,
+                                        color = Color(0xFF4F46E5),
                                         fontWeight = FontWeight.Medium
                                     )
                                 } else if (group.status == LeaveStatus.APPROVED) {
@@ -594,6 +596,19 @@ fun LeaveHistoryScreen(
                                 )
                             )
                         }
+                        if (selectedFilterTab != "ALL" || searchQuery.isNotEmpty()) {
+                            item {
+                                TextButton(
+                                    onClick = {
+                                        selectedFilterTab = "ALL"
+                                        searchQuery = ""
+                                    },
+                                    contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp)
+                                ) {
+                                    Text("Clear All Filters", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = FaflowNavy)
+                                }
+                            }
+                        }
                     }
                 }
 
@@ -774,6 +789,22 @@ fun LeaveHistoryDayCard(
                                 fontWeight = FontWeight.SemiBold
                             )
                         }
+                    } else if (dayGroup.hasProposedSubstitutes) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(
+                                imageVector = Icons.Default.Person,
+                                contentDescription = null,
+                                tint = Color(0xFF4F46E5),
+                                modifier = Modifier.size(13.dp)
+                            )
+                            Spacer(Modifier.width(3.dp))
+                            Text(
+                                text = "${dayGroup.proposedSubstitutesCount}/${dayGroup.periods.size} Proposed",
+                                fontSize = 11.sp,
+                                color = Color(0xFF4F46E5),
+                                fontWeight = FontWeight.SemiBold
+                            )
+                        }
                     }
                 }
 
@@ -855,6 +886,18 @@ fun LeaveHistoryCard(
                         text = leave.substituteTeacherName,
                         fontSize = 11.sp,
                         color = StatusSuccess,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                }
+            } else if (leave.proposedSubstituteName != null) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(Icons.Default.Person, contentDescription = null,
+                        tint = Color(0xFF4F46E5), modifier = Modifier.size(12.dp))
+                    Spacer(Modifier.width(3.dp))
+                    Text(
+                        text = "Proposed: ${leave.proposedSubstituteName}",
+                        fontSize = 11.sp,
+                        color = Color(0xFF4F46E5),
                         fontWeight = FontWeight.SemiBold
                     )
                 }

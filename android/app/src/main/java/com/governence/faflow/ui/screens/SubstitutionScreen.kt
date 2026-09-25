@@ -21,6 +21,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Groups
@@ -227,8 +228,13 @@ fun SubstitutionScreen(
                                 verticalArrangement = Arrangement.spacedBy(FaflowSpacing.md)
                             ) {
                                 items(state.myAssignedDuties) { duty ->
+                                    val isAccepted = state.acceptedDutyIds.contains(duty.id)
                                     AssignedDutyCard(
                                         duty = duty,
+                                        isAccepted = isAccepted,
+                                        onAccept = {
+                                            viewModel.acceptDuty(duty.id)
+                                        },
                                         onMarkAttendance = {
                                             onNavigateToStudentAttendance(duty.periodNumber, null)
                                         }
@@ -806,12 +812,15 @@ fun CandidateRecommendationRow(
 @Composable
 fun AssignedDutyCard(
     duty: LeaveRequest,
+    isAccepted: Boolean = false,
+    onAccept: () -> Unit = {},
     onMarkAttendance: () -> Unit
 ) {
+    val accepted = isAccepted || duty.status.name == "ACCEPTED"
     FaflowSurface(
         modifier = Modifier.fillMaxWidth(),
         backgroundColor = com.governence.faflow.ui.theme.FaflowSurface,
-        borderColor = com.governence.faflow.ui.theme.PrimaryBlue.copy(alpha = 0.3f),
+        borderColor = if (accepted) com.governence.faflow.ui.theme.StatusSuccess.copy(alpha = 0.4f) else com.governence.faflow.ui.theme.PrimaryBlue.copy(alpha = 0.3f),
         contentPadding = PaddingValues(FaflowSpacing.lg)
     ) {
         Column(modifier = Modifier.fillMaxWidth()) {
@@ -827,7 +836,7 @@ fun AssignedDutyCard(
                     Box(
                         modifier = Modifier
                             .clip(FaflowShapes.pill)
-                            .background(com.governence.faflow.ui.theme.PrimaryBlue)
+                            .background(if (accepted) com.governence.faflow.ui.theme.StatusSuccess else com.governence.faflow.ui.theme.PrimaryBlue)
                             .padding(horizontal = 8.dp, vertical = 3.dp)
                     ) {
                         Text(
@@ -844,10 +853,19 @@ fun AssignedDutyCard(
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
-                FaflowStatusBadge(
-                    text = duty.status.name,
-                    statusColor = com.governence.faflow.ui.theme.StatusSuccess
-                )
+                if (accepted) {
+                    FaflowStatusBadge(
+                        text = "ACCEPTED",
+                        statusColor = com.governence.faflow.ui.theme.StatusSuccess,
+                        showDot = true
+                    )
+                } else {
+                    FaflowStatusBadge(
+                        text = "PENDING ACKNOWLEDGEMENT",
+                        statusColor = com.governence.faflow.ui.theme.FaflowGold,
+                        showDot = true
+                    )
+                }
             }
             Spacer(modifier = Modifier.height(10.dp))
             Text(
@@ -863,11 +881,37 @@ fun AssignedDutyCard(
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
+            if (accepted) {
+                Spacer(modifier = Modifier.height(6.dp))
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(
+                        imageVector = Icons.Default.Check,
+                        contentDescription = null,
+                        tint = com.governence.faflow.ui.theme.StatusSuccess,
+                        modifier = Modifier.size(16.dp)
+                    )
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text(
+                        text = "+1.0 Credit upon attendance/completion",
+                        style = MaterialTheme.typography.bodySmall,
+                        fontWeight = FontWeight.SemiBold,
+                        color = com.governence.faflow.ui.theme.StatusSuccess
+                    )
+                }
+            }
             Spacer(modifier = Modifier.height(14.dp))
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.End
+                horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.End)
             ) {
+                if (!accepted) {
+                    FaflowPillButton(
+                        text = "Acknowledge Duty",
+                        onClick = onAccept,
+                        icon = Icons.Default.Check,
+                        isPrimary = false
+                    )
+                }
                 FaflowPillButton(
                     text = "Mark Class Attendance",
                     onClick = onMarkAttendance,

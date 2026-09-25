@@ -2,7 +2,7 @@ import os
 import math
 from datetime import date, datetime, timezone
 from typing import Optional, List, Tuple
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 from sqlalchemy import func, desc
 
 from app.core.exceptions import DomainException
@@ -17,16 +17,16 @@ from app.schemas.attendance import (
     AttendanceTodaySummaryOut,
     AttendanceSupervisorLiveStatusOut
 )
-from app.services.geofence_service import GeofenceService
+from app.services.geofence_service import GeofenceService, is_point_in_polygon
 
 
 def _get_face_threshold(db: Session) -> float:
-    """Returns the configured biometric face similarity threshold (default: 0.60)."""
+    """Returns the configured biometric face similarity threshold (default: 0.50)."""
     try:
         from app.services import governance_rule_service
         return governance_rule_service.get_rule_float(db, "staff_biometric_face_similarity_threshold")
     except Exception:
-        return 0.60
+        return 0.50
 
 
 def _get_gps_threshold(db: Session) -> float:
@@ -68,24 +68,31 @@ class AttendanceService:
 
     @staticmethod
     def _validate_server_geofence(db: Session, lat: float, lon: float, accuracy: float) -> Tuple[bool, Optional[CampusGeofence]]:
-        import os
-        if os.getenv("BYPASS_GEOLOCATION_FOR_TESTING", "false").lower() in ("true", "1", "yes"):
+        bypass_geo = os.getenv("BYPASS_GEOLOCATION_FOR_TESTING", "false").lower() in ("true", "1", "yes")
+        env_mode = os.getenv("ENVIRONMENT", "development").lower()
+        if bypass_geo and env_mode not in ("production", "prod"):
             active_geofences = GeofenceService.list_geofences(db, is_active_only=True)
             return True, active_geofences[0] if active_geofences else None
 
-        if accuracy > _get_gps_threshold(db):
-            threshold = _get_gps_threshold(db)
+        threshold = _get_gps_threshold(db)
+        if accuracy > threshold:
             raise DomainException(f"GPS accuracy ({accuracy:.1f}m) exceeds allowable threshold ({threshold:.1f}m)", status_code=400)
 
         active_geofences = GeofenceService.list_geofences(db, is_active_only=True)
         if not active_geofences:
-            # If no geofences configured in system, pass by default with no geofence attached
-            return True, None
+            # FAIL CLOSED: Without an active institutional geofence, no check-in can be authorized
+            raise DomainException("Location verification failed: No active campus geofence configured for institution", status_code=400)
 
         for g in active_geofences:
-            dist = AttendanceService._haversine_meters(lat, lon, g.center_latitude, g.center_longitude)
-            if dist <= (g.radius_meters + g.tolerance_meters):
-                return True, g
+            if g.type == "polygon":
+                vertices = g.geometry.get("coordinates", []) if g.geometry else []
+                if vertices and len(vertices) >= 3:
+                    if is_point_in_polygon(lat, lon, vertices):
+                        return True, g
+            else:
+                dist = AttendanceService._haversine_meters(lat, lon, g.center_latitude, g.center_longitude)
+                if dist <= (g.radius_meters + g.tolerance_meters):
+                    return True, g
 
         return False, None
 
@@ -197,9 +204,14 @@ class AttendanceService:
             raise DomainException("Liveness / presentation attack verification failed", status_code=400)
 
         # 3. Server-side Geofence Validation
-        is_inside, geofence = AttendanceService._validate_server_geofence(db, data.latitude, data.longitude, data.accuracy_meters)
+        try:
+            is_inside, geofence = AttendanceService._validate_server_geofence(db, data.latitude, data.longitude, data.accuracy_meters)
+        except DomainException as e:
+            AttendanceService._log_audit(db, user.id, "GPS_ACCURACY_FAILURE_CHECKOUT", {"accuracy": data.accuracy_meters})
+            raise e
+
         if not is_inside:
-            AttendanceService._log_audit(db, user.id, "GEOFENCE_FAILURE", {"latitude": data.latitude, "longitude": data.longitude})
+            AttendanceService._log_audit(db, user.id, "GEOFENCE_FAILURE_CHECKOUT", {"latitude": data.latitude, "longitude": data.longitude})
             raise DomainException("Location verification failed: Staff member is outside institutional campus geofence perimeters", status_code=400)
 
         # 4. Find Today's Check-In Record
@@ -247,7 +259,11 @@ class AttendanceService:
     @staticmethod
     def get_today_summary(db: Session, user_id: int) -> AttendanceTodaySummaryOut:
         today = date.today()
-        record = db.query(StaffAttendanceRecord).filter(
+        record = db.query(StaffAttendanceRecord).options(
+            joinedload(StaffAttendanceRecord.user),
+            joinedload(StaffAttendanceRecord.check_in_geofence),
+            joinedload(StaffAttendanceRecord.check_out_geofence)
+        ).filter(
             StaffAttendanceRecord.user_id == user_id,
             StaffAttendanceRecord.attendance_date == today
         ).first()
@@ -274,7 +290,11 @@ class AttendanceService:
 
     @staticmethod
     def list_my_history(db: Session, user_id: int, limit: int = 30, offset: int = 0) -> List[AttendanceRecordOut]:
-        records = db.query(StaffAttendanceRecord).filter(
+        records = db.query(StaffAttendanceRecord).options(
+            joinedload(StaffAttendanceRecord.user),
+            joinedload(StaffAttendanceRecord.check_in_geofence),
+            joinedload(StaffAttendanceRecord.check_out_geofence)
+        ).filter(
             StaffAttendanceRecord.user_id == user_id
         ).order_by(
             desc(StaffAttendanceRecord.attendance_date),
@@ -306,7 +326,11 @@ class AttendanceService:
             staff_query = staff_query.filter(User.department_id == dept_id)
         total_staff = staff_query.count()
 
-        records_query = db.query(StaffAttendanceRecord).filter(StaffAttendanceRecord.attendance_date == today)
+        records_query = db.query(StaffAttendanceRecord).options(
+            joinedload(StaffAttendanceRecord.user),
+            joinedload(StaffAttendanceRecord.check_in_geofence),
+            joinedload(StaffAttendanceRecord.check_out_geofence)
+        ).filter(StaffAttendanceRecord.attendance_date == today)
         if dept_id is not None:
             records_query = records_query.join(User, StaffAttendanceRecord.user_id == User.id).filter(User.department_id == dept_id)
         today_records = records_query.all()
@@ -316,7 +340,7 @@ class AttendanceService:
         absent = max(0, total_staff - (checked_in + checked_out))
 
         all_shifts = [AttendanceService._to_dto(r) for r in today_records]
-        active_shifts = [AttendanceService._to_dto(r) for r in today_records if r.check_in_time is not None and r.check_out_time is None]
+        active_shifts = [dto for dto, r in zip(all_shifts, today_records) if r.check_in_time is not None and r.check_out_time is None]
 
         return AttendanceSupervisorLiveStatusOut(
             total_staff=total_staff,

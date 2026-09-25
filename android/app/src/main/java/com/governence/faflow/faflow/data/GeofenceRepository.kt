@@ -23,58 +23,10 @@ class GeofenceRepository(
     private val locationProvider: com.governence.faflow.attendance.geolocation.LocationProvider,
     private val geofenceValidator: GeofenceValidator = GeofenceValidator(),
     private val apiService: com.governence.faflow.core.network.FaflowApiService? = null,
-    private val externalScope: CoroutineScope = CoroutineScope(Dispatchers.Default)
+    private val externalScope: CoroutineScope = CoroutineScope(Dispatchers.Default),
+    initialGeofences: List<CampusGeofence> = emptyList()
 ) {
-    // Authoritative institutional campus boundaries with live synchronization fallback
-    private val defaultGeofences = listOf(
-        CampusGeofence(
-            id = "5",
-            name = "Main Campus Perimeter",
-            type = GeofenceType.CIRCLE,
-            centerLatitude = 11.69061998,
-            centerLongitude = 78.39581827,
-            radiusMeters = 300.0,
-            toleranceMeters = 50.0,
-            isActive = true
-        ),
-        CampusGeofence(
-            id = "1",
-            name = "Main Campus Center",
-            type = GeofenceType.CIRCLE,
-            centerLatitude = 13.0827,
-            centerLongitude = 80.2707,
-            radiusMeters = 200.0,
-            toleranceMeters = 25.0,
-            isActive = true
-        ),
-        CampusGeofence(
-            id = "2",
-            name = "Faculty Complex Quadrangle",
-            type = GeofenceType.POLYGON,
-            centerLatitude = 13.0825,
-            centerLongitude = 80.2700,
-            polygonVertices = listOf(
-                GeoPoint(13.08, 80.268),
-                GeoPoint(13.085, 80.268),
-                GeoPoint(13.085, 80.272),
-                GeoPoint(13.08, 80.272)
-            ),
-            toleranceMeters = 20.0,
-            isActive = true
-        ),
-        CampusGeofence(
-            id = "GEO-CAMPUS-COIMBATORE",
-            name = "Coimbatore Academic Zone",
-            type = GeofenceType.CIRCLE,
-            centerLatitude = 11.016844,
-            centerLongitude = 76.955833,
-            radiusMeters = 300.0,
-            toleranceMeters = 30.0,
-            isActive = true
-        )
-    )
-
-    private val _geofences = MutableStateFlow<List<CampusGeofence>>(defaultGeofences)
+    private val _geofences = MutableStateFlow<List<CampusGeofence>>(initialGeofences)
     val geofences: StateFlow<List<CampusGeofence>> = _geofences.asStateFlow()
 
     private val _liveLocation = MutableStateFlow<StaffLiveLocation?>(null)
@@ -142,7 +94,15 @@ class GeofenceRepository(
 
         monitoringJob?.cancel()
         monitoringJob = externalScope.launch {
-            locationProvider.getLocationUpdates(intervalMs = 3000L)
+            try {
+                val lastLoc = locationProvider.getLastKnownLocation()
+                if (lastLoc != null && (System.currentTimeMillis() - lastLoc.timestamp) < 15_000L && lastLoc.accuracyMeters <= 50f) {
+                    _liveLocation.value = lastLoc
+                    _verificationResult.value = geofenceValidator.validate(lastLoc, _geofences.value)
+                }
+            } catch (_: Exception) {}
+
+            locationProvider.getLocationUpdates(intervalMs = 2000L)
                 .catch { e ->
                     if (e is SecurityException) {
                         _verificationResult.value = LocationVerificationResult.PermissionDenied

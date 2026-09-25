@@ -32,6 +32,7 @@ import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlin.math.sqrt
 
 class FakeTestLocationProvider : LocationProvider {
@@ -53,9 +54,28 @@ class FakeTestLocationProvider : LocationProvider {
  * - MobileFaceNetModelMetadata
  * - FaceQualityValidator
  */
+@OptIn(ExperimentalCoroutinesApi::class)
 class FaceRecognitionProductionTest {
 
     private val testDispatcher = StandardTestDispatcher()
+
+    private fun createTestGeofenceRepo(): GeofenceRepository {
+        return GeofenceRepository(
+            locationProvider = FakeTestLocationProvider(),
+            initialGeofences = listOf(
+                com.governence.faflow.attendance.geolocation.CampusGeofence(
+                    id = "GEO-CAMPUS-COIMBATORE",
+                    name = "Coimbatore Academic Zone",
+                    type = com.governence.faflow.attendance.geolocation.GeofenceType.CIRCLE,
+                    centerLatitude = 11.016844,
+                    centerLongitude = 76.955833,
+                    radiusMeters = 300.0,
+                    toleranceMeters = 30.0,
+                    isActive = true
+                )
+            )
+        )
+    }
 
     @Before
     fun setUp() {
@@ -365,7 +385,7 @@ class FaceRecognitionProductionTest {
 
     @Test
     fun testAutoCaptureMicroStabilityGate() {
-        val geofenceRepo = GeofenceRepository(locationProvider = FakeTestLocationProvider())
+        val geofenceRepo = createTestGeofenceRepo()
         val viewModel = AttendanceViewModel(geofenceRepository = geofenceRepo)
 
         val centeredFace = FaceDetectionResult(
@@ -382,14 +402,16 @@ class FaceRecognitionProductionTest {
 
         // Initial State
         assertEquals(AutoCaptureState.SEARCHING, viewModel.autoCaptureState.value)
-        assertEquals("Positioning...", viewModel.autoCapturePrompt.value)
+        assertEquals("Position your face in the frame", viewModel.autoCapturePrompt.value)
         assertFalse(viewModel.isCaptureLocked.value)
 
         // Smart Settling: minSettlingDurationMs = 300ms, minSettlingFrames = 4
-        // Frame 1: Detected -> Settling starts -> State = SETTLING, prompt = "Hold still"
+        viewModel.minSettlingDurationMs = 300L
+        viewModel.minSettlingFrames = 4
+        // Frame 1: Detected -> Settling starts -> State = SETTLING, prompt = "Position your face in the frame"
         viewModel.updateDetections(listOf(centeredFace), frameWidth = 640, frameHeight = 480)
         assertEquals(AutoCaptureState.SETTLING, viewModel.autoCaptureState.value)
-        assertEquals("Hold still", viewModel.autoCapturePrompt.value)
+        assertEquals("Position your face in the frame", viewModel.autoCapturePrompt.value)
         assertFalse(viewModel.isCaptureLocked.value)
 
         // Frames 2 & 3 arriving too quickly (< 300ms elapsed) -> must NOT trigger capture prematurely
@@ -403,7 +425,7 @@ class FaceRecognitionProductionTest {
         viewModel.updateDetections(listOf(centeredFace), frameWidth = 640, frameHeight = 480)
         // Now stableGoodFrameCount >= 4 and duration met -> CAPTURED & LOCKED
         assertEquals(AutoCaptureState.CAPTURED, viewModel.autoCaptureState.value)
-        assertEquals("Checking...", viewModel.autoCapturePrompt.value)
+        assertEquals("Verifying...", viewModel.autoCapturePrompt.value)
         assertTrue(viewModel.isCaptureLocked.value)
 
         // Subsequent frame when locked is bypassed
@@ -477,7 +499,7 @@ class FaceRecognitionProductionTest {
 
     @Test
     fun testQualityRejectionResetsStability() {
-        val geofenceRepo = GeofenceRepository(locationProvider = FakeTestLocationProvider())
+        val geofenceRepo = createTestGeofenceRepo()
         val viewModel = AttendanceViewModel(geofenceRepository = geofenceRepo)
 
         val centeredFace = FaceDetectionResult(
@@ -492,23 +514,23 @@ class FaceRecognitionProductionTest {
             )
         )
 
-        // Frame 1: Valid -> "Hold still"
+        // Frame 1: Valid -> "Position your face in the frame"
         viewModel.updateDetections(listOf(centeredFace), frameWidth = 640, frameHeight = 480)
         assertEquals(AutoCaptureState.SETTLING, viewModel.autoCaptureState.value)
-        assertEquals("Hold still", viewModel.autoCapturePrompt.value)
+        assertEquals("Position your face in the frame", viewModel.autoCapturePrompt.value)
 
         // Frame 2: Rejected (multiple faces) -> settling reset to 0
         val faceA = FaceDetectionResult(boundingBox = FaceBox(100f, 100f, 200f, 200f), confidence = 0.9f)
         val faceB = FaceDetectionResult(boundingBox = FaceBox(300f, 100f, 400f, 200f), confidence = 0.9f)
         viewModel.updateDetections(listOf(faceA, faceB), frameWidth = 640, frameHeight = 480)
         assertEquals(AutoCaptureState.SEARCHING, viewModel.autoCaptureState.value)
-        assertEquals("Only one person should be visible", viewModel.autoCapturePrompt.value)
+        assertEquals("Please make sure only one face is visible.", viewModel.autoCapturePrompt.value)
         assertFalse(viewModel.isCaptureLocked.value)
     }
 
     @Test
     fun testRetryCaptureResetsLockedState() {
-        val geofenceRepo = GeofenceRepository(locationProvider = FakeTestLocationProvider())
+        val geofenceRepo = createTestGeofenceRepo()
         val viewModel = AttendanceViewModel(geofenceRepository = geofenceRepo)
         viewModel.minSettlingDurationMs = 0L
         viewModel.minSettlingFrames = 2
@@ -535,7 +557,176 @@ class FaceRecognitionProductionTest {
         assertFalse(viewModel.isCaptureLocked.value)
         assertNull(viewModel.capturedFrameBitmap.value)
         assertEquals(AutoCaptureState.SEARCHING, viewModel.autoCaptureState.value)
-        assertEquals("Positioning...", viewModel.autoCapturePrompt.value)
+        assertEquals("Position your face in the frame", viewModel.autoCapturePrompt.value)
+    }
+
+    @Test
+    fun testSubSecondTwoFrameStabilizationGate() {
+        val geofenceRepo = createTestGeofenceRepo()
+        val viewModel = AttendanceViewModel(geofenceRepository = geofenceRepo)
+        viewModel.minSettlingDurationMs = 0L // Simulate time elapsed in unit test
+        assertEquals(2, viewModel.minSettlingFrames)
+
+        val centeredFace = FaceDetectionResult(
+            boundingBox = FaceBox(220f, 140f, 420f, 340f),
+            confidence = 0.95f,
+            quality = FaceQuality(
+                brightnessScore = 0.70f,
+                sharpnessScore = 0.85f,
+                yawAngle = 0f,
+                pitchAngle = 0f,
+                isFrontal = true
+            )
+        )
+
+        // Frame 1: Valid -> Settling
+        viewModel.updateDetections(listOf(centeredFace), frameWidth = 640, frameHeight = 480)
+        assertEquals(AutoCaptureState.SETTLING, viewModel.autoCaptureState.value)
+        assertFalse(viewModel.isCaptureLocked.value)
+
+        // Frame 2: Valid (2nd consecutive frame) -> Captures & Locks
+        viewModel.updateDetections(listOf(centeredFace), frameWidth = 640, frameHeight = 480)
+        assertEquals(AutoCaptureState.CAPTURED, viewModel.autoCaptureState.value)
+        assertTrue(viewModel.isCaptureLocked.value)
+    }
+
+    @Test
+    fun testPoseToleranceBoundaryLimits() {
+        val validator = FaceQualityValidator()
+        assertEquals(28.0f, FaceQualityValidator.BIOMETRIC_MAX_YAW_DEGREES, 0.01f)
+        assertEquals(28.0f, FaceQualityValidator.BIOMETRIC_MAX_PITCH_DEGREES, 0.01f)
+
+        // Yaw at 27° -> Within ±28° tolerance -> Valid
+        val faceYaw27 = FaceDetectionResult(
+            boundingBox = FaceBox(220f, 140f, 420f, 340f),
+            confidence = 0.92f,
+            quality = FaceQuality(
+                brightnessScore = 0.7f,
+                sharpnessScore = 0.8f,
+                yawAngle = 27.0f,
+                pitchAngle = 0f,
+                isFrontal = true
+            )
+        )
+        val resYaw27 = validator.validate(listOf(faceYaw27), frameWidth = 640, frameHeight = 480)
+        assertTrue("Face with 27° yaw must be accepted within ±28° tolerance", resYaw27 is FaceQualityCheckResult.Valid)
+
+        // Yaw at 29° -> Exceeds ±28° tolerance -> Rejected with TILTED_POSE
+        val faceYaw29 = FaceDetectionResult(
+            boundingBox = FaceBox(220f, 140f, 420f, 340f),
+            confidence = 0.92f,
+            quality = FaceQuality(
+                brightnessScore = 0.7f,
+                sharpnessScore = 0.8f,
+                yawAngle = 29.0f,
+                pitchAngle = 0f
+            )
+        )
+        val resYaw29 = validator.validate(listOf(faceYaw29), frameWidth = 640, frameHeight = 480)
+        assertTrue(resYaw29 is FaceQualityCheckResult.Rejected)
+        assertEquals(QualityErrorCode.TILTED_POSE, (resYaw29 as FaceQualityCheckResult.Rejected).code)
+
+        // Pitch at 27° -> Within ±28° tolerance -> Valid
+        val facePitch27 = FaceDetectionResult(
+            boundingBox = FaceBox(220f, 140f, 420f, 340f),
+            confidence = 0.92f,
+            quality = FaceQuality(
+                brightnessScore = 0.7f,
+                sharpnessScore = 0.8f,
+                yawAngle = 0f,
+                pitchAngle = 27.0f,
+                isFrontal = true
+            )
+        )
+        val resPitch27 = validator.validate(listOf(facePitch27), frameWidth = 640, frameHeight = 480)
+        assertTrue("Face with 27° pitch must be accepted within ±28° tolerance", resPitch27 is FaceQualityCheckResult.Valid)
+
+        // Pitch at 29° -> Exceeds ±28° tolerance -> Rejected with TILTED_POSE
+        val facePitch29 = FaceDetectionResult(
+            boundingBox = FaceBox(220f, 140f, 420f, 340f),
+            confidence = 0.92f,
+            quality = FaceQuality(
+                brightnessScore = 0.7f,
+                sharpnessScore = 0.8f,
+                yawAngle = 0f,
+                pitchAngle = 29.0f
+            )
+        )
+        val resPitch29 = validator.validate(listOf(facePitch29), frameWidth = 640, frameHeight = 480)
+        assertTrue(resPitch29 is FaceQualityCheckResult.Rejected)
+        assertEquals(QualityErrorCode.TILTED_POSE, (resPitch29 as FaceQualityCheckResult.Rejected).code)
+    }
+
+    @Test
+    fun testFacePositionBoundaryTolerance() {
+        val validator = FaceQualityValidator()
+        assertEquals(0.35f, FaceQualityValidator.BIOMETRIC_POSITION_BOUNDARY, 0.01f)
+
+        // Center offset <= 0.35 -> Valid
+        val centered = FaceDetectionResult(
+            boundingBox = FaceBox(220f, 140f, 420f, 340f),
+            confidence = 0.94f,
+            quality = FaceQuality(brightnessScore = 0.7f, sharpnessScore = 0.8f, isFrontal = true)
+        )
+        assertTrue(validator.validate(listOf(centered), frameWidth = 640, frameHeight = 480) is FaceQualityCheckResult.Valid)
+
+        // Far off-center: face center far away from middle
+        val offCenter = FaceDetectionResult(
+            boundingBox = FaceBox(10f, 20f, 180f, 220f), // centerX = 95/640 = 0.148, centerY = 120/480 = 0.25 -> dist = sqrt(0.352^2 + 0.25^2) = 0.43 > 0.35
+            confidence = 0.94f,
+            quality = FaceQuality(brightnessScore = 0.7f, sharpnessScore = 0.8f)
+        )
+        val resOff = validator.validate(listOf(offCenter), frameWidth = 640, frameHeight = 480)
+        assertTrue(resOff is FaceQualityCheckResult.Rejected)
+        assertEquals(QualityErrorCode.OFF_CENTER, (resOff as FaceQualityCheckResult.Rejected).code)
+    }
+
+    @Test
+    fun testMultiAngleMaxSimilarityMatching() {
+        val matcher = CosineFaceMatcher()
+
+        // Live embedding
+        val liveEmbedding = floatArrayOf(0.5f, 0.5f, 0.5f, 0.5f)
+
+        // 3 Enrolled Templates
+        val t1Frontal = floatArrayOf(0.3f, 0.7f, 0.2f, 0.6f)       // Frontal: lower score
+        val t2SlightAngle = floatArrayOf(0.5f, 0.5f, 0.5f, 0.5f)   // Exact match: 1.0f
+        val t3AlternateLight = floatArrayOf(0.4f, 0.4f, 0.6f, 0.4f)// Different light: moderate score
+
+        val sim1 = matcher.computeCosineSimilarity(liveEmbedding, t1Frontal)
+        val sim2 = matcher.computeCosineSimilarity(liveEmbedding, t2SlightAngle)
+        val sim3 = matcher.computeCosineSimilarity(liveEmbedding, t3AlternateLight)
+
+        val templates = listOf(t1Frontal, t2SlightAngle, t3AlternateLight)
+        val maxSim = templates.maxOf { matcher.computeCosineSimilarity(liveEmbedding, it) }
+
+        assertEquals(1.0f, maxSim, 0.001f)
+        assertTrue("Max-of-three similarity selects the best pose match", maxSim >= sim1 && maxSim >= sim3)
+        assertTrue("Threshold of 0.50 is satisfied by max-of-three", maxSim >= 0.50f)
+    }
+
+    @Test
+    fun testFirstFramePassesSecondFailsResetsSettling() {
+        val geofenceRepo = createTestGeofenceRepo()
+        val viewModel = AttendanceViewModel(geofenceRepository = geofenceRepo)
+        viewModel.minSettlingDurationMs = 0L
+        viewModel.minSettlingFrames = 2
+
+        val goodFace = FaceDetectionResult(
+            boundingBox = FaceBox(220f, 140f, 420f, 340f),
+            confidence = 0.95f,
+            quality = FaceQuality(brightnessScore = 0.70f, sharpnessScore = 0.85f, isFrontal = true)
+        )
+
+        // 1st frame valid -> Settling starts
+        viewModel.updateDetections(listOf(goodFace), frameWidth = 640, frameHeight = 480)
+        assertEquals(AutoCaptureState.SETTLING, viewModel.autoCaptureState.value)
+        assertFalse(viewModel.isCaptureLocked.value)
+
+        // 2nd frame invalid (face leaves frame / empty detections) -> Resets to SEARCHING
+        viewModel.updateDetections(emptyList(), frameWidth = 640, frameHeight = 480)
+        assertEquals(AutoCaptureState.SEARCHING, viewModel.autoCaptureState.value)
+        assertFalse(viewModel.isCaptureLocked.value)
     }
 }
 

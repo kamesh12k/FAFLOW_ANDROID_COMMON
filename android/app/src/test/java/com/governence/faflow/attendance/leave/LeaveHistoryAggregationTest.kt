@@ -85,7 +85,7 @@ class LeaveHistoryAggregationTest {
         assertEquals("2026-09-10", periodLeave.date)
         assertFalse("isFullDay must be false", periodLeave.isFullDay)
         assertEquals("Period Leave", periodLeave.leaveTypeDisplay)
-        assertEquals("P3 · 10:15–11:15", periodLeave.periodSummarySubtitle)
+        assertEquals("P3 · 11:40–12:35", periodLeave.periodSummarySubtitle)
         assertEquals(1, periodLeave.periods.size)
     }
 

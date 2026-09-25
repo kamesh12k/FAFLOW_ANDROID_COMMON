@@ -1,5 +1,10 @@
 package com.governence.faflow.camera
 
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -13,10 +18,13 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CameraAlt
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.CloudDone
 import androidx.compose.material.icons.filled.Face
 import androidx.compose.material.icons.filled.Group
 import androidx.compose.material.icons.filled.Info
@@ -30,9 +38,13 @@ import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.scale
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
@@ -59,6 +71,9 @@ fun CameraOverlay(
     showDebugOverlay: Boolean = false,
     inferenceLatencyMs: Long = 0L,
     livenessDebugInfo: com.governence.faflow.attendance.biometrics.liveness.LivenessDebugInfo? = null,
+    isServerConfirmed: Boolean = false,
+    isOfflineRecorded: Boolean = false,
+    isVerifying: Boolean = false,
     modifier: Modifier = Modifier
 ) {
     Box(
@@ -66,12 +81,13 @@ fun CameraOverlay(
         contentAlignment = Alignment.Center
     ) {
         // Oval Framing Guide
-        val borderColor = when {
-            livenessState is LivenessState.Passed -> StatusSuccess
+        val targetBorderColor = when {
+            isServerConfirmed -> StatusSuccess
+            isOfflineRecorded -> SecondaryTeal
+            isVerifying -> PrimaryBlue
             livenessState is LivenessState.SpoofSuspected -> StatusError
-            livenessState is LivenessState.ChallengeActive -> SecondaryTeal
-            faceDetectionState is FaceDetectionUiState.FacePositionValid -> StatusSuccess
-            faceDetectionState is FaceDetectionUiState.FaceDetected -> SecondaryTeal
+            faceDetectionState is FaceDetectionUiState.FacePositionValid -> Color.White.copy(alpha = 0.85f)
+            faceDetectionState is FaceDetectionUiState.FaceDetected -> Color.White.copy(alpha = 0.65f)
             faceDetectionState is FaceDetectionUiState.MultipleFaces -> StatusError
             faceDetectionState is FaceDetectionUiState.FaceTooSmall || faceDetectionState is FaceDetectionUiState.FaceTooLarge -> StatusWarning
             faceDetectionState is FaceDetectionUiState.FacePartiallyOutOfFrame -> StatusWarning
@@ -82,56 +98,107 @@ fun CameraOverlay(
             }
         }
 
+        val borderColor by animateColorAsState(
+            targetValue = targetBorderColor,
+            animationSpec = tween(durationMillis = 280),
+            label = "ReticleBorderColor"
+        )
+
+        val rippleProgress = remember { Animatable(0f) }
+        LaunchedEffect(isServerConfirmed) {
+            if (isServerConfirmed) {
+                rippleProgress.animateTo(
+                    targetValue = 1f,
+                    animationSpec = tween(durationMillis = 320, easing = FastOutSlowInEasing)
+                )
+            } else {
+                rippleProgress.snapTo(0f)
+            }
+        }
+
+        // Subtle Glow on Server Confirmed
+        if (isServerConfirmed) {
+            Box(
+                modifier = Modifier
+                    .size(width = 246.dp, height = 306.dp)
+                    .border(
+                        width = 4.dp,
+                        color = StatusSuccess.copy(alpha = 0.30f),
+                        shape = RoundedCornerShape(123.dp)
+                    )
+            )
+        }
+
+        // Small expanding ripple on successful attendance confirmation
+        if (isServerConfirmed && rippleProgress.value > 0f) {
+            Box(
+                modifier = Modifier
+                    .size(width = 240.dp, height = 300.dp)
+                    .scale(1.0f + (rippleProgress.value * 0.12f))
+                    .border(
+                        width = 2.dp,
+                        color = StatusSuccess.copy(alpha = (1f - rippleProgress.value) * 0.6f),
+                        shape = RoundedCornerShape(120.dp)
+                    )
+            )
+        }
+
         Box(
             modifier = Modifier
                 .size(width = 240.dp, height = 300.dp)
                 .border(
-                    width = 3.dp,
+                    width = if (isServerConfirmed) 4.dp else 3.dp,
                     color = borderColor,
                     shape = RoundedCornerShape(120.dp)
                 ),
             contentAlignment = Alignment.Center
         ) {
-            Icon(
-                imageVector = Icons.Default.Face,
-                contentDescription = null,
-                tint = Color.White.copy(alpha = 0.25f),
-                modifier = Modifier.size(100.dp)
-            )
-        }
-
-        // Active Liveness Challenge Banner
-        if (livenessState is LivenessState.ChallengeActive) {
-            Box(
-                modifier = Modifier
-                    .align(Alignment.TopCenter)
-                    .padding(top = 24.dp)
-                    .clip(RoundedCornerShape(16.dp))
-                    .background(Color(0xCC111827))
-                    .border(1.dp, SecondaryTeal.copy(alpha = 0.5f), RoundedCornerShape(16.dp))
-                    .padding(horizontal = 20.dp, vertical = 12.dp)
-            ) {
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Text(
-                        text = livenessState.instructions,
-                        style = MaterialTheme.typography.titleSmall,
-                        fontWeight = FontWeight.Bold,
-                        color = Color.White,
-                        textAlign = TextAlign.Center
-                    )
-                    Spacer(modifier = Modifier.height(6.dp))
-                    LinearProgressIndicator(
-                        progress = { livenessState.progress },
-                        modifier = Modifier
-                            .width(160.dp)
-                            .height(6.dp)
-                            .clip(RoundedCornerShape(3.dp)),
-                        color = SecondaryTeal,
-                        trackColor = Color.White.copy(alpha = 0.2f),
+            if (isServerConfirmed) {
+                val checkScale by animateFloatAsState(
+                    targetValue = 1f,
+                    animationSpec = tween(durationMillis = 280, easing = FastOutSlowInEasing),
+                    label = "CheckScale"
+                )
+                Box(
+                    modifier = Modifier
+                        .size(68.dp)
+                        .scale(checkScale)
+                        .clip(CircleShape)
+                        .background(StatusSuccess),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Check,
+                        contentDescription = "Success",
+                        tint = Color.White,
+                        modifier = Modifier.size(42.dp)
                     )
                 }
+            } else if (isOfflineRecorded) {
+                Box(
+                    modifier = Modifier
+                        .size(68.dp)
+                        .clip(CircleShape)
+                        .background(SecondaryTeal),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.CloudDone,
+                        contentDescription = "Offline Recorded",
+                        tint = Color.White,
+                        modifier = Modifier.size(40.dp)
+                    )
+                }
+            } else {
+                Icon(
+                    imageVector = Icons.Default.Face,
+                    contentDescription = null,
+                    tint = Color.White.copy(alpha = 0.25f),
+                    modifier = Modifier.size(100.dp)
+                )
             }
         }
+
 
         // Developer Debug Overlay (Landmarks & Bounding Box)
         if (showDebugOverlay) {
@@ -204,6 +271,30 @@ fun CameraOverlay(
         ) {
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 when {
+                    isServerConfirmed -> {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(imageVector = Icons.Default.CheckCircle, contentDescription = null, tint = StatusSuccess, modifier = Modifier.size(16.dp))
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text("Attendance Confirmed", style = MaterialTheme.typography.bodySmall, color = Color.White, fontWeight = FontWeight.Bold)
+                        }
+                    }
+
+                    isOfflineRecorded -> {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(imageVector = Icons.Default.CloudDone, contentDescription = null, tint = SecondaryTeal, modifier = Modifier.size(16.dp))
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text("Attendance Queued Offline • Will Sync", style = MaterialTheme.typography.bodySmall, color = Color.White, fontWeight = FontWeight.SemiBold)
+                        }
+                    }
+
+                    isVerifying -> {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            CircularProgressIndicator(modifier = Modifier.size(16.dp), color = SecondaryTeal, strokeWidth = 2.dp)
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text("Verifying Identity & Recording...", style = MaterialTheme.typography.bodySmall, color = Color.White, fontWeight = FontWeight.SemiBold)
+                        }
+                    }
+
                     livenessState is LivenessState.Passed -> {
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Icon(imageVector = Icons.Default.CheckCircle, contentDescription = null, tint = StatusSuccess, modifier = Modifier.size(16.dp))
@@ -224,7 +315,7 @@ fun CameraOverlay(
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Icon(imageVector = Icons.Default.Refresh, contentDescription = null, tint = StatusWarning, modifier = Modifier.size(16.dp))
                             Spacer(modifier = Modifier.width(8.dp))
-                            Text("Challenge timed out • Re-centering face", style = MaterialTheme.typography.bodySmall, color = Color.White, fontWeight = FontWeight.SemiBold)
+                            Text("Re-centering face...", style = MaterialTheme.typography.bodySmall, color = Color.White, fontWeight = FontWeight.SemiBold)
                         }
                     }
 
@@ -232,7 +323,7 @@ fun CameraOverlay(
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Icon(imageVector = Icons.Default.CheckCircle, contentDescription = null, tint = StatusSuccess, modifier = Modifier.size(16.dp))
                             Spacer(modifier = Modifier.width(8.dp))
-                            Text("Face position valid • Verifying liveness", style = MaterialTheme.typography.bodySmall, color = Color.White, fontWeight = FontWeight.SemiBold)
+                            Text("Face positioned • Verifying...", style = MaterialTheme.typography.bodySmall, color = Color.White, fontWeight = FontWeight.SemiBold)
                         }
                     }
 

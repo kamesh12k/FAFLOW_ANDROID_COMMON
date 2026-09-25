@@ -218,9 +218,11 @@ class AttendanceRepository(
                         deviceReference = item.deviceReference
                     )
                     val res = apiService.checkIn(req)
-                    if (res.isSuccessful) {
+                    if (res.isSuccessful || res.code() == 409) {
                         localQueue.markSynced(item.id)
                         successCount++
+                    } else if (res.code() in 400..499 && res.code() != 429 && item.attemptCount >= 3) {
+                        localQueue.updateAttempt(item.id, SyncStatus.FAILED, "Permanent client error HTTP ${res.code()}")
                     } else {
                         localQueue.updateAttempt(item.id, SyncStatus.PENDING, "Server returned HTTP ${res.code()}")
                     }
@@ -236,9 +238,11 @@ class AttendanceRepository(
                         deviceReference = item.deviceReference
                     )
                     val res = apiService.checkOut(req)
-                    if (res.isSuccessful) {
+                    if (res.isSuccessful || res.code() == 409) {
                         localQueue.markSynced(item.id)
                         successCount++
+                    } else if (res.code() in 400..499 && res.code() != 429 && item.attemptCount >= 3) {
+                        localQueue.updateAttempt(item.id, SyncStatus.FAILED, "Permanent client error HTTP ${res.code()}")
                     } else {
                         localQueue.updateAttempt(item.id, SyncStatus.PENDING, "Server returned HTTP ${res.code()}")
                     }

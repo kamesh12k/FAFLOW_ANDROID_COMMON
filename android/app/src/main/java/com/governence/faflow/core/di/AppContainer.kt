@@ -51,7 +51,32 @@ class AppContainer(private val context: Context) {
     }
 
     val authRepository: AuthRepository by lazy {
-        AuthRepository(apiService, tokenManager)
+        AuthRepository(
+            apiService = apiService,
+            tokenManager = tokenManager,
+            onLogoutCleanup = {
+                try {
+                    studentAttendanceLocalDb.clearAllUserData()
+                } catch (e: Exception) {
+                    android.util.Log.e("AppContainer", "Error clearing student attendance DB on logout", e)
+                }
+                try {
+                    attendanceLocalQueue.clearAll()
+                } catch (e: Exception) {
+                    android.util.Log.e("AppContainer", "Error clearing attendance queue on logout", e)
+                }
+                try {
+                    com.governence.faflow.core.notifications.FaflowNotificationManager.clearCache(context.applicationContext)
+                } catch (e: Exception) {
+                    android.util.Log.e("AppContainer", "Error clearing notification cache on logout", e)
+                }
+                try {
+                    com.governence.faflow.core.notifications.LiveNotificationSyncManager.stop()
+                } catch (e: Exception) {
+                    android.util.Log.e("AppContainer", "Error stopping LiveNotificationSyncManager on logout", e)
+                }
+            }
+        )
     }
 
     val timetableRepository: TimetableRepositoryImpl by lazy {
@@ -90,6 +115,18 @@ class AppContainer(private val context: Context) {
         com.governence.faflow.faflow.data.SystemPolicyRepositoryImpl(apiService)
     }
 
+    val announcementRepository: com.governence.faflow.faflow.data.AnnouncementRepositoryImpl by lazy {
+        com.governence.faflow.faflow.data.AnnouncementRepositoryImpl(apiService)
+    }
+
+    val campusDutyRepository: com.governence.faflow.faflow.data.CampusDutyRepositoryImpl by lazy {
+        com.governence.faflow.faflow.data.CampusDutyRepositoryImpl(apiService)
+    }
+
+    val campusStructureRepository: com.governence.faflow.faflow.data.CampusStructureRepositoryImpl by lazy {
+        com.governence.faflow.faflow.data.CampusStructureRepositoryImpl(apiService)
+    }
+
     // Milestone 4: Geofence & Location Subsystem (Lazy)
     val staffLocationProvider: StaffLocationProvider by lazy {
         StaffLocationProvider(context.applicationContext)
@@ -122,7 +159,7 @@ class AppContainer(private val context: Context) {
     }
 
     val studentAttendanceRepository: com.governence.faflow.attendance.student.data.StudentAttendanceRepository by lazy {
-        com.governence.faflow.attendance.student.data.StudentAttendanceRepository(apiService, studentAttendanceLocalDb)
+        com.governence.faflow.attendance.student.data.StudentAttendanceRepository(apiService, studentAttendanceLocalDb, context.applicationContext)
     }
 
     val deviceIntegrityVerifier: com.governence.faflow.core.security.DeviceIntegrityVerifier by lazy {

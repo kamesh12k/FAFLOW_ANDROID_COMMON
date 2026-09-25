@@ -165,14 +165,7 @@ fun TimetableScreen(
 
 @Composable
 fun TimetablePeriodItem(period: Int, slot: TimetableSlot?) {
-    val periodTime = when (period) {
-        1 -> "08:45"
-        2 -> "09:40"
-        3 -> "10:50"
-        4 -> "11:45"
-        5 -> "01:30"
-        else -> "Slot $period"
-    }
+    val periodTime = com.governence.faflow.domain.model.InstitutionalSchedule.getPeriodTime(period)
 
     val isBusy = slot != null
 
@@ -219,36 +212,44 @@ fun TimetablePeriodItem(period: Int, slot: TimetableSlot?) {
             // Period Body
             Column(modifier = Modifier.weight(1f)) {
                 if (slot != null) {
-                    Text(
-                        text = slot.subjectName,
-                        fontSize = 14.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = com.governence.faflow.ui.theme.FaflowText1
-                    )
-                    Spacer(modifier = Modifier.height(3.dp))
+                    val classTitle = if (slot.section.isNotBlank() && !slot.className.contains(slot.section)) {
+                        "${slot.className} (${slot.section})"
+                    } else {
+                        slot.className
+                    }
                     val roomDisplay = if (slot.roomNumber.startsWith("Room", ignoreCase = true)) {
                         slot.roomNumber
                     } else {
                         "Room ${slot.roomNumber}"
                     }
                     Text(
-                        text = "${slot.className} (${slot.section}) · $roomDisplay",
+                        text = classTitle,
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = com.governence.faflow.ui.theme.FaflowText1
+                    )
+                    Spacer(modifier = Modifier.height(3.dp))
+                    Text(
+                        text = roomDisplay,
                         fontSize = 11.5.sp,
                         color = com.governence.faflow.ui.theme.FaflowText3
                     )
-                    Spacer(modifier = Modifier.height(6.dp))
-                    Box(
-                        modifier = Modifier
-                            .clip(RoundedCornerShape(5.dp))
-                            .background(com.governence.faflow.ui.theme.FaflowVioletTint)
-                            .padding(horizontal = 8.dp, vertical = 3.dp)
-                    ) {
-                        Text(
-                            text = slot.subjectCode,
-                            fontSize = 10.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = com.governence.faflow.ui.theme.FaflowViolet
-                        )
+                    val subjectDisplay = slot.subjectName.ifBlank { slot.subjectCode }
+                    if (subjectDisplay.isNotBlank()) {
+                        Spacer(modifier = Modifier.height(6.dp))
+                        Box(
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(5.dp))
+                                .background(com.governence.faflow.ui.theme.FaflowVioletTint)
+                                .padding(horizontal = 8.dp, vertical = 3.dp)
+                        ) {
+                            Text(
+                                text = subjectDisplay,
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                color = com.governence.faflow.ui.theme.FaflowViolet
+                            )
+                        }
                     }
                 } else {
                     Text(

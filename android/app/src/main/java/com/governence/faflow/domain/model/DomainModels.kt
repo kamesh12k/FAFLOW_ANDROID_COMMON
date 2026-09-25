@@ -9,11 +9,16 @@ data class StaffMember(
     val email: String,
     val username: String? = null,
     val role: String = "teacher",
+    val adminLevel: String? = null,
     val departmentId: Int? = null,
     val departmentName: String? = null,
     val isActive: Boolean = true,
     val faceEnrolled: Boolean = false,
-    val creditBalance: Int = 0
+    val creditBalance: Int = 0,
+    val policyVersionAccepted: String? = null,
+    val policyAcceptedAt: String? = null,
+    val onboardingCompleted: Boolean = false,
+    val mustChangeCredentials: Boolean = false
 )
 
 /**
@@ -117,7 +122,8 @@ data class LeaveRequest(
     val isEmergency: Boolean = false,
     val substituteTeacherName: String? = null,
     val createdAt: String? = null,
-    val batchId: String? = null
+    val batchId: String? = null,
+    val proposedSubstituteName: String? = null
 )
 
 /**
@@ -163,14 +169,15 @@ data class LeaveHistoryDay(
     val hasSubstitutes: Boolean
         get() = coveredPeriodsCount > 0
 
+    val hasProposedSubstitutes: Boolean
+        get() = periods.any { !it.proposedSubstituteName.isNullOrBlank() }
+
+    val proposedSubstitutesCount: Int
+        get() = periods.count { !it.proposedSubstituteName.isNullOrBlank() && it.substituteTeacherName.isNullOrBlank() }
+
     companion object {
-        val PERIOD_TIMES = mapOf(
-            1 to "8:00–9:00",
-            2 to "9:00–10:00",
-            3 to "10:15–11:15",
-            4 to "11:15–12:15",
-            5 to "1:00–2:00"
-        )
+        val PERIOD_TIMES: Map<Int, String>
+            get() = InstitutionalSchedule.PERIOD_TIMES
     }
 }
 

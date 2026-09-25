@@ -36,18 +36,12 @@ class NotificationSyncWorker(
 
             if (response.isSuccessful) {
                 val notifications = response.body() ?: emptyList()
-                for (notification in notifications) {
-                    if (!FaflowNotificationManager.isAlreadyNotified(applicationContext, notification.id)) {
-                        FaflowNotificationManager.showNotification(
-                            context = applicationContext,
-                            id = notification.id,
-                            title = notification.title,
-                            body = notification.body,
-                            eventType = notification.eventType
-                        )
-                        FaflowNotificationManager.markAsNotified(applicationContext, notification.id)
-                    }
-                }
+                val userId = tokenManager.getUserId()
+                FaflowNotificationManager.showBatchNotifications(
+                    context = applicationContext,
+                    notifications = notifications,
+                    userId = userId
+                )
             }
             Result.success()
         } catch (_: Exception) {

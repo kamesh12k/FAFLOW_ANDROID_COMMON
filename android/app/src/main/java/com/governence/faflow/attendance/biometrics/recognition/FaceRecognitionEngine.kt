@@ -31,6 +31,18 @@ class FaceRecognitionEngine(
 ) {
 
     /**
+     * Measured execution duration for the most recent embedding extraction in milliseconds.
+     */
+    var lastEmbeddingDurationMs: Long = 0L
+        private set
+
+    /**
+     * Measured execution duration for the most recent cosine similarity matching in milliseconds.
+     */
+    var lastMatchingDurationMs: Long = 0L
+        private set
+
+    /**
      * Executes 1-to-1 biometric identity verification against enrolled staff template.
      */
     suspend fun verifyStaffIdentity(
@@ -67,6 +79,7 @@ class FaceRecognitionEngine(
         }
 
         // 4. ArcFace Feature Embedding Extraction
+        val embedStartNs = System.nanoTime()
         val liveEmbedding = try {
             embedder.extractEmbedding(alignedFace)
         } catch (e: Exception) {
@@ -75,14 +88,32 @@ class FaceRecognitionEngine(
                 reason = "Feature extractor error: ${e.localizedMessage}"
             )
         }
+        lastEmbeddingDurationMs = (System.nanoTime() - embedStartNs) / 1_000_000
 
-        // 5. Cosine Similarity Verification
-        val similarity = matcher.computeCosineSimilarity(liveEmbedding, enrollment.embedding)
+        // 5. Cosine Similarity Verification (Max of multi-angle templates or canonical embedding)
+        val matchStartNs = System.nanoTime()
+        val canonicalSimilarity = matcher.computeCosineSimilarity(liveEmbedding, enrollment.embedding)
+        val (similarity, matchedTemplateIndex) = if (enrollment.templates.isNotEmpty()) {
+            var bestSim = canonicalSimilarity
+            var bestIdx = -1
+            enrollment.templates.forEachIndexed { idx, tmpl ->
+                val s = matcher.computeCosineSimilarity(liveEmbedding, tmpl)
+                if (s > bestSim) {
+                    bestSim = s
+                    bestIdx = idx
+                }
+            }
+            Pair(bestSim, bestIdx)
+        } else {
+            Pair(canonicalSimilarity, -1)
+        }
+        lastMatchingDurationMs = (System.nanoTime() - matchStartNs) / 1_000_000
+
         val isVerified = similarity >= config.similarityThreshold
 
         android.util.Log.i(
             "FAFLOW_BIOMETRICS",
-            "verifyStaffIdentity: staffId=$staffId, similarity=${"%.4f".format(similarity)}, threshold=${config.similarityThreshold}, verified=$isVerified"
+            "verifyStaffIdentity: staffId=$staffId, similarity=${"%.4f".format(similarity)}, matchedTemplate=$matchedTemplateIndex, threshold=${config.similarityThreshold}, verified=$isVerified"
         )
 
         return@withContext if (isVerified) {

@@ -104,18 +104,23 @@ fun StaffAttendanceScreen(
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
                         // Check-in Ring (80x80dp circle)
+                        val ringBg = if (hasCheckedOut) com.governence.faflow.ui.theme.FaflowSuccess.copy(alpha = 0.12f)
+                                     else com.governence.faflow.ui.theme.FaflowNavyTint
+                        val ringIcon = if (hasCheckedOut) Icons.Default.CheckCircle else Icons.Default.Fingerprint
+                        val ringTint = if (hasCheckedOut) com.governence.faflow.ui.theme.FaflowSuccess else com.governence.faflow.ui.theme.FaflowNavy
+
                         Box(
                             modifier = Modifier
                                 .size(80.dp)
                                 .clip(CircleShape)
-                                .background(com.governence.faflow.ui.theme.FaflowNavyTint)
+                                .background(ringBg)
                                 .border(1.5.dp, com.governence.faflow.ui.theme.FaflowBorder, CircleShape),
                             contentAlignment = Alignment.Center
                         ) {
                             Icon(
-                                imageVector = Icons.Default.Fingerprint,
+                                imageVector = ringIcon,
                                 contentDescription = null,
-                                tint = com.governence.faflow.ui.theme.FaflowNavy,
+                                tint = ringTint,
                                 modifier = Modifier.size(32.dp)
                             )
                         }
@@ -124,7 +129,7 @@ fun StaffAttendanceScreen(
 
                         // Status line
                         val statusLine = when {
-                            hasCheckedOut -> "SHIFT COMPLETED TODAY"
+                            hasCheckedOut -> "ATTENDANCE COMPLETED TODAY"
                             hasCheckedIn -> "CHECKED IN AT ${formatDisplayTime(uiState.checkInTime)}"
                             else -> "NOT RECORDED TODAY"
                         }
@@ -132,7 +137,7 @@ fun StaffAttendanceScreen(
                             text = statusLine,
                             fontSize = 12.sp,
                             fontWeight = FontWeight.SemiBold,
-                            color = com.governence.faflow.ui.theme.FaflowText3,
+                            color = if (hasCheckedOut) com.governence.faflow.ui.theme.FaflowSuccess else com.governence.faflow.ui.theme.FaflowText3,
                             letterSpacing = 0.04.sp
                         )
 
@@ -154,6 +159,11 @@ fun StaffAttendanceScreen(
                         Spacer(modifier = Modifier.height(10.dp))
 
                         // Location status with pin icon
+                        val geofenceText = if (isLocationValid) {
+                            uiState.checkOutGeofenceName ?: uiState.checkInGeofenceName ?: "Campus perimeter verified"
+                        } else {
+                            "Verifying you're within campus range"
+                        }
                         Row(
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.Center
@@ -166,7 +176,7 @@ fun StaffAttendanceScreen(
                             )
                             Spacer(modifier = Modifier.width(5.dp))
                             Text(
-                                text = if (isLocationValid) "Campus perimeter verified" else "Verifying you're within campus range",
+                                text = geofenceText,
                                 fontSize = 11.5.sp,
                                 color = com.governence.faflow.ui.theme.FaflowText3
                             )
@@ -175,70 +185,136 @@ fun StaffAttendanceScreen(
                 }
             }
 
-            // 2. TIME GRID (.time-grid: CHECK-IN and CHECK-OUT cells)
+            // 2. TIME GRID (.time-grid: CHECK-IN, CHECK-OUT, and DURATION cells)
             item {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clip(RoundedCornerShape(12.dp))
-                        .background(com.governence.faflow.ui.theme.FaflowBorder)
-                        .border(1.dp, com.governence.faflow.ui.theme.FaflowBorder, RoundedCornerShape(12.dp))
-                ) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(1.dp)
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(12.dp))
+                            .background(com.governence.faflow.ui.theme.FaflowBorder)
+                            .border(1.dp, com.governence.faflow.ui.theme.FaflowBorder, RoundedCornerShape(12.dp))
                     ) {
-                        // Check-in Cell
-                        Box(
-                            modifier = Modifier
-                                .weight(1f)
-                                .background(com.governence.faflow.ui.theme.FaflowSurface)
-                                .padding(vertical = 14.dp),
-                            contentAlignment = Alignment.Center
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(1.dp)
                         ) {
-                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                Text(
-                                    text = "CHECK-IN",
-                                    fontSize = 10.5.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    letterSpacing = 0.04.sp,
-                                    color = com.governence.faflow.ui.theme.FaflowText3
-                                )
-                                Spacer(modifier = Modifier.height(6.dp))
-                                Text(
-                                    text = formatDisplayTime(uiState.checkInTime),
-                                    fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace,
-                                    fontSize = 17.sp,
-                                    fontWeight = FontWeight.Medium,
-                                    color = com.governence.faflow.ui.theme.FaflowText1
-                                )
+                            // Check-in Cell
+                            Box(
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .background(com.governence.faflow.ui.theme.FaflowSurface)
+                                    .padding(vertical = 14.dp),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                    Text(
+                                        text = "CHECK-IN",
+                                        fontSize = 10.5.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        letterSpacing = 0.04.sp,
+                                        color = com.governence.faflow.ui.theme.FaflowText3
+                                    )
+                                    Spacer(modifier = Modifier.height(6.dp))
+                                    Text(
+                                        text = formatDisplayTime(uiState.checkInTime),
+                                        fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace,
+                                        fontSize = 17.sp,
+                                        fontWeight = FontWeight.Medium,
+                                        color = com.governence.faflow.ui.theme.FaflowText1
+                                    )
+                                }
+                            }
+
+                            // Check-out Cell
+                            Box(
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .background(com.governence.faflow.ui.theme.FaflowSurface)
+                                    .padding(vertical = 14.dp),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                    Text(
+                                        text = "CHECK-OUT",
+                                        fontSize = 10.5.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        letterSpacing = 0.04.sp,
+                                        color = com.governence.faflow.ui.theme.FaflowText3
+                                    )
+                                    Spacer(modifier = Modifier.height(6.dp))
+                                    Text(
+                                        text = formatDisplayTime(uiState.checkOutTime),
+                                        fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace,
+                                        fontSize = 17.sp,
+                                        fontWeight = FontWeight.Medium,
+                                        color = com.governence.faflow.ui.theme.FaflowText1
+                                    )
+                                }
+                            }
+
+                            // Duration Cell (shown when checked out)
+                            if (hasCheckedOut) {
+                                Box(
+                                    modifier = Modifier
+                                        .weight(1f)
+                                        .background(com.governence.faflow.ui.theme.FaflowSurface)
+                                        .padding(vertical = 14.dp),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                        Text(
+                                            text = "DURATION",
+                                            fontSize = 10.5.sp,
+                                            fontWeight = FontWeight.Bold,
+                                            letterSpacing = 0.04.sp,
+                                            color = com.governence.faflow.ui.theme.FaflowText3
+                                        )
+                                        Spacer(modifier = Modifier.height(6.dp))
+                                        Text(
+                                            text = uiState.workingDuration ?: "Full Shift",
+                                            fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace,
+                                            fontSize = 16.sp,
+                                            fontWeight = FontWeight.Medium,
+                                            color = com.governence.faflow.ui.theme.FaflowSuccess
+                                        )
+                                    }
+                                }
                             }
                         }
+                    }
 
-                        // Check-out Cell
+                    // Informational early checkout notice (if checked out with short duration)
+                    if (hasCheckedOut && isEarlyCheckout(uiState.workingDuration)) {
                         Box(
                             modifier = Modifier
-                                .weight(1f)
-                                .background(com.governence.faflow.ui.theme.FaflowSurface)
-                                .padding(vertical = 14.dp),
-                            contentAlignment = Alignment.Center
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(10.dp))
+                                .background(StatusWarning.copy(alpha = 0.10f))
+                                .border(1.dp, StatusWarning.copy(alpha = 0.3f), RoundedCornerShape(10.dp))
+                                .padding(horizontal = 14.dp, vertical = 10.dp)
                         ) {
-                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                Text(
-                                    text = "CHECK-OUT",
-                                    fontSize = 10.5.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    letterSpacing = 0.04.sp,
-                                    color = com.governence.faflow.ui.theme.FaflowText3
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Icon(
+                                    imageVector = Icons.Default.Warning,
+                                    contentDescription = null,
+                                    tint = StatusWarning,
+                                    modifier = Modifier.size(16.dp)
                                 )
-                                Spacer(modifier = Modifier.height(6.dp))
-                                Text(
-                                    text = formatDisplayTime(uiState.checkOutTime),
-                                    fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace,
-                                    fontSize = 17.sp,
-                                    fontWeight = FontWeight.Medium,
-                                    color = com.governence.faflow.ui.theme.FaflowText1
-                                )
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Column {
+                                    Text(
+                                        text = "Checked out early",
+                                        fontSize = 12.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = StatusWarning
+                                    )
+                                    Text(
+                                        text = "Worked: ${uiState.workingDuration ?: "Short Shift"} (less than standard shift duration)",
+                                        fontSize = 11.sp,
+                                        color = com.governence.faflow.ui.theme.FaflowText2
+                                    )
+                                }
                             }
                         }
                     }
@@ -247,44 +323,69 @@ fun StaffAttendanceScreen(
 
             // 3. BIOMETRIC ACTION BUTTON (.btn-checkin)
             item {
-                val buttonText = when {
-                    hasCheckedOut -> "Test Another Check-In"
-                    hasCheckedIn -> "Check out with biometrics"
-                    else -> "Check in with biometrics"
-                }
-
-                Button(
-                    onClick = {
-                        if (!hasCheckedIn || hasCheckedOut) {
-                            viewModel.prepareSessionForCheckIn()
-                        } else {
-                            viewModel.prepareSessionForCheckOut()
+                if (hasCheckedOut) {
+                    // Authoritative Completed State: Check-In/Check-Out buttons must NOT appear as available actions.
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(50.dp)
+                            .clip(RoundedCornerShape(11.dp))
+                            .background(com.governence.faflow.ui.theme.FaflowSuccess.copy(alpha = 0.12f))
+                            .border(1.dp, com.governence.faflow.ui.theme.FaflowSuccess.copy(alpha = 0.3f), RoundedCornerShape(11.dp)),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(
+                                imageVector = Icons.Default.CheckCircle,
+                                contentDescription = null,
+                                tint = com.governence.faflow.ui.theme.FaflowSuccess,
+                                modifier = Modifier.size(18.dp)
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(
+                                text = "Attendance Completed",
+                                fontSize = 14.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = com.governence.faflow.ui.theme.FaflowSuccess
+                            )
                         }
-                        onNavigateToCheckIn()
-                    },
-                    enabled = true,
-                    shape = RoundedCornerShape(11.dp),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = com.governence.faflow.ui.theme.FaflowNavy,
-                        contentColor = Color.White,
-                        disabledContainerColor = com.governence.faflow.ui.theme.FaflowNavy.copy(alpha = 0.4f)
-                    ),
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(50.dp)
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Fingerprint,
-                        contentDescription = null,
-                        tint = Color.White,
-                        modifier = Modifier.size(18.dp)
-                    )
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text(
-                        text = buttonText,
-                        fontSize = 14.sp,
-                        fontWeight = FontWeight.Bold
-                    )
+                    }
+                } else {
+                    val buttonText = if (hasCheckedIn) "Check out with biometrics" else "Check in with biometrics"
+
+                    Button(
+                        onClick = {
+                            if (!hasCheckedIn) {
+                                viewModel.prepareSessionForCheckIn()
+                            } else {
+                                viewModel.prepareSessionForCheckOut()
+                            }
+                            onNavigateToCheckIn()
+                        },
+                        enabled = true,
+                        shape = RoundedCornerShape(11.dp),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = com.governence.faflow.ui.theme.FaflowNavy,
+                            contentColor = Color.White,
+                            disabledContainerColor = com.governence.faflow.ui.theme.FaflowNavy.copy(alpha = 0.4f)
+                        ),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(50.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Fingerprint,
+                            contentDescription = null,
+                            tint = Color.White,
+                            modifier = Modifier.size(18.dp)
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = buttonText,
+                            fontSize = 14.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
                 }
             }
 
@@ -339,4 +440,16 @@ private fun formatDisplayTime(raw: String?): String {
         raw
     }
 }
+
+private fun isEarlyCheckout(durationStr: String?): Boolean {
+    if (durationStr.isNullOrBlank()) return false
+    return try {
+        val hours = durationStr.substringBefore("h").trim().toIntOrNull() ?: 0
+        // Standard minimum full-shift threshold is 4 hours
+        hours < 4
+    } catch (_: Exception) {
+        false
+    }
+}
+
 

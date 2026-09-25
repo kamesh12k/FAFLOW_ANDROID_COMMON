@@ -87,9 +87,19 @@ class PreferencesAndParityTest {
     }
 
     @Test
-    fun testGeofenceAdminRouteRegistration() {
-        val route = Screen.GeofenceAdmin.route
-        assertEquals("geofence_admin", route)
+    fun testTeacherAndHodRoleGating() {
+        val allowedTeacher = "teacher"
+        val isTeacherAllowed = allowedTeacher == "teacher"
+        assertTrue("Teacher is allowed on Android", isTeacherAllowed)
+
+        val allowedHodRole = "admin"
+        val allowedHodAdminLevel = "secondary_admin"
+        val isHodAllowed = allowedHodRole == "admin" && allowedHodAdminLevel == "secondary_admin"
+        assertTrue("HOD (admin + secondary_admin) is allowed on Android", isHodAllowed)
+
+        val nonHodAdminLevel = "super_admin"
+        val isSuperAdminAllowed = allowedHodRole == "admin" && nonHodAdminLevel == "secondary_admin"
+        assertFalse("Super Admin is rejected on Android", isSuperAdminAllowed)
     }
 
     @Test

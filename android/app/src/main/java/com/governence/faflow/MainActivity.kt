@@ -12,6 +12,8 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Surface
 import androidx.compose.ui.Modifier
 import androidx.core.content.ContextCompat
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.navigation.compose.rememberNavController
 import com.governence.faflow.attendance.sync.NotificationSyncWorker
 import com.governence.faflow.core.notifications.FaflowNotificationManager
@@ -27,6 +29,8 @@ class MainActivity : ComponentActivity() {
             NotificationSyncWorker.triggerImmediateSync(this)
         }
     }
+
+    private val pendingRoute = kotlinx.coroutines.flow.MutableStateFlow<String?>(null)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -49,6 +53,17 @@ class MainActivity : ComponentActivity() {
         NotificationSyncWorker.schedulePeriodicSync(this)
         NotificationSyncWorker.triggerImmediateSync(this)
 
+        // Schedule durable attendance sync workers (safety net) and trigger immediate sync
+        com.governence.faflow.attendance.sync.AttendanceSyncWorker.schedulePeriodicSync(this)
+        com.governence.faflow.attendance.sync.StudentAttendanceSyncWorker.schedulePeriodicSync(this)
+        com.governence.faflow.attendance.sync.AttendanceSyncWorker.triggerImmediateSync(this)
+        com.governence.faflow.attendance.sync.StudentAttendanceSyncWorker.triggerImmediateSync(this)
+
+        // Capture initial notification deep link route
+        intent?.getStringExtra("EXTRA_ROUTE")?.let { route ->
+            pendingRoute.value = route
+        }
+
         setContent {
             FAFLOWTheme {
                 Surface(
@@ -56,9 +71,29 @@ class MainActivity : ComponentActivity() {
                     color = com.governence.faflow.ui.theme.FaflowBg
                 ) {
                     val navController = rememberNavController()
-                    NavGraph(navController = navController)
+                    val deepLinkRoute by pendingRoute.collectAsState()
+
+                    NavGraph(
+                        navController = navController,
+                        deepLinkRoute = deepLinkRoute.also {
+                            // Clear after passing so it doesn't re-fire on recomposition
+                            if (!it.isNullOrBlank()) {
+                                androidx.compose.runtime.LaunchedEffect(it) {
+                                    pendingRoute.value = null
+                                }
+                            }
+                        }
+                    )
                 }
             }
+        }
+    }
+
+    override fun onNewIntent(intent: android.content.Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        intent.getStringExtra("EXTRA_ROUTE")?.let { route ->
+            pendingRoute.value = route
         }
     }
 }

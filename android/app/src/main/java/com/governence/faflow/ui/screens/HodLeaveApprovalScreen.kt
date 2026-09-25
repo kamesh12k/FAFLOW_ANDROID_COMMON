@@ -29,6 +29,7 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
+import androidx.compose.material3.ExposedDropdownMenuAnchorType
 import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FilterChipDefaults
@@ -132,8 +133,12 @@ fun HodLeaveApprovalScreen(
             },
             title = { Text("Approve Leave?", fontWeight = FontWeight.Bold) },
             text = {
+                val proposedSummary = group.leaves.mapNotNull { it.proposedSubstitute?.name }.distinct()
+                val subText = if (proposedSummary.isNotEmpty()) {
+                    "\n\nProposed Substitute: ${proposedSummary.joinToString(", ")}"
+                } else ""
                 Text(
-                    "Approve ${if (group.isFullDay) "Full Day" else "${group.leaves.size} periods"} leave for ${group.teacherName} on ${group.date} (DO ${group.dayOrder})?\n\nSubstitution coverage will be required.",
+                    "Approve ${if (group.isFullDay) "Full Day" else "${group.leaves.size} periods"} leave for ${group.teacherName} on ${group.date} (DO ${group.dayOrder})?$subText\n\nSubstitution coverage will be confirmed.",
                     fontSize = 14.sp
                 )
             },
@@ -408,6 +413,7 @@ fun HodLeaveGroupItemCard(
 
             // Summary of substitute assignments across periods
             val coveredCount = group.leaves.count { it.alterAssignment?.substituteName != null }
+            val proposedCount = group.leaves.count { it.proposedSubstitute != null && it.alterAssignment == null }
             if (coveredCount > 0) {
                 Spacer(modifier = Modifier.height(FaflowSpacing.xs))
                 Text(
@@ -415,6 +421,14 @@ fun HodLeaveGroupItemCard(
                     style = MaterialTheme.typography.bodySmall,
                     fontWeight = FontWeight.Bold,
                     color = FaflowStatusColors.Approved
+                )
+            } else if (proposedCount > 0) {
+                Spacer(modifier = Modifier.height(FaflowSpacing.xs))
+                Text(
+                    text = "Proposed Substitutes: $proposedCount of ${group.leaves.size} proposed by faculty",
+                    style = MaterialTheme.typography.bodySmall,
+                    fontWeight = FontWeight.Bold,
+                    color = Color(0xFF4F46E5)
                 )
             }
 
@@ -488,11 +502,19 @@ fun HodLeaveGroupItemCard(
                                     fontWeight = FontWeight.Bold
                                 )
                                 val subName = leave.alterAssignment?.substituteName
+                                val proposedSub = leave.proposedSubstitute
                                 if (subName != null) {
                                     Text(
                                         text = "Substitute: $subName",
                                         style = MaterialTheme.typography.labelSmall,
                                         color = FaflowStatusColors.Approved
+                                    )
+                                } else if (proposedSub != null) {
+                                    Text(
+                                        text = "Proposed: ${proposedSub.name ?: "Teacher #${proposedSub.id}"} (Pending confirmation)",
+                                        style = MaterialTheme.typography.labelSmall,
+                                        fontWeight = FontWeight.SemiBold,
+                                        color = Color(0xFF4F46E5)
                                     )
                                 } else {
                                     Text(
@@ -526,7 +548,13 @@ fun AssignSubstituteDialog(
     onDismiss: () -> Unit,
     onConfirm: (substituteId: Int) -> Unit
 ) {
-    var selectedFaculty by remember { mutableStateOf(facultyList.firstOrNull()) }
+    var selectedFaculty by remember {
+        mutableStateOf(
+            facultyList.find { it.id == leave.proposedSubstitute?.id }
+                ?: facultyList.find { it.id == leave.proposedSubstituteId }
+                ?: facultyList.firstOrNull()
+        )
+    }
     var isDropdownExpanded by remember { mutableStateOf(false) }
 
     AlertDialog(
@@ -542,6 +570,38 @@ fun AssignSubstituteDialog(
                 )
                 Spacer(modifier = Modifier.height(FaflowSpacing.md))
 
+                if (leave.proposedSubstitute?.name != null) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .background(Color(0xFFEEF2FF), FaflowShapes.small)
+                            .padding(FaflowSpacing.sm)
+                    ) {
+                        Column {
+                            Text(
+                                text = "Teacher Proposed Substitute:",
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = Color(0xFF4F46E5)
+                            )
+                            Text(
+                                text = leave.proposedSubstitute.name,
+                                fontSize = 13.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = Color(0xFF312E81)
+                            )
+                            if (leave.proposedSubstitute.department != null) {
+                                Text(
+                                    text = leave.proposedSubstitute.department,
+                                    fontSize = 11.sp,
+                                    color = Color(0xFF6366F1)
+                                )
+                            }
+                        }
+                    }
+                    Spacer(modifier = Modifier.height(FaflowSpacing.sm))
+                }
+
                 ExposedDropdownMenuBox(
                     expanded = isDropdownExpanded,
                     onExpandedChange = { isDropdownExpanded = !isDropdownExpanded }
@@ -552,7 +612,7 @@ fun AssignSubstituteDialog(
                         readOnly = true,
                         label = { Text("Substitute Faculty") },
                         trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = isDropdownExpanded) },
-                        modifier = Modifier.menuAnchor().fillMaxWidth(),
+                        modifier = Modifier.menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable, true).fillMaxWidth(),
                         shape = FaflowShapes.medium
                     )
                     ExposedDropdownMenu(

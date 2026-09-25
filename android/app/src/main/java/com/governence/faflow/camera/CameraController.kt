@@ -103,6 +103,8 @@ class CameraController(
 
     fun stopCamera() {
         try {
+            analyzer?.release()
+            analyzer = null
             cameraProvider?.unbindAll()
             cameraProvider = null
             _cameraState.value = CameraState.Ready

@@ -276,3 +276,58 @@ def test_check_in_after_checkout_rejected(db_session, test_teacher, active_campu
     assert summary.is_checked_in is True
     assert summary.is_checked_out is True
 
+
+def test_polygon_geofence_check_in_authorized(db_session, test_teacher, test_admin):
+    """Verifies that an employee inside a polygon geofence perimeter is authorized for check-in."""
+    vertices = [
+        [12.9710, 77.5940],
+        [12.9730, 77.5940],
+        [12.9730, 77.5960],
+        [12.9710, 77.5960]
+    ]
+    poly_data = GeofenceCreate(
+        name="Bangalore Center Polygon",
+        description="Institutional polygon campus perimeter",
+        type="polygon",
+        polygon_vertices=vertices,
+        tolerance_meters=10.0
+    )
+    poly_geofence = GeofenceService.create_geofence(db_session, poly_data, user_id=test_admin.id)
+
+    # Point clearly inside polygon: (12.9720, 77.5950)
+    inside_req = AttendanceCheckInRequest(
+        idempotency_key=str(uuid.uuid4()),
+        latitude=12.9720,
+        longitude=77.5950,
+        accuracy_meters=5.0,
+        face_similarity_score=0.92,
+        liveness_verified=True,
+        verification_method="FACE_ON_DEVICE"
+    )
+    record = AttendanceService.check_in(db_session, test_teacher, inside_req)
+    assert record.id is not None
+    assert record.check_in_geofence_name == "Bangalore Center Polygon"
+
+
+def test_check_in_no_geofences_fails_closed(db_session, test_teacher):
+    """Verifies that if no active geofences exist in the database, attendance FAILS CLOSED."""
+    # Deactivate any existing geofences
+    all_geofences = GeofenceService.list_geofences(db_session, is_active_only=False)
+    for g in all_geofences:
+        g.is_active = False
+    db_session.commit()
+
+    req = AttendanceCheckInRequest(
+        idempotency_key=str(uuid.uuid4()),
+        latitude=11.016844,
+        longitude=76.955833,
+        accuracy_meters=5.0,
+        face_similarity_score=0.90,
+        liveness_verified=True
+    )
+
+    with pytest.raises(DomainException) as exc:
+        AttendanceService.check_in(db_session, test_teacher, req)
+    assert "no active campus geofence configured" in str(exc.value.detail).lower()
+
+

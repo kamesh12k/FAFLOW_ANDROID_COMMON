@@ -1,5 +1,5 @@
 import pytest
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 from fastapi.testclient import TestClient
 
 from app.models.user import User, Role
@@ -173,7 +173,7 @@ def test_leave_submission_enforcement_flow(client, auth_headers_teacher, auth_he
     db_session.add(policy)
     db_session.commit()
 
-    target_date = date(2026, 9, 25)
+    target_date = date.today() + timedelta(days=2)
     cal_day = db_session.query(CalendarDay).filter(CalendarDay.date == target_date).first()
     if not cal_day:
         cal_day = CalendarDay(date=target_date, day_order=1, day_type=DayType.working)
@@ -188,7 +188,7 @@ def test_leave_submission_enforcement_flow(client, auth_headers_teacher, auth_he
     )
 
     payload = {
-        "date": "2026-09-25",
+        "date": target_date.isoformat(),
         "period_number": 1,
         "reason": "Test leave under strict mode",
         "leave_policy_id": policy.id,

@@ -72,6 +72,32 @@ class AuthViewModel(
         }
     }
 
+    fun updateStaff(staff: StaffMember) {
+        _uiState.value = AuthUiState.Authenticated(staff)
+    }
+
+    fun completeFirstLoginSetup(
+        newUsername: String?,
+        newEmail: String?,
+        newPassword: String,
+        confirmPassword: String,
+        onSuccess: () -> Unit
+    ) {
+        _uiState.value = AuthUiState.Loading
+        viewModelScope.launch {
+            when (val result = authRepository.completeFirstLoginSetup(newUsername, newEmail, newPassword, confirmPassword)) {
+                is NetworkResult.Success -> {
+                    _uiState.value = AuthUiState.Authenticated(result.data)
+                    onSuccess()
+                }
+                is NetworkResult.Error -> {
+                    _uiState.value = AuthUiState.Error(result.message)
+                }
+                NetworkResult.Loading -> Unit
+            }
+        }
+    }
+
     fun logout() {
         authRepository.logout()
         _uiState.value = AuthUiState.Idle

@@ -17,6 +17,8 @@ import com.governence.faflow.core.telemetry.AttendanceTelemetry
 import com.governence.faflow.domain.model.AttendanceStatus
 import com.governence.faflow.attendance.biometrics.liveness.BiometricVerificationResult
 import com.governence.faflow.attendance.biometrics.liveness.LivenessState
+import com.governence.faflow.attendance.biometrics.liveness.PassiveLivenessEngine
+import com.governence.faflow.attendance.biometrics.liveness.PassiveLivenessResult
 import com.governence.faflow.attendance.biometrics.liveness.BlinkDetector
 import com.governence.faflow.attendance.biometrics.liveness.BlinkState
 import com.governence.faflow.attendance.biometrics.liveness.LivenessChallenge
@@ -154,7 +156,7 @@ class AttendanceViewModel(
     private val _autoCaptureState = MutableStateFlow<AutoCaptureState>(AutoCaptureState.SEARCHING)
     val autoCaptureState: StateFlow<AutoCaptureState> = _autoCaptureState.asStateFlow()
 
-    private val _autoCapturePrompt = MutableStateFlow<String>("Positioning...")
+    private val _autoCapturePrompt = MutableStateFlow<String>("Position your face in the frame")
     val autoCapturePrompt: StateFlow<String> = _autoCapturePrompt.asStateFlow()
 
     private val _capturedFrameBitmap = MutableStateFlow<Bitmap?>(null)
@@ -169,9 +171,58 @@ class AttendanceViewModel(
     private var settlingStartNs = 0L
     private val candidateFrames = mutableListOf<CandidateFaceFrame>()
 
-    // Smart Settling Window: 300ms minimum natural elapsed time + 4 consecutive valid frames
-    var minSettlingDurationMs = 300L
-    var minSettlingFrames = 4
+    val passiveLivenessEngine = PassiveLivenessEngine()
+
+    // Sub-Second Auto-Capture Settling Window: 160ms minimum natural elapsed time + 2 consecutive valid frames
+    var minSettlingDurationMs = BIOMETRIC_MIN_SETTLING_DURATION_MS
+        set(value) {
+            field = value
+            passiveLivenessEngine.minSettlingWindowMs = value
+        }
+    var minSettlingFrames = BIOMETRIC_REQUIRED_STABLE_FRAMES
+        set(value) {
+            field = value
+            passiveLivenessEngine.minSettlingFrames = value
+        }
+
+    // Latency instrumentation timestamps (T0 -> T10)
+    var t0ScreenActiveNs = 0L       // Screen active / initialized
+    var t1CameraReadyNs = 0L        // Camera preview ready
+    var t2FaceDetectedNs = 0L       // First face detected
+    var t3QualityAcceptedNs = 0L    // Face quality accepted
+    var t4PassivePadAcceptedNs = 0L // Silent passive PAD accepted
+    var t5EmbeddingCompleteNs = 0L  // Face alignment & ArcFace embedding ready
+    var t6MatchCompleteNs = 0L      // 3-template cosine match complete
+    var t7ServerStartNs = 0L        // Attendance API submission started
+    var t8ServerResponseNs = 0L     // Authoritative server response received
+    var t9GreenSuccessNs = 0L       // Green reticle success animation triggered
+    var t10HapticNs = 0L            // Success haptic triggered
+
+    var t0Ns: Long get() = t0ScreenActiveNs; set(v) { t0ScreenActiveNs = v }
+    var t1Ns: Long get() = t1CameraReadyNs; set(v) { t1CameraReadyNs = v }
+    var t2Ns: Long get() = t5EmbeddingCompleteNs; set(v) { t5EmbeddingCompleteNs = v }
+    var t3Ns: Long get() = t6MatchCompleteNs; set(v) { t6MatchCompleteNs = v }
+    var t4Ns: Long get() = t7ServerStartNs; set(v) { t7ServerStartNs = v }
+    var t5Ns: Long get() = t8ServerResponseNs; set(v) { t8ServerResponseNs = v }
+    var t6Ns: Long get() = t9GreenSuccessNs; set(v) { t9GreenSuccessNs = v }
+
+    fun recordScreenActive() {
+        if (t0ScreenActiveNs == 0L) {
+            t0ScreenActiveNs = System.nanoTime()
+            logBiometric("T0_SCREEN_ACTIVE: $t0ScreenActiveNs")
+        }
+    }
+
+    fun recordCameraReady() {
+        if (t1CameraReadyNs == 0L) {
+            t1CameraReadyNs = System.nanoTime()
+            val startupMs = if (t0ScreenActiveNs > 0) (t1CameraReadyNs - t0ScreenActiveNs) / 1_000_000 else 0L
+            logBiometric("T1_CAMERA_READY: $t1CameraReadyNs (startup: ${startupMs}ms)")
+        }
+    }
+
+    // Anti-duplication lock: prevents concurrent attendance submissions
+    private val isSubmissionInProgress = AtomicBoolean(false)
 
     private val _faceDetectionState = MutableStateFlow<FaceDetectionUiState>(FaceDetectionUiState.NoFace)
     val faceDetectionState: StateFlow<FaceDetectionUiState> = _faceDetectionState.asStateFlow()
@@ -238,6 +289,12 @@ class AttendanceViewModel(
         livenessState,
         _submissionState
     ) { loc, face, identity, liveness, submission ->
+        if (_uiState.value.shiftState == ShiftState.COMPLETED) {
+            return@combine AttendancePipelineStatus.CheckedOut(
+                _uiState.value.checkOutTime ?: "",
+                _uiState.value.workingDuration
+            )
+        }
         when (submission) {
             is AttendanceEligibilityState.Submitting -> {
                 if (_uiState.value.isCheckingIn) AttendancePipelineStatus.CheckingIn else AttendancePipelineStatus.CheckingOut
@@ -263,23 +320,10 @@ class AttendanceViewModel(
                                 is StaffBiometricVerificationState.Embedding -> AttendancePipelineStatus.FaceVerification
                                 is StaffBiometricVerificationState.VerificationFailed -> AttendancePipelineStatus.VerificationFailed(identity.reason)
                                 is StaffBiometricVerificationState.Verified -> {
-                                    if (BYPASS_LIVENESS_FOR_TESTING) {
-                                        if (_uiState.value.isCheckingIn) {
-                                            AttendancePipelineStatus.ReadyForCheckIn(identity.staffId, identity.similarity)
-                                        } else {
-                                            AttendancePipelineStatus.ReadyForCheckOut(identity.staffId)
-                                        }
-                                    } else when (liveness) {
-                                        is LivenessState.ChallengeActive -> AttendancePipelineStatus.LivenessCheck(liveness.instructions, liveness.progress)
-                                        is LivenessState.SpoofSuspected -> AttendancePipelineStatus.VerificationFailed("Liveness rejected: ${liveness.reason}")
-                                        is LivenessState.Passed -> {
-                                            if (_uiState.value.isCheckingIn) {
-                                                AttendancePipelineStatus.ReadyForCheckIn(identity.staffId, identity.similarity)
-                                            } else {
-                                                AttendancePipelineStatus.ReadyForCheckOut(identity.staffId)
-                                            }
-                                        }
-                                        else -> AttendancePipelineStatus.FaceDetected
+                                    if (_uiState.value.isCheckingIn) {
+                                        AttendancePipelineStatus.ReadyForCheckIn(identity.staffId, identity.similarity)
+                                    } else {
+                                        AttendancePipelineStatus.ReadyForCheckOut(identity.staffId)
                                     }
                                 }
                                 else -> AttendancePipelineStatus.FaceDetected
@@ -307,25 +351,10 @@ class AttendanceViewModel(
                                         is StaffBiometricVerificationState.Embedding -> AttendancePipelineStatus.FaceVerification
                                         is StaffBiometricVerificationState.VerificationFailed -> AttendancePipelineStatus.VerificationFailed(identity.reason)
                                         is StaffBiometricVerificationState.Verified -> {
-                                            if (BYPASS_LIVENESS_FOR_TESTING) {
-                                                if (_uiState.value.isCheckingIn) {
-                                                    AttendancePipelineStatus.ReadyForCheckIn(identity.staffId, identity.similarity)
-                                                } else {
-                                                    AttendancePipelineStatus.ReadyForCheckOut(identity.staffId)
-                                                }
+                                            if (_uiState.value.isCheckingIn) {
+                                                AttendancePipelineStatus.ReadyForCheckIn(identity.staffId, identity.similarity)
                                             } else {
-                                                when (liveness) {
-                                                    is LivenessState.ChallengeActive -> AttendancePipelineStatus.LivenessCheck(liveness.instructions, liveness.progress)
-                                                    is LivenessState.SpoofSuspected -> AttendancePipelineStatus.VerificationFailed("Liveness rejected: ${liveness.reason}")
-                                                    is LivenessState.Passed -> {
-                                                        if (_uiState.value.isCheckingIn) {
-                                                            AttendancePipelineStatus.ReadyForCheckIn(identity.staffId, identity.similarity)
-                                                        } else {
-                                                            AttendancePipelineStatus.ReadyForCheckOut(identity.staffId)
-                                                        }
-                                                    }
-                                                    else -> AttendancePipelineStatus.FaceDetected
-                                                }
+                                                AttendancePipelineStatus.ReadyForCheckOut(identity.staffId)
                                             }
                                         }
                                         else -> AttendancePipelineStatus.FaceDetected
@@ -361,7 +390,8 @@ class AttendanceViewModel(
             !isLocValid -> {
                 when (loc) {
                     is LocationVerificationResult.MockLocationDetected -> AttendanceEligibilityState.Blocked("Fake GPS Spoofing Detected")
-                    is LocationVerificationResult.AccuracyInsufficient -> AttendanceEligibilityState.Blocked("GPS accuracy insufficient (±${loc.currentAccuracyMeters.toInt()}m)")
+                    // AccuracyInsufficient is a transient satellite calibrating state, not a permanent rejection
+                    is LocationVerificationResult.AccuracyInsufficient -> AttendanceEligibilityState.LocationRequired
                     else -> AttendanceEligibilityState.LocationRequired
                 }
             }
@@ -370,13 +400,10 @@ class AttendanceViewModel(
             identity is StaffBiometricVerificationState.VerificationFailed -> AttendanceEligibilityState.Blocked(identity.reason)
             identity is StaffBiometricVerificationState.NoEnrollment -> AttendanceEligibilityState.Blocked("Biometric profile not enrolled for staff member #${identity.staffId}")
             identity !is StaffBiometricVerificationState.Verified -> AttendanceEligibilityState.IdentityVerificationRequired
-            !BYPASS_LIVENESS_FOR_TESTING && liveness is LivenessState.SpoofSuspected -> AttendanceEligibilityState.Blocked("Presentation attack suspected: ${liveness.reason}")
-            !BYPASS_LIVENESS_FOR_TESTING && liveness is LivenessState.TimedOut -> AttendanceEligibilityState.Blocked("Liveness challenge timed out. Please try again.")
-            !BYPASS_LIVENESS_FOR_TESTING && liveness !is LivenessState.Passed -> AttendanceEligibilityState.LivenessRequired
             else -> AttendanceEligibilityState.VerifiedAndReady(
                 staffId = (identity as StaffBiometricVerificationState.Verified).staffId,
                 similarity = identity.similarity,
-                livenessScore = if (BYPASS_LIVENESS_FOR_TESTING) 1.0f else (liveness as LivenessState.Passed).livenessScore
+                livenessScore = 1.0f
             )
         }
     }.stateIn(viewModelScope, SharingStarted.Eagerly, AttendanceEligibilityState.CheckingRequirements)
@@ -384,6 +411,37 @@ class AttendanceViewModel(
     init {
         loadTodaySummary()
         loadAttendanceHistory()
+    }
+
+    /**
+     * Resets biometric session, camera settling state, and UI state when logging out
+     * or switching accounts.
+     */
+    fun resetSession() {
+        _uiState.value = AttendanceUiState()
+        _submissionState.value = null
+        _autoCaptureState.value = AutoCaptureState.SEARCHING
+        _autoCapturePrompt.value = "Position your face in the frame"
+        _capturedFrameBitmap.value = null
+        _isCaptureLocked.value = false
+        isCaptureLockedFlag.set(false)
+        isOneShotRunning.set(false)
+        isSubmissionInProgress.set(false)
+        t0Ns = 0L
+        t1Ns = 0L
+        t2Ns = 0L
+        t3Ns = 0L
+        t4Ns = 0L
+        t5Ns = 0L
+        t6Ns = 0L
+        stableGoodFrameCount = 0
+        candidateFrames.clear()
+        _faceDetectionState.value = FaceDetectionUiState.NoFace
+        _identityVerificationState.value = StaffBiometricVerificationState.NoFace
+        _livenessState.value = LivenessState.WaitingForFace
+        _verificationStep.value = VerificationStep.IDLE
+        _blinkCount.value = 0
+        activeSession = VerificationSession(operationType = AttendanceOperationType.CHECK_IN)
     }
 
     fun toggleDebugOverlay() {
@@ -398,6 +456,24 @@ class AttendanceViewModel(
             when (val res = attendanceRepository.getTodaySummary()) {
                 is NetworkResult.Success -> {
                     val summary = res.data
+                    val currentUserId = appContext?.let { ctx ->
+                        com.governence.faflow.core.di.AppContainer.getInstance(ctx).tokenManager.getUserId()
+                    } ?: -1
+
+                    // Cross-user safety: Discard record if server payload belongs to a different user
+                    if (summary.record != null && currentUserId > 0 && summary.record.userId != currentUserId) {
+                        android.util.Log.w("AttendanceVM", "Summary record user ${summary.record.userId} does not match active session user $currentUserId. Resetting state.")
+                        _uiState.value = AttendanceUiState()
+                        return@launch
+                    }
+
+                    // Stale async response protection: If client already verified CHECKED_OUT for today,
+                    // do not let a stale cached or in-flight summary regress the state to NOT_STARTED or ON_DUTY.
+                    if (_uiState.value.shiftState == ShiftState.COMPLETED && !summary.isCheckedOut) {
+                        android.util.Log.w("AttendanceVM", "Ignoring stale server summary: client already holds authoritative COMPLETED state for today.")
+                        return@launch
+                    }
+
                     val shiftState = when {
                         summary.isCheckedOut -> ShiftState.COMPLETED
                         summary.isCheckedIn -> ShiftState.ON_DUTY
@@ -407,6 +483,22 @@ class AttendanceViewModel(
                         calculateLiveWorkingDuration(summary.checkInTime)
                     } else summary.workingDuration
 
+                    if (summary.isCheckedOut) {
+                        val recordOut = summary.record ?: AttendanceRecordOutDto(
+                            id = 0,
+                            userId = 0,
+                            attendanceDate = SimpleDateFormat("yyyy-MM-dd", Locale.US).format(Date()),
+                            checkInTime = summary.checkInTime,
+                            checkOutTime = summary.checkOutTime,
+                            status = "COMPLETED",
+                            checkInGeofenceName = _uiState.value.checkInGeofenceName,
+                            checkOutGeofenceName = _uiState.value.checkOutGeofenceName,
+                            livenessVerified = true,
+                            workingHours = summary.workingDuration
+                        )
+                        _submissionState.value = AttendanceEligibilityState.ServerAccepted(recordOut)
+                    }
+
                     _uiState.value = _uiState.value.copy(
                         isCheckingIn = !summary.isCheckedIn,
                         isShiftActive = summary.isCheckedIn && !summary.isCheckedOut,
@@ -415,8 +507,8 @@ class AttendanceViewModel(
                         checkOutTime = summary.checkOutTime ?: _uiState.value.checkOutTime,
                         workingDuration = summary.workingDuration ?: _uiState.value.workingDuration,
                         liveWorkingDuration = liveDur,
-                        checkInGeofenceName = summary.record?.checkInGeofenceName,
-                        checkOutGeofenceName = summary.record?.checkOutGeofenceName
+                        checkInGeofenceName = summary.record?.checkInGeofenceName ?: _uiState.value.checkInGeofenceName,
+                        checkOutGeofenceName = summary.record?.checkOutGeofenceName ?: _uiState.value.checkOutGeofenceName
                     )
                 }
                 else -> {}
@@ -467,7 +559,8 @@ class AttendanceViewModel(
     fun warmUpModels() {
         viewModelScope.launch(Dispatchers.Default) {
             try {
-                // Background warm-up ensures model is ready when good frame arrives
+                passiveLivenessEngine.reset()
+                recognitionEngine?.isEmbedderReady()
             } catch (_: Exception) {}
         }
     }
@@ -479,240 +572,132 @@ class AttendanceViewModel(
         frameWidth: Int = 640,
         frameHeight: Int = 480
     ) {
-        // 0. Once captured and locked, bypass unless we are in liveness verification stage
-        if (isCaptureLockedFlag.get() && (BYPASS_LIVENESS_FOR_TESTING || _verificationStep.value != VerificationStep.LIVENESS_VERIFYING)) {
+        // 0. Once captured and locked, bypass frame evaluation
+        if (isCaptureLockedFlag.get()) {
             return
         }
 
         // Concurrency backpressure: discard frame if prior evaluation is still in flight
         if (!isEvaluatingFrame.compareAndSet(false, true)) {
-            if (!BYPASS_LIVENESS_FOR_TESTING && _verificationStep.value == VerificationStep.LIVENESS_VERIFYING) {
-                droppedLivenessFrames.incrementAndGet()
-            }
             return
         }
 
         val frameStartNs = System.nanoTime()
         try {
-            // 1. TWO-BLINK LIVENESS STAGE (Runs ONLY after Face Verification has passed and liveness is not bypassed)
-            if (!BYPASS_LIVENESS_FOR_TESTING && _verificationStep.value == VerificationStep.LIVENESS_VERIFYING) {
-                val currentFrameIndex = totalLivenessFrames.incrementAndGet()
-                val primaryFace = detections.firstOrNull()
-                if (primaryFace != null) {
-                    val frameBmp = sourceBitmap ?: primaryFace.alignedBitmap
-                    val eyeResult = blinkDetector.provider.computeEyeState(frameBmp, primaryFace)
-                    val ear = eyeResult?.ear ?: 0.25f
-                    val blinkState = blinkDetector.processEyeMetric(ear)
-                    val count = blinkDetector.blinkCount
-                    val frameDurationMs = (System.nanoTime() - frameStartNs) / 1_000_000
+            val startNs = System.nanoTime()
 
-                    val eyeStateStr = when {
-                        ear <= blinkDetector.config.closedThreshold -> "CLOSED"
-                        ear >= blinkDetector.config.openThreshold -> "OPEN"
-                        else -> "UNCERTAIN"
+            // 1. Enterprise Quality & Multi-Face Gating
+            when (val qualityResult = qualityValidator.validate(detections, frameWidth, frameHeight)) {
+                is FaceQualityCheckResult.Rejected -> {
+                    stableGoodFrameCount = 0
+                    settlingStartNs = 0L
+                    candidateFrames.clear()
+                    passiveLivenessEngine.reset()
+                    _autoCaptureState.value = AutoCaptureState.SEARCHING
+
+                    when (qualityResult.code) {
+                        QualityErrorCode.NO_FACE -> {
+                            _identityVerificationState.value = StaffBiometricVerificationState.NoFace
+                            _livenessState.value = LivenessState.WaitingForFace
+                            _faceDetectionState.value = FaceDetectionUiState.NoFace
+                            _autoCapturePrompt.value = "Position your face in the frame"
+                        }
+                        QualityErrorCode.MULTIPLE_FACES -> {
+                            _identityVerificationState.value = StaffBiometricVerificationState.MultipleFaces(detections.size)
+                            _livenessState.value = LivenessState.FaceNotSuitable("Please make sure only one face is visible.")
+                            _faceDetectionState.value = FaceDetectionUiState.MultipleFaces(detections.size)
+                            _autoCapturePrompt.value = "Please make sure only one face is visible."
+                        }
+                        QualityErrorCode.TOO_FAR -> {
+                            _identityVerificationState.value = StaffBiometricVerificationState.FaceTooSmall
+                            _faceDetectionState.value = FaceDetectionUiState.FaceTooSmall
+                            _autoCapturePrompt.value = "Move closer"
+                        }
+                        QualityErrorCode.TOO_CLOSE -> {
+                            _identityVerificationState.value = StaffBiometricVerificationState.FaceTooLarge
+                            _faceDetectionState.value = FaceDetectionUiState.FaceTooLarge
+                            _autoCapturePrompt.value = "Move back slightly"
+                        }
+                        QualityErrorCode.OFF_CENTER -> {
+                            _identityVerificationState.value = StaffBiometricVerificationState.FaceOutOfFrame
+                            _faceDetectionState.value = FaceDetectionUiState.FacePartiallyOutOfFrame
+                            _autoCapturePrompt.value = "Center your face"
+                        }
+                        QualityErrorCode.TILTED_POSE -> {
+                            _faceDetectionState.value = FaceDetectionUiState.DetectionError(qualityResult.reason)
+                            _autoCapturePrompt.value = "Look straight ahead"
+                        }
+                        QualityErrorCode.POOR_LIGHTING -> {
+                            _faceDetectionState.value = FaceDetectionUiState.DetectionError(qualityResult.reason)
+                            _autoCapturePrompt.value = "Improve lighting"
+                        }
+                        QualityErrorCode.EXCESSIVE_GLARE -> {
+                            _faceDetectionState.value = FaceDetectionUiState.DetectionError(qualityResult.reason)
+                            _autoCapturePrompt.value = "Avoid glare"
+                        }
+                        QualityErrorCode.LOW_CONFIDENCE -> {
+                            _faceDetectionState.value = FaceDetectionUiState.DetectionError(qualityResult.reason)
+                            _autoCapturePrompt.value = "Position your face in the frame"
+                        }
                     }
+                }
+                is FaceQualityCheckResult.Valid -> {
+                    val face = qualityResult.primaryFace
+                    _faceDetectionState.value = FaceDetectionUiState.FacePositionValid(primaryFace = face)
 
-                    _livenessDebugInfo.value = com.governence.faflow.attendance.biometrics.liveness.LivenessDebugInfo(
-                        faceStatus = "VALID",
-                        livenessState = blinkState.javaClass.simpleName,
-                        eyeState = eyeStateStr,
-                        ear = ear,
-                        leftEar = eyeResult?.leftEyeOpenness ?: -1f,
-                        rightEar = eyeResult?.rightEyeOpenness ?: -1f,
-                        blinkCount = count,
-                        totalFrames = currentFrameIndex,
-                        droppedFrames = droppedLivenessFrames.get(),
-                        processingTimeMs = frameDurationMs
-                    )
+                    val frameBmp = sourceBitmap ?: face.alignedBitmap
+                    val nowNs = System.nanoTime()
+                    val qualityScore = computeCandidateQualityScore(face)
 
-                    android.util.Log.d(
-                        "FAFLOW_LIVENESS",
-                        "[FRAME_RECEIVED] #$currentFrameIndex (${frameDurationMs}ms) | [FACE_LANDMARKS_VALID] EAR=%.3f (L=%.3f, R=%.3f) | [EYE_STATE] %s | state=%s blinks=%d/2".format(
-                            ear,
-                            eyeResult?.leftEyeOpenness ?: -1f,
-                            eyeResult?.rightEyeOpenness ?: -1f,
-                            eyeStateStr,
-                            blinkState.javaClass.simpleName,
-                            count
-                        )
-                    )
+                    if (t2FaceDetectedNs == 0L) t2FaceDetectedNs = nowNs
+                    if (t3QualityAcceptedNs == 0L) t3QualityAcceptedNs = nowNs
 
-                    if (count > _blinkCount.value) {
-                        _blinkCount.value = count
-                        if (count == 1) {
-                            activeSession.recordBlink(1)
-                            logBlink("BLINK_1")
-                            android.util.Log.i("FAFLOW_LIVENESS", "[BLINK_COMPLETED] Blink 1 of 2 detected. [WAITING_FOR_BLINK_2]")
-                            _autoCapturePrompt.value = "✓ 1"
-                            _livenessState.value = LivenessState.ChallengeActive(
-                                challenge = LivenessChallenge.BLINK,
-                                progress = 0.5f,
-                                instructions = "✓ 1",
-                                timeRemainingMs = blinkDetector.config.sessionTimeoutMs
-                            )
+                    if (settlingStartNs == 0L) {
+                        settlingStartNs = nowNs
+                        if (t0ScreenActiveNs == 0L) t0ScreenActiveNs = nowNs
+                        stableGoodFrameCount = 1
+                        candidateFrames.clear()
+                        passiveLivenessEngine.reset()
+                        if (frameBmp != null) {
+                            candidateFrames.add(CandidateFaceFrame(frameBmp, face, qualityScore, nowNs))
+                        }
+                        _autoCaptureState.value = AutoCaptureState.SETTLING
+                        _autoCapturePrompt.value = "Position your face in the frame"
+                    } else {
+                        stableGoodFrameCount++
+                        if (frameBmp != null) {
+                            candidateFrames.add(CandidateFaceFrame(frameBmp, face, qualityScore, nowNs))
                         }
                     }
 
-                    if (blinkState is BlinkState.LivenessVerified || count >= 2) {
-                        activeSession.recordBlink(2)
-                        logBlink("BLINK_2")
-                        logLiveness("VERIFIED")
-                        android.util.Log.i("FAFLOW_LIVENESS", "[BLINK_COMPLETED] Blink 2 of 2 detected. [LIVENESS_SUCCESS] Submitting attendance.")
-                        _autoCapturePrompt.value = "✓ 2"
-                        _verificationStep.value = VerificationStep.VERIFIED
-                        _livenessState.value = LivenessState.Passed(1.0f, PresentationAttackRisk.LOW)
-                        isCaptureLockedFlag.set(false)
-                        proceedToAttendanceSubmission(activeSession.sessionId, frameBmp ?: primaryFace.alignedBitmap)
-                        return
-                    } else if (blinkState is BlinkState.TimedOut) {
-                        logLiveness("TIMED_OUT")
-                        android.util.Log.w("FAFLOW_LIVENESS", "[LIVENESS_TIMEOUT] Liveness check timed out after ${blinkDetector.config.sessionTimeoutMs}ms.")
-                        activeSession.markLivenessTimedOut()
-                        _verificationStep.value = VerificationStep.FAILED
-                        _livenessState.value = LivenessState.TimedOut(LivenessChallenge.BLINK)
-                        _autoCaptureState.value = AutoCaptureState.ERROR
-                        _autoCapturePrompt.value = "Liveness check timed out. Please try again."
-                        isCaptureLockedFlag.set(true)
-                        _isCaptureLocked.value = true
-                        return
-                    } else if (blinkState is BlinkState.Failed) {
-                        logLiveness("FAILED: ${blinkState.reason}")
-                        android.util.Log.w("FAFLOW_LIVENESS", "[LIVENESS_FAILED] Reason: ${blinkState.reason}")
-                        activeSession.markLivenessFailed()
-                        _verificationStep.value = VerificationStep.FAILED
-                        _livenessState.value = LivenessState.Failed(blinkState.reason)
-                        _autoCaptureState.value = AutoCaptureState.ERROR
-                        _autoCapturePrompt.value = blinkState.reason
-                        isCaptureLockedFlag.set(true)
-                        _isCaptureLocked.value = true
-                        return
-                    }
-                } else {
-                    _livenessDebugInfo.value = _livenessDebugInfo.value.copy(
-                        faceStatus = "NO_FACE",
-                        totalFrames = currentFrameIndex,
-                        droppedFrames = droppedLivenessFrames.get()
-                    )
-                }
-                return
-            }
+                    // 2. Parallel Silent Passive Presentation Attack Defense (PAD)
+                    when (val padResult = passiveLivenessEngine.processFrame(face, frameBmp, System.currentTimeMillis())) {
+                        is PassiveLivenessResult.SpoofDetected -> {
+                            logBiometric("PAD_REJECTED - ${padResult.spoofType}: ${padResult.reason}")
+                            _livenessState.value = LivenessState.SpoofSuspected(padResult.spoofType, padResult.reason)
+                            _autoCaptureState.value = AutoCaptureState.ERROR
+                            _autoCapturePrompt.value = "Verification failed. Please try again."
+                            retryCapture()
+                        }
+                        is PassiveLivenessResult.Analyzing -> {
+                            _livenessState.value = LivenessState.Processing
+                            _autoCaptureState.value = AutoCaptureState.SETTLING
+                            _autoCapturePrompt.value = "Position your face in the frame"
+                        }
+                        is PassiveLivenessResult.Passed -> {
+                            t4PassivePadAcceptedNs = nowNs
+                            _livenessState.value = LivenessState.Passed(padResult.confidence, padResult.risk)
+                            logLiveness("PASSIVE_PAD_PASSED (confidence=${"%.2f".format(padResult.confidence)}, risk=${padResult.risk})")
 
-            // If captured and locked for other states, bypass quality/settling
-            if (isCaptureLockedFlag.get()) {
-                return
-            }
-
-                val startNs = System.nanoTime()
-
-        // 2. Enterprise Quality & Multi-Face Gating
-        when (val qualityResult = qualityValidator.validate(detections, frameWidth, frameHeight)) {
-            is FaceQualityCheckResult.Rejected -> {
-                stableGoodFrameCount = 0
-                settlingStartNs = 0L
-                candidateFrames.clear()
-                _autoCaptureState.value = AutoCaptureState.SEARCHING
-
-                when (qualityResult.code) {
-                    QualityErrorCode.NO_FACE -> {
-                        _identityVerificationState.value = StaffBiometricVerificationState.NoFace
-                        _livenessState.value = LivenessState.WaitingForFace
-                        _faceDetectionState.value = FaceDetectionUiState.NoFace
-                        _autoCapturePrompt.value = "Positioning..."
-                    }
-                    QualityErrorCode.MULTIPLE_FACES -> {
-                        _identityVerificationState.value = StaffBiometricVerificationState.MultipleFaces(detections.size)
-                        _livenessState.value = LivenessState.FaceNotSuitable("Only one person should be visible")
-                        _faceDetectionState.value = FaceDetectionUiState.MultipleFaces(detections.size)
-                        _autoCapturePrompt.value = "Only one person should be visible"
-                    }
-                    QualityErrorCode.TOO_FAR -> {
-                        _identityVerificationState.value = StaffBiometricVerificationState.FaceTooSmall
-                        _faceDetectionState.value = FaceDetectionUiState.FaceTooSmall
-                        _autoCapturePrompt.value = "Move closer"
-                    }
-                    QualityErrorCode.TOO_CLOSE -> {
-                        _identityVerificationState.value = StaffBiometricVerificationState.FaceTooLarge
-                        _faceDetectionState.value = FaceDetectionUiState.FaceTooLarge
-                        _autoCapturePrompt.value = "Move back slightly"
-                    }
-                    QualityErrorCode.OFF_CENTER -> {
-                        _identityVerificationState.value = StaffBiometricVerificationState.FaceOutOfFrame
-                        _faceDetectionState.value = FaceDetectionUiState.FacePartiallyOutOfFrame
-                        _autoCapturePrompt.value = "Center your face"
-                    }
-                    QualityErrorCode.TILTED_POSE -> {
-                        _faceDetectionState.value = FaceDetectionUiState.DetectionError(qualityResult.reason)
-                        _autoCapturePrompt.value = "Look straight ahead"
-                    }
-                    QualityErrorCode.POOR_LIGHTING -> {
-                        _faceDetectionState.value = FaceDetectionUiState.DetectionError(qualityResult.reason)
-                        _autoCapturePrompt.value = "Improve lighting"
-                    }
-                    QualityErrorCode.EXCESSIVE_GLARE -> {
-                        _faceDetectionState.value = FaceDetectionUiState.DetectionError(qualityResult.reason)
-                        _autoCapturePrompt.value = "Avoid glare"
-                    }
-                    QualityErrorCode.LOW_CONFIDENCE -> {
-                        _faceDetectionState.value = FaceDetectionUiState.DetectionError(qualityResult.reason)
-                        _autoCapturePrompt.value = "Hold still"
-                    }
-                }
-            }
-            is FaceQualityCheckResult.Valid -> {
-                val face = qualityResult.primaryFace
-                _faceDetectionState.value = FaceDetectionUiState.FacePositionValid(primaryFace = face)
-
-                val frameBmp = sourceBitmap ?: face.alignedBitmap
-                val nowNs = System.nanoTime()
-                val qualityScore = computeCandidateQualityScore(face)
-
-                if (settlingStartNs == 0L) {
-                    // Human detected -> begin natural settling window
-                    settlingStartNs = nowNs
-                    stableGoodFrameCount = 1
-                    candidateFrames.clear()
-                    if (frameBmp != null) {
-                        candidateFrames.add(CandidateFaceFrame(frameBmp, face, qualityScore, nowNs))
-                    }
-                    _autoCaptureState.value = AutoCaptureState.SETTLING
-                    _autoCapturePrompt.value = "Hold still"
-                } else {
-                    stableGoodFrameCount++
-                    if (frameBmp != null) {
-                        candidateFrames.add(CandidateFaceFrame(frameBmp, face, qualityScore, nowNs))
-                    }
-                    val elapsedSettlingMs = (nowNs - settlingStartNs) / 1_000_000
-
-                    if (elapsedSettlingMs >= minSettlingDurationMs && stableGoodFrameCount >= minSettlingFrames) {
-                        _autoCaptureState.value = AutoCaptureState.SETTLING
-
-                        if (BYPASS_LIVENESS_FOR_TESTING) {
                             if (isCaptureLockedFlag.compareAndSet(false, true)) {
-                                _isCaptureLocked.value = true
-                                _autoCaptureState.value = AutoCaptureState.CAPTURED
-                                _autoCapturePrompt.value = "Checking..."
-
-                                val bestCandidate = candidateFrames.maxByOrNull { it.qualityScore }
-                                val capturedBmp = bestCandidate?.bitmap ?: frameBmp
-                                val capturedDetection = bestCandidate?.detection ?: face
-                                _capturedFrameBitmap.value = capturedBmp
-
-                                executeFaceVerificationFirst(
-                                    capturedBitmap = capturedBmp,
-                                    detection = capturedDetection,
-                                    staffId = staffId
-                                )
-                            }
-                        } else {
-                            // Production: Trigger FACE VERIFICATION FIRST (Liveness will only start after face is verified)
-                            if (_verificationStep.value == VerificationStep.IDLE && isOneShotRunning.compareAndSet(false, true)) {
-                                isCaptureLockedFlag.set(true)
+                                t1Ns = nowNs
                                 _isCaptureLocked.value = true
                                 _autoCaptureState.value = AutoCaptureState.CAPTURED
                                 _verificationStep.value = VerificationStep.FACE_VERIFYING
                                 activeSession.markFaceVerifying()
+                                activeSession.markPassiveLivenessVerified(padResult.confidence, padResult.risk)
                                 logFace("VERIFYING")
-                                _autoCapturePrompt.value = "Checking..."
+                                _autoCapturePrompt.value = "Verifying..."
 
                                 val bestCandidate = candidateFrames.maxByOrNull { it.qualityScore }
                                 val capturedBmp = bestCandidate?.bitmap ?: frameBmp
@@ -722,22 +707,24 @@ class AttendanceViewModel(
                                 executeFaceVerificationFirst(
                                     capturedBitmap = capturedBmp,
                                     detection = capturedDetection,
-                                    staffId = staffId
+                                    staffId = staffId,
+                                    padConfidence = padResult.confidence
                                 )
                             }
                         }
-                    } else {
-                        _autoCaptureState.value = AutoCaptureState.SETTLING
+                        is PassiveLivenessResult.Inconclusive -> {
+                            _autoCaptureState.value = AutoCaptureState.SETTLING
+                            _autoCapturePrompt.value = "Position your face in the frame"
+                        }
                     }
                 }
             }
-        }
 
-        AttendanceTelemetry.recordMetric(AttendanceTelemetry.METRIC_SCRFD_DETECTION_MS, (System.nanoTime() - startNs) / 1_000_000)
-    } finally {
-        isEvaluatingFrame.set(false)
+            AttendanceTelemetry.recordMetric(AttendanceTelemetry.METRIC_SCRFD_DETECTION_MS, (System.nanoTime() - startNs) / 1_000_000)
+        } finally {
+            isEvaluatingFrame.set(false)
+        }
     }
-}
 
     fun processSingleFrameAttendance(
         isCheckIn: Boolean,
@@ -764,7 +751,7 @@ class AttendanceViewModel(
         _verificationStep.value = VerificationStep.FACE_VERIFYING
         activeSession.markFaceVerifying()
         logFace("VERIFYING")
-        _autoCapturePrompt.value = "Verifying your face..."
+        _autoCapturePrompt.value = "Verifying..."
 
         if (isOneShotRunning.compareAndSet(false, true)) {
             executeFaceVerificationFirst(
@@ -779,7 +766,7 @@ class AttendanceViewModel(
         _verificationStep.value = VerificationStep.FACE_VERIFYING
         activeSession.markFaceVerifying()
         logFace("VERIFYING")
-        _autoCapturePrompt.value = "Verifying your face..."
+        _autoCapturePrompt.value = "Verifying..."
 
         val syntheticBmp = Bitmap.createBitmap(112, 112, Bitmap.Config.ARGB_8888)
         val face = FaceDetectionResult(
@@ -844,14 +831,15 @@ class AttendanceViewModel(
     private fun executeFaceVerificationFirst(
         capturedBitmap: Bitmap?,
         detection: FaceDetectionResult,
-        staffId: String?
+        staffId: String?,
+        padConfidence: Float = 0.95f
     ) {
         viewModelScope.launch(Dispatchers.Default) {
             val totalStartNs = System.nanoTime()
             try {
                 if (capturedBitmap == null) {
                     _autoCaptureState.value = AutoCaptureState.ERROR
-                    _autoCapturePrompt.value = "Capture failed. Try again."
+                    _autoCapturePrompt.value = "Verification failed. Please try again."
                     _verificationStep.value = VerificationStep.FAILED
                     activeSession.markFaceFailed()
                     return@launch
@@ -862,7 +850,13 @@ class AttendanceViewModel(
                         val id = com.governence.faflow.core.di.AppContainer.getInstance(ctx).tokenManager.getUserId()
                         if (id > 0) id.toString() else null
                     }
-                    ?: "1"
+
+                if (targetStaffId == null) {
+                    android.util.Log.e("FAFLOW_BIOMETRICS", "No authenticated staff ID found for biometric verification")
+                    _identityVerificationState.value = StaffBiometricVerificationState.Unavailable("No authenticated staff ID found")
+                    activeSession.markFaceFailed()
+                    return@launch
+                }
 
                 // 1. Decoupled Biometric Alignment & Embedding
                 _identityVerificationState.value = StaffBiometricVerificationState.Aligning
@@ -874,6 +868,10 @@ class AttendanceViewModel(
                     staffId = targetStaffId
                 ) ?: StaffBiometricVerificationState.Unavailable("Recognition engine not configured")
 
+                t6MatchCompleteNs = System.nanoTime()
+                val matchMs = recognitionEngine?.lastMatchingDurationMs ?: 0L
+                t5EmbeddingCompleteNs = t6MatchCompleteNs - (matchMs * 1_000_000)
+
                 AttendanceTelemetry.recordMetric(
                     AttendanceTelemetry.METRIC_UMEYAMA_ALIGNMENT_MS,
                     (System.nanoTime() - alignStartNs) / 1_000_000
@@ -883,66 +881,41 @@ class AttendanceViewModel(
 
                 when (recognitionResult) {
                     is StaffBiometricVerificationState.Verified -> {
-                        logFace("VERIFIED")
+                        logFace("VERIFIED (similarity=${"%.4f".format(recognitionResult.similarity)})")
                         activeSession.markFaceVerified(targetStaffId, recognitionResult.similarity)
-
-                        if (BYPASS_LIVENESS_FOR_TESTING) {
-                            activeSession.markLivenessBypassed()
-                            _verificationStep.value = VerificationStep.VERIFIED
-                            _livenessState.value = LivenessState.Passed(1.0f, PresentationAttackRisk.LOW)
-                            isCaptureLockedFlag.set(false)
-                            proceedToAttendanceSubmission(activeSession.sessionId, capturedBitmap)
-                        } else {
-                            // 2. Transition ATOMICALLY to Two-Blink Liveness stage
-                            // (Attendance submission is strictly barred until two genuine blinks are confirmed)
-                            _verificationStep.value = VerificationStep.LIVENESS_VERIFYING
-                            activeSession.markLivenessStarted()
-                            logLiveness("STARTED")
-                            totalLivenessFrames.set(0L)
-                            droppedLivenessFrames.set(0L)
-                            android.util.Log.i("FAFLOW_LIVENESS", "[LIVENESS_STARTED] Two-blink challenge active. Target=2 blinks, timeout=${blinkDetector.config.sessionTimeoutMs}ms")
-                            blinkDetector.startSession()
-                            _blinkCount.value = 0
-                            _autoCapturePrompt.value = "Blink twice"
-                            _autoCaptureState.value = AutoCaptureState.SEARCHING
-                            _capturedFrameBitmap.value = null // Display live camera preview
-                            isCaptureLockedFlag.set(false) // Unblock frame forwarding
-                            _isCaptureLocked.value = false // Camera analyzer resumes streaming
-                            _livenessState.value = LivenessState.ChallengeActive(
-                                challenge = LivenessChallenge.BLINK,
-                                progress = 0f,
-                                instructions = "Blink twice",
-                                timeRemainingMs = blinkDetector.config.sessionTimeoutMs
-                            )
-                        }
+                        activeSession.markPassiveLivenessVerified(padConfidence, PresentationAttackRisk.LOW)
+                        _verificationStep.value = VerificationStep.VERIFIED
+                        _livenessState.value = LivenessState.Passed(padConfidence, PresentationAttackRisk.LOW)
+                        isCaptureLockedFlag.set(false)
+                        proceedToAttendanceSubmission(activeSession.sessionId, capturedBitmap)
                     }
                     is StaffBiometricVerificationState.VerificationFailed -> {
                         logFace("FAILED")
                         activeSession.markFaceFailed()
                         _verificationStep.value = VerificationStep.FAILED
                         _autoCaptureState.value = AutoCaptureState.RECOGNITION_FAILED
-                        _autoCapturePrompt.value = "We couldn't verify your face. Please look directly at the camera."
+                        _autoCapturePrompt.value = "Verification failed. Please try again."
                     }
                     is StaffBiometricVerificationState.NoEnrollment -> {
                         logFace("FAILED - NO_ENROLLMENT")
                         activeSession.markFaceFailed()
                         _verificationStep.value = VerificationStep.FAILED
                         _autoCaptureState.value = AutoCaptureState.RECOGNITION_FAILED
-                        _autoCapturePrompt.value = "Face profile not enrolled. Please complete face registration."
+                        _autoCapturePrompt.value = "Verification failed. Please try again."
                     }
                     is StaffBiometricVerificationState.Unavailable -> {
                         logFace("UNAVAILABLE")
                         activeSession.markFaceFailed()
                         _verificationStep.value = VerificationStep.FAILED
                         _autoCaptureState.value = AutoCaptureState.ERROR
-                        _autoCapturePrompt.value = sanitizeErrorMessage(recognitionResult.reason)
+                        _autoCapturePrompt.value = "Verification failed. Please try again."
                     }
                     else -> {
                         logFace("FAILED")
                         activeSession.markFaceFailed()
                         _verificationStep.value = VerificationStep.FAILED
                         _autoCaptureState.value = AutoCaptureState.RECOGNITION_FAILED
-                        _autoCapturePrompt.value = "Face not recognized. Please try again."
+                        _autoCapturePrompt.value = "Verification failed. Please try again."
                     }
                 }
             } catch (e: Exception) {
@@ -950,7 +923,7 @@ class AttendanceViewModel(
                 activeSession.markFaceFailed()
                 _verificationStep.value = VerificationStep.FAILED
                 _autoCaptureState.value = AutoCaptureState.ERROR
-                _autoCapturePrompt.value = "Verification interrupted. Please try again."
+                _autoCapturePrompt.value = "Verification failed. Please try again."
             } finally {
                 isOneShotRunning.set(false)
                 AttendanceTelemetry.recordMetric(
@@ -965,7 +938,7 @@ class AttendanceViewModel(
         sessionId: String,
         capturedBitmap: Bitmap? = null
     ) {
-        if (!activeSession.canSubmitAttendance(sessionId, bypassLiveness = BYPASS_LIVENESS_FOR_TESTING)) {
+        if (!activeSession.canSubmitAttendance(sessionId)) {
             logAttendance("BLOCKED - Verification criteria not satisfied (session=$sessionId)")
             return
         }
@@ -976,14 +949,25 @@ class AttendanceViewModel(
 
         _isCaptureLocked.value = true
         _autoCaptureState.value = AutoCaptureState.CAPTURED
-        _autoCapturePrompt.value = "Recording attendance..."
+        _autoCapturePrompt.value = "Verifying..."
         if (capturedBitmap != null) {
             _capturedFrameBitmap.value = capturedBitmap
         }
 
         logAttendance("SUBMITTING")
-        val targetStaffId = activeSession.verifiedStaffId ?: "1"
-        val staffUserId = targetStaffId.toIntOrNull() ?: 1
+        val targetStaffId = activeSession.verifiedStaffId
+            ?: appContext?.let { ctx ->
+                val id = com.governence.faflow.core.di.AppContainer.getInstance(ctx).tokenManager.getUserId()
+                if (id > 0) id.toString() else null
+            }
+        val staffUserId = targetStaffId?.toIntOrNull()
+        if (staffUserId == null || staffUserId <= 0) {
+            logAttendance("FAILED: Unauthenticated user session")
+            _autoCaptureState.value = AutoCaptureState.ERROR
+            _autoCapturePrompt.value = "User session expired or invalid. Please re-login."
+            isCaptureLockedFlag.set(false)
+            return
+        }
 
         if (_uiState.value.isCheckingIn) {
             performCheckIn(
@@ -992,12 +976,12 @@ class AttendanceViewModel(
                 onSuccess = {
                     logAttendance("SUCCESS")
                     _autoCaptureState.value = AutoCaptureState.SUCCESS
-                    _autoCapturePrompt.value = "Attendance recorded"
+                    _autoCapturePrompt.value = "Attendance Recorded"
                 },
                 onFailure = { errorMsg ->
                     logAttendance("FAILED: $errorMsg")
                     _autoCaptureState.value = AutoCaptureState.ERROR
-                    _autoCapturePrompt.value = errorMsg
+                    _autoCapturePrompt.value = "Verification failed. Please try again."
                 }
             )
         } else {
@@ -1007,12 +991,12 @@ class AttendanceViewModel(
                 onSuccess = {
                     logAttendance("SUCCESS")
                     _autoCaptureState.value = AutoCaptureState.SUCCESS
-                    _autoCapturePrompt.value = "Attendance recorded"
+                    _autoCapturePrompt.value = "Attendance Recorded"
                 },
                 onFailure = { errorMsg ->
                     logAttendance("FAILED: $errorMsg")
                     _autoCaptureState.value = AutoCaptureState.ERROR
-                    _autoCapturePrompt.value = errorMsg
+                    _autoCapturePrompt.value = "Verification failed. Please try again."
                 }
             )
         }
@@ -1025,9 +1009,20 @@ class AttendanceViewModel(
         settlingStartNs = 0L
         candidateFrames.clear()
         isOneShotRunning.set(false)
+        isSubmissionInProgress.set(false)
+        passiveLivenessEngine.reset()
+        t2FaceDetectedNs = 0L
+        t3QualityAcceptedNs = 0L
+        t4PassivePadAcceptedNs = 0L
+        t5EmbeddingCompleteNs = 0L
+        t6MatchCompleteNs = 0L
+        t7ServerStartNs = 0L
+        t8ServerResponseNs = 0L
+        t9GreenSuccessNs = 0L
+        t10HapticNs = 0L
         _capturedFrameBitmap.value = null
         _autoCaptureState.value = AutoCaptureState.SEARCHING
-        _autoCapturePrompt.value = "Positioning..."
+        _autoCapturePrompt.value = "Position your face in the frame"
         _identityVerificationState.value = StaffBiometricVerificationState.NoFace
         _faceDetectionState.value = FaceDetectionUiState.NoFace
         _submissionState.value = null
@@ -1046,6 +1041,10 @@ class AttendanceViewModel(
     }
 
     fun prepareSessionForCheckIn() {
+        if (_uiState.value.shiftState == ShiftState.COMPLETED) {
+            android.util.Log.w("AttendanceVM", "Ignoring prepareSessionForCheckIn: Today's shift is already COMPLETED.")
+            return
+        }
         activeSession.cancel()
         activeSession = VerificationSession(operationType = AttendanceOperationType.CHECK_IN)
         logBiometric("SESSION_CREATED - CHECK_IN (id=${activeSession.sessionId})")
@@ -1062,8 +1061,12 @@ class AttendanceViewModel(
     }
 
     companion object {
+        const val BIOMETRIC_REQUIRED_STABLE_FRAMES = 2
+        const val BIOMETRIC_MIN_SETTLING_DURATION_MS = 160L
+        const val BIOMETRIC_SUCCESS_ANIMATION_MS = 280
+
         var BYPASS_GEOLOCATION_FOR_TESTING = false
-        var BYPASS_LIVENESS_FOR_TESTING = true  // Liveness detection disabled per request: face match only
+        var BYPASS_LIVENESS_FOR_TESTING = false
 
         fun calculateLiveWorkingDuration(checkInStr: String?): String? {
             if (checkInStr.isNullOrBlank()) return null
@@ -1178,7 +1181,13 @@ class AttendanceViewModel(
          onSuccess: () -> Unit = {},
          onFailure: (String) -> Unit = {}
      ) {
+        if (!isSubmissionInProgress.compareAndSet(false, true)) {
+            android.util.Log.w("AttendanceVM", "performCheckIn: Submission already in progress. Ignoring duplicate request.")
+            return
+        }
+
         if (staffUserId <= 0) {
+            isSubmissionInProgress.set(false)
             val err = "Invalid authenticated staff identity."
             _submissionState.value = AttendanceEligibilityState.Blocked(err)
             onFailure(err)
@@ -1187,6 +1196,7 @@ class AttendanceViewModel(
 
         val targetSession = activeSession
         if (sessionId != null && !targetSession.canSubmitAttendance(sessionId)) {
+            isSubmissionInProgress.set(false)
             val err = "Cannot check in: Verification session criteria not met."
             _submissionState.value = AttendanceEligibilityState.Blocked(err)
             onFailure(err)
@@ -1194,6 +1204,7 @@ class AttendanceViewModel(
         }
 
         if (attendanceRepository == null) {
+            isSubmissionInProgress.set(false)
             val err = "Attendance repository is not initialized."
             _submissionState.value = AttendanceEligibilityState.Blocked(err)
             _uiState.value = _uiState.value.copy(isSubmitting = false, errorMessage = err)
@@ -1205,20 +1216,28 @@ class AttendanceViewModel(
         val identity = _identityVerificationState.value
 
         if (!isLocationVerifiedForAttendance()) {
-            val err = "Cannot check in: Outside authorized campus perimeter."
+            isSubmissionInProgress.set(false)
+            val err = when (val res = verificationResult.value) {
+                is LocationVerificationResult.AccuracyInsufficient ->
+                    "Acquiring precise GPS satellite lock (current ±${res.currentAccuracyMeters.toInt()}m, required ±${res.requiredAccuracyMeters.toInt()}m). Please wait a moment."
+                is LocationVerificationResult.PermissionDenied ->
+                    "Cannot check in: Precise location permission required."
+                is LocationVerificationResult.LocationServicesDisabled ->
+                    "Cannot check in: Device location services are turned off."
+                is LocationVerificationResult.OutsideAllGeofences ->
+                    "Cannot check in: Outside authorized campus perimeter."
+                else ->
+                    "Cannot check in: Outside authorized campus perimeter."
+            }
             _submissionState.value = AttendanceEligibilityState.Blocked(err)
             onFailure(err)
             return
         }
 
-        // Use valid campus coordinates when testing so backend geofence check passes
-        val effectiveLocation = if (BYPASS_GEOLOCATION_FOR_TESTING) {
-            StaffLiveLocation(latitude = 11.016844, longitude = 76.955833, accuracyMeters = 5.0f, timestamp = System.currentTimeMillis())
-        } else {
-            location
-        }
+        val effectiveLocation = location
 
         if (effectiveLocation == null) {
+            isSubmissionInProgress.set(false)
             val err = "Cannot acquire location coordinates."
             _submissionState.value = AttendanceEligibilityState.Blocked(err)
             onFailure(err)
@@ -1237,68 +1256,108 @@ class AttendanceViewModel(
         }
 
         if (!isLive) {
-            val err = "Cannot check in: Two-blink liveness verification is required."
+            isSubmissionInProgress.set(false)
+            val err = "Verification failed. Please try again."
             _submissionState.value = AttendanceEligibilityState.Blocked(err)
             onFailure(err)
             return
         }
 
         viewModelScope.launch {
-            _submissionState.value = AttendanceEligibilityState.Submitting
-            _uiState.value = _uiState.value.copy(isSubmitting = true)
-            val netStartNs = System.nanoTime()
+            try {
+                _submissionState.value = AttendanceEligibilityState.Submitting
+                _uiState.value = _uiState.value.copy(isSubmitting = true)
+                t7ServerStartNs = System.nanoTime()
+                val netStartNs = t7ServerStartNs
+                t4Ns = t7ServerStartNs
 
-            when (val result = attendanceRepository.checkIn(
-                latitude = effectiveLocation.latitude,
-                longitude = effectiveLocation.longitude,
-                accuracyMeters = effectiveLocation.accuracyMeters.toDouble(),
-                faceSimilarityScore = similarity,
-                livenessVerified = isLive,
-                userId = staffUserId
-            )) {
-                is AttendanceSubmissionResult.Success -> {
-                    val netLatencyMs = (System.nanoTime() - netStartNs) / 1_000_000
-                    AttendanceTelemetry.recordMetric(AttendanceTelemetry.METRIC_NETWORK_SUBMISSION_MS, netLatencyMs)
-                    AttendanceTelemetry.recordMetric(AttendanceTelemetry.METRIC_BACKEND_MS, netLatencyMs)
-                    _submissionState.value = AttendanceEligibilityState.ServerAccepted(result.record)
-                    _uiState.value = _uiState.value.copy(
-                        isCheckingIn = false,
-                        isShiftActive = true,
-                        shiftState = ShiftState.ON_DUTY,
-                        checkInTime = result.record.checkInTime ?: SimpleDateFormat("hh:mm a", Locale.getDefault()).format(Date()),
-                        checkInGeofenceName = result.record.checkInGeofenceName,
-                        isSubmitting = false,
-                        errorMessage = null
-                    )
-                    loadTodaySummary()
-                    loadAttendanceHistory()
-                    onSuccess()
+                when (val result = attendanceRepository.checkIn(
+                    latitude = effectiveLocation.latitude,
+                    longitude = effectiveLocation.longitude,
+                    accuracyMeters = effectiveLocation.accuracyMeters.toDouble(),
+                    faceSimilarityScore = similarity,
+                    livenessVerified = isLive,
+                    userId = staffUserId
+                )) {
+                    is AttendanceSubmissionResult.Success -> {
+                        t8ServerResponseNs = System.nanoTime()
+                        t9GreenSuccessNs = System.nanoTime()
+                        t5Ns = t8ServerResponseNs
+                        t6Ns = t9GreenSuccessNs
+                        val netLatencyMs = (t8ServerResponseNs - netStartNs) / 1_000_000
+                        AttendanceTelemetry.recordMetric(AttendanceTelemetry.METRIC_NETWORK_SUBMISSION_MS, netLatencyMs)
+                        AttendanceTelemetry.recordMetric(AttendanceTelemetry.METRIC_BACKEND_MS, netLatencyMs)
+                        _submissionState.value = AttendanceEligibilityState.ServerAccepted(result.record)
+                        _autoCaptureState.value = AutoCaptureState.SUCCESS
+                        _autoCapturePrompt.value = "Attendance Recorded"
+                        _uiState.value = _uiState.value.copy(
+                            isCheckingIn = false,
+                            isShiftActive = true,
+                            shiftState = ShiftState.ON_DUTY,
+                            checkInTime = result.record.checkInTime ?: SimpleDateFormat("hh:mm a", Locale.getDefault()).format(Date()),
+                            checkInGeofenceName = result.record.checkInGeofenceName,
+                            isSubmitting = false,
+                            errorMessage = null
+                        )
+                        loadTodaySummary()
+                        loadAttendanceHistory()
+                        appContext?.let { ctx ->
+                            t10HapticNs = System.nanoTime()
+                            com.governence.faflow.attendance.biometrics.feedback.BiometricFeedbackManager.notifyAttendanceSuccess(ctx)
+                        }
+                        if (com.governence.faflow.BuildConfig.DEBUG) {
+                            logPerformanceReport("CHECK_IN")
+                        }
+                        onSuccess()
+                    }
+                    is AttendanceSubmissionResult.QueuedOffline -> {
+                        t8ServerResponseNs = System.nanoTime()
+                        t9GreenSuccessNs = System.nanoTime()
+                        t5Ns = t8ServerResponseNs
+                        t6Ns = t9GreenSuccessNs
+                        _submissionState.value = AttendanceEligibilityState.SavedOffline(result.message)
+                        _autoCaptureState.value = AutoCaptureState.SUCCESS
+                        _autoCapturePrompt.value = "Attendance saved — will sync"
+                        _uiState.value = _uiState.value.copy(
+                            isCheckingIn = false,
+                            isShiftActive = true,
+                            shiftState = ShiftState.ON_DUTY,
+                            checkInTime = SimpleDateFormat("hh:mm a", Locale.getDefault()).format(Date()),
+                            isSubmitting = false,
+                            errorMessage = null
+                        )
+                        appContext?.let { AttendanceSyncWorker.triggerImmediateSync(it) }
+                        appContext?.let { ctx ->
+                            t10HapticNs = System.nanoTime()
+                            com.governence.faflow.attendance.biometrics.feedback.BiometricFeedbackManager.notifyAttendanceSuccess(ctx)
+                        }
+                        if (com.governence.faflow.BuildConfig.DEBUG) {
+                            logPerformanceReport("CHECK_IN_OFFLINE")
+                        }
+                        onSuccess()
+                    }
+                    is AttendanceSubmissionResult.Failed -> {
+                        val friendlyMsg = sanitizeErrorMessage(result.message)
+                        _submissionState.value = AttendanceEligibilityState.Blocked(friendlyMsg)
+                        _autoCaptureState.value = AutoCaptureState.ERROR
+                        _autoCapturePrompt.value = "Verification failed. Please try again."
+                        _uiState.value = _uiState.value.copy(
+                            isSubmitting = false,
+                            errorMessage = friendlyMsg
+                        )
+                        if (result.message.contains("already", ignoreCase = true)) {
+                            loadTodaySummary()
+                        }
+                        appContext?.let { ctx ->
+                            com.governence.faflow.attendance.biometrics.feedback.BiometricFeedbackManager.notifyAttendanceError(ctx)
+                        }
+                        onFailure(friendlyMsg)
+                    }
                 }
-                is AttendanceSubmissionResult.QueuedOffline -> {
-                    _submissionState.value = AttendanceEligibilityState.SavedOffline(result.message)
-                    _uiState.value = _uiState.value.copy(
-                        isCheckingIn = false,
-                        isShiftActive = true,
-                        shiftState = ShiftState.ON_DUTY,
-                        checkInTime = SimpleDateFormat("hh:mm a", Locale.getDefault()).format(Date()),
-                        isSubmitting = false,
-                        errorMessage = null
-                    )
-                    appContext?.let { AttendanceSyncWorker.triggerImmediateSync(it) }
-                    onSuccess()
-                }
-                is AttendanceSubmissionResult.Failed -> {
-                    val friendlyMsg = sanitizeErrorMessage(result.message)
-                    _submissionState.value = AttendanceEligibilityState.Blocked(friendlyMsg)
-                    _uiState.value = _uiState.value.copy(
-                        isSubmitting = false,
-                        errorMessage = friendlyMsg
-                    )
-                    onFailure(friendlyMsg)
-                }
+            } finally {
+                isSubmissionInProgress.set(false)
             }
         }
-
     }
 
     /**
@@ -1310,7 +1369,13 @@ class AttendanceViewModel(
         onSuccess: () -> Unit = {},
         onFailure: (String) -> Unit = {}
     ) {
+        if (!isSubmissionInProgress.compareAndSet(false, true)) {
+            android.util.Log.w("AttendanceVM", "performCheckOut: Submission already in progress. Ignoring duplicate request.")
+            return
+        }
+
         if (staffUserId <= 0) {
+            isSubmissionInProgress.set(false)
             val err = "Invalid authenticated staff identity."
             _submissionState.value = AttendanceEligibilityState.Blocked(err)
             onFailure(err)
@@ -1319,6 +1384,7 @@ class AttendanceViewModel(
 
         val targetSession = activeSession
         if (sessionId != null && !targetSession.canSubmitAttendance(sessionId)) {
+            isSubmissionInProgress.set(false)
             val err = "Cannot check out: Verification session criteria not met."
             _submissionState.value = AttendanceEligibilityState.Blocked(err)
             onFailure(err)
@@ -1326,6 +1392,7 @@ class AttendanceViewModel(
         }
 
         if (attendanceRepository == null) {
+            isSubmissionInProgress.set(false)
             val err = "Attendance repository is not initialized."
             _submissionState.value = AttendanceEligibilityState.Blocked(err)
             _uiState.value = _uiState.value.copy(isSubmitting = false, errorMessage = err)
@@ -1337,20 +1404,28 @@ class AttendanceViewModel(
         val identity = _identityVerificationState.value
 
         if (!isLocationVerifiedForAttendance()) {
-            val err = "Cannot check out: Outside authorized campus perimeter."
+            isSubmissionInProgress.set(false)
+            val err = when (val res = verificationResult.value) {
+                is LocationVerificationResult.AccuracyInsufficient ->
+                    "Acquiring precise GPS satellite lock (current ±${res.currentAccuracyMeters.toInt()}m, required ±${res.requiredAccuracyMeters.toInt()}m). Please wait a moment."
+                is LocationVerificationResult.PermissionDenied ->
+                    "Cannot check out: Precise location permission required."
+                is LocationVerificationResult.LocationServicesDisabled ->
+                    "Cannot check out: Device location services are turned off."
+                is LocationVerificationResult.OutsideAllGeofences ->
+                    "Cannot check out: Outside authorized campus perimeter."
+                else ->
+                    "Cannot check out: Outside authorized campus perimeter."
+            }
             _submissionState.value = AttendanceEligibilityState.Blocked(err)
             onFailure(err)
             return
         }
 
-        // Use valid campus coordinates when testing so backend geofence check passes
-        val effectiveLocation = if (BYPASS_GEOLOCATION_FOR_TESTING) {
-            StaffLiveLocation(latitude = 11.016844, longitude = 76.955833, accuracyMeters = 5.0f, timestamp = System.currentTimeMillis())
-        } else {
-            location
-        }
+        val effectiveLocation = location
 
         if (effectiveLocation == null) {
+            isSubmissionInProgress.set(false)
             val err = "Cannot acquire location coordinates."
             _submissionState.value = AttendanceEligibilityState.Blocked(err)
             onFailure(err)
@@ -1369,18 +1444,21 @@ class AttendanceViewModel(
         }
 
         if (!isLive) {
-            val err = "Cannot check out: Two-blink liveness verification is required."
+            isSubmissionInProgress.set(false)
+            val err = "Verification failed. Please try again."
             _submissionState.value = AttendanceEligibilityState.Blocked(err)
             onFailure(err)
             return
         }
 
         viewModelScope.launch {
-            _submissionState.value = AttendanceEligibilityState.Submitting
-            _uiState.value = _uiState.value.copy(isSubmitting = true)
-            val netStartNs = System.nanoTime()
+            try {
+                _submissionState.value = AttendanceEligibilityState.Submitting
+                _uiState.value = _uiState.value.copy(isSubmitting = true)
+                t7ServerStartNs = System.nanoTime()
+                val netStartNs = t7ServerStartNs
+                t4Ns = t7ServerStartNs
 
-            if (attendanceRepository != null) {
                 when (val result = attendanceRepository.checkOut(
                     latitude = effectiveLocation.latitude,
                     longitude = effectiveLocation.longitude,
@@ -1390,10 +1468,16 @@ class AttendanceViewModel(
                     userId = staffUserId
                 )) {
                     is AttendanceSubmissionResult.Success -> {
-                        val netLatencyMs = (System.nanoTime() - netStartNs) / 1_000_000
+                        t8ServerResponseNs = System.nanoTime()
+                        t9GreenSuccessNs = System.nanoTime()
+                        t5Ns = t8ServerResponseNs
+                        t6Ns = t9GreenSuccessNs
+                        val netLatencyMs = (t8ServerResponseNs - netStartNs) / 1_000_000
                         AttendanceTelemetry.recordMetric(AttendanceTelemetry.METRIC_NETWORK_SUBMISSION_MS, netLatencyMs)
                         AttendanceTelemetry.recordMetric(AttendanceTelemetry.METRIC_BACKEND_MS, netLatencyMs)
                         _submissionState.value = AttendanceEligibilityState.ServerAccepted(result.record)
+                        _autoCaptureState.value = AutoCaptureState.SUCCESS
+                        _autoCapturePrompt.value = "Attendance Recorded"
                         _uiState.value = _uiState.value.copy(
                             isCheckingIn = false,
                             isShiftActive = false,
@@ -1406,10 +1490,23 @@ class AttendanceViewModel(
                         )
                         loadTodaySummary()
                         loadAttendanceHistory()
+                        appContext?.let { ctx ->
+                            t10HapticNs = System.nanoTime()
+                            com.governence.faflow.attendance.biometrics.feedback.BiometricFeedbackManager.notifyAttendanceSuccess(ctx)
+                        }
+                        if (com.governence.faflow.BuildConfig.DEBUG) {
+                            logPerformanceReport("CHECK_OUT")
+                        }
                         onSuccess()
                     }
                     is AttendanceSubmissionResult.QueuedOffline -> {
+                        t8ServerResponseNs = System.nanoTime()
+                        t9GreenSuccessNs = System.nanoTime()
+                        t5Ns = t8ServerResponseNs
+                        t6Ns = t9GreenSuccessNs
                         _submissionState.value = AttendanceEligibilityState.SavedOffline(result.message)
+                        _autoCaptureState.value = AutoCaptureState.SUCCESS
+                        _autoCapturePrompt.value = "Attendance saved — will sync"
                         _uiState.value = _uiState.value.copy(
                             isCheckingIn = false,
                             isShiftActive = false,
@@ -1419,25 +1516,69 @@ class AttendanceViewModel(
                             errorMessage = null
                         )
                         appContext?.let { AttendanceSyncWorker.triggerImmediateSync(it) }
+                        appContext?.let { ctx ->
+                            t10HapticNs = System.nanoTime()
+                            com.governence.faflow.attendance.biometrics.feedback.BiometricFeedbackManager.notifyAttendanceSuccess(ctx)
+                        }
+                        if (com.governence.faflow.BuildConfig.DEBUG) {
+                            logPerformanceReport("CHECK_OUT_OFFLINE")
+                        }
                         onSuccess()
                     }
                     is AttendanceSubmissionResult.Failed -> {
                         val friendlyMsg = sanitizeErrorMessage(result.message)
                         _submissionState.value = AttendanceEligibilityState.Blocked(friendlyMsg)
+                        _autoCaptureState.value = AutoCaptureState.ERROR
+                        _autoCapturePrompt.value = "Verification failed. Please try again."
                         _uiState.value = _uiState.value.copy(
                             isSubmitting = false,
                             errorMessage = friendlyMsg
                         )
+                        if (result.message.contains("already", ignoreCase = true)) {
+                            loadTodaySummary()
+                        }
+                        appContext?.let { ctx ->
+                            com.governence.faflow.attendance.biometrics.feedback.BiometricFeedbackManager.notifyAttendanceError(ctx)
+                        }
                         onFailure(friendlyMsg)
                     }
                 }
-            } else {
-                val err = "Attendance repository is not initialized."
-                _submissionState.value = AttendanceEligibilityState.Blocked(err)
-                _uiState.value = _uiState.value.copy(isSubmitting = false, errorMessage = err)
-                onFailure(err)
+            } finally {
+                isSubmissionInProgress.set(false)
             }
         }
+    }
+
+    private fun logPerformanceReport(operation: String) {
+        val t0 = if (t0ScreenActiveNs > 0L) t0ScreenActiveNs else t0Ns
+        val camMs = if (t1CameraReadyNs > t0) (t1CameraReadyNs - t0) / 1_000_000 else 0L
+        val detMs = if (t2FaceDetectedNs > t1CameraReadyNs) (t2FaceDetectedNs - t1CameraReadyNs) / 1_000_000 else 0L
+        val qualMs = if (t3QualityAcceptedNs > t2FaceDetectedNs) (t3QualityAcceptedNs - t2FaceDetectedNs) / 1_000_000 else 0L
+        val padMs = if (t4PassivePadAcceptedNs > t3QualityAcceptedNs) (t4PassivePadAcceptedNs - t3QualityAcceptedNs) / 1_000_000 else 0L
+        val alignEmbedMs = recognitionEngine?.lastEmbeddingDurationMs ?: 0L
+        val matchMs = recognitionEngine?.lastMatchingDurationMs ?: 0L
+        val netMs = if (t8ServerResponseNs > t7ServerStartNs) (t8ServerResponseNs - t7ServerStartNs) / 1_000_000 else 0L
+        val totalMs = if (t10HapticNs > t0) (t10HapticNs - t0) / 1_000_000 else (camMs + detMs + qualMs + padMs + alignEmbedMs + matchMs + netMs)
+
+        android.util.Log.i("FAFLOW_PERF", """
+            ==================================================
+            FAFLOW INSTANT ATTENDANCE — PIPELINE TIMINGS ($operation)
+            T0 (Screen Active):       $t0
+            T1 (Camera Ready):        $t1CameraReadyNs -> Camera Startup:      ${camMs}ms
+            T2 (Face Detected):       $t2FaceDetectedNs -> Face Detection:      ${detMs}ms
+            T3 (Quality Accepted):    $t3QualityAcceptedNs -> Quality Check:       ${qualMs}ms
+            T4 (Passive PAD Passed):  $t4PassivePadAcceptedNs -> Silent Passive PAD:  ${padMs}ms
+            T5 (Embedding Ready):     $t5EmbeddingCompleteNs -> Alignment+Embedding: ${alignEmbedMs}ms
+            T6 (Biometric Match):     $t6MatchCompleteNs -> 3-Template Match:   ${matchMs}ms
+            T7 (Server Request):      $t7ServerStartNs
+            T8 (Server Response):     $t8ServerResponseNs -> Server / Network:    ${netMs}ms
+            T9 (Green Success UI):    $t9GreenSuccessNs
+            T10 (Haptic Feedback):    $t10HapticNs
+            --------------------------------------------------
+            TOTAL END-TO-END LATENCY (T0 -> T10): ${totalMs}ms
+            TARGET: < 1000ms [${if (totalMs < 1000) "PASSED" else "NEEDS OPTIMIZATION"}]
+            ==================================================
+        """.trimIndent())
     }
 
     fun triggerManualSync() {

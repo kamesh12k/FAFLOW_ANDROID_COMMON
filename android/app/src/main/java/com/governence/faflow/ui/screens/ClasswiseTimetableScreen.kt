@@ -28,6 +28,7 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
+import androidx.compose.material3.ExposedDropdownMenuAnchorType
 import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FilterChipDefaults
@@ -51,6 +52,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.governence.faflow.core.network.ClassOutDto
 import com.governence.faflow.core.network.TimetableSlotOutDto
 import com.governence.faflow.ui.components.DayOrderBadge
 import com.governence.faflow.ui.components.PremiumTopBar
@@ -105,6 +107,15 @@ fun ClasswiseTimetableScreen(
             ) {
                 Spacer(modifier = Modifier.height(FaflowSpacing.sm))
 
+                val formatClassName = { item: ClassOutDto ->
+                    val sec = item.section?.trim() ?: "A"
+                    if (sec.isNotBlank() && !item.name.contains(sec, ignoreCase = true)) {
+                        "${item.name} ($sec)"
+                    } else {
+                        item.name
+                    }
+                }
+
                 // Class Selector Dropdown
                 val selectedClass = timetableState.classes.find { it.id == timetableState.selectedClassId }
                 ExposedDropdownMenuBox(
@@ -113,13 +124,13 @@ fun ClasswiseTimetableScreen(
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     OutlinedTextField(
-                        value = selectedClass?.let { "${it.name} (${it.section ?: "A"})" } ?: "Select Class",
+                        value = selectedClass?.let { formatClassName(it) } ?: "Select Class",
                         onValueChange = {},
                         readOnly = true,
                         label = { Text("Selected Class") },
                         trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = isDropdownExpanded) },
                         modifier = Modifier
-                            .menuAnchor()
+                            .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable, true)
                             .fillMaxWidth(),
                         shape = FaflowShapes.medium
                     )
@@ -130,7 +141,7 @@ fun ClasswiseTimetableScreen(
                     ) {
                         timetableState.classes.forEach { classItem ->
                             DropdownMenuItem(
-                                text = { Text("${classItem.name} (${classItem.section ?: "A"})") },
+                                text = { Text(formatClassName(classItem)) },
                                 onClick = {
                                     hodViewModel.selectClass(classItem.id)
                                     isDropdownExpanded = false

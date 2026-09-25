@@ -297,7 +297,24 @@ class HodViewModel(
                 }
             }
 
-            val targetClassId = classId ?: currentClasses.firstOrNull()?.id
+            val userDeptId = authRepository.tokenManager.getDepartmentId()
+            val sortedClasses = if (userDeptId != null) {
+                currentClasses.sortedWith(
+                    compareByDescending<ClassOutDto> { it.departmentId == userDeptId }
+                        .thenBy { it.name }
+                        .thenBy { it.section ?: "" }
+                )
+            } else {
+                currentClasses.sortedWith(
+                    compareBy<ClassOutDto> { it.name }
+                        .thenBy { it.section ?: "" }
+                )
+            }
+
+            val targetClassId = classId
+                ?: _timetableState.value.selectedClassId
+                ?: sortedClasses.firstOrNull()?.id
+
             val timetableRes = if (targetClassId != null) {
                 hodRepository.getTimetable(classId = targetClassId, dayOrder = dayOrder)
             } else {
@@ -306,7 +323,7 @@ class HodViewModel(
 
             _timetableState.value = HodTimetableUiState(
                 isLoading = false,
-                classes = currentClasses,
+                classes = sortedClasses,
                 selectedClassId = targetClassId,
                 selectedDayOrder = dayOrder,
                 timetableSlots = if (timetableRes is NetworkResult.Success) timetableRes.data else emptyList(),

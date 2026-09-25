@@ -97,6 +97,7 @@ import com.governence.faflow.attendance.sync.AttendanceSyncWorker
 import com.governence.faflow.camera.CameraController
 import com.governence.faflow.camera.CameraOverlay
 import com.governence.faflow.camera.CameraPreviewView
+import com.governence.faflow.camera.CameraState
 import com.governence.faflow.core.network.AttendanceRecordOutDto
 import com.governence.faflow.core.network.SupervisorLiveStatusOutDto
 import com.governence.faflow.ui.components.FaflowPillButton
@@ -128,7 +129,7 @@ import java.util.Locale
  * 1. Web Parity First: Respects server-authoritative shift states (Check-In -> On-Duty -> Shift Completed).
  * 2. Mobile-Native UX: Purpose-built for phones with single context-aware primary actions.
  * 3. Zero Technical Jargon: Never leaks cosine similarity, model names, raw thresholds, or coordinates.
- * 4. Transparent Biometrics: Clean face guidance oval + two-blink visual challenge.
+ * 4. Transparent Biometrics: Clean face guidance oval + silent passive presentation attack detection.
  * 5. Full Offline Resilience: Clear "Saved securely • Sync pending" indicators with Room & WorkManager.
  */
 @OptIn(ExperimentalMaterial3Api::class)
@@ -152,7 +153,6 @@ fun AttendanceCheckInOutScreen(
     val isCaptureLocked by viewModel.isCaptureLocked.collectAsState()
     val liveLocation by viewModel.liveLocation.collectAsState()
     val verificationStep by viewModel.verificationStep.collectAsState()
-    val blinkCount by viewModel.blinkCount.collectAsState()
     val livenessDebugInfo by viewModel.livenessDebugInfo.collectAsState()
     val isLocationVerified = viewModel.isLocationVerifiedForAttendance()
     val coroutineScope = rememberCoroutineScope()
@@ -200,6 +200,22 @@ fun AttendanceCheckInOutScreen(
         }
     }
 
+    LaunchedEffect(Unit) {
+        viewModel.recordScreenActive()
+    }
+
+    LaunchedEffect(cameraState) {
+        if (cameraState is CameraState.Ready) {
+            viewModel.recordCameraReady()
+        }
+    }
+
+    LaunchedEffect(uiState.shiftState) {
+        if (uiState.shiftState == ShiftState.COMPLETED) {
+            cameraController.stopCamera()
+        }
+    }
+
     BackHandler {
         viewModel.cancelVerification()
         cameraController.stopCamera()
@@ -210,8 +226,9 @@ fun AttendanceCheckInOutScreen(
         contract = ActivityResultContracts.RequestMultiplePermissions()
     ) { permissions ->
         val fineGranted = permissions[Manifest.permission.ACCESS_FINE_LOCATION] == true
-        val coarseGranted = permissions[Manifest.permission.ACCESS_COARSE_LOCATION] == true
-        if (fineGranted || coarseGranted) {
+        if (fineGranted) {
+            viewModel.refreshLocation()
+        } else {
             viewModel.refreshLocation()
         }
     }
@@ -233,8 +250,7 @@ fun AttendanceCheckInOutScreen(
 
     val requestLocationPermission = {
         val fineGranted = ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED
-        val coarseGranted = ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED
-        if (!fineGranted && !coarseGranted) {
+        if (!fineGranted) {
             locationPermissionsLauncher.launch(
                 arrayOf(
                     Manifest.permission.ACCESS_FINE_LOCATION,
@@ -261,8 +277,7 @@ fun AttendanceCheckInOutScreen(
         mobileFaceNetModelManager.initializeModels()
 
         val fineGranted = ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED
-        val coarseGranted = ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED
-        if (!fineGranted && !coarseGranted) {
+        if (!fineGranted) {
             locationPermissionsLauncher.launch(
                 arrayOf(
                     Manifest.permission.ACCESS_FINE_LOCATION,
@@ -410,9 +425,17 @@ fun AttendanceCheckInOutScreen(
                 is LocationVerificationResult.InsideGeofence -> Triple("Campus Perimeter Verified", res.geofenceName, StatusSuccess)
                 is LocationVerificationResult.Boundary -> Triple("Campus Perimeter Verified", "${res.geofenceName} (Boundary)", StatusSuccess)
                 is LocationVerificationResult.OutsideAllGeofences -> Triple("Outside Institutional Campus", "Please be inside campus to record attendance", StatusWarning)
-                is LocationVerificationResult.AccuracyInsufficient -> Triple("Calibrating Satellite Lock", "Waiting for optimal GPS accuracy", StatusWarning)
+                is LocationVerificationResult.AccuracyInsufficient -> Triple("Calibrating Satellite Lock", "Current precision: ±${res.currentAccuracyMeters.toInt()}m (target: ≤${res.requiredAccuracyMeters.toInt()}m)", StatusWarning)
                 is LocationVerificationResult.MockLocationDetected -> Triple("Simulated Location Rejected", "Mock GPS prohibited for attendance integrity", StatusError)
-                is LocationVerificationResult.PermissionDenied -> Triple("Location Access Required", "Tap to grant permission", StatusWarning)
+                is LocationVerificationResult.PermissionDenied -> {
+                    val hasCoarseOnly = ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED &&
+                            ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED
+                    if (hasCoarseOnly) {
+                        Triple("Precise Location Required", "Tap to enable precise GPS accuracy", StatusWarning)
+                    } else {
+                        Triple("Location Access Required", "Tap to grant permission", StatusWarning)
+                    }
+                }
                 LocationVerificationResult.Loading -> Triple("Acquiring Campus Location…", "Connecting to GPS satellites", MaterialTheme.colorScheme.primary)
                 else -> Triple("Checking Location…", "Locating campus perimeter", MaterialTheme.colorScheme.onSurfaceVariant)
             }
@@ -540,6 +563,8 @@ fun AttendanceCheckInOutScreen(
                         ) {
                             when (val locRes = verificationResult) {
                                 is LocationVerificationResult.PermissionDenied -> {
+                                    val hasCoarseOnly = ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED &&
+                                            ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED
                                     Box(
                                         modifier = Modifier
                                             .size(64.dp)
@@ -556,7 +581,7 @@ fun AttendanceCheckInOutScreen(
                                     }
                                     Spacer(modifier = Modifier.height(FaflowSpacing.md))
                                     Text(
-                                        text = "Location Permission Needed",
+                                        text = if (hasCoarseOnly) "Precise Location Needed" else "Location Permission Needed",
                                         style = MaterialTheme.typography.titleMedium,
                                         fontWeight = FontWeight.Bold,
                                         color = MaterialTheme.colorScheme.onSurface,
@@ -564,18 +589,32 @@ fun AttendanceCheckInOutScreen(
                                     )
                                     Spacer(modifier = Modifier.height(FaflowSpacing.xs))
                                     Text(
-                                        text = "FAFLOW requires location access to verify attendance within institutional campus boundaries.",
+                                        text = if (hasCoarseOnly)
+                                            "FAFLOW requires Precise Location to verify attendance within institutional campus boundaries. Currently only Approximate location is enabled."
+                                        else
+                                            "FAFLOW requires location access to verify attendance within institutional campus boundaries.",
                                         style = MaterialTheme.typography.bodySmall,
                                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                                         textAlign = TextAlign.Center
                                     )
                                     Spacer(modifier = Modifier.height(FaflowSpacing.lg))
                                     FaflowPillButton(
-                                        text = "Grant Location Access",
+                                        text = if (hasCoarseOnly) "Enable Precise Location" else "Grant Location Access",
                                         onClick = { requestLocationPermission() },
                                         icon = Icons.Default.LocationOn,
-                                        isPrimary = true
+                                        isPrimary = true,
+                                        modifier = Modifier.fillMaxWidth()
                                     )
+                                    if (hasCoarseOnly) {
+                                        Spacer(modifier = Modifier.height(FaflowSpacing.sm))
+                                        FaflowPillButton(
+                                            text = "Open App Settings",
+                                            onClick = { openAppSettings() },
+                                            icon = Icons.Default.Tune,
+                                            isPrimary = false,
+                                            modifier = Modifier.fillMaxWidth()
+                                        )
+                                    }
                                 }
 
                                 is LocationVerificationResult.LocationServicesDisabled -> {
@@ -665,9 +704,9 @@ fun AttendanceCheckInOutScreen(
                                         contentAlignment = Alignment.Center
                                     ) {
                                         CircularProgressIndicator(
-                                            modifier = Modifier.size(32.dp),
-                                            strokeWidth = 3.dp,
-                                            color = StatusWarning
+                                             modifier = Modifier.size(32.dp),
+                                             strokeWidth = 3.dp,
+                                             color = StatusWarning
                                         )
                                     }
                                     Spacer(modifier = Modifier.height(FaflowSpacing.md))
@@ -680,7 +719,7 @@ fun AttendanceCheckInOutScreen(
                                     )
                                     Spacer(modifier = Modifier.height(FaflowSpacing.xs))
                                     Text(
-                                        text = "Locking onto satellites. Please hold still or step outdoors for optimal accuracy.",
+                                        text = "Acquiring satellite lock (precision: ±${locRes.currentAccuracyMeters.toInt()}m • target: ≤${locRes.requiredAccuracyMeters.toInt()}m). Please wait a moment.",
                                         style = MaterialTheme.typography.bodySmall,
                                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                                         textAlign = TextAlign.Center
@@ -749,6 +788,30 @@ fun AttendanceCheckInOutScreen(
                     }
 
                     else -> {
+                        val isServerConfirmed = eligibilityState is AttendanceEligibilityState.ServerAccepted
+                        val isOfflineRecorded = eligibilityState is AttendanceEligibilityState.SavedOffline
+                        val isVerifying = autoCaptureState == AutoCaptureState.CAPTURED || eligibilityState is AttendanceEligibilityState.Submitting || verificationStep == VerificationStep.FACE_VERIFYING
+
+                        var showFullTickScreen by remember { mutableStateOf(false) }
+                        LaunchedEffect(isServerConfirmed) {
+                            if (isServerConfirmed) {
+                                kotlinx.coroutines.delay(com.governence.faflow.ui.viewmodels.AttendanceViewModel.BIOMETRIC_SUCCESS_ANIMATION_MS.toLong())
+                                showFullTickScreen = true
+                            } else {
+                                showFullTickScreen = false
+                            }
+                        }
+
+                        var showOfflineTickScreen by remember { mutableStateOf(false) }
+                        LaunchedEffect(isOfflineRecorded) {
+                            if (isOfflineRecorded) {
+                                kotlinx.coroutines.delay(com.governence.faflow.ui.viewmodels.AttendanceViewModel.BIOMETRIC_SUCCESS_ANIMATION_MS.toLong())
+                                showOfflineTickScreen = true
+                            } else {
+                                showOfflineTickScreen = false
+                            }
+                        }
+
                         Box(modifier = Modifier.fillMaxSize()) {
                             // 1. Live Feed or Frozen Captured Bitmap
                             if (capturedBitmap != null && verificationStep != VerificationStep.LIVENESS_VERIFYING) {
@@ -763,19 +826,23 @@ fun AttendanceCheckInOutScreen(
                                     cameraController = cameraController,
                                     modifier = Modifier.fillMaxSize()
                                 )
-
-                                CameraOverlay(
-                                    cameraState = cameraState,
-                                    faceDetectionState = faceDetectionState,
-                                    livenessState = livenessState,
-                                    showDebugOverlay = uiState.isDebugOverlayVisible,
-                                    inferenceLatencyMs = latencyMs,
-                                    livenessDebugInfo = livenessDebugInfo,
-                                    modifier = Modifier.fillMaxSize()
-                                )
                             }
 
-                            // 2. Floating Viewfinder Guidance Pill (Top)
+                            // 2. Continuous Biometric Overlay with animated green reticle, glow & ripple
+                            CameraOverlay(
+                                cameraState = cameraState,
+                                faceDetectionState = faceDetectionState,
+                                livenessState = livenessState,
+                                showDebugOverlay = uiState.isDebugOverlayVisible,
+                                inferenceLatencyMs = latencyMs,
+                                livenessDebugInfo = livenessDebugInfo,
+                                isServerConfirmed = isServerConfirmed,
+                                isOfflineRecorded = isOfflineRecorded,
+                                isVerifying = isVerifying,
+                                modifier = Modifier.fillMaxSize()
+                            )
+
+                            // 3. Floating Viewfinder Guidance Pill (Top)
                             Box(
                                 modifier = Modifier
                                     .align(Alignment.TopCenter)
@@ -792,40 +859,8 @@ fun AttendanceCheckInOutScreen(
                                 )
                             }
 
-                            // 3. Two-Blink Liveness Visual Challenge Row (Bottom inside camera)
-                            if (verificationStep == VerificationStep.LIVENESS_VERIFYING) {
-                                Box(
-                                    modifier = Modifier
-                                        .align(Alignment.BottomCenter)
-                                        .padding(bottom = 16.dp)
-                                        .clip(RoundedCornerShape(16.dp))
-                                        .background(Color.Black.copy(alpha = 0.80f))
-                                        .padding(horizontal = 16.dp, vertical = 10.dp)
-                                ) {
-                                    Row(
-                                        verticalAlignment = Alignment.CenterVertically,
-                                        horizontalArrangement = Arrangement.spacedBy(12.dp)
-                                    ) {
-                                        BlinkProgressBadge(
-                                            stepNumber = 1,
-                                            isCompleted = blinkCount >= 1
-                                        )
-                                        BlinkProgressBadge(
-                                            stepNumber = 2,
-                                            isCompleted = blinkCount >= 2
-                                        )
-                                        Text(
-                                            text = if (blinkCount == 0) "Blink naturally" else if (blinkCount == 1) "One more blink" else "Verified!",
-                                            style = MaterialTheme.typography.bodySmall,
-                                            fontWeight = FontWeight.Bold,
-                                            color = Color.White
-                                        )
-                                    }
-                                }
-                            }
-
-                            // 4. Attendance Verified Tick Screen Overlay
-                            if (autoCaptureState == AutoCaptureState.SUCCESS || eligibilityState is AttendanceEligibilityState.ServerAccepted) {
+                            // 5. Attendance Verified Tick Screen Overlay (Server Confirmed)
+                            if (showFullTickScreen) {
                                 Box(
                                     modifier = Modifier
                                         .fillMaxSize()
@@ -860,9 +895,54 @@ fun AttendanceCheckInOutScreen(
                                         )
                                         Spacer(modifier = Modifier.height(8.dp))
                                         Text(
-                                            text = "Attendance verified & synchronized",
+                                            text = "Attendance verified & synchronized with server",
                                             style = MaterialTheme.typography.bodyMedium,
                                             color = Color.White.copy(alpha = 0.8f)
+                                        )
+                                    }
+                                }
+                            }
+
+                            // 6. Attendance Offline Recorded Screen Overlay
+                            if (showOfflineTickScreen) {
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxSize()
+                                        .background(Color.Black.copy(alpha = 0.88f)),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Column(
+                                        horizontalAlignment = Alignment.CenterHorizontally,
+                                        verticalArrangement = Arrangement.Center,
+                                        modifier = Modifier.padding(24.dp)
+                                    ) {
+                                        Box(
+                                            modifier = Modifier
+                                                .size(88.dp)
+                                                .clip(CircleShape)
+                                                .background(SecondaryTeal),
+                                            contentAlignment = Alignment.Center
+                                        ) {
+                                            Icon(
+                                                imageVector = Icons.Default.CloudDone,
+                                                contentDescription = "Offline Saved",
+                                                tint = Color.White,
+                                                modifier = Modifier.size(52.dp)
+                                            )
+                                        }
+                                        Spacer(modifier = Modifier.height(20.dp))
+                                        Text(
+                                            text = "Attendance Recorded Offline",
+                                            style = MaterialTheme.typography.titleLarge,
+                                            fontWeight = FontWeight.Bold,
+                                            color = Color.White
+                                        )
+                                        Spacer(modifier = Modifier.height(8.dp))
+                                        Text(
+                                            text = "Saved securely on device • Will synchronize when back online",
+                                            style = MaterialTheme.typography.bodyMedium,
+                                            color = Color.White.copy(alpha = 0.8f),
+                                            textAlign = TextAlign.Center
                                         )
                                     }
                                 }
@@ -940,48 +1020,6 @@ fun AttendanceCheckInOutScreen(
                                     style = MaterialTheme.typography.bodySmall,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
-                            }
-                        }
-                    }
-                }
-
-                verificationStep == VerificationStep.LIVENESS_VERIFYING -> {
-                    FaflowSurface(
-                        modifier = Modifier.fillMaxWidth(),
-                        contentPadding = PaddingValues(FaflowSpacing.md)
-                    ) {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.SpaceBetween
-                        ) {
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(FaflowSpacing.sm)
-                            ) {
-                                CircularProgressIndicator(
-                                    modifier = Modifier.size(20.dp),
-                                    color = SecondaryTeal,
-                                    strokeWidth = 2.dp
-                                )
-                                Column {
-                                    Text(
-                                        text = "Liveness Check Active",
-                                        style = MaterialTheme.typography.titleSmall,
-                                        fontWeight = FontWeight.Bold,
-                                        color = MaterialTheme.colorScheme.onSurface
-                                    )
-                                    Text(
-                                        text = if (blinkCount == 0) "Blink naturally to verify" else "1 blink recorded, one more to go",
-                                        style = MaterialTheme.typography.bodySmall,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                                    )
-                                }
-                            }
-                            androidx.compose.material3.TextButton(
-                                onClick = { viewModel.retryCapture() }
-                            ) {
-                                Text("Cancel", color = MaterialTheme.colorScheme.error)
                             }
                         }
                     }
@@ -1303,43 +1341,7 @@ private fun ShiftStateBanner(
     }
 }
 
-/**
- * Visual badge for the two-blink challenge.
- */
-@Composable
-private fun BlinkProgressBadge(
-    stepNumber: Int,
-    isCompleted: Boolean
-) {
-    Box(
-        modifier = Modifier
-            .size(32.dp)
-            .clip(CircleShape)
-            .background(if (isCompleted) Color(0xFF059669) else Color.White.copy(alpha = 0.2f)),
-        contentAlignment = Alignment.Center
-    ) {
-        if (isCompleted) {
-            Icon(
-                imageVector = Icons.Default.Check,
-                contentDescription = null,
-                tint = Color.White,
-                modifier = Modifier.size(18.dp)
-            )
-        } else {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.Center
-            ) {
-                Icon(
-                    imageVector = Icons.Default.RemoveRedEye,
-                    contentDescription = null,
-                    tint = Color.White,
-                    modifier = Modifier.size(14.dp)
-                )
-            }
-        }
-    }
-}
+
 
 /**
  * Native Bottom Sheet displaying the user's past 30 days of attendance.

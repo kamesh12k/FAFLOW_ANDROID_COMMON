@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useMemo, useCallback } from 'react'
 import { useAuth } from '../../context/AuthContext'
 import { biometricsApi, departmentsApi } from '../../api/services'
 import { Spinner, ErrorAlert, Modal, EmptyState } from '../../components/ui'
@@ -8,8 +8,10 @@ export default function AdminBiometrics() {
   const [faculty, setFaculty] = useState([])
   const [departments, setDepartments] = useState([])
   const [selectedDept, setSelectedDept] = useState('')
+  const [statusFilter, setStatusFilter] = useState('ALL') // ALL, ENROLLED, PENDING
   const [searchQuery, setSearchQuery] = useState('')
   const [loading, setLoading] = useState(true)
+  const [refreshing, setRefreshing] = useState(false)
   const [error, setError] = useState('')
   const [successMsg, setSuccessMsg] = useState('')
 
@@ -18,8 +20,9 @@ export default function AdminBiometrics() {
   const [selectedFaculty, setSelectedFaculty] = useState(null)
   const [resetting, setResetting] = useState(false)
 
-  const loadData = async () => {
-    setLoading(true)
+  const loadData = useCallback(async (isSilent = false) => {
+    if (isSilent) setRefreshing(true)
+    else setLoading(true)
     setError('')
     try {
       const [facRes, deptRes] = await Promise.all([
@@ -32,23 +35,33 @@ export default function AdminBiometrics() {
       setError(err.response?.data?.detail || 'Failed to load faculty biometric registration records.')
     } finally {
       setLoading(false)
+      setRefreshing(false)
     }
-  }
+  }, [])
 
   useEffect(() => {
     loadData()
-  }, [])
+  }, [loadData])
 
-  const filteredFaculty = faculty.filter(f => {
-    const matchesSearch = f.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                          f.email?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                          f.username?.toLowerCase().includes(searchQuery.toLowerCase())
-    const matchesDept = !selectedDept || String(f.department_id) === String(selectedDept)
-    return matchesSearch && matchesDept
-  })
+  const enrolledCount = useMemo(() => faculty.filter(f => Boolean(f.has_face_enrolled)).length, [faculty])
+  const pendingCount = useMemo(() => faculty.filter(f => !f.has_face_enrolled).length, [faculty])
 
-  const enrolledCount = faculty.filter(f => Boolean(f.has_face_enrolled)).length
-  const pendingCount = faculty.filter(f => !f.has_face_enrolled).length
+  const filteredFaculty = useMemo(() => {
+    const q = searchQuery.toLowerCase().trim()
+    return faculty.filter(f => {
+      const matchesSearch = !q ||
+                            f.name?.toLowerCase().includes(q) ||
+                            f.email?.toLowerCase().includes(q) ||
+                            f.username?.toLowerCase().includes(q) ||
+                            String(f.id).includes(q)
+      const matchesDept = !selectedDept || String(f.department_id) === String(selectedDept)
+      let matchesStatus = true
+      if (statusFilter === 'ENROLLED') matchesStatus = Boolean(f.has_face_enrolled)
+      else if (statusFilter === 'PENDING') matchesStatus = !f.has_face_enrolled
+
+      return matchesSearch && matchesDept && matchesStatus
+    })
+  }, [faculty, searchQuery, selectedDept, statusFilter])
 
   const handleResetBiometric = async () => {
     if (!selectedFaculty) return
@@ -59,7 +72,7 @@ export default function AdminBiometrics() {
       setSuccessMsg(`Biometric profile for ${selectedFaculty.name} has been reset. The faculty member must re-enroll their face template via the mobile app.`)
       setResetModalOpen(false)
       setSelectedFaculty(null)
-      loadData()
+      loadData(true)
     } catch (err) {
       setError(err.response?.data?.detail || 'Failed to reset biometric template.')
     } finally {
@@ -77,6 +90,27 @@ export default function AdminBiometrics() {
             System Administrator console for institutional facial templates, real biometric enrollment tracking, and device authorization resets.
           </p>
         </div>
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => loadData(true)}
+            disabled={refreshing || loading}
+            className="flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold rounded-xl transition shadow-sm disabled:opacity-60"
+          >
+            <svg
+              className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`}
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <path d="M21 12a9 9 0 1 1-2.64-6.36" />
+              <path d="M21 3v6h-6" />
+            </svg>
+            <span>{refreshing ? 'Syncing...' : 'Sync Registry'}</span>
+          </button>
+        </div>
       </div>
 
       {error && <ErrorAlert message={error} onClose={() => setError('')} />}
@@ -89,19 +123,28 @@ export default function AdminBiometrics() {
 
       {/* Metrics Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <div className="p-5 rounded-2xl bg-white border border-gray-200 shadow-sm">
+        <div
+          onClick={() => setStatusFilter('ALL')}
+          className={`p-5 rounded-2xl bg-white border cursor-pointer transition shadow-sm ${statusFilter === 'ALL' ? 'border-indigo-500 ring-2 ring-indigo-100' : 'border-gray-200 hover:border-gray-300'}`}
+        >
           <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Total Registered Faculty</span>
           <p className="text-2xl font-bold text-gray-900 mt-1">{faculty.length}</p>
           <span className="text-xs text-gray-500 mt-1 block">Active institutional faculty accounts</span>
         </div>
 
-        <div className="p-5 rounded-2xl bg-white border border-gray-200 shadow-sm">
+        <div
+          onClick={() => setStatusFilter('ENROLLED')}
+          className={`p-5 rounded-2xl bg-white border cursor-pointer transition shadow-sm ${statusFilter === 'ENROLLED' ? 'border-emerald-500 ring-2 ring-emerald-100' : 'border-gray-200 hover:border-gray-300'}`}
+        >
           <span className="text-xs font-semibold text-emerald-600 uppercase tracking-wider">Face Templates Enrolled</span>
           <p className="text-2xl font-bold text-emerald-700 mt-1">{enrolledCount}</p>
           <span className="text-xs text-gray-500 mt-1 block">Verified 512-D ArcFace profiles in hardware Keystore</span>
         </div>
 
-        <div className="p-5 rounded-2xl bg-white border border-gray-200 shadow-sm">
+        <div
+          onClick={() => setStatusFilter('PENDING')}
+          className={`p-5 rounded-2xl bg-white border cursor-pointer transition shadow-sm ${statusFilter === 'PENDING' ? 'border-amber-500 ring-2 ring-amber-100' : 'border-gray-200 hover:border-gray-300'}`}
+        >
           <span className="text-xs font-semibold text-amber-600 uppercase tracking-wider">Pending Enrollment</span>
           <p className="text-2xl font-bold text-amber-700 mt-1">{pendingCount}</p>
           <span className="text-xs text-gray-500 mt-1 block">Awaiting physical phone face capture</span>
@@ -110,6 +153,27 @@ export default function AdminBiometrics() {
 
       {/* Search & Filter Bar */}
       <div className="flex flex-col sm:flex-row gap-3">
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setStatusFilter('ALL')}
+            className={`px-3 py-2 rounded-xl text-xs font-semibold transition ${statusFilter === 'ALL' ? 'bg-indigo-600 text-white shadow-sm' : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-50'}`}
+          >
+            All ({faculty.length})
+          </button>
+          <button
+            onClick={() => setStatusFilter('ENROLLED')}
+            className={`px-3 py-2 rounded-xl text-xs font-semibold transition ${statusFilter === 'ENROLLED' ? 'bg-emerald-600 text-white shadow-sm' : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-50'}`}
+          >
+            Enrolled ({enrolledCount})
+          </button>
+          <button
+            onClick={() => setStatusFilter('PENDING')}
+            className={`px-3 py-2 rounded-xl text-xs font-semibold transition ${statusFilter === 'PENDING' ? 'bg-amber-600 text-white shadow-sm' : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-50'}`}
+          >
+            Pending ({pendingCount})
+          </button>
+        </div>
+
         <div className="relative flex-1">
           <input
             type="text"
