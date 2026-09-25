@@ -30,11 +30,11 @@ export default function AdminGeofences() {
 
   // Editor Form Fields
   const [boundaryType, setBoundaryType] = useState('circle') // 'circle' | 'polygon'
-  const [center, setCenter] = useState({ lat: 11.016844, lng: 76.955833 })
+  const [center, setCenter] = useState(null)
   const [radiusMeters, setRadiusMeters] = useState(200)
   const [polygonVertices, setPolygonVertices] = useState([])
-  const [name, setName] = useState('Main Campus Perimeter')
-  const [description, setDescription] = useState('Primary institutional boundary for faculty attendance validation')
+  const [name, setName] = useState('')
+  const [description, setDescription] = useState('')
   const [toleranceMeters, setToleranceMeters] = useState(25)
   const [isActive, setIsActive] = useState(true)
   const [saving, setSaving] = useState(false)
@@ -84,6 +84,16 @@ export default function AdminGeofences() {
         } else if (!activeGeofence) {
           selectGeofenceForView(data[0])
         }
+      } else {
+        // No campus geofence configured in database: do not point anywhere!
+        setActiveGeofence(null)
+        setCenter(null)
+        setPolygonVertices([])
+        setIsEditing(false)
+        setIsDirty(false)
+        if (mapEditorRef.current) {
+          mapEditorRef.current.flyTo(20.5937, 78.9629, 5)
+        }
       }
     } catch (err) {
       setError(getApiErrorMessage(err, 'Failed to retrieve campus geofence configurations.'))
@@ -114,14 +124,15 @@ export default function AdminGeofences() {
     setIsActive(geo.is_active !== undefined ? geo.is_active : true)
 
     if (geo.type === 'circle') {
-      const targetCenter = {
-        lat: Number(geo.center_latitude) || 11.016844,
-        lng: Number(geo.center_longitude) || 76.955833,
-      }
-      setCenter(targetCenter)
-      setRadiusMeters(Number(geo.radius_meters) || 200)
-      if (mapEditorRef.current) {
-        mapEditorRef.current.flyTo(targetCenter.lat, targetCenter.lng, 16)
+      const lat = Number(geo.center_latitude)
+      const lng = Number(geo.center_longitude)
+      if (!isNaN(lat) && !isNaN(lng)) {
+        const targetCenter = { lat, lng }
+        setCenter(targetCenter)
+        setRadiusMeters(Number(geo.radius_meters) || 200)
+        if (mapEditorRef.current) {
+          mapEditorRef.current.flyTo(targetCenter.lat, targetCenter.lng, 16)
+        }
       }
     } else if (geo.type === 'polygon') {
       // Prefer polygon_vertices (new API field), fall back to geometry.coordinates
@@ -140,7 +151,7 @@ export default function AdminGeofences() {
           lat: Number(v.latitude ?? v.lat ?? 0),
           lng: Number(v.longitude ?? v.lng ?? 0),
         }
-      })
+      }).filter((v) => !isNaN(v.lat) && !isNaN(v.lng))
       setPolygonVertices(vertices)
       if (vertices.length > 0) {
         setCenter({ lat: vertices[0].lat, lng: vertices[0].lng })
@@ -166,22 +177,23 @@ export default function AdminGeofences() {
     setName('Main Campus Perimeter')
     setDescription('Authoritative institutional attendance zone')
     setBoundaryType('circle')
-
-    // Center around current user location or current map center
-    const defaultCenter = userLocation || center || { lat: 11.016844, lng: 76.955833 }
-    setCenter(defaultCenter)
     setRadiusMeters(200)
-    setPolygonVertices([
-      { lat: defaultCenter.lat + 0.001, lng: defaultCenter.lng - 0.001 },
-      { lat: defaultCenter.lat + 0.001, lng: defaultCenter.lng + 0.001 },
-      { lat: defaultCenter.lat - 0.001, lng: defaultCenter.lng + 0.001 },
-      { lat: defaultCenter.lat - 0.001, lng: defaultCenter.lng - 0.001 },
-    ])
+    setPolygonVertices([])
     setToleranceMeters(25)
     setIsActive(true)
 
-    if (mapEditorRef.current) {
-      mapEditorRef.current.flyTo(defaultCenter.lat, defaultCenter.lng, 16)
+    // Center around current user location if available
+    if (userLocation && userLocation.lat && userLocation.lng) {
+      setCenter(userLocation)
+      if (mapEditorRef.current) {
+        mapEditorRef.current.flyTo(userLocation.lat, userLocation.lng, 16)
+      }
+    } else if (center && center.lat && center.lng) {
+      if (mapEditorRef.current) {
+        mapEditorRef.current.flyTo(center.lat, center.lng, 16)
+      }
+    } else {
+      setCenter(null)
     }
   }
 
@@ -386,7 +398,7 @@ export default function AdminGeofences() {
           setTestResult(res.data)
         } catch (err) {
           // Fallback to local geometric estimation if network fails
-          if (boundaryType === 'circle') {
+          if (boundaryType === 'circle' && center && center.lat != null && center.lng != null) {
             const dist = calculateHaversineDistance(center.lat, center.lng, coords.lat, coords.lng)
             const isInside = dist <= radiusMeters + toleranceMeters
             setTestResult({
@@ -397,7 +409,7 @@ export default function AdminGeofences() {
               distance_to_boundary_meters: Math.max(0, dist - radiusMeters),
               distance_to_center_meters: dist,
             })
-          } else {
+          } else if (boundaryType === 'polygon' && polygonVertices && polygonVertices.length >= 3) {
             const isInside = isPointInPolygon(coords, polygonVertices)
             setTestResult({
               is_inside: isInside,
@@ -430,8 +442,13 @@ export default function AdminGeofences() {
       return
     }
 
-    if (boundaryType === 'polygon' && polygonVertices.length < 3) {
+    if (boundaryType === 'polygon' && (!polygonVertices || polygonVertices.length < 3)) {
       setError('Polygon geofences require at least 3 boundary vertices.')
+      return
+    }
+
+    if (boundaryType === 'circle' && (!center || center.lat == null || center.lng == null)) {
+      setError('Please set the center of the campus perimeter by clicking on the map, using search, or clicking "Use My Location".')
       return
     }
 
@@ -663,6 +680,28 @@ export default function AdminGeofences() {
           onClearSearchPlace={() => setSearchPlace(null)}
           className="w-full h-full"
         />
+
+        {/* Floating No-Geofence Notice (when database has no campus perimeters) */}
+        {geofences.length === 0 && !isEditing && (
+          <div className="absolute top-20 left-4 sm:left-1/2 sm:-translate-x-1/2 z-[999] max-w-lg px-4 py-3 rounded-2xl bg-white/95 backdrop-blur-md shadow-xl border border-slate-200/90 text-xs text-slate-700 flex items-center gap-3">
+            <span className="text-xl">📍</span>
+            <div className="flex-1 min-w-0">
+              <span className="font-bold text-slate-900 block text-xs">No Campus Perimeter Configured</span>
+              <span className="text-[11px] text-slate-500">
+                Use the search box above or click "+ Add Perimeter" to set your institution's boundary.
+              </span>
+            </div>
+            {canManageGeofences && (
+              <button
+                type="button"
+                onClick={startNewGeofence}
+                className="px-3 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-xs transition shadow-sm shrink-0"
+              >
+                + Add Perimeter
+              </button>
+            )}
+          </div>
+        )}
 
         {/* Top-Left: Google-Maps-Style Floating Search Island */}
         <div className="absolute top-4 left-4 z-[1000] w-full max-w-sm sm:max-w-md">
@@ -1029,11 +1068,15 @@ export default function AdminGeofences() {
                       <div className="grid grid-cols-2 gap-2 text-[11px]">
                         <div className="bg-white p-2 rounded-lg border border-slate-200">
                           <span className="text-slate-400 block text-[10px]">Center Lat</span>
-                          <span className="font-mono font-bold text-slate-800">{center.lat.toFixed(6)}</span>
+                          <span className="font-mono font-bold text-slate-800">
+                            {center?.lat != null ? center.lat.toFixed(6) : 'Not set'}
+                          </span>
                         </div>
                         <div className="bg-white p-2 rounded-lg border border-slate-200">
                           <span className="text-slate-400 block text-[10px]">Center Lng</span>
-                          <span className="font-mono font-bold text-slate-800">{center.lng.toFixed(6)}</span>
+                          <span className="font-mono font-bold text-slate-800">
+                            {center?.lng != null ? center.lng.toFixed(6) : 'Not set'}
+                          </span>
                         </div>
                       </div>
 

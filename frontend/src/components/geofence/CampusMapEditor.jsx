@@ -210,10 +210,13 @@ function computeOffsetPoint(center, distanceMeters, bearingDegrees = 90) {
   }
 }
 
+const NEUTRAL_DEFAULT_CENTER = { lat: 20.5937, lng: 78.9629 } // Geographic center of India
+const NEUTRAL_DEFAULT_ZOOM = 5
+
 const CampusMapEditor = forwardRef(function CampusMapEditor(
   {
     boundaryType = 'circle', // 'circle' | 'polygon'
-    center = { lat: 11.016844, lng: 76.955833 },
+    center = null,
     radiusMeters = 200,
     polygonVertices = [],
     allGeofences = [],
@@ -262,7 +265,7 @@ const CampusMapEditor = forwardRef(function CampusMapEditor(
   // Imperative Expose
   useImperativeHandle(ref, () => ({
     flyTo: (lat, lng, zoom = 16) => {
-      if (mapInstanceRef.current) {
+      if (mapInstanceRef.current && lat != null && lng != null) {
         mapInstanceRef.current.flyTo([lat, lng], zoom, { duration: 1.0 })
       }
     },
@@ -289,14 +292,26 @@ const CampusMapEditor = forwardRef(function CampusMapEditor(
     if (!mapContainerRef.current) return
     if (mapInstanceRef.current) return
 
-    const initialCenter =
-      boundaryType === 'polygon' && polygonVertices.length > 0
-        ? [polygonVertices[0].lat, polygonVertices[0].lng]
-        : [center.lat, center.lng]
+    const hasConfiguredPolygon = boundaryType === 'polygon' && polygonVertices && polygonVertices.length > 0
+    const hasConfiguredCircle = center && center.lat != null && center.lng != null && (selectedGeofenceId !== null || isDrawingMode)
+
+    let initialCenter = [NEUTRAL_DEFAULT_CENTER.lat, NEUTRAL_DEFAULT_CENTER.lng]
+    let initialZoom = NEUTRAL_DEFAULT_ZOOM
+
+    if (hasConfiguredPolygon) {
+      initialCenter = [polygonVertices[0].lat, polygonVertices[0].lng]
+      initialZoom = 16
+    } else if (hasConfiguredCircle) {
+      initialCenter = [center.lat, center.lng]
+      initialZoom = 16
+    } else if (userLocation && userLocation.lat && userLocation.lng) {
+      initialCenter = [userLocation.lat, userLocation.lng]
+      initialZoom = 16
+    }
 
     const map = L.map(mapContainerRef.current, {
       center: initialCenter,
-      zoom: 16,
+      zoom: initialZoom,
       zoomControl: false,
       attributionControl: true,
     })
@@ -388,7 +403,14 @@ const CampusMapEditor = forwardRef(function CampusMapEditor(
     const map = mapInstanceRef.current
     if (!map) return
 
-    if (boundaryType === 'circle') {
+    const shouldRenderCircle =
+      boundaryType === 'circle' &&
+      center &&
+      center.lat != null &&
+      center.lng != null &&
+      (isDrawingMode || (selectedGeofenceId !== null && selectedGeofenceId !== undefined))
+
+    if (shouldRenderCircle) {
       const centerCoords = [center.lat, center.lng]
 
       // A. Center Draggable Marker
@@ -488,7 +510,7 @@ const CampusMapEditor = forwardRef(function CampusMapEditor(
         resizeHandleMarkerRef.current = null
       }
     }
-  }, [boundaryType, center.lat, center.lng, radiusMeters, isDrawingMode, onCenterChange, onRadiusChange])
+  }, [boundaryType, center?.lat, center?.lng, radiusMeters, isDrawingMode, selectedGeofenceId, onCenterChange, onRadiusChange])
 
   // 5. Polygon Geofence Rendering (Vertices, Midpoints, Polygon Surface)
   useEffect(() => {
@@ -501,7 +523,13 @@ const CampusMapEditor = forwardRef(function CampusMapEditor(
     polygonMidpointMarkersRef.current.forEach((m) => m.remove())
     polygonMidpointMarkersRef.current = []
 
-    if (boundaryType === 'polygon' && polygonVertices.length > 0) {
+    const shouldRenderPolygon =
+      boundaryType === 'polygon' &&
+      polygonVertices &&
+      polygonVertices.length > 0 &&
+      (isDrawingMode || (selectedGeofenceId !== null && selectedGeofenceId !== undefined))
+
+    if (shouldRenderPolygon) {
       const latLngs = polygonVertices.map((v) => [v.lat, v.lng])
 
       // A. Polygon Surface Layer
@@ -586,7 +614,7 @@ const CampusMapEditor = forwardRef(function CampusMapEditor(
         polygonLayerRef.current = null
       }
     }
-  }, [boundaryType, polygonVertices, isDrawingMode, onPolygonChange])
+  }, [boundaryType, polygonVertices, isDrawingMode, selectedGeofenceId, onPolygonChange])
 
   // 6. Other Existing Geofences Visualization
   useEffect(() => {
@@ -866,10 +894,10 @@ const CampusMapEditor = forwardRef(function CampusMapEditor(
     const bounds = L.latLngBounds()
     let count = 0
 
-    if (boundaryType === 'circle' && center.lat && center.lng) {
+    if (boundaryType === 'circle' && center?.lat && center?.lng && (isDrawingMode || selectedGeofenceId !== null)) {
       bounds.extend([center.lat, center.lng])
       count++
-    } else if (boundaryType === 'polygon' && polygonVertices.length > 0) {
+    } else if (boundaryType === 'polygon' && polygonVertices && polygonVertices.length > 0 && (isDrawingMode || selectedGeofenceId !== null)) {
       polygonVertices.forEach((v) => bounds.extend([v.lat, v.lng]))
       count++
     }
@@ -890,8 +918,10 @@ const CampusMapEditor = forwardRef(function CampusMapEditor(
 
     if (count > 0 && bounds.isValid()) {
       map.fitBounds(bounds, { padding: [60, 60], maxZoom: 17 })
+    } else if (userLocation && userLocation.lat && userLocation.lng) {
+      map.flyTo([userLocation.lat, userLocation.lng], 16)
     } else {
-      map.flyTo([center.lat, center.lng], 16)
+      map.flyTo([NEUTRAL_DEFAULT_CENTER.lat, NEUTRAL_DEFAULT_CENTER.lng], NEUTRAL_DEFAULT_ZOOM)
     }
   }
 
