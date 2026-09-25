@@ -3,7 +3,12 @@ from fastapi import HTTPException
 from app.models.campus_geofence import CampusGeofence
 from app.models.audit_log import AuditLog
 from app.schemas.geofence import GeofenceCreate, GeofenceUpdate
-from app.services.geofence_service import GeofenceService, haversine_distance_meters, compute_polygon_metrics
+from app.services.geofence_service import (
+    GeofenceService,
+    haversine_distance_meters,
+    compute_polygon_metrics,
+    distance_to_polygon_meters,
+)
 
 
 def test_haversine_distance_computation():
@@ -127,3 +132,49 @@ def test_toggle_and_deactivate_geofence(db_session, test_admin):
     # Soft delete
     del_res = GeofenceService.delete_geofence(db_session, geofence.id, user_id=test_admin.id)
     assert "deactivated" in del_res["message"]
+
+
+def test_distance_to_polygon_meters():
+    # Square polygon around (11.018, 76.957) ~100m wide
+    vertices = [
+        [11.017000, 76.956000],
+        [11.019000, 76.956000],
+        [11.019000, 76.958000],
+        [11.017000, 76.958000],
+    ]
+    # Point exactly on left edge (longitude 76.956000, latitude 11.018000)
+    d_on_edge = distance_to_polygon_meters(11.018000, 76.956000, vertices)
+    assert d_on_edge < 1.0
+
+    # Point 50m west of left edge
+    d_outside = distance_to_polygon_meters(11.018000, 76.955500, vertices)
+    assert 40.0 <= d_outside <= 65.0
+
+
+def test_polygon_test_location_containment(db_session, test_admin):
+    vertices = [
+        [11.017000, 76.956000],
+        [11.019000, 76.956000],
+        [11.019000, 76.958000],
+        [11.017000, 76.958000],
+    ]
+    data = GeofenceCreate(
+        name="Exact Quad Test Boundary",
+        type="polygon",
+        polygon_vertices=vertices,
+        tolerance_meters=25.0
+    )
+    GeofenceService.create_geofence(db_session, data, user_id=test_admin.id)
+
+    # 1. Point strictly inside polygon
+    res_inside = GeofenceService.test_location(db_session, 11.018000, 76.957000)
+    assert res_inside["is_inside"] is True
+    assert res_inside["status"] == "INSIDE_CAMPUS"
+    assert res_inside["distance_to_boundary_meters"] == 0.0
+
+    # 2. Point strictly outside polygon (~55m west of west wall)
+    res_outside = GeofenceService.test_location(db_session, 11.018000, 76.955500)
+    assert res_outside["is_inside"] is False
+    assert res_outside["status"] == "OUTSIDE_CAMPUS"
+    assert res_outside["distance_to_boundary_meters"] > 40.0
+

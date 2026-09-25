@@ -17,7 +17,7 @@ from app.schemas.attendance import (
     AttendanceTodaySummaryOut,
     AttendanceSupervisorLiveStatusOut
 )
-from app.services.geofence_service import GeofenceService, is_point_in_polygon
+from app.services.geofence_service import GeofenceService, is_point_in_polygon, distance_to_polygon_meters
 
 
 def _get_face_threshold(db: Session) -> float:
@@ -90,8 +90,8 @@ class AttendanceService:
                     if is_point_in_polygon(lat, lon, vertices):
                         return True, g
                     tolerance = g.tolerance_meters if g.tolerance_meters is not None else 15.0
-                    dist = AttendanceService._haversine_meters(lat, lon, g.center_latitude, g.center_longitude)
-                    if dist <= ((g.radius_meters or 0.0) + tolerance):
+                    edge_dist = distance_to_polygon_meters(lat, lon, vertices)
+                    if edge_dist <= tolerance:
                         return True, g
             else:
                 dist = AttendanceService._haversine_meters(lat, lon, g.center_latitude, g.center_longitude)

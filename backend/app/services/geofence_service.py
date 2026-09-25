@@ -331,17 +331,17 @@ class GeofenceService:
                 best_geofence = g
 
             if g.type == "circle":
-                effective_radius = g.radius_meters + g.tolerance_meters
-                if dist_to_center <= effective_radius:
+                if dist_to_center <= g.radius_meters:
                     is_inside_any = True
-                    dist_to_boundary = abs(dist_to_center - g.radius_meters)
-                    if dist_to_boundary < nearest_boundary_dist:
-                        nearest_boundary_dist = dist_to_boundary
-                        best_geofence = g
+                    nearest_boundary_dist = 0.0
+                    best_geofence = g
                 else:
                     dist_to_boundary = dist_to_center - g.radius_meters
                     if dist_to_boundary < nearest_boundary_dist:
                         nearest_boundary_dist = dist_to_boundary
+                        if not is_inside_any:
+                            best_geofence = g
+
             elif g.type == "polygon":
                 vertices = g.geometry.get("coordinates", []) if g.geometry else []
                 if vertices and len(vertices) >= 3:
@@ -350,15 +350,11 @@ class GeofenceService:
                         nearest_boundary_dist = 0.0
                         best_geofence = g
                     else:
-                        tolerance = g.tolerance_meters if g.tolerance_meters is not None else 15.0
-                        if dist_to_center <= ((g.radius_meters or 0.0) + tolerance):
-                            is_inside_any = True
-                            nearest_boundary_dist = 0.0
-                            best_geofence = g
-                        else:
-                            poly_min_dist = min(haversine_distance_meters(lat, lon, v[0], v[1]) for v in vertices)
-                            if poly_min_dist < nearest_boundary_dist:
-                                nearest_boundary_dist = poly_min_dist
+                        poly_edge_dist = distance_to_polygon_meters(lat, lon, vertices)
+                        if poly_edge_dist < nearest_boundary_dist:
+                            nearest_boundary_dist = poly_edge_dist
+                            if not is_inside_any:
+                                best_geofence = g
 
         if is_inside_any:
             status_str = "INSIDE_CAMPUS"
@@ -377,6 +373,54 @@ class GeofenceService:
             "distance_to_center_meters": round(min_dist_to_center if min_dist_to_center != float("inf") else 0.0, 1),
             "accuracy_meters": accuracy_meters
         }
+
+
+def distance_to_polygon_meters(lat: float, lon: float, vertices: List[List[float]]) -> float:
+    """
+    Calculates the minimum geodesic distance in meters from a point (lat, lon)
+    to the boundary (edges) of a polygon defined by vertices [[lat, lon], ...].
+    """
+    n = len(vertices)
+    if n < 2:
+        if n == 1:
+            return haversine_distance_meters(lat, lon, vertices[0][0], vertices[0][1])
+        return 0.0
+
+    lat_rad = math.radians(lat)
+    cos_lat = math.cos(lat_rad)
+    lat_to_m = (math.pi / 180.0) * EARTH_RADIUS_METERS
+    lon_to_m = lat_to_m * cos_lat
+
+    px = lon * lon_to_m
+    py = lat * lat_to_m
+
+    min_dist_sq = float("inf")
+
+    for i in range(n):
+        v1 = vertices[i]
+        v2 = vertices[(i + 1) % n]
+
+        x1 = v1[1] * lon_to_m
+        y1 = v1[0] * lat_to_m
+        x2 = v2[1] * lon_to_m
+        y2 = v2[0] * lat_to_m
+
+        dx = x2 - x1
+        dy = y2 - y1
+        seg_len_sq = dx * dx + dy * dy
+
+        if seg_len_sq < 1e-12:
+            dist_sq = (px - x1) ** 2 + (py - y1) ** 2
+        else:
+            t = max(0.0, min(1.0, ((px - x1) * dx + (py - y1) * dy) / seg_len_sq))
+            proj_x = x1 + t * dx
+            proj_y = y1 + t * dy
+            dist_sq = (px - proj_x) ** 2 + (py - proj_y) ** 2
+
+        if dist_sq < min_dist_sq:
+            min_dist_sq = dist_sq
+
+    return math.sqrt(min_dist_sq)
 
 
 def is_point_in_polygon(lat: float, lon: float, vertices: List[List[float]]) -> bool:

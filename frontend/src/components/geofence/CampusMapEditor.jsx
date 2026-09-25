@@ -157,6 +157,52 @@ export function isPointInPolygon(point, polygonVertices) {
   return inside
 }
 
+// Calculate minimum geodesic distance in meters from point to polygon boundary
+export function calculateDistanceToPolygon(point, polygonVertices) {
+  if (!polygonVertices || polygonVertices.length < 2) return 0
+  const R = 6371000
+  const latRad = (point.lat * Math.PI) / 180
+  const cosLat = Math.cos(latRad)
+  const latToM = (Math.PI / 180) * R
+  const lonToM = latToM * cosLat
+
+  const px = point.lng * lonToM
+  const py = point.lat * latToM
+
+  let minDistSq = Infinity
+  const n = polygonVertices.length
+
+  for (let i = 0; i < n; i++) {
+    const v1 = polygonVertices[i]
+    const v2 = polygonVertices[(i + 1) % n]
+
+    const x1 = v1.lng * lonToM
+    const y1 = v1.lat * latToM
+    const x2 = v2.lng * lonToM
+    const y2 = v2.lat * latToM
+
+    const dx = x2 - x1
+    const dy = y2 - y1
+    const segLenSq = dx * dx + dy * dy
+
+    let distSq
+    if (segLenSq < 1e-12) {
+      distSq = (px - x1) ** 2 + (py - y1) ** 2
+    } else {
+      const t = Math.max(0, Math.min(1, ((px - x1) * dx + (py - y1) * dy) / segLenSq))
+      const projX = x1 + t * dx
+      const projY = y1 + t * dy
+      distSq = (px - projX) ** 2 + (py - projY) ** 2
+    }
+
+    if (distSq < minDistSq) {
+      minDistSq = distSq
+    }
+  }
+
+  return Math.sqrt(minDistSq)
+}
+
 // Calculate approximate polygon area in square meters using Shoelace formula
 export function calculatePolygonArea(vertices) {
   if (!vertices || vertices.length < 3) return 0

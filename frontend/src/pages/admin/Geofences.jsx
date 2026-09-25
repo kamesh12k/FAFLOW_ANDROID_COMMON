@@ -6,6 +6,7 @@ import { Spinner, ErrorAlert, Modal } from '../../components/ui'
 import CampusMapEditor, {
   calculateHaversineDistance,
   isPointInPolygon,
+  calculateDistanceToPolygon,
   calculatePolygonArea,
   calculatePolygonPerimeter,
 } from '../../components/geofence/CampusMapEditor'
@@ -400,24 +401,26 @@ export default function AdminGeofences() {
           // Fallback to local geometric estimation if network fails
           if (boundaryType === 'circle' && center && center.lat != null && center.lng != null) {
             const dist = calculateHaversineDistance(center.lat, center.lng, coords.lat, coords.lng)
-            const isInside = dist <= radiusMeters + toleranceMeters
+            const isInside = dist <= radiusMeters
+            const distToEdge = isInside ? 0 : Math.max(0, dist - radiusMeters)
             setTestResult({
               is_inside: isInside,
               status: isInside ? 'VERIFIED' : 'OUT_OF_BOUNDS',
-              message: isInside ? 'Within verified perimeter' : 'Outside verified perimeter',
+              message: isInside ? 'Within verified perimeter' : `${Math.round(distToEdge)}m outside verified perimeter`,
               nearest_geofence_name: name,
-              distance_to_boundary_meters: Math.max(0, dist - radiusMeters),
+              distance_to_boundary_meters: distToEdge,
               distance_to_center_meters: dist,
             })
           } else if (boundaryType === 'polygon' && polygonVertices && polygonVertices.length >= 3) {
             const isInside = isPointInPolygon(coords, polygonVertices)
+            const distToEdge = isInside ? 0 : calculateDistanceToPolygon(coords, polygonVertices)
             setTestResult({
               is_inside: isInside,
               status: isInside ? 'VERIFIED' : 'OUT_OF_BOUNDS',
-              message: isInside ? 'Within verified perimeter' : 'Outside verified perimeter',
+              message: isInside ? 'Within verified perimeter' : `${Math.round(distToEdge)}m outside verified perimeter`,
               nearest_geofence_name: name,
-              distance_to_boundary_meters: 0,
-              distance_to_center_meters: 0,
+              distance_to_boundary_meters: distToEdge,
+              distance_to_center_meters: center && center.lat != null ? calculateHaversineDistance(center.lat, center.lng, coords.lat, coords.lng) : 0,
             })
           }
         } finally {
