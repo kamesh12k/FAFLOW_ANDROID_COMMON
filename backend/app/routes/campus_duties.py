@@ -288,11 +288,12 @@ def get_duty_detail(
 @router.get("/{duty_id}/candidates", response_model=DutyCandidatesResponse)
 def get_candidates(
     duty_id: int,
+    require_checked_in: bool = Query(False, description="Whether candidate must have checked in today"),
     current_user: User = Depends(require_admin_or_principal),
     db: Session = Depends(get_db)
 ):
     """Returns ranked eligible faculty candidates with explainable score justifications."""
-    return CampusDutyService.evaluate_candidates(db, duty_id)
+    return CampusDutyService.evaluate_candidates(db, duty_id, require_checked_in=require_checked_in)
 
 
 @router.post("/{duty_id}/auto-assign", response_model=CampusDutyOut)

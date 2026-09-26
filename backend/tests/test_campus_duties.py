@@ -457,3 +457,123 @@ def test_configure_block_duties_route_rbac(client, db_session, duty_setup, auth_
     assert data["total_duties_configured"] >= 1
 
 
+def test_pending_checkin_teachers_eligible_for_advance_selection(db_session, duty_setup):
+    """
+    Verifies that when teachers have not yet checked in today:
+    1. evaluate_candidates(require_checked_in=False) still treats them as ELIGIBLE.
+    2. Score is non-zero (e.g. 85.0+), not 0.0.
+    3. Reason explains 'Pending check-in (Auto-swaps if absent)'.
+    4. Admin can manually assign them.
+    5. When require_checked_in=True, they are excluded with 'Teacher has not checked in today'.
+    """
+    today = date.today()
+    teachers = duty_setup["teachers"]
+    dept = duty_setup["dept"]
+
+    # Delete attendance records for Teacher 1 to simulate pending check-in
+    db_session.query(StaffAttendanceRecord).filter(
+        StaffAttendanceRecord.user_id == teachers[0].id,
+        StaffAttendanceRecord.attendance_date == today
+    ).delete()
+    db_session.commit()
+
+    duty = CampusDuty(
+        duty_type=DutyType.DISCIPLINE_DUTY,
+        title="Gate Supervision Duty",
+        duty_date=today,
+        start_time=time(8, 30),
+        end_time=time(9, 0),
+        department_id=dept.id,
+        day_order=1,
+        required_teachers=1,
+        status=DutyStatus.PUBLISHED
+    )
+    db_session.add(duty)
+    db_session.commit()
+
+    # 1. Standard candidate evaluation (for UI picker / advance scheduling)
+    cand_resp = CampusDutyService.evaluate_candidates(db_session, duty.id, require_checked_in=False)
+    t1_cand = next((c for c in cand_resp.candidates if c.teacher_id == teachers[0].id), None)
+    assert t1_cand is not None
+    assert t1_cand.is_eligible is True
+    assert t1_cand.present_today is False
+    assert t1_cand.score > 0.0
+    assert any("Pending check-in" in r for r in t1_cand.reasons)
+
+    # 2. Strict candidate evaluation (used by emergency auto-replace sweep)
+    cand_resp_strict = CampusDutyService.evaluate_candidates(db_session, duty.id, require_checked_in=True)
+    t1_strict = next((c for c in cand_resp_strict.candidates if c.teacher_id == teachers[0].id), None)
+    assert t1_strict is not None
+    assert t1_strict.is_eligible is False
+    assert t1_strict.score == 0.0
+    assert "not checked in" in t1_strict.exclusion_reason.lower()
+
+    # 3. Manual assignment succeeds for pending check-in teacher
+    assignment = CampusDutyService.manual_assign(db_session, duty.id, teachers[0].id)
+    assert assignment is not None
+    assert assignment.teacher_id == teachers[0].id
+    assert assignment.status == AssignmentStatus.ASSIGNED
+
+
+def test_auto_replace_absent_teacher_swaps_with_checked_in_candidate(db_session, duty_setup):
+    """
+    Verifies that if an assigned teacher is absent past the cutoff,
+    auto_replace_absent_teachers automatically swaps them with an eligible candidate
+    who IS checked in.
+    """
+    today = date.today()
+    teachers = duty_setup["teachers"]
+    dept = duty_setup["dept"]
+
+    # Teacher 1 is assigned, but has NOT checked in (absent)
+    db_session.query(StaffAttendanceRecord).filter(
+        StaffAttendanceRecord.user_id == teachers[0].id,
+        StaffAttendanceRecord.attendance_date == today
+    ).delete()
+
+    # Teachers 2, 3, 4 ARE checked in (from duty_setup)
+    db_session.commit()
+
+    duty = CampusDuty(
+        duty_type=DutyType.DISCIPLINE_DUTY,
+        title="Break Interval Duty",
+        duty_date=today,
+        start_time=time(8, 0),  # In the past relative to now, so cutoff is passed
+        end_time=time(8, 30),
+        department_id=dept.id,
+        day_order=1,
+        required_teachers=1,
+        status=DutyStatus.PUBLISHED
+    )
+    db_session.add(duty)
+    db_session.flush()
+
+    # Assign Teacher 1 initially
+    assignment = DutyAssignment(
+        duty_id=duty.id,
+        teacher_id=teachers[0].id,
+        status=AssignmentStatus.ASSIGNED,
+        role="GENERAL",
+        is_manual=True,
+        score=100.0
+    )
+    db_session.add(assignment)
+    db_session.commit()
+
+    # Trigger auto-replacement sweep
+    result = CampusDutyService.auto_replace_absent_teachers(db_session, target_date=today)
+    assert result["replacements_made"] >= 1
+
+    # Reload assignments
+    db_session.refresh(duty)
+    replaced_a = next((a for a in duty.assignments if a.teacher_id == teachers[0].id), None)
+    assert replaced_a is not None
+    assert replaced_a.status == AssignmentStatus.REPLACED
+    assert "Not checked in" in replaced_a.overridden_reason
+
+    # New active assignment is created for a checked-in teacher
+    active_a = next((a for a in duty.assignments if a.status == AssignmentStatus.ASSIGNED), None)
+    assert active_a is not None
+    assert active_a.teacher_id != teachers[0].id
+
+

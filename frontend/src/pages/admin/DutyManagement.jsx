@@ -41,6 +41,7 @@ export default function DutyManagement({ readOnly = false }) {
   const [candidateModalDuty, setCandidateModalDuty] = useState(null)
   const [candidateData, setCandidateData] = useState(null)
   const [candidatesLoading, setCandidatesLoading] = useState(false)
+  const [candidateFilter, setCandidateFilter] = useState('all')
 
   // Override / Replace Modal
   const [actionModal, setActionModal] = useState(null) // { type: 'override'|'replace'|'lock'|'create', duty, assignment }
@@ -281,6 +282,7 @@ export default function DutyManagement({ readOnly = false }) {
 
   const openCandidatePicker = async (duty) => {
     setCandidateModalDuty(duty)
+    setCandidateFilter('all')
     setCandidatesLoading(true)
     try {
       const res = await campusDutiesApi.getCandidates(duty.id)
@@ -1385,7 +1387,7 @@ export default function DutyManagement({ readOnly = false }) {
       {/* Candidate Picker Modal with "Why Selected?" Explainability */}
       {candidateModalDuty && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
-          <div className="bg-white rounded-3xl max-w-2xl w-full p-6 space-y-5 shadow-2xl border border-slate-100 max-h-[85vh] flex flex-col">
+          <div className="bg-white rounded-3xl max-w-2xl w-full p-6 space-y-4 shadow-2xl border border-slate-100 max-h-[85vh] flex flex-col">
             <div className="flex items-start justify-between gap-4 pb-3 border-b border-slate-100">
               <div>
                 <span className="text-[10px] font-black uppercase tracking-wider text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded">
@@ -1395,6 +1397,10 @@ export default function DutyManagement({ readOnly = false }) {
                 <p className="text-xs text-slate-500 font-semibold">
                   Select a faculty member ranked by attendance, conflict checks & preceding free period advantage.
                 </p>
+                <div className="mt-2 text-[11px] font-medium text-slate-600 bg-slate-50 border border-slate-200/70 rounded-xl px-2.5 py-1.5 flex items-center gap-1.5">
+                  <span className="text-xs">💡</span>
+                  <span>Faculty pending check-in can be assigned now. If absent at duty cutoff (9:00 AM / 10m before), system auto-swaps to next present staff.</span>
+                </div>
               </div>
               <button
                 onClick={() => setCandidateModalDuty(null)}
@@ -1404,13 +1410,42 @@ export default function DutyManagement({ readOnly = false }) {
               </button>
             </div>
 
+            {/* Filter Tabs */}
+            {candidateData?.candidates?.length > 0 && (
+              <div className="flex items-center gap-1.5 pb-1">
+                {[
+                  { id: 'all', label: `All Candidates (${candidateData.candidates.length})` },
+                  { id: 'checked_in', label: `✓ Checked In (${candidateData.candidates.filter(c => c.present_today && c.is_eligible).length})` },
+                  { id: 'pending', label: `⏳ Pending Check-in (${candidateData.candidates.filter(c => !c.present_today && c.is_eligible).length})` },
+                ].map(tab => (
+                  <button
+                    key={tab.id}
+                    onClick={() => setCandidateFilter(tab.id)}
+                    className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all ${
+                      candidateFilter === tab.id
+                        ? 'bg-slate-900 text-white shadow-sm'
+                        : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                    }`}
+                  >
+                    {tab.label}
+                  </button>
+                ))}
+              </div>
+            )}
+
             <div className="overflow-y-auto flex-1 space-y-3 pr-1">
               {candidatesLoading ? (
                 <div className="py-12 flex justify-center"><Spinner /></div>
               ) : !candidateData?.candidates?.length ? (
                 <p className="text-xs text-slate-400 text-center py-8">No eligible faculty found for this timeslot.</p>
               ) : (
-                candidateData.candidates.map((c) => (
+                candidateData.candidates
+                  .filter((c) => {
+                    if (candidateFilter === 'checked_in') return c.present_today && c.is_eligible
+                    if (candidateFilter === 'pending') return !c.present_today && c.is_eligible
+                    return true
+                  })
+                  .map((c) => (
                   <div
                     key={c.teacher_id}
                     className={`p-3.5 rounded-2xl border transition-all ${
@@ -1421,8 +1456,17 @@ export default function DutyManagement({ readOnly = false }) {
                   >
                     <div className="flex items-start justify-between gap-3">
                       <div>
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-2 flex-wrap">
                           <span className="font-extrabold text-sm text-slate-900">{c.teacher_name}</span>
+                          {c.present_today ? (
+                            <span className="px-2 py-0.5 rounded-md text-[9px] font-black uppercase bg-emerald-100 text-emerald-800">
+                              ✓ Checked In
+                            </span>
+                          ) : c.is_eligible ? (
+                            <span className="px-2 py-0.5 rounded-md text-[9px] font-black uppercase bg-amber-100 text-amber-800" title="Pending check-in. System auto-swaps to next present faculty if absent at cutoff.">
+                              ⏳ Pending Check-in
+                            </span>
+                          ) : null}
                           {c.free_before_break && (
                             <span className="px-2 py-0.5 rounded-md text-[9px] font-black uppercase bg-emerald-100 text-emerald-800">
                               ⚡ Free Pre-Break Slot
@@ -1435,8 +1479,17 @@ export default function DutyManagement({ readOnly = false }) {
                         {c.is_eligible ? (
                           <div className="flex flex-wrap gap-1 mt-2">
                             {c.reasons.map((r, i) => (
-                              <span key={i} className="text-[10px] font-bold bg-slate-100 text-slate-600 px-2 py-0.5 rounded-md">
-                                ✓ {r}
+                              <span
+                                key={i}
+                                className={`text-[10px] font-bold px-2 py-0.5 rounded-md ${
+                                  r.includes('Pending check-in')
+                                    ? 'bg-amber-50 text-amber-700 border border-amber-200/50'
+                                    : r.includes('Checked in')
+                                    ? 'bg-emerald-50 text-emerald-700 border border-emerald-200/50'
+                                    : 'bg-slate-100 text-slate-600'
+                                }`}
+                              >
+                                {r.includes('Pending check-in') ? '⏳' : '✓'} {r}
                               </span>
                             ))}
                           </div>

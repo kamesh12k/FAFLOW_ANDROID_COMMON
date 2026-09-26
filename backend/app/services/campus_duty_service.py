@@ -332,21 +332,32 @@ class CampusDutyService:
                     StaffAttendanceRecord.attendance_date == t_date
                 ).first()
 
-                if att and att.check_in_time is not None:
-                    # Teacher is present — no replacement needed
+                if att and att.check_in_time is not None and att.check_out_time is None:
+                    # Teacher is present and still on campus — no replacement needed
                     continue
 
-                # Teacher is absent — mark as replaced
-                reason = f"Auto: Not checked in by {effective_cutoff.strftime('%H:%M')}"
+                # Teacher is absent or unavailable — determine specific reason
+                if att and att.check_out_time is not None:
+                    reason = f"Auto: Checked out early at {att.check_out_time.strftime('%H:%M')}"
+                else:
+                    on_leave = db.query(LeaveRequest).filter(
+                        LeaveRequest.teacher_id == teacher.id,
+                        LeaveRequest.date == t_date,
+                        LeaveRequest.status == LeaveStatus.approved
+                    ).first()
+                    if on_leave:
+                        reason = f"Auto: On approved leave today ({on_leave.reason or 'Leave'})"
+                    else:
+                        reason = f"Auto: Not checked in by {effective_cutoff.strftime('%H:%M')}"
                 old_teacher_name = teacher.name or teacher.username
 
                 assignment.status = AssignmentStatus.REPLACED
                 assignment.overridden_reason = reason
                 db.flush()
 
-                # Find next eligible candidate
+                # Find next eligible candidate (strictly require checked-in for emergency replacement)
                 try:
-                    cand_resp = CampusDutyService.evaluate_candidates(db, duty.id)
+                    cand_resp = CampusDutyService.evaluate_candidates(db, duty.id, require_checked_in=True)
                     eligible = [c for c in cand_resp.candidates if c.is_eligible]
                 except Exception as e:
                     logger.warning("Could not evaluate candidates for duty %d: %s", duty.id, e)
@@ -769,7 +780,8 @@ class CampusDutyService:
     def evaluate_candidates(
         db: Session,
         duty_id: int,
-        allowed_department_ids: Optional[Set[int]] = None
+        allowed_department_ids: Optional[Set[int]] = None,
+        require_checked_in: bool = False
     ) -> DutyCandidatesResponse:
         duty = CampusDutyService.get_duty(db, duty_id)
         rules = CampusDutyService.get_rules(db, duty.department_id)
@@ -821,14 +833,23 @@ class CampusDutyService:
                 ).first()
                 if not att_record or att_record.check_in_time is None:
                     present_today = False
-                    is_eligible = False
-                    exclusion_reason = "Teacher has not checked in today"
+                    if require_checked_in:
+                        is_eligible = False
+                        exclusion_reason = "Teacher has not checked in today"
+                    else:
+                        # Faculty can still be chosen initially!
+                        # If absent at duty cutoff, autonomous scheduler will auto-replace them.
+                        score -= 10.0
+                        reasons.append("Pending check-in (Auto-swaps if absent)")
                 elif att_record.check_out_time is not None:
                     present_today = False
                     is_eligible = False
                     exclusion_reason = "Teacher has already checked out"
-            if present_today:
-                reasons.append("Present today")
+                else:
+                    present_today = True
+                    reasons.append("Present & Checked in today")
+            else:
+                reasons.append("Scheduled date")
 
             # 2. Approved Leave Check
             if is_eligible:
@@ -987,8 +1008,8 @@ class CampusDutyService:
                 exclusion_reason=exclusion_reason
             ))
 
-        # Sort: eligible first, then higher score, then fewer duties today
-        candidates.sort(key=lambda c: (c.is_eligible, c.score, -c.duties_today, -c.duties_this_week), reverse=True)
+        # Sort: eligible first, then present_today, then higher score, then fewer duties today
+        candidates.sort(key=lambda c: (c.is_eligible, c.present_today, c.score, -c.duties_today, -c.duties_this_week), reverse=True)
 
         assigned_count = len(assigned_teacher_ids)
         return DutyCandidatesResponse(
