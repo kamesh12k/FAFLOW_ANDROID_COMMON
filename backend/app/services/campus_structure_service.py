@@ -24,7 +24,8 @@ from app.schemas.campus_structure import (
     CampusStructureTreeOut, CampusStructureTreeBlockOut, CampusStructureTreeFloorOut,
     CampusStructureMetricsOut,
     CampusSearchResponse, CampusSearchItemOut,
-    CampusStructureImportValidationOut, CampusStructureImportCommitOut
+    CampusStructureImportValidationOut, CampusStructureImportCommitOut,
+    BlockMultiDepartmentAllocationRequest, BlockMultiDepartmentAllocationResponse
 )
 
 logger = logging.getLogger(__name__)
@@ -574,6 +575,66 @@ class CampusStructureService:
             "updated_count": count
         })
         return count
+
+    @staticmethod
+    def allocate_block_departments(
+        db: Session,
+        block_id: int,
+        data: BlockMultiDepartmentAllocationRequest,
+        user_id: Optional[int] = None
+    ) -> BlockMultiDepartmentAllocationResponse:
+        block = db.query(CampusBlock).filter(CampusBlock.id == block_id).first()
+        if not block:
+            raise HTTPException(status_code=404, detail="Block not found")
+
+        block_floors = {f.id: f for f in block.floors}
+        total_rooms_updated = 0
+        floors_updated = 0
+
+        # Update primary department if explicitly specified
+        if data.primary_department_id is not None:
+            block.department_id = data.primary_department_id if data.primary_department_id > 0 else None
+
+        for floor_id_key, dept_id in (data.floor_allocations or {}).items():
+            try:
+                floor_id = int(floor_id_key)
+            except (ValueError, TypeError):
+                continue
+
+            if floor_id not in block_floors:
+                continue
+
+            resolved_dept_id = dept_id if dept_id and dept_id > 0 else None
+
+            query = db.query(Room).filter(Room.floor_id == floor_id, Room.block_id == block_id)
+            if not data.overwrite_existing:
+                query = query.filter(Room.department_id == None)
+
+            count = query.update({"department_id": resolved_dept_id}, synchronize_session=False)
+            total_rooms_updated += count
+            floors_updated += 1
+
+        # Fallback primary department if none exists on block
+        if block.department_id is None and data.floor_allocations:
+            first_assigned = next((d for d in data.floor_allocations.values() if d and d > 0), None)
+            if first_assigned:
+                block.department_id = first_assigned
+
+        db.commit()
+
+        CampusStructureService._log_audit(db, user_id, "BLOCK_MULTI_DEPARTMENT_ALLOCATED", {
+            "block_id": block_id,
+            "floors_updated": floors_updated,
+            "total_rooms_updated": total_rooms_updated,
+            "primary_department_id": block.department_id
+        })
+
+        return BlockMultiDepartmentAllocationResponse(
+            success=True,
+            updated_rooms=total_rooms_updated,
+            floors_count=floors_updated,
+            message=f"Successfully allocated departments across {floors_updated} floor(s) and {total_rooms_updated} room(s) in block '{block.name}'."
+        )
 
     # ── Structure Tree & Metrics ──────────────────────────────────────────────
 

@@ -20,7 +20,8 @@ from app.schemas.campus_structure import (
     CampusStructureTreeOut, CampusStructureMetricsOut,
     CampusSearchResponse,
     CampusStructureImportValidationOut, CampusStructureImportCommitOut,
-    BlockDutyConfigIn, BlockDutyConfigResultOut
+    BlockDutyConfigIn, BlockDutyConfigResultOut,
+    BlockMultiDepartmentAllocationRequest, BlockMultiDepartmentAllocationResponse
 )
 
 router = APIRouter(prefix="/campus-structure", tags=["Campus Structure Builder"])
@@ -196,6 +197,22 @@ def bulk_assign_block_department(
         db, block_id=block_id, department_id=data.department_id, clear_department=data.clear_department, user_id=current_user.id
     )
     return {"updated_count": count, "message": f"Successfully updated {count} room(s) in block."}
+
+
+@router.post("/blocks/{block_id}/allocate-departments", response_model=BlockMultiDepartmentAllocationResponse)
+def allocate_block_departments(
+    block_id: int,
+    data: BlockMultiDepartmentAllocationRequest,
+    current_user: User = Depends(require_admin),
+    db: Session = Depends(get_db)
+):
+    """Allocates departments across multiple floors/rooms in a specified block."""
+    return CampusStructureService.allocate_block_departments(
+        db=db,
+        block_id=block_id,
+        data=data,
+        user_id=current_user.id
+    )
 
 
 # ── Block Duties: Configure & Auto-Assign ─────────────────────────────────────

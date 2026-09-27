@@ -98,29 +98,78 @@ function SectionLabel({ children }) {
 function BulkAssignDeptModal({ target, type, onClose, onSuccess }) {
   const [departments, setDepartments] = useState([])
   const [loading, setLoading] = useState(true)
+  const [mode, setMode] = useState(type === 'block' && (target?.floors?.length || 0) > 0 ? 'multi_floor' : 'whole')
   const [selectedDeptId, setSelectedDeptId] = useState('')
+  const [floorAllocations, setFloorAllocations] = useState({})
+  const [primaryDeptId, setPrimaryDeptId] = useState(target?.department_id ? String(target.department_id) : '')
+  const [quickDeptId, setQuickDeptId] = useState('')
   const [overwrite, setOverwrite] = useState(true)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
 
+  const floors = (type === 'block' ? target?.floors : null) || []
+
   useEffect(() => {
     departmentsApi.list(true)
-      .then(r => setDepartments(r.data || []))
+      .then(r => {
+        const depts = r.data || []
+        setDepartments(depts)
+        if (type === 'block' && target?.floors) {
+          const initialAlloc = {}
+          target.floors.forEach(f => {
+            const roomsWithDept = (f.rooms || []).filter(rm => rm.department_id)
+            if (roomsWithDept.length > 0) {
+              initialAlloc[f.id] = String(roomsWithDept[0].department_id)
+            } else {
+              initialAlloc[f.id] = ''
+            }
+          })
+          setFloorAllocations(initialAlloc)
+        }
+      })
       .catch(() => setDepartments([]))
       .finally(() => setLoading(false))
-  }, [])
+  }, [target, type])
+
+  const handleApplyQuickDept = () => {
+    if (!quickDeptId) return
+    const updated = {}
+    floors.forEach(f => {
+      updated[f.id] = quickDeptId === 'none' ? 'none' : quickDeptId
+    })
+    setFloorAllocations(updated)
+  }
 
   const handleSubmit = async () => {
     setSaving(true)
     setError('')
     try {
-      const payload = {
-        department_id: selectedDeptId === '' ? null : Number(selectedDeptId),
-        overwrite_existing: overwrite,
-      }
       if (type === 'floor') {
+        const payload = {
+          department_id: selectedDeptId === '' ? null : Number(selectedDeptId),
+          overwrite_existing: overwrite,
+        }
         await campusStructureApi.bulkAssignFloorDepartment(target.id, payload)
+      } else if (mode === 'multi_floor') {
+        const mappedFloors = {}
+        for (const [fId, dId] of Object.entries(floorAllocations)) {
+          if (dId === 'none') {
+            mappedFloors[fId] = null
+          } else if (dId !== '') {
+            mappedFloors[fId] = Number(dId)
+          }
+        }
+        const payload = {
+          floor_allocations: mappedFloors,
+          primary_department_id: primaryDeptId ? Number(primaryDeptId) : null,
+          overwrite_existing: overwrite,
+        }
+        await campusStructureApi.allocateBlockDepartments(target.id, payload)
       } else {
+        const payload = {
+          department_id: selectedDeptId === '' ? null : Number(selectedDeptId),
+          overwrite_existing: overwrite,
+        }
         await campusStructureApi.bulkAssignBlockDepartment(target.id, payload)
       }
       onSuccess()
@@ -139,44 +188,169 @@ function BulkAssignDeptModal({ target, type, onClose, onSuccess }) {
       {error && <div className="p-3 bg-rose-50 border border-rose-200 rounded-xl text-sm text-rose-700">{error}</div>}
       {loading ? <div className="flex justify-center py-6"><Spinner /></div> : (
         <>
-          <p className="text-sm text-slate-600">
-            Bulk assign a department to all rooms on <strong>{titleName}</strong> without setting them room-by-room.
-          </p>
-          <div>
-            <label className="block text-xs font-bold text-slate-600 mb-1">Select Department</label>
-            <select
-              value={selectedDeptId}
-              onChange={e => setSelectedDeptId(e.target.value)}
-              className="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-primary-400"
-            >
-              <option value="">-- Clear / Unassign Department (None) --</option>
-              {departments.map(d => (
-                <option key={d.id} value={d.id}>{d.name} {d.code ? `(${d.code})` : ''}</option>
-              ))}
-            </select>
-          </div>
-          <div className="flex items-center gap-2">
-            <input
-              type="checkbox"
-              id="overwrite_dept"
-              checked={overwrite}
-              onChange={e => setOverwrite(e.target.checked)}
-              className="w-4 h-4 text-primary-600 rounded"
-            />
-            <label htmlFor="overwrite_dept" className="text-xs text-slate-600">
-              Overwrite rooms that already have a department assigned
-            </label>
-          </div>
-          <div className="flex gap-2 pt-2">
+          {type === 'block' && floors.length > 0 && (
+            <div className="flex rounded-xl bg-slate-100 p-1 gap-1">
+              <button
+                type="button"
+                onClick={() => setMode('multi_floor')}
+                className={`flex-1 py-1.5 px-3 rounded-lg text-xs font-bold transition-all ${
+                  mode === 'multi_floor'
+                    ? 'bg-white text-indigo-700 shadow-sm'
+                    : 'text-slate-600 hover:text-slate-800'
+                }`}
+              >
+                🏢 Multi-Dept Floor Allocation
+              </button>
+              <button
+                type="button"
+                onClick={() => setMode('whole')}
+                className={`flex-1 py-1.5 px-3 rounded-lg text-xs font-bold transition-all ${
+                  mode === 'whole'
+                    ? 'bg-white text-indigo-700 shadow-sm'
+                    : 'text-slate-600 hover:text-slate-800'
+                }`}
+              >
+                Single Department (Whole Block)
+              </button>
+            </div>
+          )}
+
+          {type === 'block' && mode === 'multi_floor' && floors.length > 0 ? (
+            <div className="space-y-3">
+              <div className="p-3 bg-indigo-50/70 border border-indigo-100 rounded-xl text-xs text-indigo-900 leading-relaxed">
+                Assign different departments to each floor of <strong>{titleName}</strong>. Faculty from all assigned departments will automatically be eligible for duty scheduling in this block.
+              </div>
+
+              {/* Quick Fill Toolbar */}
+              <div className="flex items-center gap-2 p-2 bg-slate-50 border border-slate-200 rounded-xl">
+                <span className="text-[11px] font-bold text-slate-500 shrink-0">Quick Fill All Floors:</span>
+                <select
+                  value={quickDeptId}
+                  onChange={e => setQuickDeptId(e.target.value)}
+                  className="flex-1 border border-slate-200 rounded-lg px-2 py-1 text-xs bg-white focus:outline-none focus:border-indigo-400"
+                >
+                  <option value="">-- Choose department --</option>
+                  <option value="none">Clear / Unassign</option>
+                  {departments.map(d => (
+                    <option key={d.id} value={d.id}>{d.name} {d.code ? `(${d.code})` : ''}</option>
+                  ))}
+                </select>
+                <button
+                  type="button"
+                  onClick={handleApplyQuickDept}
+                  disabled={!quickDeptId}
+                  className="px-2.5 py-1 bg-slate-200 hover:bg-slate-300 disabled:opacity-40 text-slate-700 rounded-lg text-xs font-bold transition-all shrink-0"
+                >
+                  Apply to All
+                </button>
+              </div>
+
+              {/* Primary Department Selector */}
+              <div className="pt-1">
+                <label className="block text-xs font-bold text-slate-700 mb-1">
+                  Primary Block Department <span className="font-normal text-slate-400">(Optional lead department)</span>
+                </label>
+                <select
+                  value={primaryDeptId}
+                  onChange={e => setPrimaryDeptId(e.target.value)}
+                  className="w-full border border-slate-200 rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-indigo-400"
+                >
+                  <option value="">-- Auto-detect / Shared Block --</option>
+                  {departments.map(d => (
+                    <option key={d.id} value={d.id}>{d.name} {d.code ? `(${d.code})` : ''}</option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Per-Floor Rows */}
+              <div className="border border-slate-200 rounded-xl divide-y divide-slate-100 max-h-60 overflow-y-auto">
+                {floors.map(f => {
+                  const roomCount = (f.rooms || []).length
+                  const currentAlloc = floorAllocations[f.id] || ''
+                  return (
+                    <div key={f.id} className="p-2.5 flex items-center justify-between gap-3 hover:bg-slate-50 transition-colors">
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-1.5">
+                          <span className="font-bold text-slate-800 text-xs truncate">{f.floor_name}</span>
+                          <span className="text-[10px] text-slate-400 font-mono">({roomCount} {roomCount === 1 ? 'room' : 'rooms'})</span>
+                        </div>
+                      </div>
+                      <select
+                        value={currentAlloc}
+                        onChange={e => setFloorAllocations(prev => ({ ...prev, [f.id]: e.target.value }))}
+                        className="w-56 border border-slate-200 rounded-lg px-2.5 py-1.5 text-xs bg-white focus:outline-none focus:border-indigo-500 font-medium"
+                      >
+                        <option value="">-- Keep Existing --</option>
+                        <option value="none">-- Unassigned / Clear Dept --</option>
+                        {departments.map(d => (
+                          <option key={d.id} value={d.id}>{d.name} {d.code ? `(${d.code})` : ''}</option>
+                        ))}
+                      </select>
+                    </div>
+                  )
+                })}
+              </div>
+
+              <div className="flex items-center gap-2 pt-1">
+                <input
+                  type="checkbox"
+                  id="overwrite_multi_dept"
+                  checked={overwrite}
+                  onChange={e => setOverwrite(e.target.checked)}
+                  className="w-4 h-4 text-indigo-600 rounded"
+                />
+                <label htmlFor="overwrite_multi_dept" className="text-xs text-slate-600">
+                  Overwrite rooms that already have a department assigned on these floors
+                </label>
+              </div>
+            </div>
+          ) : (
+            <>
+              <p className="text-sm text-slate-600">
+                Bulk assign a department to all rooms on <strong>{titleName}</strong> without setting them room-by-room.
+              </p>
+              <div>
+                <label className="block text-xs font-bold text-slate-600 mb-1">Select Department</label>
+                <select
+                  value={selectedDeptId}
+                  onChange={e => setSelectedDeptId(e.target.value)}
+                  className="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-primary-400"
+                >
+                  <option value="">-- Clear / Unassign Department (None) --</option>
+                  {departments.map(d => (
+                    <option key={d.id} value={d.id}>{d.name} {d.code ? `(${d.code})` : ''}</option>
+                  ))}
+                </select>
+              </div>
+              <div className="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  id="overwrite_dept"
+                  checked={overwrite}
+                  onChange={e => setOverwrite(e.target.checked)}
+                  className="w-4 h-4 text-primary-600 rounded"
+                />
+                <label htmlFor="overwrite_dept" className="text-xs text-slate-600">
+                  Overwrite rooms that already have a department assigned
+                </label>
+              </div>
+            </>
+          )}
+
+          <div className="flex gap-2 pt-2 border-t border-slate-100">
             <button onClick={onClose} className="flex-1 py-2.5 rounded-xl border border-slate-200 text-sm font-bold text-slate-600 hover:bg-slate-50 transition-all">
               Cancel
             </button>
             <button
               onClick={handleSubmit}
               disabled={saving}
-              className="flex-[2] py-2.5 rounded-xl bg-primary-600 text-white font-bold text-sm disabled:opacity-50 hover:bg-primary-700 transition-all flex items-center justify-center gap-2"
+              className="flex-[2] py-2.5 rounded-xl bg-primary-600 text-white font-bold text-sm disabled:opacity-50 hover:bg-primary-700 transition-all flex items-center justify-center gap-2 shadow-sm"
             >
-              {saving ? <><Spinner size="sm" /> Applying...</> : `🏢 Apply to ${type === 'floor' ? 'Floor' : 'Block'}`}
+              {saving ? <><Spinner size="sm" /> Applying...</> : (
+                mode === 'multi_floor' && type === 'block'
+                  ? '🏢 Allocate Departments to Block'
+                  : `🏢 Apply to ${type === 'floor' ? 'Floor' : 'Block'}`
+              )}
             </button>
           </div>
         </>
@@ -1627,13 +1801,14 @@ function BlockDutyConfigModal({ block, onClose, onSuccess }) {
 // ─────────────────────────────────────────────────────────────────────────────
 const BLOCK_COLORS = ['#4F46E5','#0EA5E9','#10B981','#F59E0B','#EF4444','#8B5CF6','#EC4899','#14B8A6']
 
-function BlockModal({ block, onClose, onSuccess }) {
+function BlockModal({ block, departments = [], onClose, onSuccess }) {
   const isEdit = !!block
   const [form, setForm] = useState({
     name: block?.name || '',
     prefix: block?.code || block?.prefix || '',
     color_hex: block?.color_hex || BLOCK_COLORS[0],
     description: block?.description || '',
+    department_id: block?.department_id ? String(block.department_id) : '',
     is_active: block?.is_active ?? true,
   })
   const [saving, setSaving] = useState(false)
@@ -1650,6 +1825,7 @@ function BlockModal({ block, onClose, onSuccess }) {
         name: form.name.trim(),
         code: code,
         description: form.description || null,
+        department_id: form.department_id ? Number(form.department_id) : null,
         is_active: form.is_active ?? true,
       }
       if (isEdit) {
@@ -1693,6 +1869,20 @@ function BlockModal({ block, onClose, onSuccess }) {
           </div>
         </div>
         <div className="col-span-2">
+          <label className="block text-xs font-bold text-slate-600 mb-1">Primary Department (Optional)</label>
+          <select
+            value={form.department_id}
+            onChange={e => upd('department_id', e.target.value)}
+            className="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-primary-400"
+          >
+            <option value="">-- No Primary Department / Multi-Dept Block --</option>
+            {departments.map(d => (
+              <option key={d.id} value={d.id}>{d.name} {d.code ? `(${d.code})` : ''}</option>
+            ))}
+          </select>
+          <p className="text-[10px] text-slate-400 mt-1">If this block is primarily occupied by a single department, choose it here. You can also assign multiple departments across different floors.</p>
+        </div>
+        <div className="col-span-2">
           <label className="block text-xs font-bold text-slate-600 mb-1">Description</label>
           <textarea value={form.description} onChange={e => upd('description', e.target.value)} rows={2}
             placeholder="Optional notes about this block"
@@ -1715,7 +1905,7 @@ function BlockModal({ block, onClose, onSuccess }) {
 // ─────────────────────────────────────────────────────────────────────────────
 // Room & Department Mapping Panel (In-Place, Zero Navigation)
 // ─────────────────────────────────────────────────────────────────────────────
-function RoomMappingPanel({ tree, departments, classes, onRefresh, canEdit }) {
+function RoomMappingPanel({ tree, departments, classes, onRefresh, canEdit, onBulkAssignDept }) {
   const [expandedBlocks, setExpandedBlocks] = useState({})
   const [expandedFloors, setExpandedFloors] = useState({})
   const [saving, setSaving] = useState({})
@@ -1837,7 +2027,7 @@ function RoomMappingPanel({ tree, departments, classes, onRefresh, canEdit }) {
       {blocks.map(block => {
         // Check if this block has any matching rooms
         const blockFloors = block.floors || []
-        const blockRoomsAll = blockFloors.flatMap(f => (f.rooms || []).map(r => ({ ...r, floor })))
+        const blockRoomsAll = blockFloors.flatMap(f => f.rooms || [])
         const blockVisible = blockFloors.some(f =>
           (f.rooms || []).some(room => {
             if (filterDept === 'none' && room.department_id) return false
@@ -1872,11 +2062,21 @@ function RoomMappingPanel({ tree, departments, classes, onRefresh, canEdit }) {
               </div>
               {canEdit && (
                 <div className="flex items-center gap-2" onClick={e => e.stopPropagation()}>
+                  {onBulkAssignDept && (
+                    <button
+                      type="button"
+                      onClick={() => onBulkAssignDept(block)}
+                      className="px-2.5 py-1.5 rounded-lg text-xs font-bold bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 transition-all flex items-center gap-1 shrink-0"
+                      title="Open Multi-Department Floor Allocation for this block"
+                    >
+                      🏢 Allocate Depts
+                    </button>
+                  )}
                   <select
                     defaultValue=""
                     onChange={e => { if (e.target.value !== '') bulkAssignBlock(block, e.target.value === 'none' ? null : e.target.value) }}
                     className="border border-slate-200 rounded-lg px-2 py-1.5 text-xs focus:outline-none focus:border-primary-400 max-w-[160px]"
-                    title="Bulk assign all rooms in block to a department">
+                    title="Bulk assign all rooms in block to a single department">
                     <option value="">🏢 Assign Whole Block…</option>
                     <option value="none">— Clear Department —</option>
                     {departments.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
@@ -2295,6 +2495,10 @@ export default function CampusStructureBuilder({ readOnly = false }) {
           classes={classes}
           onRefresh={fetchData}
           canEdit={canEdit}
+          onBulkAssignDept={target => setBulkDeptModal({
+            target: target.floor_name ? target : target,
+            type: target.floor_name ? 'floor' : 'block'
+          })}
         />
       ) : (
         <div>
@@ -2359,6 +2563,7 @@ export default function CampusStructureBuilder({ readOnly = false }) {
         {blockModal !== null && (
           <BlockModal
             block={blockModal === 'new' ? null : blockModal}
+            departments={departments}
             onClose={() => setBlockModal(null)}
             onSuccess={fetchData}
           />
@@ -2401,7 +2606,8 @@ export default function CampusStructureBuilder({ readOnly = false }) {
       <Modal
         isOpen={bulkDeptModal !== null}
         onClose={() => setBulkDeptModal(null)}
-        title={`🏢 Bulk Assign Department — ${bulkDeptModal?.type === 'floor' ? bulkDeptModal?.target?.floor_name : bulkDeptModal?.target?.name}`}
+        title={bulkDeptModal?.type === 'floor' ? `🏢 Assign Department — ${bulkDeptModal?.target?.floor_name}` : `🏢 Allocate Departments — ${bulkDeptModal?.target?.name}`}
+        maxWidth={bulkDeptModal?.type === 'block' ? "max-w-2xl" : "max-w-lg"}
       >
         {bulkDeptModal && (
           <BulkAssignDeptModal

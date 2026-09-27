@@ -234,6 +234,19 @@ class BulkBlockAssignDepartmentRequest(BaseModel):
     clear_department: bool = False
 
 
+class BlockMultiDepartmentAllocationRequest(BaseModel):
+    floor_allocations: Dict[int, Optional[int]] = Field(..., description="Map of floor_id -> department_id (null to clear/unassign)")
+    primary_department_id: Optional[int] = Field(None, description="Optional primary department for the block itself")
+    overwrite_existing: bool = Field(True, description="Whether to overwrite existing room departments on each floor")
+
+
+class BlockMultiDepartmentAllocationResponse(BaseModel):
+    success: bool
+    updated_rooms: int
+    floors_count: int
+    message: str
+
+
 # ── Duplicate Structure ───────────────────────────────────────────────────────
 
 class DuplicateBlockRequest(BaseModel):

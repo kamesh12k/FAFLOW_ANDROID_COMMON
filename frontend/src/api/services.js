@@ -474,6 +474,7 @@ export const campusStructureApi = {
   bulkAssign: (data) => api.post('/campus-structure/rooms/bulk-assign', data),
   bulkAssignFloorDepartment: (floorId, data) => api.post(`/campus-structure/floors/${floorId}/bulk-assign-department`, data),
   bulkAssignBlockDepartment: (blockId, data) => api.post(`/campus-structure/blocks/${blockId}/bulk-assign-department`, data),
+  allocateBlockDepartments: (blockId, data) => api.post(`/campus-structure/blocks/${blockId}/allocate-departments`, data),
   configureBlockDuties: (blockId, data) => api.post(`/campus-structure/blocks/${blockId}/duties/configure-and-assign`, data),
 
   // Export / Import

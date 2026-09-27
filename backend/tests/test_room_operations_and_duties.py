@@ -13,7 +13,7 @@ from app.services import room_service
 from app.services.campus_duty_service import CampusDutyService
 from app.schemas.campus_structure import (
     BulkRoomGenerateRequest, SmartBlockAutoFillRequest, SmartFloorConfig,
-    RoomPatternPreviewRequest
+    RoomPatternPreviewRequest, BlockMultiDepartmentAllocationRequest
 )
 from app.schemas.room import BulkRoomAssignIn
 
@@ -139,6 +139,64 @@ def test_bulk_assign_department_floor_and_block(db_session):
     assert r1.department_id == dept.id
     assert r2.department_id == dept.id
     assert r3.department_id == dept.id
+
+
+def test_allocate_block_departments_multi_department_allocation(db_session):
+    """Verifies allocating distinct departments per floor to a single block."""
+    db = db_session
+    dept_cs = Department(name="Computer Science", code="CS_DEPT")
+    dept_mech = Department(name="Mechanical Eng", code="MECH_DEPT")
+    db.add_all([dept_cs, dept_mech])
+    db.flush()
+
+    block = CampusBlock(name="Engineering Block", code="ENG_BLK", floors_count=2)
+    db.add(block)
+    db.flush()
+
+    f0 = CampusFloor(block_id=block.id, floor_number=0, floor_name="Ground Floor")
+    f1 = CampusFloor(block_id=block.id, floor_number=1, floor_name="First Floor")
+    db.add_all([f0, f1])
+    db.flush()
+
+    r0_1 = Room(room_number="ENG001", block_id=block.id, floor_id=f0.id)
+    r0_2 = Room(room_number="ENG002", block_id=block.id, floor_id=f0.id)
+    r1_1 = Room(room_number="ENG101", block_id=block.id, floor_id=f1.id)
+    r1_2 = Room(room_number="ENG102", block_id=block.id, floor_id=f1.id)
+    db.add_all([r0_1, r0_2, r1_1, r1_2])
+    db.commit()
+
+    alloc_req = BlockMultiDepartmentAllocationRequest(
+        floor_allocations={
+            f0.id: dept_cs.id,
+            f1.id: dept_mech.id,
+        },
+        primary_department_id=dept_cs.id,
+        overwrite_existing=True
+    )
+
+    res = CampusStructureService.allocate_block_departments(db, block_id=block.id, data=alloc_req)
+    assert res.success is True
+    assert res.updated_rooms == 4
+    assert res.floors_count == 2
+
+    db.refresh(block)
+    db.refresh(r0_1)
+    db.refresh(r0_2)
+    db.refresh(r1_1)
+    db.refresh(r1_2)
+
+    assert block.department_id == dept_cs.id
+    assert r0_1.department_id == dept_cs.id
+    assert r0_2.department_id == dept_cs.id
+    assert r1_1.department_id == dept_mech.id
+    assert r1_2.department_id == dept_mech.id
+
+    # Verify get_structure_tree associates both departments with the block
+    tree = CampusStructureService.get_structure_tree(db)
+    eng_block = next(b for b in tree.blocks if b.id == block.id)
+    assoc_depts = {d["id"]: d["name"] for d in eng_block.associated_departments}
+    assert dept_cs.id in assoc_depts
+    assert dept_mech.id in assoc_depts
 
 
 def test_bulk_assign_rooms_service(db_session):
