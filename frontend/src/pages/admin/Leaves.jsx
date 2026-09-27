@@ -1,5 +1,5 @@
 import { useEffect, useState, useMemo } from 'react'
-import { leavesApi, adminApi, departmentsApi, leaveBalancesApi } from '../../api/services'
+import { leavesApi, adminApi, departmentsApi, leaveBalancesApi, leavePoliciesApi } from '../../api/services'
 import { Spinner, StatusBadge, Modal, EmptyState, AssignmentTypeBadge } from '../../components/ui'
 import {
   SwapIcon,
@@ -244,15 +244,21 @@ export default function AdminLeaves() {
   const loadBalances = (deptId = selectedDeptId, ay = academicYear) => {
     setLoadingBalances(true)
     leaveBalancesApi.getDepartmentOverview(deptId ? Number(deptId) : undefined, ay)
-      .then(r => setBalancesData(r.data || []))
+      .then(r => {
+        const summaries = Array.isArray(r.data) ? r.data : (r.data?.staff_summaries || [])
+        setBalancesData(summaries)
+      })
       .catch(err => setToast({ type: 'error', message: err.response?.data?.detail || 'Failed to load staff leave balances.' }))
       .finally(() => setLoadingBalances(false))
   }
 
   useEffect(() => {
-    leaveBalancesApi.getActivePolicies()
-      .then(r => setActivePolicies(r.data || []))
-      .catch(() => {})
+    const fetcher = leavePoliciesApi?.getActivePolicies || leavePoliciesApi?.getActive || leaveBalancesApi?.getActivePolicies
+    if (fetcher) {
+      fetcher()
+        .then(r => setActivePolicies(r.data || []))
+        .catch(() => {})
+    }
   }, [])
 
   useEffect(() => {
@@ -279,12 +285,10 @@ export default function AdminLeaves() {
     }
     setAdjustModal(prev => ({ ...prev, loading: true, error: null }))
     try {
-      await leaveBalancesApi.adjustBalance({
-        teacher_id: adjustModal.teacher.teacher_id,
+      await leaveBalancesApi.adjustBalance(adjustModal.teacher.teacher_id, {
         policy_id: Number(adjustModal.policy_id),
-        days: daysNum,
+        change: daysNum,
         reason: adjustModal.reason.trim(),
-        academic_year: academicYear,
       })
       setToast({ type: 'success', message: `Adjusted balance for ${adjustModal.teacher.teacher_name}.` })
       setAdjustModal(null)

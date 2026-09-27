@@ -18,6 +18,38 @@ class RoomType(str, enum.Enum):
     store_room = "store_room"
     other = "other"
 
+    @classmethod
+    def _missing_(cls, value):
+        if isinstance(value, str):
+            val = value.strip().lower()
+            aliases = {
+                "seminar_room": cls.seminar_hall,
+                "seminar": cls.seminar_hall,
+                "seminar hall": cls.seminar_hall,
+                "seminar-hall": cls.seminar_hall,
+                "lecture_hall": cls.classroom,
+                "lecture": cls.classroom,
+                "lecture hall": cls.classroom,
+                "lecture-hall": cls.classroom,
+                "class": cls.classroom,
+                "exam_hall": cls.examination_hall,
+                "exam": cls.examination_hall,
+                "examination": cls.examination_hall,
+                "examination hall": cls.examination_hall,
+                "meeting": cls.meeting_room,
+                "meeting room": cls.meeting_room,
+                "store": cls.store_room,
+                "store room": cls.store_room,
+                "staff": cls.staff_room,
+                "staff room": cls.staff_room,
+            }
+            if val in aliases:
+                return aliases[val]
+            for member in cls:
+                if member.value.lower() == val:
+                    return member
+        return None
+
 
 class Room(Base):
     __tablename__ = "rooms"

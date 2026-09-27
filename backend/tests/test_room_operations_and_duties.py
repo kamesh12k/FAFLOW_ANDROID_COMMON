@@ -319,3 +319,45 @@ def test_autonomous_duty_activation_and_block_department_identification(db_sessi
     assert res["success"] is True
     assert res["discipline_duties_count"] >= 1 or res["wing_duties_count"] >= 1
     assert res["total_duties_active"] >= 1
+
+
+def test_smart_autofill_with_mixed_overrides_and_aliases(db_session):
+    """Verifies Smart Campus Auto-Fill Wizard with mixed room overrides and synonyms (e.g. seminar_room, lecture_hall)."""
+    db = db_session
+    from app.schemas.campus_structure import SmartBlockAutoFillRequest, SmartFloorConfig
+
+    req = SmartBlockAutoFillRequest(
+        block_name="Engineering Annex",
+        block_code="EA",
+        description="Engineering Annex with labs and seminar halls",
+        floors=[
+            SmartFloorConfig(
+                floor_number=0,
+                floor_name="Ground Floor",
+                room_count=12,
+                start_num=1,
+                pattern="{floor_code}{number:02d}",
+                room_type=RoomType.classroom,
+                room_type_overrides={
+                    "009": "seminar_room",  # Synonym for seminar_hall
+                    "9": "seminar_room",
+                    "012": "lecture_hall",  # Synonym for classroom
+                    "12": "lecture_hall",
+                    "003": "laboratory",
+                }
+            )
+        ]
+    )
+
+    res = CampusStructureService.smart_autofill_block(db, req)
+    assert res.total_floors_created == 1
+    assert res.total_rooms_created == 12
+
+    rooms = db.query(Room).filter(Room.block_id == res.block.id).all()
+    rooms_by_num = {r.room_number: r.room_type for r in rooms}
+
+    assert rooms_by_num["009"] == RoomType.seminar_hall
+    assert rooms_by_num["012"] == RoomType.classroom
+    assert rooms_by_num["003"] == RoomType.laboratory
+    assert rooms_by_num["001"] == RoomType.classroom
+

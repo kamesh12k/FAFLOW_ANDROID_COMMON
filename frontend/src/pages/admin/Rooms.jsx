@@ -500,8 +500,10 @@ export default function AdminRooms() {
                         <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md uppercase ${
                           r.room_type === 'lab' || r.room_type === 'laboratory'
                             ? 'bg-purple-100 text-purple-700'
-                            : r.room_type === 'seminar_room'
+                            : r.room_type === 'seminar_room' || r.room_type === 'seminar_hall'
                             ? 'bg-teal-100 text-teal-700'
+                            : r.room_type === 'examination_hall'
+                            ? 'bg-rose-100 text-rose-700'
                             : 'bg-gray-100 text-gray-600'
                         }`}>
                           {r.room_type}
@@ -698,8 +700,10 @@ export default function AdminRooms() {
                             <span className={`text-xs font-semibold px-2.5 py-0.5 rounded-full ${
                               r.room_type === 'lab' || r.room_type === 'laboratory'
                                 ? 'bg-purple-100 text-purple-700'
-                                : r.room_type === 'seminar_room'
+                                : r.room_type === 'seminar_room' || r.room_type === 'seminar_hall'
                                 ? 'bg-teal-100 text-teal-700'
+                                : r.room_type === 'examination_hall'
+                                ? 'bg-rose-100 text-rose-700'
                                 : 'bg-gray-100 text-gray-600'
                             }`}>
                               {r.room_type}
@@ -757,9 +761,13 @@ export default function AdminRooms() {
               <select className="input" value={form.room_type} onChange={e => setForm({ ...form, room_type: e.target.value })}>
                 <option value="classroom">Classroom</option>
                 <option value="laboratory">Laboratory / Lab</option>
-                <option value="seminar_room">Seminar Room</option>
-                <option value="lecture_hall">Lecture Hall</option>
+                <option value="seminar_hall">Seminar Hall</option>
+                <option value="examination_hall">Examination Hall</option>
+                <option value="staff_room">Staff Room</option>
                 <option value="office">Office</option>
+                <option value="auditorium">Auditorium</option>
+                <option value="meeting_room">Meeting Room</option>
+                <option value="store_room">Store Room</option>
                 <option value="other">Other</option>
               </select>
             </div>
@@ -883,8 +891,10 @@ export default function AdminRooms() {
               <select className="input" value={bulkForm.room_type} onChange={e => setBulkForm({ ...bulkForm, room_type: e.target.value })}>
                 <option value="classroom">Classroom</option>
                 <option value="laboratory">Laboratory</option>
-                <option value="seminar_room">Seminar Room</option>
-                <option value="lecture_hall">Lecture Hall</option>
+                <option value="seminar_hall">Seminar Hall</option>
+                <option value="examination_hall">Examination Hall</option>
+                <option value="auditorium">Auditorium</option>
+                <option value="other">Other</option>
               </select>
             </div>
             <div>
@@ -924,9 +934,13 @@ export default function AdminRooms() {
               <select className="input" value={editForm.room_type} onChange={e => setEditForm({ ...editForm, room_type: e.target.value })}>
                 <option value="classroom">Classroom</option>
                 <option value="laboratory">Laboratory / Lab</option>
-                <option value="seminar_room">Seminar Room</option>
-                <option value="lecture_hall">Lecture Hall</option>
+                <option value="seminar_hall">Seminar Hall</option>
+                <option value="examination_hall">Examination Hall</option>
+                <option value="staff_room">Staff Room</option>
                 <option value="office">Office</option>
+                <option value="auditorium">Auditorium</option>
+                <option value="meeting_room">Meeting Room</option>
+                <option value="store_room">Store Room</option>
                 <option value="other">Other</option>
               </select>
             </div>
@@ -1068,9 +1082,13 @@ export default function AdminRooms() {
               >
                 <option value="classroom">Classroom</option>
                 <option value="laboratory">Laboratory / Lab</option>
-                <option value="seminar_room">Seminar Room</option>
-                <option value="lecture_hall">Lecture Hall</option>
+                <option value="seminar_hall">Seminar Hall</option>
+                <option value="examination_hall">Examination Hall</option>
+                <option value="staff_room">Staff Room</option>
                 <option value="office">Office</option>
+                <option value="auditorium">Auditorium</option>
+                <option value="meeting_room">Meeting Room</option>
+                <option value="store_room">Store Room</option>
                 <option value="other">Other</option>
               </select>
               <p className="text-[11px] text-gray-500 mt-1">Change venue classification for all {selectedRoomIds.length} rooms.</p>

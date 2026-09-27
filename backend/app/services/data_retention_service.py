@@ -13,6 +13,7 @@ from app.models.notification import Notification, PushSubscription
 from app.models.leave import LeaveRequest, AlterAssignment
 from app.models.credit import CreditTransaction, TeacherCredit
 from app.models.staff_leave import StaffLeaveRequest, StaffCreditTransaction, StaffCredit
+from app.models.leave_policy import LeaveBalanceTransaction
 from app.models.timetable_submission import TimetableSubmission
 from app.models.day_order_calendar import CalendarDay
 from app.models.academic_calendar import AcademicYear, Semester
@@ -450,6 +451,8 @@ def execute_selective_purge(
             q = q.filter(StaffLeaveRequest.created_at <= end_dt)
         leave_ids = [l.id for l in q.all()]
         if leave_ids:
+            # Unlink staff credit transactions referencing related_leave_id
+            db.query(StaffCreditTransaction).filter(StaffCreditTransaction.related_leave_id.in_(leave_ids)).update({StaffCreditTransaction.related_leave_id: None}, synchronize_session=False)
             cnt = db.query(StaffLeaveRequest).filter(StaffLeaveRequest.id.in_(leave_ids)).delete(synchronize_session=False)
             purged_counts["staff_leaves"] = cnt
             total_purged += cnt
@@ -471,8 +474,12 @@ def execute_selective_purge(
         if leave_ids:
             # Delete child AlterAssignments first
             db.query(AlterAssignment).filter(AlterAssignment.leave_request_id.in_(leave_ids)).delete(synchronize_session=False)
-            # Also nullify or delete related credit transactions referencing leave_request_id
-            db.query(CreditTransaction).filter(CreditTransaction.leave_request_id.in_(leave_ids)).delete(synchronize_session=False)
+            # Unlink related credit transactions referencing related_leave_id
+            db.query(CreditTransaction).filter(CreditTransaction.related_leave_id.in_(leave_ids)).update({CreditTransaction.related_leave_id: None}, synchronize_session=False)
+            # Unlink notifications referencing related_leave_id
+            db.query(Notification).filter(Notification.related_leave_id.in_(leave_ids)).update({Notification.related_leave_id: None}, synchronize_session=False)
+            # Unlink leave balance transactions referencing leave_request_id
+            db.query(LeaveBalanceTransaction).filter(LeaveBalanceTransaction.leave_request_id.in_(leave_ids)).update({LeaveBalanceTransaction.leave_request_id: None}, synchronize_session=False)
             cnt = db.query(LeaveRequest).filter(LeaveRequest.id.in_(leave_ids)).delete(synchronize_session=False)
             purged_counts["leaves"] = cnt
             total_purged += cnt
@@ -673,7 +680,9 @@ def check_and_run_auto_cleanup(db: Session, force: bool = False) -> dict[str, An
             leave_ids = [l.id for l in old_leaves]
             if leave_ids:
                 db.query(AlterAssignment).filter(AlterAssignment.leave_request_id.in_(leave_ids)).delete(synchronize_session=False)
-                db.query(CreditTransaction).filter(CreditTransaction.leave_request_id.in_(leave_ids)).delete(synchronize_session=False)
+                db.query(CreditTransaction).filter(CreditTransaction.related_leave_id.in_(leave_ids)).update({CreditTransaction.related_leave_id: None}, synchronize_session=False)
+                db.query(Notification).filter(Notification.related_leave_id.in_(leave_ids)).update({Notification.related_leave_id: None}, synchronize_session=False)
+                db.query(LeaveBalanceTransaction).filter(LeaveBalanceTransaction.leave_request_id.in_(leave_ids)).update({LeaveBalanceTransaction.leave_request_id: None}, synchronize_session=False)
                 cnt = db.query(LeaveRequest).filter(LeaveRequest.id.in_(leave_ids)).delete(synchronize_session=False)
                 purged_counts["leaves"] = cnt
                 total_purged += cnt

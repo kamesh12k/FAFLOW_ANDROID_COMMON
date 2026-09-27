@@ -242,6 +242,7 @@ export const policyEnforcementApi = {
 
 export const leavePoliciesApi = {
   getActive: () => api.get('/leave-policies/active'),
+  getActivePolicies: () => api.get('/leave-policies/active'),
   getById: (id) => api.get(`/leave-policies/${id}`),
   update: (id, data) => api.put(`/leave-policies/${id}`, data),
   validate: (data) => api.post('/leaves/validate', data),
@@ -250,10 +251,36 @@ export const leavePoliciesApi = {
 export const leaveBalancesApi = {
   getMyBalances: (academicYear) => api.get('/leave-balances/me', { params: academicYear ? { academic_year: academicYear } : {} }),
   getMyPolicyBalance: (leaveType, academicYear) => api.get(`/leave-balances/me/${leaveType}`, { params: academicYear ? { academic_year: academicYear } : {} }),
-  getDepartmentOverview: (params) => api.get('/leave-balances/department', { params }),
+  getActivePolicies: () => api.get('/leave-policies/active'),
+  getDepartmentOverview: (deptIdOrParams, maybeAy) => {
+    let params = {}
+    if (typeof deptIdOrParams === 'object' && deptIdOrParams !== null) {
+      params = deptIdOrParams
+    } else {
+      if (deptIdOrParams !== undefined && deptIdOrParams !== null) params.department_id = deptIdOrParams
+      if (maybeAy) params.academic_year = maybeAy
+    }
+    return api.get('/leave-balances/department', { params })
+  },
   getDepartmentTeacherDetail: (teacherId, academicYear) => api.get(`/leave-balances/department/${teacherId}`, { params: academicYear ? { academic_year: academicYear } : {} }),
   getTeacherLedger: (teacherId, params) => api.get(`/leave-balances/${teacherId}/ledger`, { params }),
-  adjustBalance: (teacherId, data) => api.post(`/leave-balances/${teacherId}/adjust`, data),
+  adjustBalance: (teacherIdOrPayload, maybeData) => {
+    if (typeof teacherIdOrPayload === 'object' && teacherIdOrPayload !== null) {
+      const { teacher_id, policy_id, days, change, reason } = teacherIdOrPayload
+      return api.post(`/leave-balances/${teacher_id}/adjust`, {
+        policy_id: Number(policy_id),
+        change: change !== undefined ? Number(change) : Number(days),
+        reason: reason || '',
+      })
+    }
+    const data = maybeData || {}
+    const changeVal = data.change !== undefined ? data.change : data.days
+    return api.post(`/leave-balances/${teacherIdOrPayload}/adjust`, {
+      policy_id: Number(data.policy_id),
+      change: Number(changeVal),
+      reason: data.reason || '',
+    })
+  },
   consumeLeave: (leaveId) => api.post(`/leaves/${leaveId}/consume`),
   consumeDueLeaves: () => api.post('/leaves/consume-due'),
 }

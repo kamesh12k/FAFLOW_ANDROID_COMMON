@@ -9,8 +9,10 @@ import pytest
 
 from app.models.audit_log import AuditLog
 from app.models.notification import Notification
-from app.models.leave import LeaveRequest, AlterAssignment
+from app.models.leave import LeaveRequest, AlterAssignment, LeaveStatus
 from app.models.credit import CreditTransaction
+from app.models.staff_leave import StaffLeaveRequest, StaffCreditTransaction
+from app.models.operational_staff import OperationalStaff
 from app.models.timetable_submission import TimetableSubmission
 from app.models.day_order_calendar import CalendarDay
 from app.models.user import User, Role
@@ -145,6 +147,140 @@ class TestDataRetentionServiceUnit:
         assert res["total_purged"] >= 2
         assert res["purged_counts"].get("audit_logs", 0) >= 1
         assert res["purged_counts"].get("notifications", 0) >= 1
+
+    def test_purge_leaves_with_foreign_key_safety(self, db_session):
+        from datetime import date
+        from app.models.department import Department
+        dept = Department(name="Computer Science", code="CS")
+        db_session.add(dept)
+        db_session.commit()
+
+        teacher = User(name="Faculty One", username="fac1", email="fac1@test.com", password_hash="fake", role=Role.teacher, department_id=dept.id, is_active=True)
+        substitute = User(name="Faculty Two", username="fac2", email="fac2@test.com", password_hash="fake", role=Role.teacher, department_id=dept.id, is_active=True)
+        db_session.add_all([teacher, substitute])
+        db_session.commit()
+
+        old_time = datetime.now(timezone.utc) - timedelta(days=120)
+        leave = LeaveRequest(
+            teacher_id=teacher.id,
+            date=date.today() - timedelta(days=120),
+            day_order=1,
+            period_number=1,
+            reason="Conference",
+            status=LeaveStatus.approved,
+            created_at=old_time,
+        )
+        db_session.add(leave)
+        db_session.commit()
+        leave_id = leave.id
+
+        assignment = AlterAssignment(
+            leave_request_id=leave.id,
+            substitute_teacher_id=substitute.id,
+        )
+        credit = CreditTransaction(
+            teacher_id=substitute.id,
+            change=1,
+            reason="Substitution for Faculty One",
+            related_leave_id=leave.id,
+            created_at=old_time,
+        )
+        notif = Notification(
+            user_id=teacher.id,
+            title="Leave Approved",
+            body="Approved",
+            event_type="leave",
+            related_leave_id=leave.id,
+            created_at=old_time,
+        )
+        db_session.add_all([assignment, credit, notif])
+        db_session.commit()
+        credit_id = credit.id
+        notif_id = notif.id
+
+        exec_req = SelectivePurgeExecuteRequest(
+            targets=["leaves"],
+            filter_type="all_records",
+            create_backup_first=False,
+            confirmation_phrase="PURGE DATA",
+        )
+        result = data_retention_service.execute_selective_purge(
+            db=db_session,
+            req=exec_req,
+            actor_user_id=teacher.id,
+            actor_name="Admin",
+        )
+        assert result.success is True
+        assert result.purged_counts["leaves"] == 1
+
+        # Check that leave is deleted, assignment is deleted, and credit/notification are unlinked (SET NULL)
+        assert db_session.query(LeaveRequest).filter(LeaveRequest.id == leave_id).first() is None
+        assert db_session.query(AlterAssignment).filter(AlterAssignment.leave_request_id == leave_id).first() is None
+        reloaded_credit = db_session.query(CreditTransaction).filter(CreditTransaction.id == credit_id).first()
+        assert reloaded_credit is not None
+        assert reloaded_credit.related_leave_id is None
+        reloaded_notif = db_session.query(Notification).filter(Notification.id == notif_id).first()
+        assert reloaded_notif is not None
+        assert reloaded_notif.related_leave_id is None
+
+    def test_purge_staff_leaves(self, db_session):
+        from datetime import date
+        from app.models.operational_staff import StaffCategory
+        staff = OperationalStaff(
+            employee_code="TECH001",
+            full_name="Lab Tech",
+            category=StaffCategory.laboratory,
+            designation="Lab Assistant",
+            phone_number="9999999999",
+            email="tech@college.edu",
+        )
+        db_session.add(staff)
+        db_session.commit()
+
+        old_time = datetime.now(timezone.utc) - timedelta(days=120)
+        s_leave = StaffLeaveRequest(
+            staff_id=staff.id,
+            start_date=date.today() - timedelta(days=120),
+            end_date=date.today() - timedelta(days=120),
+            reason="Personal",
+            status="approved",
+            created_at=old_time,
+        )
+        db_session.add(s_leave)
+        db_session.commit()
+        s_leave_id = s_leave.id
+
+        s_credit = StaffCreditTransaction(
+            staff_id=staff.id,
+            change=-1.0,
+            balance_after=11.0,
+            category="leave_deduction",
+            reason="Leave deduction",
+            related_leave_id=s_leave.id,
+            created_at=old_time,
+        )
+        db_session.add(s_credit)
+        db_session.commit()
+        s_credit_id = s_credit.id
+
+        exec_req = SelectivePurgeExecuteRequest(
+            targets=["staff_leaves"],
+            filter_type="all_records",
+            create_backup_first=False,
+            confirmation_phrase="PURGE DATA",
+        )
+        result = data_retention_service.execute_selective_purge(
+            db=db_session,
+            req=exec_req,
+            actor_user_id=None,
+            actor_name="Admin",
+        )
+        assert result.success is True
+        assert result.purged_counts["staff_leaves"] == 1
+        assert db_session.query(StaffLeaveRequest).filter(StaffLeaveRequest.id == s_leave_id).first() is None
+        reloaded_sc = db_session.query(StaffCreditTransaction).filter(StaffCreditTransaction.id == s_credit_id).first()
+        assert reloaded_sc is not None
+        assert reloaded_sc.related_leave_id is None
 
 
 class TestDataRetentionRoutes:

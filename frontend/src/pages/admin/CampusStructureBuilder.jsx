@@ -22,14 +22,19 @@ function formatRoomNumber(pattern, num, floorNum, blockPrefix = '') {
 }
 
 const ROOM_TYPE_COLORS = {
-  classroom:    { bg: 'bg-blue-50',   text: 'text-blue-700',   border: 'border-blue-200' },
-  laboratory:   { bg: 'bg-violet-50', text: 'text-violet-700', border: 'border-violet-200' },
-  lecture_hall: { bg: 'bg-amber-50',  text: 'text-amber-700',  border: 'border-amber-200' },
-  seminar_room: { bg: 'bg-teal-50',   text: 'text-teal-700',   border: 'border-teal-200' },
-  staff_room:   { bg: 'bg-slate-50',  text: 'text-slate-600',  border: 'border-slate-200' },
-  office:       { bg: 'bg-emerald-50',text: 'text-emerald-700',border: 'border-emerald-200' },
-  auditorium:   { bg: 'bg-rose-50',   text: 'text-rose-700',   border: 'border-rose-200' },
-  other:        { bg: 'bg-gray-50',   text: 'text-gray-600',   border: 'border-gray-200' },
+  classroom:        { bg: 'bg-blue-50',   text: 'text-blue-700',   border: 'border-blue-200' },
+  laboratory:       { bg: 'bg-violet-50', text: 'text-violet-700', border: 'border-violet-200' },
+  lab:              { bg: 'bg-violet-50', text: 'text-violet-700', border: 'border-violet-200' },
+  seminar_hall:     { bg: 'bg-teal-50',   text: 'text-teal-700',   border: 'border-teal-200' },
+  seminar_room:     { bg: 'bg-teal-50',   text: 'text-teal-700',   border: 'border-teal-200' },
+  lecture_hall:     { bg: 'bg-amber-50',  text: 'text-amber-700',  border: 'border-amber-200' },
+  examination_hall: { bg: 'bg-rose-50',   text: 'text-rose-700',   border: 'border-rose-200' },
+  staff_room:       { bg: 'bg-slate-50',  text: 'text-slate-600',  border: 'border-slate-200' },
+  office:           { bg: 'bg-emerald-50',text: 'text-emerald-700',border: 'border-emerald-200' },
+  auditorium:       { bg: 'bg-purple-50', text: 'text-purple-700', border: 'border-purple-200' },
+  meeting_room:     { bg: 'bg-cyan-50',   text: 'text-cyan-700',   border: 'border-cyan-200' },
+  store_room:       { bg: 'bg-amber-50',  text: 'text-amber-700',  border: 'border-amber-200' },
+  other:            { bg: 'bg-gray-50',   text: 'text-gray-600',   border: 'border-gray-200' },
 }
 
 function formatError(e, fallback = 'Operation failed') {
@@ -247,12 +252,14 @@ function QuickEditRoomModal({ room, departments, classes, onClose, onSuccess }) 
           >
             <option value="classroom">🚪 Classroom</option>
             <option value="laboratory">🧪 Laboratory</option>
-            <option value="seminar_room">🏛️ Seminar Hall</option>
-            <option value="lecture_hall">🎓 Lecture Hall</option>
-            <option value="office">💼 Office</option>
+            <option value="seminar_hall">🏛️ Seminar Hall</option>
+            <option value="examination_hall">📝 Examination Hall</option>
             <option value="staff_room">👥 Staff Room</option>
+            <option value="office">💼 Office</option>
             <option value="auditorium">🎭 Auditorium</option>
-            <option value="other">📦 Other</option>
+            <option value="meeting_room">🤝 Meeting Room</option>
+            <option value="store_room">📦 Store Room</option>
+            <option value="other">🏷️ Other</option>
           </select>
         </div>
         <div className="col-span-2">
@@ -406,12 +413,14 @@ function RoomRow({ room, onEdit, onRefresh, readOnly }) {
         >
           <option value="classroom">🚪 Classroom</option>
           <option value="laboratory">🧪 Laboratory</option>
-          <option value="seminar_room">🏛️ Seminar Hall</option>
-          <option value="lecture_hall">🎓 Lecture Hall</option>
-          <option value="office">💼 Office</option>
+          <option value="seminar_hall">🏛️ Seminar Hall</option>
+          <option value="examination_hall">📝 Examination Hall</option>
           <option value="staff_room">👥 Staff Room</option>
+          <option value="office">💼 Office</option>
           <option value="auditorium">🎭 Auditorium</option>
-          <option value="other">📦 Other</option>
+          <option value="meeting_room">🤝 Meeting Room</option>
+          <option value="store_room">📦 Store Room</option>
+          <option value="other">🏷️ Other</option>
         </select>
       ) : (
         <RoomTypeBadge type={room.room_type} />
@@ -669,15 +678,26 @@ function AutoFillWizard({ onClose, onSuccess }) {
       for (let f = 0; f < numFloors; f++) {
         const floorName = f === 0 ? 'Ground Floor' : (f === 1 ? 'First Floor' : (f === 2 ? 'Second Floor' : (f === 3 ? 'Third Floor' : `Floor ${f}`)))
         const overrides = mixedRoomsConfig[f] || {}
+        const sanitizedOverrides = {}
+        for (const [k, v] of Object.entries(overrides)) {
+          let clean = v
+          if (clean === 'seminar_room' || clean === 'seminar') clean = 'seminar_hall'
+          if (clean === 'lecture_hall' || clean === 'lecture') clean = 'classroom'
+          sanitizedOverrides[k] = clean
+        }
+        let cleanBaseType = form.room_type || 'classroom'
+        if (cleanBaseType === 'seminar_room' || cleanBaseType === 'seminar') cleanBaseType = 'seminar_hall'
+        if (cleanBaseType === 'lecture_hall' || cleanBaseType === 'lecture') cleanBaseType = 'classroom'
+
         floorConfigs.push({
           floor_number: f,
           floor_name: floorName,
           room_count: roomsPerFloor,
           start_num: startNum,
           pattern: pattern,
-          room_type: form.room_type || 'classroom',
+          room_type: cleanBaseType,
           capacity: capacity,
-          room_type_overrides: Object.keys(overrides).length > 0 ? overrides : undefined,
+          room_type_overrides: Object.keys(sanitizedOverrides).length > 0 ? sanitizedOverrides : undefined,
         })
       }
 
@@ -777,11 +797,13 @@ function AutoFillWizard({ onClose, onSuccess }) {
                 className="w-full border border-slate-200 rounded-xl px-2 py-2 text-xs focus:outline-none focus:border-primary-400">
                 <option value="classroom">Classroom</option>
                 <option value="laboratory">Laboratory</option>
-                <option value="lecture_hall">Lecture Hall</option>
-                <option value="seminar_room">Seminar Room</option>
+                <option value="seminar_hall">Seminar Hall</option>
+                <option value="examination_hall">Examination Hall</option>
                 <option value="staff_room">Staff Room</option>
                 <option value="office">Office</option>
                 <option value="auditorium">Auditorium</option>
+                <option value="meeting_room">Meeting Room</option>
+                <option value="store_room">Store Room</option>
                 <option value="other">Other</option>
               </select>
             </div>
@@ -813,7 +835,7 @@ function AutoFillWizard({ onClose, onSuccess }) {
                 <span className="px-1.5 py-0.5 rounded bg-blue-100 text-blue-700 font-semibold">🚪 Class</span>
                 <span className="px-1.5 py-0.5 rounded bg-violet-100 text-violet-700 font-semibold">🧪 Lab</span>
                 <span className="px-1.5 py-0.5 rounded bg-teal-100 text-teal-700 font-semibold">🏛️ Seminar</span>
-                <span className="px-1.5 py-0.5 rounded bg-amber-100 text-amber-700 font-semibold">🎓 Lecture</span>
+                <span className="px-1.5 py-0.5 rounded bg-rose-100 text-rose-700 font-semibold">📝 Exam</span>
                 <span className="px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-700 font-semibold">💼 Office</span>
               </div>
             </div>
@@ -858,7 +880,7 @@ function AutoFillWizard({ onClose, onSuccess }) {
                             const roomNo = formatRoomNumber(pattern, curNum, f, blockCode)
                             setMixedRoomsConfig(prev => ({
                               ...prev,
-                              [f]: { ...(prev[f] || {}), [roomNo]: 'seminar_room', [String(curNum)]: 'seminar_room' }
+                              [f]: { ...(prev[f] || {}), [roomNo]: 'seminar_hall', [String(curNum)]: 'seminar_hall' }
                             }))
                           }}
                           className="text-[10px] px-1.5 py-0.5 rounded bg-teal-50 text-teal-700 border border-teal-200 hover:bg-teal-100 font-medium"
@@ -877,18 +899,24 @@ function AutoFillWizard({ onClose, onSuccess }) {
                         const typeStyles = {
                           classroom: 'bg-blue-50 border-blue-200 text-blue-700 hover:border-blue-400',
                           laboratory: 'bg-violet-100 border-violet-300 text-violet-800 font-bold hover:border-violet-500 shadow-xs',
+                          lab: 'bg-violet-100 border-violet-300 text-violet-800 font-bold hover:border-violet-500 shadow-xs',
+                          seminar_hall: 'bg-teal-100 border-teal-300 text-teal-800 font-bold hover:border-teal-500 shadow-xs',
                           seminar_room: 'bg-teal-100 border-teal-300 text-teal-800 font-bold hover:border-teal-500 shadow-xs',
-                          lecture_hall: 'bg-amber-100 border-amber-300 text-amber-800 font-bold hover:border-amber-500',
+                          examination_hall: 'bg-rose-100 border-rose-300 text-rose-800 font-bold hover:border-rose-500',
                           office: 'bg-emerald-100 border-emerald-300 text-emerald-800 font-bold hover:border-emerald-500',
                           staff_room: 'bg-slate-100 border-slate-300 text-slate-700 hover:border-slate-500',
+                          auditorium: 'bg-purple-100 border-purple-300 text-purple-800 font-bold hover:border-purple-500',
                         }
                         const typeIcons = {
                           classroom: '🚪',
                           laboratory: '🧪',
+                          lab: '🧪',
+                          seminar_hall: '🏛️',
                           seminar_room: '🏛️',
-                          lecture_hall: '🎓',
+                          examination_hall: '📝',
                           office: '💼',
                           staff_room: '👥',
+                          auditorium: '🎭',
                         }
 
                         return (
@@ -896,7 +924,7 @@ function AutoFillWizard({ onClose, onSuccess }) {
                             key={curNum}
                             type="button"
                             onClick={() => {
-                              const types = ['classroom', 'laboratory', 'seminar_room', 'lecture_hall', 'office']
+                              const types = ['classroom', 'laboratory', 'seminar_hall', 'examination_hall', 'office', 'staff_room']
                               const nextIdx = (types.indexOf(currentType) + 1) % types.length
                               const nextType = types[nextIdx]
                               setMixedRoomsConfig(prev => {
@@ -912,7 +940,7 @@ function AutoFillWizard({ onClose, onSuccess }) {
                             <span className="font-mono font-bold">{roomNo}</span>
                             <span className="text-[11px]">{typeIcons[currentType] || '🚪'}</span>
                             <span className="text-[9px] uppercase tracking-tighter opacity-85">
-                              {currentType === 'laboratory' ? 'Lab' : currentType === 'seminar_room' ? 'Seminar' : currentType === 'lecture_hall' ? 'Lecture' : currentType === 'classroom' ? 'Class' : currentType}
+                              {currentType === 'laboratory' || currentType === 'lab' ? 'Lab' : currentType === 'seminar_hall' || currentType === 'seminar_room' ? 'Seminar' : currentType === 'examination_hall' ? 'Exam' : currentType === 'classroom' ? 'Class' : currentType}
                             </span>
                           </button>
                         )
@@ -1000,6 +1028,20 @@ function BulkRoomGenerator({ block, onClose, onSuccess }) {
 
   const upd = (k, v) => setForm(f => ({ ...f, [k]: v }))
 
+  const sanitizeType = (t) => {
+    if (t === 'seminar_room' || t === 'seminar') return 'seminar_hall'
+    if (t === 'lecture_hall' || t === 'lecture') return 'classroom'
+    return t || 'classroom'
+  }
+
+  const sanitizeOverridesMap = (raw) => {
+    const out = {}
+    for (const [k, v] of Object.entries(raw || {})) {
+      out[k] = sanitizeType(v)
+    }
+    return out
+  }
+
   const handlePreview = async () => {
     setPreviewing(true)
     setError('')
@@ -1012,9 +1054,9 @@ function BulkRoomGenerator({ block, onClose, onSuccess }) {
         start_num: parseInt(form.start_num) || 1,
         count: count,
         pad_digits: parseInt(form.pad_digits) || 0,
-        room_type: form.room_type || 'classroom',
+        room_type: sanitizeType(form.room_type),
         capacity: parseInt(form.capacity) || 60,
-        room_type_overrides: roomTypeOverrides,
+        room_type_overrides: sanitizeOverridesMap(roomTypeOverrides),
       })
       setPreview(res.data)
     } catch (e) {
@@ -1025,7 +1067,7 @@ function BulkRoomGenerator({ block, onClose, onSuccess }) {
   }
 
   const handleToggleRoomType = (roomNumber, currentType) => {
-    const types = ['classroom', 'laboratory', 'seminar_room', 'lecture_hall', 'office', 'staff_room']
+    const types = ['classroom', 'laboratory', 'seminar_hall', 'examination_hall', 'office', 'staff_room']
     const nextIdx = (types.indexOf(currentType) + 1) % types.length
     const nextType = types[nextIdx]
     setRoomTypeOverrides(prev => ({
@@ -1054,9 +1096,9 @@ function BulkRoomGenerator({ block, onClose, onSuccess }) {
         start_num: parseInt(form.start_num) || 1,
         count: count,
         pad_digits: parseInt(form.pad_digits) || 2,
-        room_type: form.room_type || 'classroom',
+        room_type: sanitizeType(form.room_type),
         capacity: parseInt(form.capacity) || 60,
-        room_type_overrides: roomTypeOverrides,
+        room_type_overrides: sanitizeOverridesMap(roomTypeOverrides),
       })
       onSuccess()
       onClose()
@@ -1101,7 +1143,7 @@ function BulkRoomGenerator({ block, onClose, onSuccess }) {
               <label className="block text-xs font-bold text-slate-600 mb-1">Default Room Type</label>
               <select value={form.room_type} onChange={e => { upd('room_type', e.target.value); setPreview(null) }}
                 className="w-full border border-slate-200 rounded-xl px-2 py-2 text-xs focus:outline-none focus:border-primary-400">
-                {Object.keys(ROOM_TYPE_COLORS).map(t => (
+                {['classroom', 'laboratory', 'seminar_hall', 'examination_hall', 'staff_room', 'office', 'auditorium', 'meeting_room', 'store_room', 'other'].map(t => (
                   <option key={t} value={t}>{t.replace(/_/g,' ').replace(/\b\w/g, l => l.toUpperCase())}</option>
                 ))}
               </select>
@@ -1763,11 +1805,13 @@ function RoomMappingPanel({ tree, departments, classes, onRefresh, canEdit }) {
           <option value="">All Types</option>
           <option value="classroom">Classroom</option>
           <option value="laboratory">Lab</option>
-          <option value="seminar_room">Seminar</option>
-          <option value="lecture_hall">Lecture Hall</option>
+          <option value="seminar_hall">Seminar Hall</option>
+          <option value="examination_hall">Examination Hall</option>
           <option value="staff_room">Staff Room</option>
           <option value="office">Office</option>
           <option value="auditorium">Auditorium</option>
+          <option value="meeting_room">Meeting Room</option>
+          <option value="store_room">Store Room</option>
         </select>
         <button onClick={() => {
           const allOpen = {}
@@ -1932,12 +1976,14 @@ function RoomMappingPanel({ tree, departments, classes, onRefresh, canEdit }) {
                                     className="flex-1 border border-slate-200 rounded-lg px-2 py-1 text-xs focus:outline-none focus:border-primary-400 bg-white">
                                     <option value="classroom">🚪 Classroom</option>
                                     <option value="laboratory">🧪 Lab</option>
-                                    <option value="seminar_room">🏛️ Seminar</option>
-                                    <option value="lecture_hall">🎓 Lecture</option>
+                                    <option value="seminar_hall">🏛️ Seminar Hall</option>
+                                    <option value="examination_hall">📝 Exam Hall</option>
                                     <option value="staff_room">👥 Staff Room</option>
                                     <option value="office">💼 Office</option>
                                     <option value="auditorium">🎭 Auditorium</option>
-                                    <option value="other">📦 Other</option>
+                                    <option value="meeting_room">🤝 Meeting Room</option>
+                                    <option value="store_room">📦 Store Room</option>
+                                    <option value="other">🏷️ Other</option>
                                   </select>
                                   <label className="flex items-center gap-1 cursor-pointer" title="Exam eligible">
                                     <input type="checkbox"
