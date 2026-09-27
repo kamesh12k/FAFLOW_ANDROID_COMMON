@@ -538,8 +538,8 @@ def test_auto_replace_absent_teacher_swaps_with_checked_in_candidate(db_session,
         duty_type=DutyType.DISCIPLINE_DUTY,
         title="Break Interval Duty",
         duty_date=today,
-        start_time=time(8, 0),  # In the past relative to now, so cutoff is passed
-        end_time=time(8, 30),
+        start_time=time(0, 0),  # Past cutoff guaranteed at any hour of the day
+        end_time=time(0, 30),
         department_id=dept.id,
         day_order=1,
         required_teachers=1,
@@ -575,5 +575,52 @@ def test_auto_replace_absent_teacher_swaps_with_checked_in_candidate(db_session,
     active_a = next((a for a in duty.assignments if a.status == AssignmentStatus.ASSIGNED), None)
     assert active_a is not None
     assert active_a.teacher_id != teachers[0].id
+
+
+def test_waterfall_auto_swap_when_all_top_candidates_absent(db_session, duty_setup):
+    today = date.today()
+    teachers = duty_setup["teachers"]
+    dept = duty_setup["dept"]
+
+    # Delete all attendance records for today so NO teacher has checked in
+    db_session.query(StaffAttendanceRecord).filter(
+        StaffAttendanceRecord.attendance_date == today
+    ).delete()
+    db_session.commit()
+
+    duty = CampusDuty(
+        duty_type=DutyType.DISCIPLINE_DUTY,
+        title="Gate Supervision",
+        duty_date=today,
+        start_time=time(8, 30),
+        end_time=time(9, 15),
+        department_id=dept.id,
+        day_order=1,
+        required_teachers=1,
+        status=DutyStatus.PUBLISHED
+    )
+    db_session.add(duty)
+    db_session.commit()
+
+    # Query candidates with require_checked_in=True
+    resp = CampusDutyService.evaluate_candidates(db_session, duty.id, require_checked_in=True)
+
+    # Verify Waterfall auto-swap activated
+    assert resp.fallback_applied is True
+    assert "Waterfall auto-swap" in resp.fallback_message
+    assert resp.suggested_candidate_id is not None
+
+    # Verify candidates are eligible under waterfall rather than all being excluded with Score 0
+    eligible = [c for c in resp.candidates if c.is_eligible]
+    assert len(eligible) > 0
+    assert any("Waterfall Auto-Swap" in r for r in eligible[0].reasons)
+    assert eligible[0].score > 0.0
+
+    # Verify auto_assign_duty successfully fills duty using the waterfall candidate
+    assigned_duty = CampusDutyService.auto_assign_duty(db_session, duty.id)
+    active_assignments = [a for a in assigned_duty.assignments if a.status == AssignmentStatus.ASSIGNED]
+    assert len(active_assignments) == 1
+    assert active_assignments[0].teacher_id == resp.suggested_candidate_id
+
 
 

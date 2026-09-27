@@ -1353,7 +1353,7 @@ class StudentAttendanceService:
         cal_day = db.query(CalendarDay).filter(CalendarDay.date == target_date).first()
         day_order = cal_day.day_order if cal_day else None
         is_blocked = cal_day.day_type in BLOCKING_DAY_TYPES if cal_day else False
-        block_reason = cal_day.description if is_blocked else None
+        block_reason = (cal_day.day_type.value if hasattr(cal_day.day_type, 'value') else str(cal_day.day_type)) if is_blocked and cal_day else None
 
         departments = db.query(Department).order_by(Department.name).all()
         classes = db.query(Class).all()

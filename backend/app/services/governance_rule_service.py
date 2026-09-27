@@ -45,7 +45,7 @@ BASELINE_RULES: Dict[str, str] = {
     "student_attendance_submission_window_minutes": "15",
     "student_attendance_correction_window_hours": "24",
     "intelligence_student_shortage_threshold": "75.0",
-    "staff_biometric_face_similarity_threshold": "0.60",
+    "staff_biometric_face_similarity_threshold": "0.50",
     "staff_geofence_gps_accuracy_threshold": "50.0",
     "leave_same_day_cancellation_cutoff_hour": "10",
     "substitution_action_cutoff_hour": "17",

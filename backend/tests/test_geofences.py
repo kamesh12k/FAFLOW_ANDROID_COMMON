@@ -65,9 +65,9 @@ def test_toggle_and_delete_geofence(db_session: Session, test_admin: User):
     toggled = GeofenceService.toggle_geofence(db_session, g.id, is_active=False, user_id=test_admin.id)
     assert toggled.is_active is False
 
-    # Soft Delete
+    # Delete
     deleted = GeofenceService.delete_geofence(db_session, g.id, user_id=test_admin.id)
-    assert "deactivated successfully" in deleted["message"]
+    assert "deleted" in deleted["message"]
 
     refetched = db_session.query(CampusGeofence).filter(CampusGeofence.id == g.id).first()
-    assert refetched.is_active is False
+    assert refetched is None

@@ -135,7 +135,7 @@ class AttendanceService:
             raise DomainException("Location verification failed: Staff member is outside institutional campus geofence perimeters", status_code=400)
 
         # 4. Check Duplicate Check-In for Today
-        today = date.today()
+        today = data.captured_at.date() if data.captured_at is not None else date.today()
         existing_today = db.query(StaffAttendanceRecord).filter(
             StaffAttendanceRecord.user_id == user.id,
             StaffAttendanceRecord.attendance_date == today
@@ -159,7 +159,7 @@ class AttendanceService:
         if effective_time.tzinfo is None:
             effective_time = effective_time.replace(tzinfo=timezone.utc)
 
-        effective_date = effective_time.date()
+        effective_date = today
 
         record = existing_today or StaffAttendanceRecord(
             user_id=user.id,
@@ -226,7 +226,7 @@ class AttendanceService:
             raise DomainException("Location verification failed: Staff member is outside institutional campus geofence perimeters", status_code=400)
 
         # 4. Find Today's Check-In Record
-        today = date.today()
+        today = data.captured_at.date() if data.captured_at is not None else date.today()
         record = db.query(StaffAttendanceRecord).filter(
             StaffAttendanceRecord.user_id == user.id,
             StaffAttendanceRecord.attendance_date == today

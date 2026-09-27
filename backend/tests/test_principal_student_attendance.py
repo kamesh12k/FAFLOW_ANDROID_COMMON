@@ -107,12 +107,14 @@ def setup_principal_context(db_session: Session, test_teacher: User, test_princi
     db_session.flush()
 
     # Submit attendance for CS slot: 8 present, 2 absent (001, 002)
+    start_time, _ = StudentAttendanceService.get_scheduled_times(today, 1, db_session)
     req = SubmitAttendanceRequest(
         class_id=cls_cs.id,
         period_number=1,
         attendance_date=today,
         timetable_slot_id=slot1.id,
-        absent_roll_suffixes=["001", "002"]
+        absent_roll_suffixes=["001", "002"],
+        client_timestamp=start_time + timedelta(minutes=5)
     )
     session_out = StudentAttendanceService.submit_attendance(db_session, test_teacher, req)
 

@@ -240,6 +240,9 @@ class DutyCandidatesResponse(BaseModel):
     required_teachers: int
     assigned_count: int
     candidates: List[DutyCandidateOut] = []
+    fallback_applied: bool = False
+    fallback_message: Optional[str] = None
+    suggested_candidate_id: Optional[int] = None
 
 
 class DutyDashboardMetricsOut(BaseModel):

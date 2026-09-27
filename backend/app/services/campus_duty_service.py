@@ -1008,17 +1008,49 @@ class CampusDutyService:
                 exclusion_reason=exclusion_reason
             ))
 
+        # Check if any candidate is eligible under current criteria
+        eligible_candidates = [c for c in candidates if c.is_eligible]
+        fallback_applied = False
+        fallback_message = None
+
+        # WATERFALL AUTO-SWAP: When require_checked_in is requested (or emergency replacement needed)
+        # and all candidates are excluded because they have not checked in yet (or top candidates absent):
+        # Automatically cascade down the waterfall to promote the best available on-campus staff
+        # who have NO approved leave and NO timetable/duty conflicts.
+        if require_checked_in and not eligible_candidates:
+            fallback_cands = [
+                c for c in candidates
+                if c.exclusion_reason == "Teacher has not checked in today"
+            ]
+            if fallback_cands:
+                fallback_applied = True
+                fallback_message = "All checked-in staff are unavailable or absent. Waterfall auto-swap activated: Promoted next best eligible faculty."
+                for fc in fallback_cands:
+                    fc.is_eligible = True
+                    fc.exclusion_reason = None
+                    fc.reasons.insert(0, "⚡ Waterfall Auto-Swap: Promoted as substitute candidate (pending check-in)")
+                    # Calculate prospective score based on workload and free period preference
+                    base_pts = 100.0 - (fc.duties_today * 30.0) - (fc.duties_this_week * 10.0) - 15.0
+                    if fc.free_before_break:
+                        base_pts += 30.0
+                    fc.score = max(50.0, min(100.0, round(base_pts, 1)))
+
         # Sort: eligible first, then present_today, then higher score, then fewer duties today
         candidates.sort(key=lambda c: (c.is_eligible, c.present_today, c.score, -c.duties_today, -c.duties_this_week), reverse=True)
 
         assigned_count = len(assigned_teacher_ids)
+        suggested_candidate_id = candidates[0].teacher_id if (candidates and candidates[0].is_eligible) else None
+
         return DutyCandidatesResponse(
             duty_id=duty.id,
             duty_title=duty.title,
             duty_type=duty.duty_type,
             required_teachers=duty.required_teachers,
             assigned_count=assigned_count,
-            candidates=candidates
+            candidates=candidates,
+            fallback_applied=fallback_applied,
+            fallback_message=fallback_message,
+            suggested_candidate_id=suggested_candidate_id
         )
 
     # ── Assignment Actions ───────────────────────────────────────────────────
