@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from 'react'
+import { useState, useEffect, useMemo, useCallback, useRef } from 'react'
 import { campusStructureApi, departmentsApi, roomsApi, classesApi } from '../../api/services'
 import { Spinner, ErrorAlert, Modal, Badge } from '../../components/ui'
 import { useAuth } from '../../context/AuthContext'
