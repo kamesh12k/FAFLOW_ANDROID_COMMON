@@ -540,6 +540,125 @@ function QuickEditRoomModal({ room, departments, classes, onClose, onSuccess }) 
 // ─────────────────────────────────────────────────────────────────────────────
 // Tree Node components
 // ─────────────────────────────────────────────────────────────────────────────
+function RoomCard({ room, onEdit, onRefresh, readOnly }) {
+  const [updating, setUpdating] = useState(false)
+
+  const handleTypeChange = async (e) => {
+    const newType = e.target.value
+    if (newType === room.room_type) return
+    setUpdating(true)
+    try {
+      await roomsApi.update(room.id, { room_type: newType })
+      onRefresh?.()
+    } catch (err) {
+      alert(formatError(err, 'Failed to update room type'))
+    } finally {
+      setUpdating(false)
+    }
+  }
+
+  const handleToggleExam = async () => {
+    if (readOnly) return
+    setUpdating(true)
+    try {
+      await roomsApi.update(room.id, { is_exam_eligible: !room.is_exam_eligible })
+      onRefresh?.()
+    } catch (err) {
+      alert(formatError(err, 'Failed to toggle exam hall status'))
+    } finally {
+      setUpdating(false)
+    }
+  }
+
+  return (
+    <div className="bg-white border border-slate-200/90 rounded-2xl p-3.5 shadow-sm hover:shadow-md hover:border-indigo-300 transition-all space-y-2.5 relative group">
+      {/* Top Header: Room number & Type Selector */}
+      <div className="flex items-center justify-between gap-1.5">
+        <div className="flex items-center gap-1.5 min-w-0">
+          <span className="text-sm">🚪</span>
+          <span className="font-black text-slate-900 text-sm font-mono tracking-tight">{room.room_number}</span>
+          {room.name && <span className="text-slate-400 text-xs truncate max-w-[80px]" title={room.name}>{room.name}</span>}
+        </div>
+        {!readOnly ? (
+          <select
+            value={room.room_type || 'classroom'}
+            onChange={handleTypeChange}
+            disabled={updating}
+            className="text-[10px] font-bold py-1 px-1.5 rounded-lg border border-slate-200 bg-slate-50 hover:bg-white focus:outline-none focus:ring-1 focus:ring-indigo-500 cursor-pointer text-slate-700 max-w-[110px]"
+          >
+            <option value="classroom">🚪 Class</option>
+            <option value="laboratory">🧪 Lab</option>
+            <option value="seminar_hall">🏛️ Seminar</option>
+            <option value="examination_hall">📝 Exam Hall</option>
+            <option value="staff_room">👥 Staff</option>
+            <option value="office">💼 Office</option>
+            <option value="auditorium">🎭 Audit.</option>
+            <option value="meeting_room">🤝 Meeting</option>
+            <option value="store_room">📦 Store</option>
+            <option value="other">🏷️ Other</option>
+          </select>
+        ) : (
+          <RoomTypeBadge type={room.room_type} />
+        )}
+      </div>
+
+      {/* Middle: Dept & Class Badges */}
+      <div className="flex flex-wrap items-center gap-1 min-h-[22px]">
+        {room.department_name ? (
+          <span className="text-[10px] bg-slate-100 text-slate-700 px-2 py-0.5 rounded-md font-bold truncate max-w-[160px]" title={room.department_name}>
+            🏢 {room.department_name}
+          </span>
+        ) : (
+          <span className="text-[10px] text-slate-400 italic">No dept assigned</span>
+        )}
+        {room.primary_class_name && (
+          <span className="text-[10px] bg-indigo-50 text-indigo-700 border border-indigo-200 px-1.5 py-0.5 rounded-md font-bold truncate max-w-[120px]" title={room.primary_class_name}>
+            🎓 {room.primary_class_name}
+          </span>
+        )}
+      </div>
+
+      {/* Bottom Bar: Exam Hall Toggle, Capacity, & Edit */}
+      <div className="pt-2 border-t border-slate-100 flex items-center justify-between gap-1 text-xs">
+        <div className="flex items-center gap-1.5">
+          {!readOnly ? (
+            <button
+              onClick={handleToggleExam}
+              disabled={updating}
+              title="Click to toggle Exam Hall status"
+              className={`text-[10px] px-2 py-0.5 rounded-md font-bold transition-all border ${
+                room.is_exam_eligible
+                  ? 'bg-purple-100 text-purple-800 border-purple-300 hover:bg-purple-200'
+                  : 'bg-slate-50 text-slate-400 border-slate-200 hover:bg-slate-100 hover:text-slate-600'
+              }`}
+            >
+              {room.is_exam_eligible ? '✓ Exam Hall' : '+ Exam'}
+            </button>
+          ) : room.is_exam_eligible ? (
+            <span className="text-[10px] bg-purple-50 text-purple-700 border border-purple-200 px-1.5 py-0.5 rounded font-bold">
+              📝 Exam
+            </span>
+          ) : null}
+
+          {room.capacity ? (
+            <span className="text-[10px] font-semibold text-slate-500">{room.capacity} seats</span>
+          ) : null}
+        </div>
+
+        {!readOnly && (
+          <button
+            onClick={() => onEdit?.(room)}
+            title="Edit room configuration, class assignment, or capacity"
+            className="p-1 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-all text-xs"
+          >
+            ✏️
+          </button>
+        )}
+      </div>
+    </div>
+  )
+}
+
 function RoomRow({ room, onEdit, onRefresh, readOnly }) {
   const [updating, setUpdating] = useState(false)
 
@@ -571,19 +690,18 @@ function RoomRow({ room, onEdit, onRefresh, readOnly }) {
   }
 
   return (
-    <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-50 border border-slate-100 hover:border-slate-200 transition-all flex-wrap sm:flex-nowrap group">
-      <span className="text-slate-300 text-xs">🚪</span>
-      <span className="font-semibold text-slate-700 text-sm font-mono">{room.room_number}</span>
-      {room.name && <span className="text-slate-400 text-xs truncate max-w-[100px]">{room.name}</span>}
+    <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-slate-50 border border-slate-100 hover:border-slate-200 transition-all flex-wrap sm:flex-nowrap group">
+      <span className="text-slate-400 text-xs">🚪</span>
+      <span className="font-extrabold text-slate-800 text-sm font-mono w-20">{room.room_number}</span>
+      {room.name && <span className="text-slate-400 text-xs truncate max-w-[120px]">{room.name}</span>}
 
-      {/* Inline Room Type Quick-Select or Badge */}
       {!readOnly ? (
         <select
           value={room.room_type || 'classroom'}
           onChange={handleTypeChange}
           disabled={updating}
           title="Change room type in-place"
-          className="text-[11px] font-bold py-0.5 px-1.5 rounded-lg border border-slate-200 bg-white hover:border-primary-400 focus:outline-none focus:border-primary-500 cursor-pointer text-slate-700"
+          className="text-[11px] font-bold py-0.5 px-2 rounded-lg border border-slate-200 bg-white hover:border-primary-400 focus:outline-none focus:border-primary-500 cursor-pointer text-slate-700"
         >
           <option value="classroom">🚪 Classroom</option>
           <option value="laboratory">🧪 Laboratory</option>
@@ -601,23 +719,22 @@ function RoomRow({ room, onEdit, onRefresh, readOnly }) {
       )}
 
       {room.department_name && (
-        <span className="text-[10px] bg-slate-100 text-slate-600 px-1.5 py-0.5 rounded font-medium truncate max-w-[120px]" title={room.department_name}>
+        <span className="text-[10px] bg-slate-100 text-slate-700 px-2 py-0.5 rounded font-bold truncate max-w-[140px]" title={room.department_name}>
           🏢 {room.department_name}
         </span>
       )}
       {room.primary_class_name && (
-        <span className="text-[10px] bg-indigo-50 text-indigo-700 border border-indigo-200 px-1.5 py-0.5 rounded font-medium">
+        <span className="text-[10px] bg-indigo-50 text-indigo-700 border border-indigo-200 px-2 py-0.5 rounded font-bold truncate max-w-[120px]">
           🎓 {room.primary_class_name}
         </span>
       )}
 
-      {/* Exam Hall Toggle */}
       {!readOnly ? (
         <button
           onClick={handleToggleExam}
           disabled={updating}
           title="Click to toggle Exam Hall eligibility"
-          className={`text-[10px] px-1.5 py-0.5 rounded font-semibold transition-all border ${
+          className={`text-[10px] px-2 py-0.5 rounded font-bold transition-all border ${
             room.is_exam_eligible
               ? 'bg-purple-50 text-purple-700 border-purple-200 hover:bg-purple-100'
               : 'bg-slate-100 text-slate-400 border-slate-200 hover:bg-slate-200'
@@ -626,17 +743,17 @@ function RoomRow({ room, onEdit, onRefresh, readOnly }) {
           {room.is_exam_eligible ? '📝 Exam Hall' : '+ Exam Hall'}
         </button>
       ) : room.is_exam_eligible ? (
-        <span className="text-[10px] bg-purple-50 text-purple-700 border border-purple-200 px-1.5 py-0.5 rounded font-semibold" title={`Exam Hall (${room.exam_capacity || room.capacity || 0} seats)`}>
+        <span className="text-[10px] bg-purple-50 text-purple-700 border border-purple-200 px-2 py-0.5 rounded font-bold">
           📝 Exam Hall
         </span>
       ) : null}
 
-      {room.capacity && <span className="text-[10px] text-slate-400 font-semibold shrink-0 ml-auto">{room.capacity} seats</span>}
+      {room.capacity && <span className="text-[11px] text-slate-500 font-semibold shrink-0 ml-auto">{room.capacity} seats</span>}
 
       {!readOnly && (
         <button
           onClick={() => onEdit?.(room)}
-          title="Edit room details (department, home class, capacity)"
+          title="Edit room details"
           className="opacity-0 group-hover:opacity-100 p-1 rounded text-slate-400 hover:text-slate-700 hover:bg-slate-200 transition-all text-xs shrink-0 cursor-pointer"
         >
           ✏️
@@ -696,112 +813,304 @@ function FloorNode({ floor, onBulkAssignDept, onEditRoom, onRefresh, readOnly })
   )
 }
 
-function BlockNode({ block, onEdit, onDelete, onDuplicate, onAddFloor, onGenerateRooms, onBulkAssignDept, onEditRoom, onRefresh, onConfigureDuties, canManageDuties, readOnly }) {
-  const [open, setOpen] = useState(true)
+function BlockNode({
+  block,
+  onEdit,
+  onDelete,
+  onDuplicate,
+  onAddFloor,
+  onGenerateRooms,
+  onBulkAssignDept,
+  onEditRoom,
+  onRefresh,
+  onConfigureDuties,
+  canManageDuties,
+  readOnly,
+  searchQuery = '',
+  typeFilter = 'all'
+}) {
+  const [selectedFloorId, setSelectedFloorId] = useState('all') // 'all' | floor.id
+  const [viewMode, setViewMode] = useState('grid') // 'grid' | 'list'
   const floors = block.floors || []
-  const roomCount = floors.reduce((acc, f) => acc + (f.rooms?.length || 0), 0)
+  const totalRooms = floors.reduce((acc, f) => acc + (f.rooms?.length || 0), 0)
+
+  // Filter rooms based on search and type
+  const filterRoom = (r) => {
+    if (typeFilter === 'exam' && !r.is_exam_eligible) return false
+    if (typeFilter === 'lab' && !['laboratory', 'lab'].includes(r.room_type)) return false
+    if (typeFilter === 'classroom' && r.room_type !== 'classroom') return false
+    if (typeFilter === 'seminar' && !['seminar_hall', 'seminar_room', 'auditorium'].includes(r.room_type)) return false
+    if (searchQuery && searchQuery.trim()) {
+      const q = searchQuery.toLowerCase().trim()
+      const matchNum = (r.room_number || '').toLowerCase().includes(q)
+      const matchName = (r.name || '').toLowerCase().includes(q)
+      const matchDept = (r.department_name || '').toLowerCase().includes(q)
+      const matchClass = (r.primary_class_name || '').toLowerCase().includes(q)
+      const matchType = (r.room_type || '').toLowerCase().includes(q)
+      if (!matchNum && !matchName && !matchDept && !matchClass && !matchType) return false
+    }
+    return true
+  }
+
+  // Floors with filtered rooms
+  const floorsWithFilteredRooms = useMemo(() => {
+    return floors.map(f => ({
+      ...f,
+      filteredRooms: (f.rooms || []).filter(filterRoom)
+    }))
+  }, [floors, searchQuery, typeFilter])
+
+  const totalFilteredRooms = floorsWithFilteredRooms.reduce((acc, f) => acc + f.filteredRooms.length, 0)
+
+  // Displayed floors
+  const displayedFloors = selectedFloorId === 'all'
+    ? floorsWithFilteredRooms.filter(f => f.filteredRooms.length > 0 || !searchQuery)
+    : floorsWithFilteredRooms.filter(f => f.id === selectedFloorId)
 
   return (
-    <div className="border border-slate-200 rounded-2xl overflow-hidden mb-3 shadow-sm hover:shadow-md transition-shadow">
-      {/* Block header */}
-      <div className="flex items-center gap-3 px-4 py-3 bg-gradient-to-r from-slate-800 to-slate-700">
-        <button onClick={() => setOpen(o => !o)} className="flex items-center gap-2 flex-1 text-left min-w-0">
-          <span className={`text-slate-400 transition-transform text-xs ${open ? 'rotate-90' : ''}`}>▶</span>
+    <div className="bg-white border border-slate-200/90 rounded-3xl overflow-hidden shadow-sm hover:shadow-md transition-all mb-5">
+      {/* ── Block Executive Header ── */}
+      <div className="px-5 py-4 bg-gradient-to-r from-slate-900 via-slate-800 to-indigo-950 text-white flex flex-wrap items-center justify-between gap-4">
+        <div className="flex items-center gap-3.5 min-w-0">
           <div
-            className="w-8 h-8 rounded-xl flex items-center justify-center text-white text-xs font-black shrink-0 shadow-md"
+            className="w-10 h-10 rounded-2xl flex items-center justify-center text-white text-base font-black shrink-0 shadow-lg border border-white/20"
             style={{ background: block.color_hex || '#4F46E5' }}
           >
-            {(block.prefix || block.name || '?').charAt(0).toUpperCase()}
+            {(block.prefix || block.name || 'B').charAt(0).toUpperCase()}
           </div>
+
           <div className="min-w-0">
-            <div className="flex items-center gap-2">
-              <p className="text-white font-bold text-sm truncate">{block.name}</p>
-              <span
-                onClick={(e) => {
-                  if (canManageDuties && onConfigureDuties) {
-                    e.stopPropagation()
-                    onConfigureDuties(block)
-                  }
-                }}
-                className={`px-1.5 py-0.2 rounded text-[9px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 ${
-                  canManageDuties ? 'cursor-pointer hover:bg-emerald-500/30' : ''
-                }`}
-                title={canManageDuties ? "Click to configure & auto-assign block duties" : "Discipline Zone"}
-              >
-                🛡️ Discipline Zone
-              </span>
+            <div className="flex items-center gap-2 flex-wrap">
+              <h2 className="text-base font-black tracking-tight text-white">{block.name}</h2>
+              {block.prefix && (
+                <span className="px-2 py-0.5 rounded-md text-[10px] font-mono font-bold bg-white/10 text-indigo-200 border border-white/10">
+                  Prefix: {block.prefix}
+                </span>
+              )}
+              {canManageDuties && onConfigureDuties && (
+                <button
+                  onClick={() => onConfigureDuties(block)}
+                  className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/40 hover:bg-amber-500/30 transition-all flex items-center gap-1"
+                  title="Configure & auto-assign block discipline duties"
+                >
+                  <span>🛡️</span> Discipline Zone
+                </button>
+              )}
             </div>
-            <p className="text-slate-400 text-[10px]">
-              Prefix: {block.prefix || '—'} · {floors.length} floor{floors.length !== 1 ? 's' : ''} · {roomCount} rooms
+
+            <p className="text-slate-400 text-xs mt-0.5">
+              {floors.length} Floors · {totalRooms} Total Rooms
+              {searchQuery || typeFilter !== 'all' ? ` (${totalFilteredRooms} matching filter)` : ''}
             </p>
+
+            {/* Associated Departments in Block */}
             {block.associated_departments && block.associated_departments.length > 0 && (
-              <div className="flex items-center gap-1 flex-wrap mt-1">
-                <span className="text-[9px] uppercase font-bold tracking-wider text-slate-300">🏢 Departments in Block:</span>
+              <div className="flex items-center gap-1.5 flex-wrap mt-2">
+                <span className="text-[10px] uppercase font-bold tracking-wider text-slate-400">🏢 Departments:</span>
                 {block.associated_departments.map(d => (
-                  <span key={d.id} className="px-1.5 py-0.2 rounded text-[10px] font-semibold bg-indigo-500/30 text-indigo-100 border border-indigo-400/30">
-                    {d.name} {d.code ? `(${d.code})` : ''} · {d.room_count} {d.room_count === 1 ? 'rm' : 'rms'}
+                  <span key={d.id} className="px-2 py-0.5 rounded-lg text-[10px] font-bold bg-indigo-500/20 text-indigo-200 border border-indigo-400/25">
+                    {d.name} {d.code ? `(${d.code})` : ''} · {d.room_count} rm{d.room_count !== 1 ? 's' : ''}
                   </span>
                 ))}
               </div>
             )}
           </div>
-        </button>
+        </div>
+
+        {/* Action Hub on Block Header */}
         {!readOnly && (
-          <div className="flex items-center gap-1 shrink-0">
+          <div className="flex items-center gap-1.5 flex-wrap shrink-0">
             {canManageDuties && onConfigureDuties && (
               <button
                 onClick={() => onConfigureDuties(block)}
-                title="Configure discipline & wing duties and auto-assign respected department teachers"
-                className="px-2.5 py-1 rounded-lg text-[11px] font-bold bg-amber-500 hover:bg-amber-400 text-slate-950 border border-amber-400/60 shadow-sm transition-all flex items-center gap-1"
+                title="Configure discipline & wing duties and auto-assign block teachers"
+                className="px-3 py-1.5 rounded-xl text-xs font-black bg-amber-400 hover:bg-amber-300 text-slate-950 transition-all shadow-sm flex items-center gap-1 active:scale-95"
               >
-                🛡️ Block Duties
+                <span>🛡️</span> Block Duties
               </button>
             )}
-            <button onClick={() => onBulkAssignDept(block)} title="Bulk assign department to all rooms in this block"
-              className="px-2 py-1 rounded-lg text-[11px] font-bold bg-slate-700 hover:bg-slate-600 text-slate-200 border border-slate-600 transition-all">
-              + Dept
+
+            <button
+              onClick={() => onGenerateRooms(block)}
+              title="Bulk pattern generator for rooms in this block"
+              className="px-3 py-1.5 rounded-xl text-xs font-bold bg-indigo-600 hover:bg-indigo-500 text-white transition-all shadow-sm flex items-center gap-1 active:scale-95"
+            >
+              <span>⚡</span> Generate Rooms
             </button>
-            <button onClick={() => onGenerateRooms(block)} title="Bulk generate rooms"
-              className="px-2 py-1 rounded-lg text-[11px] font-bold bg-primary-600/90 text-white hover:bg-primary-500 transition-all">
-              + Rooms
+
+            <button
+              onClick={() => onBulkAssignDept(block)}
+              title="Bulk allocate departments to rooms on this block"
+              className="px-3 py-1.5 rounded-xl text-xs font-bold bg-white/10 hover:bg-white/20 text-white border border-white/15 transition-all flex items-center gap-1 active:scale-95"
+            >
+              <span>🏢</span> Allocate Depts
             </button>
-            <button onClick={() => onAddFloor(block)} title="Add floor"
-              className="px-2 py-1 rounded-lg text-[11px] font-bold bg-slate-600/80 text-slate-200 hover:bg-slate-600 transition-all">
-              + Floor
+
+            <button
+              onClick={() => onAddFloor(block)}
+              title="Add a new floor to this block"
+              className="px-2.5 py-1.5 rounded-xl text-xs font-bold bg-white/10 hover:bg-white/20 text-white border border-white/15 transition-all flex items-center gap-1 active:scale-95"
+            >
+              <span>+</span> Floor
             </button>
-            <button onClick={() => onEdit(block)} title="Edit block"
-              className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-600 transition-all">
-              ✏️
-            </button>
-            <button onClick={() => onDuplicate(block)} title="Duplicate block"
-              className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-600 transition-all">
-              📋
-            </button>
-            <button onClick={() => onDelete(block)} title="Delete block"
-              className="p-1.5 rounded-lg text-slate-400 hover:text-rose-400 hover:bg-rose-500/10 transition-all">
-              🗑️
-            </button>
+
+            <div className="flex items-center gap-1 ml-1 pl-1 border-l border-white/15">
+              <button
+                onClick={() => onEdit(block)}
+                title="Edit block properties"
+                className="p-1.5 rounded-lg text-slate-300 hover:text-white hover:bg-white/10 transition-all"
+              >
+                ✏️
+              </button>
+              <button
+                onClick={() => onDuplicate(block)}
+                title="Duplicate block"
+                className="p-1.5 rounded-lg text-slate-300 hover:text-white hover:bg-white/10 transition-all"
+              >
+                📋
+              </button>
+              <button
+                onClick={() => onDelete(block)}
+                title="Delete block and rooms"
+                className="p-1.5 rounded-lg text-rose-300 hover:text-rose-100 hover:bg-rose-500/20 transition-all"
+              >
+                🗑️
+              </button>
+            </div>
           </div>
         )}
       </div>
-      {/* Floors */}
-      {open && (
-        <div className="px-4 py-3 bg-white">
-          {floors.length > 0
-            ? floors.map(f => (
-                <FloorNode
-                  key={f.id}
-                  floor={f}
-                  onBulkAssignDept={onBulkAssignDept}
-                  onEditRoom={onEditRoom}
-                  onRefresh={onRefresh}
-                  readOnly={readOnly}
-                />
-              ))
-            : <p className="text-xs text-slate-400 italic py-1">No floors added yet.</p>
-          }
+
+      {/* ── INTERACTIVE FLOOR SELECTOR STRIP & CONTROLS ── */}
+      <div className="px-5 py-3 bg-slate-50 border-b border-slate-100 flex flex-wrap items-center justify-between gap-3">
+        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0">
+          <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mr-1">Floors:</span>
+          <button
+            onClick={() => setSelectedFloorId('all')}
+            className={`px-3 py-1 rounded-xl text-xs font-bold transition-all whitespace-nowrap ${
+              selectedFloorId === 'all'
+                ? 'bg-slate-900 text-white shadow-sm'
+                : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200'
+            }`}
+          >
+            All Floors ({totalRooms})
+          </button>
+
+          {floors.map(f => {
+            const isSelected = selectedFloorId === f.id
+            const roomCount = f.rooms?.length || 0
+            return (
+              <button
+                key={f.id}
+                onClick={() => setSelectedFloorId(f.id)}
+                className={`px-3 py-1 rounded-xl text-xs font-bold transition-all whitespace-nowrap flex items-center gap-1.5 ${
+                  isSelected
+                    ? 'bg-indigo-600 text-white shadow-sm'
+                    : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200'
+                }`}
+              >
+                <span>{f.floor_name}</span>
+                <span className={`text-[10px] px-1.5 py-0.2 rounded-full ${
+                  isSelected ? 'bg-indigo-700 text-indigo-100' : 'bg-slate-100 text-slate-500'
+                }`}>
+                  {roomCount}
+                </span>
+              </button>
+            )
+          })}
         </div>
-      )}
+
+        {/* View mode toggle: Grid vs List */}
+        <div className="flex items-center gap-1 bg-white border border-slate-200 rounded-xl p-0.5 shadow-sm">
+          <button
+            onClick={() => setViewMode('grid')}
+            title="Grid Card View"
+            className={`px-2 py-1 rounded-lg text-xs font-bold transition-all flex items-center gap-1 ${
+              viewMode === 'grid' ? 'bg-slate-900 text-white' : 'text-slate-500 hover:text-slate-800'
+            }`}
+          >
+            <span>⊞</span> Grid
+          </button>
+          <button
+            onClick={() => setViewMode('list')}
+            title="Dense List View"
+            className={`px-2 py-1 rounded-lg text-xs font-bold transition-all flex items-center gap-1 ${
+              viewMode === 'list' ? 'bg-slate-900 text-white' : 'text-slate-500 hover:text-slate-800'
+            }`}
+          >
+            <span>☰</span> List
+          </button>
+        </div>
+      </div>
+
+      {/* ── ROOMS CONTENT ── */}
+      <div className="p-5 space-y-6">
+        {displayedFloors.length === 0 ? (
+          <div className="text-center py-8 text-slate-400 text-xs italic">
+            {searchQuery ? `No rooms match "${searchQuery}" in this block.` : 'No floors or rooms in this block yet. Click "+ Floor" or "⚡ Generate Rooms" above.'}
+          </div>
+        ) : (
+          displayedFloors.map(floor => {
+            const rooms = floor.filteredRooms || []
+            return (
+              <div key={floor.id} className="space-y-3">
+                {/* Floor Sub-Header */}
+                <div className="flex items-center justify-between pb-1.5 border-b border-slate-100">
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm">🏬</span>
+                    <h3 className="font-extrabold text-sm text-slate-800">{floor.floor_name}</h3>
+                    <span className="text-[10px] font-bold bg-indigo-50 text-indigo-700 px-2 py-0.5 rounded-full border border-indigo-100">
+                      {rooms.length} {rooms.length === 1 ? 'room' : 'rooms'}
+                    </span>
+                    <span className="text-[10px] font-semibold text-blue-600 bg-blue-50 px-2 py-0.5 rounded border border-blue-100">
+                      🏢 Wing Duty Supervision Floor
+                    </span>
+                  </div>
+
+                  {!readOnly && (
+                    <button
+                      onClick={() => onBulkAssignDept(floor)}
+                      title={`Assign department to all rooms on ${floor.floor_name}`}
+                      className="text-[11px] font-bold text-slate-600 hover:text-indigo-600 bg-slate-50 hover:bg-slate-100 px-2.5 py-1 rounded-lg border border-slate-200 transition-all flex items-center gap-1"
+                    >
+                      <span>🏢</span> + Assign Dept
+                    </button>
+                  )}
+                </div>
+
+                {/* Rooms Grid or List */}
+                {rooms.length === 0 ? (
+                  <p className="text-xs text-slate-400 italic py-2 pl-4">No rooms on this floor matching criteria.</p>
+                ) : viewMode === 'grid' ? (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
+                    {rooms.map(r => (
+                      <RoomCard
+                        key={r.id}
+                        room={r}
+                        onEdit={onEditRoom}
+                        onRefresh={onRefresh}
+                        readOnly={readOnly}
+                      />
+                    ))}
+                  </div>
+                ) : (
+                  <div className="space-y-1.5">
+                    {rooms.map(r => (
+                      <RoomRow
+                        key={r.id}
+                        room={r}
+                        onEdit={onEditRoom}
+                        onRefresh={onRefresh}
+                        readOnly={readOnly}
+                      />
+                    ))}
+                  </div>
+                )}
+              </div>
+            )
+          })
+        )}
+      </div>
     </div>
   )
 }
@@ -2289,6 +2598,11 @@ export default function CampusStructureBuilder({ readOnly = false }) {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
 
+  // 1-Click Fast Navigation & Live Filters
+  const [activeBlockId, setActiveBlockId] = useState('all') // 'all' | number
+  const [searchQuery, setSearchQuery] = useState('')
+  const [typeFilter, setTypeFilter] = useState('all') // all, exam, lab, classroom, seminar
+
   // Modals
   const [wizardOpen, setWizardOpen] = useState(false)
   const [blockModal, setBlockModal] = useState(null) // null | block | 'new'
@@ -2398,84 +2712,231 @@ export default function CampusStructureBuilder({ readOnly = false }) {
 
   const blocks = tree?.blocks || []
 
+  // Filter blocks based on 1-click activeBlockId
+  const displayedBlocks = useMemo(() => {
+    if (activeBlockId === 'all') return blocks
+    return blocks.filter(b => b.id === Number(activeBlockId))
+  }, [blocks, activeBlockId])
+
   return (
-    <div className="space-y-6">
-      {/* Page header */}
-      <div className="flex items-start justify-between gap-4 flex-wrap">
-        <div>
-          <h1 className="text-2xl font-black text-slate-800">🏛️ Campus Structure Builder</h1>
-          <p className="text-slate-500 text-sm mt-0.5">
-            {tree?.institution_name || 'Campus'} · Visual hierarchy of your physical infrastructure
-          </p>
+    <div className="space-y-6 max-w-7xl mx-auto px-4 py-6">
+      {/* ── TOP EXECUTIVE COMMAND BAR ── */}
+      <div className="bg-white border border-slate-200/90 rounded-3xl p-5 shadow-sm space-y-4">
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+          <div>
+            <h1 className="text-2xl font-black text-slate-900 tracking-tight flex items-center gap-2">
+              <span>🏛️</span> Campus Structure Builder
+            </h1>
+            <p className="text-xs font-semibold text-slate-500 mt-1">
+              {tree?.institution_name || 'Campus'} · Physical Infrastructure & Spatial Allocation
+            </p>
+          </div>
+
+          {canEdit && (
+            <div className="flex items-center gap-2 flex-wrap">
+              <button
+                onClick={handleExport}
+                disabled={exportLoading}
+                className="flex items-center gap-1.5 px-3 py-2 rounded-xl border border-slate-200 text-xs font-bold text-slate-600 hover:bg-slate-50 disabled:opacity-50 transition-all active:scale-95"
+              >
+                {exportLoading ? <Spinner size="sm" /> : '📥'} Export CSV
+              </button>
+              <label className="flex items-center gap-1.5 px-3 py-2 rounded-xl border border-slate-200 text-xs font-bold text-slate-600 hover:bg-slate-50 cursor-pointer transition-all active:scale-95">
+                📤 Import CSV
+                <input ref={importRef} type="file" accept=".csv" className="hidden" onChange={handleImport} />
+              </label>
+              <button
+                onClick={() => setWizardOpen(true)}
+                className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-gradient-to-r from-violet-600 to-indigo-600 text-white font-black text-xs hover:from-violet-700 hover:to-indigo-700 transition-all shadow-md shadow-indigo-600/20 active:scale-95"
+              >
+                🏗️ Smart Auto-Fill
+              </button>
+              <button
+                onClick={() => setBlockModal('new')}
+                className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-slate-900 text-white font-bold text-xs hover:bg-slate-800 transition-all shadow-sm active:scale-95"
+              >
+                + Add Block
+              </button>
+            </div>
+          )}
         </div>
-        {canEdit && (
-          <div className="flex items-center gap-2 flex-wrap">
-            <button onClick={handleExport} disabled={exportLoading}
-              className="flex items-center gap-1.5 px-3 py-2 rounded-xl border border-slate-200 text-sm font-semibold text-slate-600 hover:bg-slate-50 disabled:opacity-50 transition-all">
-              {exportLoading ? <Spinner size="sm" /> : '📥'} Export CSV
+
+        {/* Import result feedback */}
+        {importResult && (
+          <div className={`p-3 rounded-2xl border text-xs font-bold flex items-center justify-between ${
+            importResult.type === 'success'
+              ? 'bg-emerald-50 border-emerald-200 text-emerald-800'
+              : 'bg-rose-50 border-rose-200 text-rose-800'
+          }`}>
+            <span>{importResult.type === 'success'
+              ? `✅ Imported — ${importResult.data?.blocks_created ?? 0} blocks, ${importResult.data?.rooms_created ?? 0} rooms created`
+              : `❌ ${importResult.message}`
+            }</span>
+            <button onClick={() => setImportResult(null)} className="text-base leading-none opacity-60 hover:opacity-100">✕</button>
+          </div>
+        )}
+
+        {/* ── INTERACTIVE KPI SUMMARY STRIP ── */}
+        {metrics && (
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-2 border-t border-slate-100">
+            <button
+              onClick={() => setActiveBlockId('all')}
+              className="p-3 bg-slate-50 rounded-2xl border border-slate-100 text-left hover:border-slate-300 transition-all"
+            >
+              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Total Blocks</span>
+              <span className="text-xl font-black text-slate-900 mt-0.5 block">{metrics.total_blocks}</span>
             </button>
-            <label className="flex items-center gap-1.5 px-3 py-2 rounded-xl border border-slate-200 text-sm font-semibold text-slate-600 hover:bg-slate-50 cursor-pointer transition-all">
-              📤 Import CSV
-              <input ref={importRef} type="file" accept=".csv" className="hidden" onChange={handleImport} />
-            </label>
-            <button onClick={() => setWizardOpen(true)}
-              className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-gradient-to-r from-violet-600 to-primary-600 text-white font-bold text-sm hover:from-violet-700 hover:to-primary-700 transition-all shadow-sm">
-              🏗️ Smart Auto-Fill
-            </button>
-            <button onClick={() => setBlockModal('new')}
-              className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-primary-600 text-white font-bold text-sm hover:bg-primary-700 transition-all shadow-sm">
-              + Add Block
-            </button>
+            <div className="p-3 bg-slate-50 rounded-2xl border border-slate-100">
+              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Total Floors</span>
+              <span className="text-xl font-black text-slate-900 mt-0.5 block">{metrics.total_floors}</span>
+            </div>
+            <div className="p-3 bg-slate-50 rounded-2xl border border-slate-100">
+              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Total Rooms</span>
+              <span className="text-xl font-black text-slate-900 mt-0.5 block">{metrics.total_rooms}</span>
+            </div>
+            <div className={`p-3 rounded-2xl border transition-all ${metrics.warnings?.length > 0 ? 'bg-amber-50 border-amber-200' : 'bg-slate-50 border-slate-100'}`}>
+              <span className="text-[10px] font-bold text-amber-700 uppercase tracking-wider block">Warnings</span>
+              <span className="text-xl font-black text-amber-900 mt-0.5 block">{metrics.warnings?.length || 0}</span>
+            </div>
+          </div>
+        )}
+
+        {/* Warnings List */}
+        {metrics?.warnings?.length > 0 && (
+          <div className="bg-amber-50 border border-amber-200 rounded-2xl p-3 text-xs text-amber-800 space-y-1">
+            <p className="font-extrabold flex items-center gap-1.5">
+              <span>⚠️</span> Configuration Warnings
+            </p>
+            {metrics.warnings.map((w, i) => <p key={i} className="text-[11px]">• {w}</p>)}
+          </div>
+        )}
+
+        {/* ── 1-CLICK BLOCK SWITCHER HORIZONTAL STRIP ── */}
+        {blocks.length > 0 && (
+          <div className="pt-2 border-t border-slate-100">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-[11px] font-black uppercase tracking-wider text-slate-500 flex items-center gap-1">
+                <span>🏢</span> Jump to Block
+              </span>
+              <span className="text-[10px] font-semibold text-slate-400">1-click to focus any block</span>
+            </div>
+
+            <div className="flex items-center gap-2 overflow-x-auto pb-1">
+              <button
+                onClick={() => setActiveBlockId('all')}
+                className={`px-3.5 py-2 rounded-2xl text-xs font-bold transition-all whitespace-nowrap ${
+                  activeBlockId === 'all'
+                    ? 'bg-slate-900 text-white shadow-md'
+                    : 'bg-slate-50 text-slate-700 hover:bg-slate-100 border border-slate-200'
+                }`}
+              >
+                All Blocks ({blocks.length})
+              </button>
+
+              {blocks.map(b => {
+                const isSelected = String(activeBlockId) === String(b.id)
+                const fCount = b.floors?.length || 0
+                const rCount = (b.floors || []).reduce((acc, f) => acc + (f.rooms?.length || 0), 0)
+                return (
+                  <button
+                    key={b.id}
+                    onClick={() => setActiveBlockId(b.id)}
+                    className={`px-3.5 py-2 rounded-2xl text-xs font-bold transition-all whitespace-nowrap flex items-center gap-2 ${
+                      isSelected
+                        ? 'bg-indigo-600 text-white shadow-md ring-2 ring-indigo-500/20'
+                        : 'bg-slate-50 text-slate-700 hover:bg-slate-100 border border-slate-200'
+                    }`}
+                  >
+                    <span
+                      className="w-2.5 h-2.5 rounded-full shrink-0"
+                      style={{ background: b.color_hex || '#4F46E5' }}
+                    />
+                    <span>{b.name}</span>
+                    <span className={`text-[10px] px-1.5 py-0.2 rounded-full ${
+                      isSelected ? 'bg-indigo-700 text-indigo-100' : 'bg-slate-200 text-slate-600'
+                    }`}>
+                      {fCount}F · {rCount}R
+                    </span>
+                  </button>
+                )
+              })}
+
+              {canEdit && (
+                <button
+                  onClick={() => setBlockModal('new')}
+                  className="px-3 py-2 rounded-2xl text-xs font-bold text-indigo-600 hover:bg-indigo-50 border border-dashed border-indigo-300 transition-all whitespace-nowrap"
+                >
+                  + Add Block
+                </button>
+              )}
+            </div>
           </div>
         )}
       </div>
 
-      {/* Import result feedback */}
-      {importResult && (
-        <div className={`p-3 rounded-xl border text-sm flex items-center justify-between ${
-          importResult.type === 'success'
-            ? 'bg-emerald-50 border-emerald-200 text-emerald-700'
-            : 'bg-rose-50 border-rose-200 text-rose-700'
-        }`}>
-          <span>{importResult.type === 'success'
-            ? `✅ Imported — ${importResult.data?.blocks_created ?? 0} blocks, ${importResult.data?.rooms_created ?? 0} rooms created`
-            : `❌ ${importResult.message}`
-          }</span>
-          <button onClick={() => setImportResult(null)} className="text-lg leading-none opacity-60 hover:opacity-100">×</button>
+      {/* ── LIVE SEARCH & QUICK FILTER BAR ── */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div className="relative flex-1 max-w-md">
+          <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400 text-sm">
+            🔍
+          </span>
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Search room number, name, department, or class..."
+            className="w-full pl-9 pr-8 py-2 bg-white border border-slate-200 rounded-xl text-xs font-semibold text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 shadow-sm"
+          />
+          {searchQuery && (
+            <button
+              onClick={() => setSearchQuery('')}
+              className="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-slate-600 text-xs font-bold"
+            >
+              ✕
+            </button>
+          )}
         </div>
-      )}
 
-      {/* Metrics */}
-      {metrics && (
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-          <MetricCard label="Blocks" value={metrics.total_blocks} icon="🏢" color="primary" />
-          <MetricCard label="Floors" value={metrics.total_floors} icon="🏬" color="emerald" />
-          <MetricCard label="Rooms" value={metrics.total_rooms} icon="🚪" color="amber" />
-          <MetricCard label="Warnings" value={metrics.warnings?.length || 0} icon="⚠️" color={metrics.warnings?.length > 0 ? 'rose' : 'emerald'} />
+        {/* Room Type Quick Filters */}
+        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0">
+          {[
+            { id: 'all', label: 'All Rooms' },
+            { id: 'exam', label: '📝 Exam Halls' },
+            { id: 'lab', label: '🧪 Labs' },
+            { id: 'classroom', label: '🚪 Classrooms' },
+            { id: 'seminar', label: '🏛️ Seminar / Audit.' },
+          ].map(f => (
+            <button
+              key={f.id}
+              onClick={() => setTypeFilter(f.id)}
+              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap ${
+                typeFilter === f.id
+                  ? 'bg-slate-900 text-white shadow-sm'
+                  : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200'
+              }`}
+            >
+              {f.label}
+            </button>
+          ))}
         </div>
-      )}
+      </div>
 
-      {/* Warnings */}
-      {metrics?.warnings?.length > 0 && (
-        <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 text-sm text-amber-700 space-y-1">
-          <p className="font-bold">⚠️ Configuration Warnings</p>
-          {metrics.warnings.map((w, i) => <p key={i} className="text-xs">• {w}</p>)}
-        </div>
-      )}
-
-      {/* Tabs */}
-      <div className="flex gap-1 border-b border-slate-200 overflow-x-auto">
+      {/* ── TABS (Hierarchy, Mapping, Search) ── */}
+      <div className="flex gap-2 border-b border-slate-200">
         {[
-          { id: 'tree', label: '🌳 Hierarchy' },
+          { id: 'tree', label: '🌳 Campus Hierarchy & Layout' },
           { id: 'mapping', label: '🗺️ Room & Dept Mapping' },
-          { id: 'search', label: '🔍 Search' },
+          { id: 'search', label: '🔍 Deep Search' },
         ].map(tab => (
-          <button key={tab.id} onClick={() => setActiveTab(tab.id)}
-            className={`px-4 py-2.5 text-sm font-bold border-b-2 transition-all -mb-px whitespace-nowrap ${
+          <button
+            key={tab.id}
+            onClick={() => setActiveTab(tab.id)}
+            className={`px-4 py-2.5 text-xs font-extrabold border-b-2 transition-all -mb-px whitespace-nowrap ${
               activeTab === tab.id
-                ? 'border-primary-600 text-primary-600'
+                ? 'border-indigo-600 text-indigo-700 bg-white'
                 : 'border-transparent text-slate-500 hover:text-slate-700'
-            }`}>
+            }`}
+          >
             {tab.label}
           </button>
         ))}
@@ -2502,27 +2963,35 @@ export default function CampusStructureBuilder({ readOnly = false }) {
         />
       ) : (
         <div>
-          {blocks.length === 0 ? (
-            <div className="text-center py-16 border-2 border-dashed border-slate-200 rounded-2xl">
+          {displayedBlocks.length === 0 ? (
+            <div className="text-center py-16 bg-white border border-slate-200 rounded-3xl p-8 shadow-sm">
               <div className="text-5xl mb-3">🏛️</div>
-              <p className="font-bold text-slate-700 text-lg">No Blocks Yet</p>
-              <p className="text-slate-400 text-sm mt-1 mb-4">Use the Smart Auto-Fill wizard to build your entire campus in seconds, or add blocks manually.</p>
-              {canEdit && (
+              <p className="font-extrabold text-slate-800 text-base">No Blocks Found</p>
+              <p className="text-slate-400 text-xs mt-1 mb-4">
+                {blocks.length === 0
+                  ? 'Use the Smart Auto-Fill wizard to build your entire campus in seconds, or add blocks manually.'
+                  : 'No blocks match the current search or block filter.'}
+              </p>
+              {canEdit && blocks.length === 0 && (
                 <div className="flex items-center justify-center gap-3">
-                  <button onClick={() => setWizardOpen(true)}
-                    className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-violet-600 to-primary-600 text-white font-bold text-sm hover:opacity-90 transition-all">
+                  <button
+                    onClick={() => setWizardOpen(true)}
+                    className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-violet-600 to-indigo-600 text-white font-black text-xs hover:opacity-90 transition-all shadow-md"
+                  >
                     🏗️ Launch Auto-Fill Wizard
                   </button>
-                  <button onClick={() => setBlockModal('new')}
-                    className="px-5 py-2.5 rounded-xl border border-slate-200 text-sm font-bold text-slate-600 hover:bg-slate-50 transition-all">
+                  <button
+                    onClick={() => setBlockModal('new')}
+                    className="px-5 py-2.5 rounded-xl border border-slate-200 text-xs font-bold text-slate-600 hover:bg-slate-50 transition-all"
+                  >
                     + Add Block Manually
                   </button>
                 </div>
               )}
             </div>
           ) : (
-            <div className="space-y-1">
-              {blocks.map(block => (
+            <div className="space-y-4">
+              {displayedBlocks.map(block => (
                 <BlockNode
                   key={block.id}
                   block={block}
@@ -2536,6 +3005,8 @@ export default function CampusStructureBuilder({ readOnly = false }) {
                   onGenerateRooms={b => setGenerateModal(b)}
                   onEditRoom={room => setRoomEditModal(room)}
                   onRefresh={fetchData}
+                  searchQuery={searchQuery}
+                  typeFilter={typeFilter}
                   onBulkAssignDept={target => setBulkDeptModal({
                     target: target.floor_name ? target : block,
                     type: target.floor_name ? 'floor' : 'block'
