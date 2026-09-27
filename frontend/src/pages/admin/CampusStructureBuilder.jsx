@@ -95,10 +95,15 @@ function SectionLabel({ children }) {
 // ─────────────────────────────────────────────────────────────────────────────
 // Bulk Department Assignment Modal (Floor / Block)
 // ─────────────────────────────────────────────────────────────────────────────
-function BulkAssignDeptModal({ target, type, onClose, onSuccess }) {
-  const [departments, setDepartments] = useState([])
-  const [loading, setLoading] = useState(true)
-  const [mode, setMode] = useState(type === 'block' && (target?.floors?.length || 0) > 0 ? 'multi_floor' : 'whole')
+function BulkAssignDeptModal({ target, type, departments: propDepartments = [], classes: propClasses = [], onClose, onSuccess }) {
+  const [departments, setDepartments] = useState(propDepartments)
+  const [classes, setClasses] = useState(propClasses)
+  const [loading, setLoading] = useState(false)
+  const [mode, setMode] = useState(
+    type === 'block' && (target?.floors?.length || 0) > 0
+      ? 'multi_floor'
+      : (type === 'floor' && (target?.rooms?.length || 0) > 1 ? 'split' : 'whole')
+  )
   const [selectedDeptId, setSelectedDeptId] = useState('')
   const [floorAllocations, setFloorAllocations] = useState({})
   const [primaryDeptId, setPrimaryDeptId] = useState(target?.department_id ? String(target.department_id) : '')
@@ -107,29 +112,66 @@ function BulkAssignDeptModal({ target, type, onClose, onSuccess }) {
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
 
+  // Floor Split Mode state
+  const floorRooms = useMemo(() => {
+    if (type !== 'floor' || !target?.rooms) return []
+    return [...target.rooms].sort((a, b) => (a.room_number || '').localeCompare(b.room_number || '', undefined, { numeric: true }))
+  }, [target, type])
+
+  const [roomAllocations, setRoomAllocations] = useState({})
+  const [rangeFromId, setRangeFromId] = useState('')
+  const [rangeToId, setRangeToId] = useState('')
+  const [rangeDeptId, setRangeDeptId] = useState('')
+  const [rangeClassId, setRangeClassId] = useState('')
+
   const floors = (type === 'block' ? target?.floors : null) || []
 
   useEffect(() => {
-    departmentsApi.list(true)
-      .then(r => {
-        const depts = r.data || []
-        setDepartments(depts)
-        if (type === 'block' && target?.floors) {
-          const initialAlloc = {}
-          target.floors.forEach(f => {
-            const roomsWithDept = (f.rooms || []).filter(rm => rm.department_id)
-            if (roomsWithDept.length > 0) {
-              initialAlloc[f.id] = String(roomsWithDept[0].department_id)
-            } else {
-              initialAlloc[f.id] = ''
-            }
-          })
-          setFloorAllocations(initialAlloc)
+    if (departments.length === 0) {
+      departmentsApi.list(true)
+        .then(r => setDepartments(r.data || []))
+        .catch(() => setDepartments([]))
+    }
+    if (classes.length === 0) {
+      classesApi.list()
+        .then(r => setClasses(r.data || []))
+        .catch(() => setClasses([]))
+    }
+  }, [departments.length, classes.length])
+
+  useEffect(() => {
+    if (type === 'block' && target?.floors) {
+      const initialAlloc = {}
+      target.floors.forEach(f => {
+        const roomsWithDept = (f.rooms || []).filter(rm => rm.department_id)
+        if (roomsWithDept.length > 0) {
+          initialAlloc[f.id] = String(roomsWithDept[0].department_id)
+        } else {
+          initialAlloc[f.id] = ''
         }
       })
-      .catch(() => setDepartments([]))
-      .finally(() => setLoading(false))
-  }, [target, type])
+      setFloorAllocations(initialAlloc)
+    } else if (type === 'floor' && target?.rooms) {
+      const initial = {}
+      target.rooms.forEach(r => {
+        initial[r.id] = {
+          department_id: r.department_id ? String(r.department_id) : '',
+          primary_class_id: r.primary_class_id ? String(r.primary_class_id) : ''
+        }
+      })
+      setRoomAllocations(initial)
+      if (floorRooms.length > 0) {
+        setRangeFromId(String(floorRooms[0].id))
+        setRangeToId(String(floorRooms[floorRooms.length - 1].id))
+      }
+    }
+  }, [target, type, floorRooms])
+
+  const deptMap = useMemo(() => {
+    const m = {}
+    departments.forEach(d => { m[d.id] = d.name })
+    return m
+  }, [departments])
 
   const handleApplyQuickDept = () => {
     if (!quickDeptId) return
@@ -140,16 +182,101 @@ function BulkAssignDeptModal({ target, type, onClose, onSuccess }) {
     setFloorAllocations(updated)
   }
 
+  const handleApplyRange = () => {
+    if (!rangeFromId || !rangeToId || !rangeDeptId) return
+    const idxFrom = floorRooms.findIndex(r => String(r.id) === String(rangeFromId))
+    const idxTo = floorRooms.findIndex(r => String(r.id) === String(rangeToId))
+    if (idxFrom === -1 || idxTo === -1) return
+    const start = Math.min(idxFrom, idxTo)
+    const end = Math.max(idxFrom, idxTo)
+
+    setRoomAllocations(prev => {
+      const next = { ...prev }
+      for (let i = start; i <= end; i++) {
+        const rm = floorRooms[i]
+        const assignedDept = rangeDeptId === 'none' ? '' : rangeDeptId
+        next[rm.id] = {
+          ...next[rm.id],
+          department_id: assignedDept,
+          primary_class_id: rangeClassId
+            ? (rangeClassId === 'none' ? '' : rangeClassId)
+            : (assignedDept && next[rm.id]?.primary_class_id ? next[rm.id].primary_class_id : '')
+        }
+      }
+      return next
+    })
+  }
+
+  const handleRoomDeptChange = (roomId, newDeptId) => {
+    setRoomAllocations(prev => ({
+      ...prev,
+      [roomId]: {
+        ...prev[roomId],
+        department_id: newDeptId,
+      }
+    }))
+  }
+
+  const handleRoomClassChange = (roomId, newClassId) => {
+    setRoomAllocations(prev => {
+      const current = prev[roomId] || { department_id: '', primary_class_id: '' }
+      let dept = current.department_id
+      if (newClassId && !dept) {
+        const cls = classes.find(c => String(c.id) === String(newClassId))
+        if (cls?.department_id) {
+          dept = String(cls.department_id)
+        }
+      }
+      return {
+        ...prev,
+        [roomId]: {
+          department_id: dept,
+          primary_class_id: newClassId,
+        }
+      }
+    })
+  }
+
   const handleSubmit = async () => {
     setSaving(true)
     setError('')
     try {
       if (type === 'floor') {
-        const payload = {
-          department_id: selectedDeptId === '' ? null : Number(selectedDeptId),
-          overwrite_existing: overwrite,
+        if (mode === 'split') {
+          // Find changed rooms
+          const changed = []
+          target.rooms.forEach(orig => {
+            const alloc = roomAllocations[orig.id] || {}
+            const origDept = orig.department_id ? String(orig.department_id) : ''
+            const origClass = orig.primary_class_id ? String(orig.primary_class_id) : ''
+            const newDept = alloc.department_id || ''
+            const newClass = alloc.primary_class_id || ''
+            if (newDept !== origDept || newClass !== origClass) {
+              changed.push({
+                id: orig.id,
+                department_id: newDept ? Number(newDept) : null,
+                primary_class_id: newClass ? Number(newClass) : null
+              })
+            }
+          })
+
+          if (changed.length > 0) {
+            await Promise.all(
+              changed.map(c =>
+                roomsApi.update(c.id, {
+                  department_id: c.department_id,
+                  primary_class_id: c.primary_class_id
+                })
+              )
+            )
+          }
+        } else {
+          const payload = {
+            department_id: selectedDeptId === '' ? null : Number(selectedDeptId),
+            overwrite_existing: overwrite,
+          }
+          await campusStructureApi.bulkAssignFloorDepartment(target.id, payload)
         }
-        await campusStructureApi.bulkAssignFloorDepartment(target.id, payload)
       } else if (mode === 'multi_floor') {
         const mappedFloors = {}
         for (const [fId, dId] of Object.entries(floorAllocations)) {
@@ -215,7 +342,173 @@ function BulkAssignDeptModal({ target, type, onClose, onSuccess }) {
             </div>
           )}
 
-          {type === 'block' && mode === 'multi_floor' && floors.length > 0 ? (
+          {type === 'floor' && floorRooms.length > 1 && (
+            <div className="flex rounded-2xl bg-slate-100 p-1 gap-1">
+              <button
+                type="button"
+                onClick={() => setMode('split')}
+                className={`flex-1 py-2 px-3 rounded-xl text-xs font-black transition-all ${
+                  mode === 'split'
+                    ? 'bg-white text-indigo-700 shadow-sm'
+                    : 'text-slate-600 hover:text-slate-800'
+                }`}
+              >
+                🔀 Multi-Dept Split / Wing Partition
+              </button>
+              <button
+                type="button"
+                onClick={() => setMode('whole')}
+                className={`flex-1 py-2 px-3 rounded-xl text-xs font-bold transition-all ${
+                  mode === 'whole'
+                    ? 'bg-white text-indigo-700 shadow-sm'
+                    : 'text-slate-600 hover:text-slate-800'
+                }`}
+              >
+                Single Department (Whole Floor)
+              </button>
+            </div>
+          )}
+
+          {type === 'floor' && mode === 'split' ? (
+            <div className="space-y-4">
+              <div className="p-3 bg-indigo-50/70 border border-indigo-100 rounded-2xl text-xs text-indigo-900 leading-relaxed">
+                Partition <strong>{titleName}</strong> into wings or sections by assigning different departments and classes to different rooms. You can use the Quick Range Allocator or change room dropdowns below.
+              </div>
+
+              {/* Quick Range Allocator */}
+              <div className="p-3.5 bg-slate-50 border border-slate-200/90 rounded-2xl space-y-2 shadow-xs">
+                <span className="text-[11px] font-extrabold text-slate-700 uppercase tracking-wider block">
+                  ⚡ Quick Range Allocator
+                </span>
+                <div className="grid grid-cols-1 sm:grid-cols-4 gap-2">
+                  <div>
+                    <label className="block text-[10px] font-bold text-slate-500 mb-0.5">From Room</label>
+                    <select
+                      value={rangeFromId}
+                      onChange={e => setRangeFromId(e.target.value)}
+                      className="w-full text-xs font-bold border border-slate-200 rounded-xl px-2 py-1.5 bg-white focus:outline-none focus:border-indigo-500"
+                    >
+                      {floorRooms.map(r => (
+                        <option key={r.id} value={r.id}>🚪 {r.room_number}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-[10px] font-bold text-slate-500 mb-0.5">To Room</label>
+                    <select
+                      value={rangeToId}
+                      onChange={e => setRangeToId(e.target.value)}
+                      className="w-full text-xs font-bold border border-slate-200 rounded-xl px-2 py-1.5 bg-white focus:outline-none focus:border-indigo-500"
+                    >
+                      {floorRooms.map(r => (
+                        <option key={r.id} value={r.id}>🚪 {r.room_number}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-[10px] font-bold text-slate-500 mb-0.5">Assign Dept</label>
+                    <select
+                      value={rangeDeptId}
+                      onChange={e => setRangeDeptId(e.target.value)}
+                      className="w-full text-xs font-bold border border-slate-200 rounded-xl px-2 py-1.5 bg-white focus:outline-none focus:border-indigo-500 truncate"
+                    >
+                      <option value="">-- Choose Dept --</option>
+                      <option value="none">-- Unassigned (Clear) --</option>
+                      {departments.map(d => (
+                        <option key={d.id} value={d.id}>🏢 {d.name} {d.code ? `(${d.code})` : ''}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="flex items-end">
+                    <button
+                      type="button"
+                      onClick={handleApplyRange}
+                      disabled={!rangeDeptId}
+                      className="w-full py-1.5 px-3 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-40 text-white rounded-xl text-xs font-bold transition-all shadow-xs active:scale-95"
+                    >
+                      Apply to Range
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              {/* Room by Room Table */}
+              <div className="space-y-1">
+                <div className="flex items-center justify-between text-[11px] font-bold text-slate-500 px-2 pb-1">
+                  <span>Room ({floorRooms.length} Total)</span>
+                  <span>Assigned Department & Class</span>
+                </div>
+                <div className="border border-slate-200 rounded-2xl divide-y divide-slate-100 max-h-72 overflow-y-auto">
+                  {floorRooms.map(rm => {
+                    const alloc = roomAllocations[rm.id] || { department_id: '', primary_class_id: '' }
+                    const rmDeptNum = alloc.department_id ? Number(alloc.department_id) : null
+                    const deptClasses = rmDeptNum ? classes.filter(c => c.department_id === rmDeptNum) : []
+                    const otherCls = rmDeptNum ? classes.filter(c => c.department_id !== rmDeptNum) : classes
+
+                    return (
+                      <div key={rm.id} className="p-2.5 flex items-center justify-between gap-3 hover:bg-slate-50 transition-colors">
+                        <div className="flex items-center gap-2 min-w-0 shrink-0">
+                          <div className="px-2.5 py-1 rounded-xl bg-slate-900 text-white font-mono font-black text-xs tracking-wider shrink-0 select-all border border-slate-800 flex items-center gap-1">
+                            <span className="text-[10px]">🚪</span>
+                            <span className="shrink-0">{rm.room_number}</span>
+                          </div>
+                          {rm.name && rm.name !== rm.room_number && (
+                            <span className="text-[11px] text-slate-400 font-semibold truncate max-w-[80px]">
+                              {rm.name}
+                            </span>
+                          )}
+                          <span className="text-[10px] text-slate-500 font-semibold bg-slate-100 px-1.5 py-0.5 rounded capitalize">
+                            {rm.room_type || 'class'}
+                          </span>
+                        </div>
+
+                        <div className="flex items-center gap-2 flex-1 max-w-md justify-end">
+                          {/* Department Select */}
+                          <select
+                            value={alloc.department_id}
+                            onChange={e => handleRoomDeptChange(rm.id, e.target.value)}
+                            className="flex-1 border border-slate-200 rounded-xl px-2 py-1.5 text-xs bg-white focus:outline-none focus:border-indigo-500 font-bold truncate"
+                          >
+                            <option value="">-- No Dept (Unassigned) --</option>
+                            {departments.map(d => (
+                              <option key={d.id} value={d.id}>🏢 {d.name} {d.code ? `(${d.code})` : ''}</option>
+                            ))}
+                          </select>
+
+                          {/* Class Select */}
+                          <select
+                            value={alloc.primary_class_id}
+                            onChange={e => handleRoomClassChange(rm.id, e.target.value)}
+                            className="flex-1 border border-slate-200 rounded-xl px-2 py-1.5 text-xs bg-white focus:outline-none focus:border-indigo-500 font-semibold truncate"
+                          >
+                            <option value="">-- No Class --</option>
+                            {deptClasses.length > 0 && (
+                              <optgroup label="⭐ Dept Classes">
+                                {deptClasses.map(c => (
+                                  <option key={c.id} value={c.id}>
+                                    🎓 {c.name} {c.section ? `(${c.section})` : ''}
+                                  </option>
+                                ))}
+                              </optgroup>
+                            )}
+                            {otherCls.length > 0 && (
+                              <optgroup label={deptClasses.length > 0 ? "🌐 Other Classes" : "All Classes"}>
+                                {otherCls.map(c => (
+                                  <option key={c.id} value={c.id}>
+                                    🎓 {c.name} {c.section ? `(${c.section})` : ''} {c.department_id && deptMap[c.department_id] ? `(${deptMap[c.department_id]})` : ''}
+                                  </option>
+                                ))}
+                              </optgroup>
+                            )}
+                          </select>
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
+              </div>
+            </div>
+          ) : type === 'block' && mode === 'multi_floor' && floors.length > 0 ? (
             <div className="space-y-3">
               <div className="p-3 bg-indigo-50/70 border border-indigo-100 rounded-xl text-xs text-indigo-900 leading-relaxed">
                 Assign different departments to each floor of <strong>{titleName}</strong>. Faculty from all assigned departments will automatically be eligible for duty scheduling in this block.
@@ -344,10 +637,12 @@ function BulkAssignDeptModal({ target, type, onClose, onSuccess }) {
             <button
               onClick={handleSubmit}
               disabled={saving}
-              className="flex-[2] py-2.5 rounded-xl bg-primary-600 text-white font-bold text-sm disabled:opacity-50 hover:bg-primary-700 transition-all flex items-center justify-center gap-2 shadow-sm"
+              className="flex-[2] py-2.5 rounded-xl bg-indigo-600 text-white font-bold text-sm disabled:opacity-50 hover:bg-indigo-700 transition-all flex items-center justify-center gap-2 shadow-sm active:scale-95"
             >
               {saving ? <><Spinner size="sm" /> Applying...</> : (
-                mode === 'multi_floor' && type === 'block'
+                type === 'floor' && mode === 'split'
+                  ? '💾 Save Multi-Dept Floor Assignments'
+                  : mode === 'multi_floor' && type === 'block'
                   ? '🏢 Allocate Departments to Block'
                   : `🏢 Apply to ${type === 'floor' ? 'Floor' : 'Block'}`
               )}
@@ -540,13 +835,45 @@ function QuickEditRoomModal({ room, departments, classes, onClose, onSuccess }) 
 // ─────────────────────────────────────────────────────────────────────────────
 // Tree Node components
 // ─────────────────────────────────────────────────────────────────────────────
-function RoomCard({ room, onEdit, onRefresh, readOnly }) {
+function RoomCard({ room, departments = [], classes = [], onEdit, onRefresh, readOnly }) {
   const [updating, setUpdating] = useState(false)
+  const [updatingField, setUpdatingField] = useState(null)
+  const [localDeptId, setLocalDeptId] = useState(room.department_id ? String(room.department_id) : '')
+  const [localClassId, setLocalClassId] = useState(room.primary_class_id ? String(room.primary_class_id) : '')
+
+  useEffect(() => {
+    setLocalDeptId(room.department_id ? String(room.department_id) : '')
+    setLocalClassId(room.primary_class_id ? String(room.primary_class_id) : '')
+  }, [room.department_id, room.primary_class_id])
+
+  const deptMap = useMemo(() => {
+    const m = {}
+    departments.forEach(d => { m[d.id] = d.name })
+    return m
+  }, [departments])
+
+  const { roomDeptClasses, otherClasses } = useMemo(() => {
+    const currentDeptNum = localDeptId ? Number(localDeptId) : null
+    if (!currentDeptNum) {
+      return { roomDeptClasses: [], otherClasses: classes }
+    }
+    const forDept = []
+    const others = []
+    classes.forEach(c => {
+      if (c.department_id === currentDeptNum) {
+        forDept.push(c)
+      } else {
+        others.push(c)
+      }
+    })
+    return { roomDeptClasses: forDept, otherClasses: others }
+  }, [classes, localDeptId])
 
   const handleTypeChange = async (e) => {
     const newType = e.target.value
     if (newType === room.room_type) return
     setUpdating(true)
+    setUpdatingField('type')
     try {
       await roomsApi.update(room.id, { room_type: newType })
       onRefresh?.()
@@ -554,12 +881,60 @@ function RoomCard({ room, onEdit, onRefresh, readOnly }) {
       alert(formatError(err, 'Failed to update room type'))
     } finally {
       setUpdating(false)
+      setUpdatingField(null)
+    }
+  }
+
+  const handleDeptChange = async (e) => {
+    const val = e.target.value
+    const newDeptId = val ? Number(val) : null
+    if (newDeptId === (room.department_id || null)) return
+    setLocalDeptId(val)
+    setUpdating(true)
+    setUpdatingField('dept')
+    try {
+      await roomsApi.update(room.id, { department_id: newDeptId })
+      onRefresh?.()
+    } catch (err) {
+      setLocalDeptId(room.department_id ? String(room.department_id) : '')
+      alert(formatError(err, 'Failed to update room department'))
+    } finally {
+      setUpdating(false)
+      setUpdatingField(null)
+    }
+  }
+
+  const handleClassChange = async (e) => {
+    const val = e.target.value
+    const newClassId = val ? Number(val) : null
+    if (newClassId === (room.primary_class_id || null)) return
+    setLocalClassId(val)
+    setUpdating(true)
+    setUpdatingField('class')
+    try {
+      const payload = { primary_class_id: newClassId }
+      if (newClassId) {
+        const cls = classes.find(c => c.id === newClassId)
+        if (cls?.department_id && !room.department_id) {
+          payload.department_id = cls.department_id
+          setLocalDeptId(String(cls.department_id))
+        }
+      }
+      await roomsApi.update(room.id, payload)
+      onRefresh?.()
+    } catch (err) {
+      setLocalClassId(room.primary_class_id ? String(room.primary_class_id) : '')
+      alert(formatError(err, 'Failed to assign class to room'))
+    } finally {
+      setUpdating(false)
+      setUpdatingField(null)
     }
   }
 
   const handleToggleExam = async () => {
     if (readOnly) return
     setUpdating(true)
+    setUpdatingField('exam')
     try {
       await roomsApi.update(room.id, { is_exam_eligible: !room.is_exam_eligible })
       onRefresh?.()
@@ -567,24 +942,33 @@ function RoomCard({ room, onEdit, onRefresh, readOnly }) {
       alert(formatError(err, 'Failed to toggle exam hall status'))
     } finally {
       setUpdating(false)
+      setUpdatingField(null)
     }
   }
 
   return (
-    <div className="bg-white border border-slate-200/90 rounded-2xl p-3.5 shadow-sm hover:shadow-md hover:border-indigo-300 transition-all space-y-2.5 relative group">
-      {/* Top Header: Room number & Type Selector */}
-      <div className="flex items-center justify-between gap-1.5">
-        <div className="flex items-center gap-1.5 min-w-0">
-          <span className="text-sm">🚪</span>
-          <span className="font-black text-slate-900 text-sm font-mono tracking-tight">{room.room_number}</span>
-          {room.name && <span className="text-slate-400 text-xs truncate max-w-[80px]" title={room.name}>{room.name}</span>}
+    <div className="bg-white border border-slate-200/90 rounded-2xl p-3.5 shadow-sm hover:shadow-md hover:border-indigo-300 transition-all space-y-3 relative group">
+      {/* Top Header: Dedicated Unclipped Room Number & Type Selector */}
+      <div className="flex items-center justify-between gap-2">
+        <div className="flex items-center gap-1.5 shrink-0 min-w-0">
+          <div className="px-2.5 py-1 rounded-xl bg-slate-900 text-white font-mono font-black text-sm tracking-wider shadow-sm flex items-center gap-1.5 shrink-0 select-all border border-slate-800">
+            <span className="text-xs">🚪</span>
+            <span className="shrink-0">{room.room_number}</span>
+          </div>
+          {room.name && room.name !== room.room_number && (
+            <span className="text-slate-400 font-semibold text-xs truncate max-w-[80px]" title={room.name}>
+              {room.name}
+            </span>
+          )}
         </div>
+
         {!readOnly ? (
           <select
             value={room.room_type || 'classroom'}
             onChange={handleTypeChange}
             disabled={updating}
-            className="text-[10px] font-bold py-1 px-1.5 rounded-lg border border-slate-200 bg-slate-50 hover:bg-white focus:outline-none focus:ring-1 focus:ring-indigo-500 cursor-pointer text-slate-700 max-w-[110px]"
+            title="Change room type"
+            className="text-[11px] font-bold py-1 px-2 rounded-xl border border-slate-200 bg-slate-50 hover:bg-white focus:outline-none focus:ring-1 focus:ring-indigo-500 cursor-pointer text-slate-700 shrink-0"
           >
             <option value="classroom">🚪 Class</option>
             <option value="laboratory">🧪 Lab</option>
@@ -602,19 +986,80 @@ function RoomCard({ room, onEdit, onRefresh, readOnly }) {
         )}
       </div>
 
-      {/* Middle: Dept & Class Badges */}
-      <div className="flex flex-wrap items-center gap-1 min-h-[22px]">
-        {room.department_name ? (
-          <span className="text-[10px] bg-slate-100 text-slate-700 px-2 py-0.5 rounded-md font-bold truncate max-w-[160px]" title={room.department_name}>
-            🏢 {room.department_name}
-          </span>
+      {/* Middle 1: Inline Department Selector (1-Click) */}
+      <div className="space-y-1">
+        <div className="flex items-center justify-between text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+          <span>🏢 Department</span>
+          {updatingField === 'dept' && <span className="text-indigo-600 font-semibold animate-pulse">Saving...</span>}
+        </div>
+        {!readOnly ? (
+          <select
+            value={localDeptId}
+            onChange={handleDeptChange}
+            disabled={updating}
+            title="Assign department to this room (can differ across rooms on the same wing or floor)"
+            className={`w-full text-xs font-bold py-1.5 px-2 rounded-xl border transition-all cursor-pointer truncate ${
+              localDeptId
+                ? 'bg-slate-50 hover:bg-white text-slate-800 border-slate-200 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500'
+                : 'bg-amber-50/70 hover:bg-amber-50 text-amber-800 border-amber-200'
+            }`}
+          >
+            <option value="">-- No Dept (Unassigned) --</option>
+            {departments.map(d => (
+              <option key={d.id} value={d.id}>
+                {d.name} {d.code ? `(${d.code})` : ''}
+              </option>
+            ))}
+          </select>
         ) : (
-          <span className="text-[10px] text-slate-400 italic">No dept assigned</span>
+          <div className="text-xs font-bold text-slate-700 truncate py-1">
+            {room.department_name ? `🏢 ${room.department_name}` : <span className="text-slate-400 italic font-normal">No Dept Assigned</span>}
+          </div>
         )}
-        {room.primary_class_name && (
-          <span className="text-[10px] bg-indigo-50 text-indigo-700 border border-indigo-200 px-1.5 py-0.5 rounded-md font-bold truncate max-w-[120px]" title={room.primary_class_name}>
-            🎓 {room.primary_class_name}
-          </span>
+      </div>
+
+      {/* Middle 2: Inline Class Selector (1-Click) */}
+      <div className="space-y-1">
+        <div className="flex items-center justify-between text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+          <span>🎓 Home Class</span>
+          {updatingField === 'class' && <span className="text-indigo-600 font-semibold animate-pulse">Saving...</span>}
+        </div>
+        {!readOnly ? (
+          <select
+            value={localClassId}
+            onChange={handleClassChange}
+            disabled={updating}
+            title="Assign class to this room (classes can belong to different departments on the same floor)"
+            className={`w-full text-xs font-semibold py-1.5 px-2 rounded-xl border transition-all cursor-pointer truncate ${
+              localClassId
+                ? 'bg-indigo-50/70 hover:bg-indigo-50 text-indigo-900 border-indigo-200 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500'
+                : 'bg-slate-50 hover:bg-white text-slate-600 border-slate-200'
+            }`}
+          >
+            <option value="">-- No Class (Floating / Shared) --</option>
+            {roomDeptClasses.length > 0 && (
+              <optgroup label={`⭐ ${departments.find(d => String(d.id) === String(localDeptId))?.name || 'Department'} Classes`}>
+                {roomDeptClasses.map(c => (
+                  <option key={c.id} value={c.id}>
+                    🎓 {c.name} {c.section ? `(${c.section})` : ''} {c.semester ? `· Sem ${c.semester}` : ''}
+                  </option>
+                ))}
+              </optgroup>
+            )}
+            {otherClasses.length > 0 && (
+              <optgroup label={roomDeptClasses.length > 0 ? "🌐 Other Department Classes" : "All College Classes"}>
+                {otherClasses.map(c => (
+                  <option key={c.id} value={c.id}>
+                    🎓 {c.name} {c.section ? `(${c.section})` : ''} {c.department_id && deptMap[c.department_id] ? `(${deptMap[c.department_id]})` : ''}
+                  </option>
+                ))}
+              </optgroup>
+            )}
+          </select>
+        ) : (
+          <div className="text-xs font-bold text-indigo-700 truncate py-1">
+            {room.primary_class_name ? `🎓 ${room.primary_class_name}` : <span className="text-slate-400 italic font-normal">No Class</span>}
+          </div>
         )}
       </div>
 
@@ -626,7 +1071,7 @@ function RoomCard({ room, onEdit, onRefresh, readOnly }) {
               onClick={handleToggleExam}
               disabled={updating}
               title="Click to toggle Exam Hall status"
-              className={`text-[10px] px-2 py-0.5 rounded-md font-bold transition-all border ${
+              className={`text-[10px] px-2 py-0.5 rounded-lg font-bold transition-all border ${
                 room.is_exam_eligible
                   ? 'bg-purple-100 text-purple-800 border-purple-300 hover:bg-purple-200'
                   : 'bg-slate-50 text-slate-400 border-slate-200 hover:bg-slate-100 hover:text-slate-600'
@@ -635,7 +1080,7 @@ function RoomCard({ room, onEdit, onRefresh, readOnly }) {
               {room.is_exam_eligible ? '✓ Exam Hall' : '+ Exam'}
             </button>
           ) : room.is_exam_eligible ? (
-            <span className="text-[10px] bg-purple-50 text-purple-700 border border-purple-200 px-1.5 py-0.5 rounded font-bold">
+            <span className="text-[10px] bg-purple-50 text-purple-700 border border-purple-200 px-1.5 py-0.5 rounded-md font-bold">
               📝 Exam
             </span>
           ) : null}
@@ -648,7 +1093,7 @@ function RoomCard({ room, onEdit, onRefresh, readOnly }) {
         {!readOnly && (
           <button
             onClick={() => onEdit?.(room)}
-            title="Edit room configuration, class assignment, or capacity"
+            title="Advanced room settings (custom name, exam capacity, invigilators)"
             className="p-1 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-all text-xs"
           >
             ✏️
@@ -659,13 +1104,45 @@ function RoomCard({ room, onEdit, onRefresh, readOnly }) {
   )
 }
 
-function RoomRow({ room, onEdit, onRefresh, readOnly }) {
+function RoomRow({ room, departments = [], classes = [], onEdit, onRefresh, readOnly }) {
   const [updating, setUpdating] = useState(false)
+  const [updatingField, setUpdatingField] = useState(null)
+  const [localDeptId, setLocalDeptId] = useState(room.department_id ? String(room.department_id) : '')
+  const [localClassId, setLocalClassId] = useState(room.primary_class_id ? String(room.primary_class_id) : '')
+
+  useEffect(() => {
+    setLocalDeptId(room.department_id ? String(room.department_id) : '')
+    setLocalClassId(room.primary_class_id ? String(room.primary_class_id) : '')
+  }, [room.department_id, room.primary_class_id])
+
+  const deptMap = useMemo(() => {
+    const m = {}
+    departments.forEach(d => { m[d.id] = d.name })
+    return m
+  }, [departments])
+
+  const { roomDeptClasses, otherClasses } = useMemo(() => {
+    const currentDeptNum = localDeptId ? Number(localDeptId) : null
+    if (!currentDeptNum) {
+      return { roomDeptClasses: [], otherClasses: classes }
+    }
+    const forDept = []
+    const others = []
+    classes.forEach(c => {
+      if (c.department_id === currentDeptNum) {
+        forDept.push(c)
+      } else {
+        others.push(c)
+      }
+    })
+    return { roomDeptClasses: forDept, otherClasses: others }
+  }, [classes, localDeptId])
 
   const handleTypeChange = async (e) => {
     const newType = e.target.value
     if (newType === room.room_type) return
     setUpdating(true)
+    setUpdatingField('type')
     try {
       await roomsApi.update(room.id, { room_type: newType })
       onRefresh?.()
@@ -673,12 +1150,60 @@ function RoomRow({ room, onEdit, onRefresh, readOnly }) {
       alert(formatError(err, 'Failed to update room type'))
     } finally {
       setUpdating(false)
+      setUpdatingField(null)
+    }
+  }
+
+  const handleDeptChange = async (e) => {
+    const val = e.target.value
+    const newDeptId = val ? Number(val) : null
+    if (newDeptId === (room.department_id || null)) return
+    setLocalDeptId(val)
+    setUpdating(true)
+    setUpdatingField('dept')
+    try {
+      await roomsApi.update(room.id, { department_id: newDeptId })
+      onRefresh?.()
+    } catch (err) {
+      setLocalDeptId(room.department_id ? String(room.department_id) : '')
+      alert(formatError(err, 'Failed to update room department'))
+    } finally {
+      setUpdating(false)
+      setUpdatingField(null)
+    }
+  }
+
+  const handleClassChange = async (e) => {
+    const val = e.target.value
+    const newClassId = val ? Number(val) : null
+    if (newClassId === (room.primary_class_id || null)) return
+    setLocalClassId(val)
+    setUpdating(true)
+    setUpdatingField('class')
+    try {
+      const payload = { primary_class_id: newClassId }
+      if (newClassId) {
+        const cls = classes.find(c => c.id === newClassId)
+        if (cls?.department_id && !room.department_id) {
+          payload.department_id = cls.department_id
+          setLocalDeptId(String(cls.department_id))
+        }
+      }
+      await roomsApi.update(room.id, payload)
+      onRefresh?.()
+    } catch (err) {
+      setLocalClassId(room.primary_class_id ? String(room.primary_class_id) : '')
+      alert(formatError(err, 'Failed to assign class to room'))
+    } finally {
+      setUpdating(false)
+      setUpdatingField(null)
     }
   }
 
   const handleToggleExam = async () => {
     if (readOnly) return
     setUpdating(true)
+    setUpdatingField('exam')
     try {
       await roomsApi.update(room.id, { is_exam_eligible: !room.is_exam_eligible })
       onRefresh?.()
@@ -686,75 +1211,146 @@ function RoomRow({ room, onEdit, onRefresh, readOnly }) {
       alert(formatError(err, 'Failed to toggle exam hall status'))
     } finally {
       setUpdating(false)
+      setUpdatingField(null)
     }
   }
 
   return (
-    <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-slate-50 border border-slate-100 hover:border-slate-200 transition-all flex-wrap sm:flex-nowrap group">
-      <span className="text-slate-400 text-xs">🚪</span>
-      <span className="font-extrabold text-slate-800 text-sm font-mono w-20">{room.room_number}</span>
-      {room.name && <span className="text-slate-400 text-xs truncate max-w-[120px]">{room.name}</span>}
+    <div className="flex items-center gap-2.5 px-3 py-2 rounded-xl bg-slate-50 border border-slate-200/80 hover:border-slate-300 hover:bg-white transition-all flex-wrap md:flex-nowrap group shadow-xs">
+      {/* Dedicated Unclipped Room Number Badge */}
+      <div className="px-2.5 py-1 rounded-xl bg-slate-900 text-white font-mono font-black text-xs tracking-wider shrink-0 select-all border border-slate-800 flex items-center gap-1.5 shadow-xs">
+        <span className="text-[11px]">🚪</span>
+        <span className="shrink-0">{room.room_number}</span>
+      </div>
 
+      {room.name && room.name !== room.room_number && (
+        <span className="text-slate-400 text-xs truncate max-w-[100px] shrink-0" title={room.name}>
+          {room.name}
+        </span>
+      )}
+
+      {/* Room Type Selector */}
       {!readOnly ? (
         <select
           value={room.room_type || 'classroom'}
           onChange={handleTypeChange}
           disabled={updating}
-          title="Change room type in-place"
-          className="text-[11px] font-bold py-0.5 px-2 rounded-lg border border-slate-200 bg-white hover:border-primary-400 focus:outline-none focus:border-primary-500 cursor-pointer text-slate-700"
+          title="Change room type"
+          className="text-[11px] font-bold py-1 px-2 rounded-xl border border-slate-200 bg-white hover:border-indigo-400 focus:outline-none focus:border-indigo-500 cursor-pointer text-slate-700 shrink-0"
         >
-          <option value="classroom">🚪 Classroom</option>
-          <option value="laboratory">🧪 Laboratory</option>
-          <option value="seminar_hall">🏛️ Seminar Hall</option>
-          <option value="examination_hall">📝 Examination Hall</option>
-          <option value="staff_room">👥 Staff Room</option>
+          <option value="classroom">🚪 Class</option>
+          <option value="laboratory">🧪 Lab</option>
+          <option value="seminar_hall">🏛️ Seminar</option>
+          <option value="examination_hall">📝 Exam Hall</option>
+          <option value="staff_room">👥 Staff</option>
           <option value="office">💼 Office</option>
-          <option value="auditorium">🎭 Auditorium</option>
-          <option value="meeting_room">🤝 Meeting Room</option>
-          <option value="store_room">📦 Store Room</option>
+          <option value="auditorium">🎭 Audit.</option>
+          <option value="meeting_room">🤝 Meeting</option>
+          <option value="store_room">📦 Store</option>
           <option value="other">🏷️ Other</option>
         </select>
       ) : (
         <RoomTypeBadge type={room.room_type} />
       )}
 
-      {room.department_name && (
-        <span className="text-[10px] bg-slate-100 text-slate-700 px-2 py-0.5 rounded font-bold truncate max-w-[140px]" title={room.department_name}>
-          🏢 {room.department_name}
-        </span>
-      )}
-      {room.primary_class_name && (
-        <span className="text-[10px] bg-indigo-50 text-indigo-700 border border-indigo-200 px-2 py-0.5 rounded font-bold truncate max-w-[120px]">
-          🎓 {room.primary_class_name}
-        </span>
-      )}
+      {/* Inline 1-Click Department Selector */}
+      <div className="flex-1 min-w-[140px] max-w-[220px]">
+        {!readOnly ? (
+          <select
+            value={localDeptId}
+            onChange={handleDeptChange}
+            disabled={updating}
+            title="Assign department to this room (can differ across rooms on the same floor)"
+            className={`w-full text-xs font-bold py-1 px-2 rounded-xl border transition-all cursor-pointer truncate ${
+              localDeptId
+                ? 'bg-white hover:bg-slate-50 text-slate-800 border-slate-200 focus:border-indigo-500'
+                : 'bg-amber-50/70 hover:bg-amber-50 text-amber-800 border-amber-200'
+            }`}
+          >
+            <option value="">-- No Dept (Unassigned) --</option>
+            {departments.map(d => (
+              <option key={d.id} value={d.id}>
+                🏢 {d.name} {d.code ? `(${d.code})` : ''}
+              </option>
+            ))}
+          </select>
+        ) : (
+          <span className="text-xs font-bold text-slate-700 truncate" title={room.department_name}>
+            {room.department_name ? `🏢 ${room.department_name}` : <span className="text-slate-400 italic font-normal">No Dept</span>}
+          </span>
+        )}
+      </div>
 
+      {/* Inline 1-Click Class Selector */}
+      <div className="flex-1 min-w-[140px] max-w-[220px]">
+        {!readOnly ? (
+          <select
+            value={localClassId}
+            onChange={handleClassChange}
+            disabled={updating}
+            title="Assign class to this room (classes can belong to different departments)"
+            className={`w-full text-xs font-semibold py-1 px-2 rounded-xl border transition-all cursor-pointer truncate ${
+              localClassId
+                ? 'bg-indigo-50/70 hover:bg-indigo-50 text-indigo-900 border-indigo-200 focus:border-indigo-500'
+                : 'bg-white hover:bg-slate-50 text-slate-600 border-slate-200'
+            }`}
+          >
+            <option value="">-- No Class (Floating) --</option>
+            {roomDeptClasses.length > 0 && (
+              <optgroup label={`⭐ ${departments.find(d => String(d.id) === String(localDeptId))?.name || 'Department'} Classes`}>
+                {roomDeptClasses.map(c => (
+                  <option key={c.id} value={c.id}>
+                    🎓 {c.name} {c.section ? `(${c.section})` : ''} {c.semester ? `· Sem ${c.semester}` : ''}
+                  </option>
+                ))}
+              </optgroup>
+            )}
+            {otherClasses.length > 0 && (
+              <optgroup label={roomDeptClasses.length > 0 ? "🌐 Other Department Classes" : "All College Classes"}>
+                {otherClasses.map(c => (
+                  <option key={c.id} value={c.id}>
+                    🎓 {c.name} {c.section ? `(${c.section})` : ''} {c.department_id && deptMap[c.department_id] ? `(${deptMap[c.department_id]})` : ''}
+                  </option>
+                ))}
+              </optgroup>
+            )}
+          </select>
+        ) : (
+          <span className="text-xs font-bold text-indigo-700 truncate" title={room.primary_class_name}>
+            {room.primary_class_name ? `🎓 ${room.primary_class_name}` : <span className="text-slate-400 italic font-normal">No Class</span>}
+          </span>
+        )}
+      </div>
+
+      {/* Exam Hall Toggle */}
       {!readOnly ? (
         <button
           onClick={handleToggleExam}
           disabled={updating}
           title="Click to toggle Exam Hall eligibility"
-          className={`text-[10px] px-2 py-0.5 rounded font-bold transition-all border ${
+          className={`text-[10px] px-2 py-1 rounded-lg font-bold transition-all border shrink-0 ${
             room.is_exam_eligible
-              ? 'bg-purple-50 text-purple-700 border-purple-200 hover:bg-purple-100'
-              : 'bg-slate-100 text-slate-400 border-slate-200 hover:bg-slate-200'
+              ? 'bg-purple-100 text-purple-800 border-purple-300 hover:bg-purple-200'
+              : 'bg-white text-slate-400 border-slate-200 hover:bg-slate-100 hover:text-slate-600'
           }`}
         >
-          {room.is_exam_eligible ? '📝 Exam Hall' : '+ Exam Hall'}
+          {room.is_exam_eligible ? '✓ Exam' : '+ Exam'}
         </button>
       ) : room.is_exam_eligible ? (
-        <span className="text-[10px] bg-purple-50 text-purple-700 border border-purple-200 px-2 py-0.5 rounded font-bold">
-          📝 Exam Hall
+        <span className="text-[10px] bg-purple-50 text-purple-700 border border-purple-200 px-1.5 py-0.5 rounded-md font-bold shrink-0">
+          📝 Exam
         </span>
       ) : null}
 
-      {room.capacity && <span className="text-[11px] text-slate-500 font-semibold shrink-0 ml-auto">{room.capacity} seats</span>}
+      {room.capacity ? (
+        <span className="text-[11px] text-slate-500 font-semibold shrink-0 ml-auto">{room.capacity} seats</span>
+      ) : null}
 
       {!readOnly && (
         <button
           onClick={() => onEdit?.(room)}
-          title="Edit room details"
-          className="opacity-0 group-hover:opacity-100 p-1 rounded text-slate-400 hover:text-slate-700 hover:bg-slate-200 transition-all text-xs shrink-0 cursor-pointer"
+          title="Advanced room settings"
+          className="p-1 rounded-lg text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 transition-all text-xs shrink-0 cursor-pointer ml-1"
         >
           ✏️
         </button>
@@ -763,7 +1359,7 @@ function RoomRow({ room, onEdit, onRefresh, readOnly }) {
   )
 }
 
-function FloorNode({ floor, onBulkAssignDept, onEditRoom, onRefresh, readOnly }) {
+function FloorNode({ floor, departments = [], classes = [], onBulkAssignDept, onEditRoom, onRefresh, readOnly }) {
   const [open, setOpen] = useState(true)
   const rooms = floor.rooms || []
   return (
@@ -786,7 +1382,7 @@ function FloorNode({ floor, onBulkAssignDept, onEditRoom, onRefresh, readOnly })
         {!readOnly && (
           <button
             onClick={() => onBulkAssignDept(floor)}
-            title="Bulk assign department to all rooms on this floor"
+            title="Bulk assign department or split rooms on this floor"
             className="px-2 py-0.5 rounded text-[11px] font-bold bg-slate-100 hover:bg-slate-200 text-slate-600 border border-slate-200 transition-all"
           >
             + Dept
@@ -799,6 +1395,8 @@ function FloorNode({ floor, onBulkAssignDept, onEditRoom, onRefresh, readOnly })
             <RoomRow
               key={r.id}
               room={r}
+              departments={departments}
+              classes={classes}
               onEdit={onEditRoom}
               onRefresh={onRefresh}
               readOnly={readOnly}
@@ -815,6 +1413,8 @@ function FloorNode({ floor, onBulkAssignDept, onEditRoom, onRefresh, readOnly })
 
 function BlockNode({
   block,
+  departments = [],
+  classes = [],
   onEdit,
   onDelete,
   onDuplicate,
@@ -1052,12 +1652,18 @@ function BlockNode({
         ) : (
           displayedFloors.map(floor => {
             const rooms = floor.filteredRooms || []
+            const floorDeptCounts = {}
+            ;(floor.rooms || []).forEach(r => {
+              const dName = r.department_name || 'Unassigned'
+              floorDeptCounts[dName] = (floorDeptCounts[dName] || 0) + 1
+            })
+
             return (
               <div key={floor.id} className="space-y-3">
                 {/* Floor Sub-Header */}
-                <div className="flex items-center justify-between pb-1.5 border-b border-slate-100">
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm">🏬</span>
+                <div className="flex items-center justify-between pb-2 border-b border-slate-200/80 flex-wrap gap-2.5">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="text-base">🏬</span>
                     <h3 className="font-extrabold text-sm text-slate-800">{floor.floor_name}</h3>
                     <span className="text-[10px] font-bold bg-indigo-50 text-indigo-700 px-2 py-0.5 rounded-full border border-indigo-100">
                       {rooms.length} {rooms.length === 1 ? 'room' : 'rooms'}
@@ -1065,15 +1671,31 @@ function BlockNode({
                     <span className="text-[10px] font-semibold text-blue-600 bg-blue-50 px-2 py-0.5 rounded border border-blue-100">
                       🏢 Wing Duty Supervision Floor
                     </span>
+
+                    {/* Department Allocation Breakdown Pills */}
+                    <div className="flex items-center gap-1.5 flex-wrap ml-1">
+                      {Object.entries(floorDeptCounts).map(([name, count]) => (
+                        <span
+                          key={name}
+                          className={`text-[10px] font-bold px-2 py-0.5 rounded-lg border ${
+                            name === 'Unassigned'
+                              ? 'bg-amber-50 text-amber-800 border-amber-200/80'
+                              : 'bg-indigo-50 text-indigo-800 border-indigo-200/80'
+                          }`}
+                        >
+                          {name === 'Unassigned' ? '⚠️' : '🏢'} {name}: {count}
+                        </span>
+                      ))}
+                    </div>
                   </div>
 
                   {!readOnly && (
                     <button
                       onClick={() => onBulkAssignDept(floor)}
-                      title={`Assign department to all rooms on ${floor.floor_name}`}
-                      className="text-[11px] font-bold text-slate-600 hover:text-indigo-600 bg-slate-50 hover:bg-slate-100 px-2.5 py-1 rounded-lg border border-slate-200 transition-all flex items-center gap-1"
+                      title={`Assign department or split wings/rooms on ${floor.floor_name}`}
+                      className="text-[11px] font-black text-indigo-700 hover:text-indigo-900 bg-indigo-50/80 hover:bg-indigo-100 px-3 py-1.5 rounded-xl border border-indigo-200/90 transition-all flex items-center gap-1.5 shadow-xs active:scale-95 shrink-0"
                     >
-                      <span>🏢</span> + Assign Dept
+                      <span>🏢</span> + Assign Dept / Split Floor
                     </button>
                   )}
                 </div>
@@ -1082,11 +1704,13 @@ function BlockNode({
                 {rooms.length === 0 ? (
                   <p className="text-xs text-slate-400 italic py-2 pl-4">No rooms on this floor matching criteria.</p>
                 ) : viewMode === 'grid' ? (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                     {rooms.map(r => (
                       <RoomCard
                         key={r.id}
                         room={r}
+                        departments={departments}
+                        classes={classes}
                         onEdit={onEditRoom}
                         onRefresh={onRefresh}
                         readOnly={readOnly}
@@ -1099,6 +1723,8 @@ function BlockNode({
                       <RoomRow
                         key={r.id}
                         room={r}
+                        departments={departments}
+                        classes={classes}
                         onEdit={onEditRoom}
                         onRefresh={onRefresh}
                         readOnly={readOnly}
@@ -2995,6 +3621,8 @@ export default function CampusStructureBuilder({ readOnly = false }) {
                 <BlockNode
                   key={block.id}
                   block={block}
+                  departments={departments}
+                  classes={classes}
                   readOnly={!canEdit}
                   canManageDuties={canManageDuties}
                   onConfigureDuties={b => setDutyModal(b)}
@@ -3077,13 +3705,15 @@ export default function CampusStructureBuilder({ readOnly = false }) {
       <Modal
         isOpen={bulkDeptModal !== null}
         onClose={() => setBulkDeptModal(null)}
-        title={bulkDeptModal?.type === 'floor' ? `🏢 Assign Department — ${bulkDeptModal?.target?.floor_name}` : `🏢 Allocate Departments — ${bulkDeptModal?.target?.name}`}
-        maxWidth={bulkDeptModal?.type === 'block' ? "max-w-2xl" : "max-w-lg"}
+        title={bulkDeptModal?.type === 'floor' ? `🏢 Assign Department / Split Floor — ${bulkDeptModal?.target?.floor_name}` : `🏢 Allocate Departments — ${bulkDeptModal?.target?.name}`}
+        maxWidth="max-w-3xl"
       >
         {bulkDeptModal && (
           <BulkAssignDeptModal
             target={bulkDeptModal.target}
             type={bulkDeptModal.type}
+            departments={departments}
+            classes={classes}
             onClose={() => setBulkDeptModal(null)}
             onSuccess={fetchData}
           />
