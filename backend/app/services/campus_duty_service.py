@@ -447,69 +447,189 @@ class CampusDutyService:
         return None
 
     @staticmethod
-    def generate_discipline_duties(db: Session, target_date: date, department_id: Optional[int] = None, user_id: Optional[int] = None) -> List[CampusDuty]:
+    def get_departments_for_block(db: Session, block_id: int) -> Set[int]:
+        """Resolves all departments physically located in a campus block,
+        including the block's primary department and any department assigned to rooms on its floors."""
+        from app.models.campus_structure import CampusBlock, CampusFloor
+        block = db.query(CampusBlock).options(
+            joinedload(CampusBlock.department),
+            joinedload(CampusBlock.floors).joinedload(CampusFloor.rooms).joinedload(Room.department)
+        ).filter(CampusBlock.id == block_id).first()
+        if not block:
+            return set()
+        dept_ids = set()
+        if block.department_id:
+            dept_ids.add(block.department_id)
+        for fl in block.floors:
+            for rm in fl.rooms:
+                if rm.department_id:
+                    dept_ids.add(rm.department_id)
+        return dept_ids
+
+    @staticmethod
+    def generate_discipline_duties(
+        db: Session,
+        target_date: date,
+        department_id: Optional[int] = None,
+        user_id: Optional[int] = None,
+        block_id: Optional[int] = None,
+        required_teachers: Optional[int] = None,
+        auto_assign: bool = False
+    ) -> List[CampusDuty]:
         CampusDutyService.ensure_default_break_periods(db)
         day_order = CampusDutyService.get_day_order_for_date(db, target_date)
         break_periods = db.query(DutyBreakPeriod).filter(DutyBreakPeriod.is_active == True).all()
 
+        from app.models.campus_structure import CampusBlock
+        blocks_q = db.query(CampusBlock).filter(CampusBlock.is_active == True)
+        if block_id is not None:
+            blocks_q = blocks_q.filter(CampusBlock.id == block_id)
+        blocks = blocks_q.all()
+
         created_duties = []
-        for bp in break_periods:
-            if day_order is not None:
-                orders = [int(x.strip()) for x in bp.applicable_day_orders.split(",") if x.strip().isdigit()]
-                if orders and day_order not in orders:
-                    continue
 
-            # Check if duty already generated for this break period on this date
-            existing = db.query(CampusDuty).filter(
-                CampusDuty.duty_date == target_date,
-                or_(
-                    CampusDuty.break_period_id == bp.id,
-                    CampusDuty.title == f"{bp.name} Discipline",
-                    CampusDuty.title == bp.name
-                )
-            ).first()
+        if blocks:
+            # A discipline duty belongs to a BLOCK
+            for block in blocks:
+                block_depts = CampusDutyService.get_departments_for_block(db, block.id)
+                primary_dept_id = block.department_id or (next(iter(block_depts)) if block_depts else department_id)
 
-            if not existing:
-                duty = CampusDuty(
-                    duty_type=DutyType.DISCIPLINE_DUTY,
-                    title=f"{bp.name} Discipline",
-                    duty_date=target_date,
-                    start_time=bp.start_time,
-                    end_time=bp.end_time,
-                    break_period_id=bp.id,
-                    department_id=department_id,
-                    day_order=day_order,
-                    required_teachers=bp.required_teachers,
-                    status=DutyStatus.PUBLISHED,
-                    created_by_user_id=user_id
-                )
-                db.add(duty)
-                created_duties.append(duty)
-            else:
-                # Update existing duty in-place rather than creating duplicate
-                if existing.status == DutyStatus.CANCELLED:
-                    existing.status = DutyStatus.PUBLISHED
-                existing.required_teachers = bp.required_teachers
-                existing.start_time = bp.start_time
-                existing.end_time = bp.end_time
-                existing.break_period_id = bp.id
-                existing.day_order = day_order
-                created_duties.append(existing)
+                for bp in break_periods:
+                    if day_order is not None:
+                        orders = [int(x.strip()) for x in bp.applicable_day_orders.split(",") if x.strip().isdigit()]
+                        if orders and day_order not in orders:
+                            continue
+
+                    staff_needed = required_teachers if (required_teachers is not None and required_teachers > 0) else bp.required_teachers
+
+                    # Ensure CampusArea exists for this block & break period
+                    area_code = f"DISC_{block.code}_{bp.id}".upper()
+                    area = db.query(CampusArea).filter(CampusArea.code == area_code).first()
+                    if not area:
+                        area = CampusArea(
+                            name=f"Discipline Zone - {block.name} ({bp.name})",
+                            code=area_code,
+                            duty_type=DutyType.DISCIPLINE_DUTY.value,
+                            block_id=block.id,
+                            building_or_block=block.name,
+                            required_teachers=staff_needed,
+                            department_id=primary_dept_id,
+                            is_active=True
+                        )
+                        db.add(area)
+                        db.flush()
+                    else:
+                        area.required_teachers = staff_needed
+                        if not area.block_id:
+                            area.block_id = block.id
+
+                    title = f"Discipline Duty - {block.name} ({bp.name})"
+                    existing = db.query(CampusDuty).filter(
+                        CampusDuty.duty_date == target_date,
+                        CampusDuty.duty_type == DutyType.DISCIPLINE_DUTY,
+                        or_(
+                            and_(CampusDuty.area_id == area.id, CampusDuty.break_period_id == bp.id),
+                            CampusDuty.title == title
+                        )
+                    ).first()
+
+                    if not existing:
+                        duty = CampusDuty(
+                            duty_type=DutyType.DISCIPLINE_DUTY,
+                            title=title,
+                            duty_date=target_date,
+                            start_time=bp.start_time,
+                            end_time=bp.end_time,
+                            break_period_id=bp.id,
+                            area_id=area.id,
+                            department_id=primary_dept_id,
+                            day_order=day_order,
+                            required_teachers=staff_needed,
+                            status=DutyStatus.PUBLISHED,
+                            created_by_user_id=user_id
+                        )
+                        db.add(duty)
+                        created_duties.append(duty)
+                    else:
+                        if existing.status == DutyStatus.CANCELLED:
+                            existing.status = DutyStatus.PUBLISHED
+                        existing.required_teachers = staff_needed
+                        existing.start_time = bp.start_time
+                        existing.end_time = bp.end_time
+                        existing.break_period_id = bp.id
+                        existing.area_id = area.id
+                        existing.day_order = day_order
+                        if not existing.department_id and primary_dept_id:
+                            existing.department_id = primary_dept_id
+                        created_duties.append(existing)
+        else:
+            # Fallback if campus has no blocks configured yet (preserves backward compatibility and unit tests)
+            for bp in break_periods:
+                if day_order is not None:
+                    orders = [int(x.strip()) for x in bp.applicable_day_orders.split(",") if x.strip().isdigit()]
+                    if orders and day_order not in orders:
+                        continue
+
+                staff_needed = required_teachers if (required_teachers is not None and required_teachers > 0) else bp.required_teachers
+
+                existing = db.query(CampusDuty).filter(
+                    CampusDuty.duty_date == target_date,
+                    or_(
+                        CampusDuty.break_period_id == bp.id,
+                        CampusDuty.title == f"{bp.name} Discipline",
+                        CampusDuty.title == bp.name
+                    )
+                ).first()
+
+                if not existing:
+                    duty = CampusDuty(
+                        duty_type=DutyType.DISCIPLINE_DUTY,
+                        title=f"{bp.name} Discipline",
+                        duty_date=target_date,
+                        start_time=bp.start_time,
+                        end_time=bp.end_time,
+                        break_period_id=bp.id,
+                        department_id=department_id,
+                        day_order=day_order,
+                        required_teachers=staff_needed,
+                        status=DutyStatus.PUBLISHED,
+                        created_by_user_id=user_id
+                    )
+                    db.add(duty)
+                    created_duties.append(duty)
+                else:
+                    if existing.status == DutyStatus.CANCELLED:
+                        existing.status = DutyStatus.PUBLISHED
+                    existing.required_teachers = staff_needed
+                    existing.start_time = bp.start_time
+                    existing.end_time = bp.end_time
+                    existing.break_period_id = bp.id
+                    existing.day_order = day_order
+                    created_duties.append(existing)
 
         if created_duties:
             db.commit()
             for d in created_duties:
                 db.refresh(d)
+                if auto_assign and not d.is_locked:
+                    CampusDutyService.auto_assign_duty(db, d.id, user_id=user_id)
+
             CampusDutyService._log_audit(db, user_id, "DISCIPLINE_DUTIES_GENERATED", {
                 "date": str(target_date),
                 "count": len(created_duties),
+                "block_id": block_id,
+                "required_teachers": required_teachers,
+                "auto_assign": auto_assign,
                 "day_order": day_order
             })
 
-        return db.query(CampusDuty).filter(
+        q = db.query(CampusDuty).filter(
             CampusDuty.duty_date == target_date,
             CampusDuty.duty_type == DutyType.DISCIPLINE_DUTY
-        ).order_by(CampusDuty.start_time).all()
+        )
+        if block_id is not None:
+            q = q.join(CampusArea, CampusDuty.area_id == CampusArea.id).filter(CampusArea.block_id == block_id)
+        return q.order_by(CampusDuty.start_time).all()
 
     @staticmethod
     def generate_wing_duties(
@@ -724,11 +844,12 @@ class CampusDutyService:
         day_order: Optional[int] = None,
         duty_type: Optional[str] = None,
         department_id: Optional[int] = None,
-        teacher_id: Optional[int] = None
+        teacher_id: Optional[int] = None,
+        block_id: Optional[int] = None
     ) -> List[CampusDuty]:
         q = db.query(CampusDuty).options(
             joinedload(CampusDuty.break_period),
-            joinedload(CampusDuty.area),
+            joinedload(CampusDuty.area).joinedload(CampusArea.block),
             joinedload(CampusDuty.room).joinedload(Room.block),
             joinedload(CampusDuty.room).joinedload(Room.floor),
             joinedload(CampusDuty.department),
@@ -751,6 +872,10 @@ class CampusDutyService:
             q = q.filter(CampusDuty.duty_type == duty_type)
         if department_id is not None:
             q = q.filter(or_(CampusDuty.department_id == department_id, CampusDuty.department_id == None))
+        if block_id is not None:
+            q = q.outerjoin(CampusArea, CampusDuty.area_id == CampusArea.id)\
+                 .outerjoin(Room, CampusDuty.room_id == Room.id)\
+                 .filter(or_(CampusArea.block_id == block_id, Room.block_id == block_id))
         if teacher_id is not None:
             q = q.join(DutyAssignment).filter(
                 DutyAssignment.teacher_id == teacher_id,
@@ -763,7 +888,7 @@ class CampusDutyService:
     def get_duty(db: Session, duty_id: int) -> CampusDuty:
         duty = db.query(CampusDuty).options(
             joinedload(CampusDuty.break_period),
-            joinedload(CampusDuty.area),
+            joinedload(CampusDuty.area).joinedload(CampusArea.block),
             joinedload(CampusDuty.room).joinedload(Room.block),
             joinedload(CampusDuty.room).joinedload(Room.floor),
             joinedload(CampusDuty.department),
@@ -785,6 +910,19 @@ class CampusDutyService:
     ) -> DutyCandidatesResponse:
         duty = CampusDutyService.get_duty(db, duty_id)
         rules = CampusDutyService.get_rules(db, duty.department_id)
+
+        # Automatically resolve departments belonging to the duty's block if not explicitly specified
+        if allowed_department_ids is None:
+            duty_block_id = None
+            if duty.area and duty.area.block_id:
+                duty_block_id = duty.area.block_id
+            elif duty.room and duty.room.block_id:
+                duty_block_id = duty.room.block_id
+
+            if duty_block_id:
+                block_depts = CampusDutyService.get_departments_for_block(db, duty_block_id)
+                if block_depts:
+                    allowed_department_ids = block_depts
 
         # Base teacher query
         teacher_q = db.query(User).filter(User.role == Role.teacher, User.is_active == True)
@@ -1923,18 +2061,27 @@ class CampusDutyService:
         room_number = None
         room_name = None
         loc_hierarchy = None
+        block_id = None
+        block_name = None
         if duty.room:
             room_number = duty.room.room_number
             room_name = duty.room.room_name or duty.room.room_number
             parts = []
             if duty.room.block:
+                block_id = duty.room.block_id
+                block_name = duty.room.block.name
                 parts.append(duty.room.block.name)
             if duty.room.floor:
                 parts.append(duty.room.floor.floor_name)
             parts.append(room_name)
             loc_hierarchy = " · ".join(parts)
         elif duty.area:
-            loc_hierarchy = duty.area.name
+            if duty.area.block:
+                block_id = duty.area.block_id
+                block_name = duty.area.block.name
+                loc_hierarchy = f"{duty.area.block.name} · {duty.area.name}"
+            else:
+                loc_hierarchy = duty.area.name
 
         return CampusDutyOut(
             id=duty.id,
@@ -1948,6 +2095,8 @@ class CampusDutyService:
             area_id=duty.area_id,
             area_name=duty.area.name if duty.area else None,
             area_code=duty.area.code if duty.area else None,
+            block_id=block_id,
+            block_name=block_name,
             room_id=duty.room_id,
             room_number=room_number,
             room_name=room_name,

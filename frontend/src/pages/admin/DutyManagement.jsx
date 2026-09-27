@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo, useCallback } from 'react'
-import { campusDutiesApi, departmentsApi } from '../../api/services'
+import { campusDutiesApi, campusStructureApi, departmentsApi } from '../../api/services'
 import { Card, Spinner, ErrorAlert, Modal, Badge } from '../../components/ui'
 import { useAuth } from '../../context/AuthContext'
 
@@ -13,6 +13,14 @@ export default function DutyManagement({ readOnly = false }) {
   const [metrics, setMetrics] = useState(null)
   const [areas, setAreas] = useState([])
   const [breakPeriods, setBreakPeriods] = useState([])
+  const [blocks, setBlocks] = useState([])
+  const [disciplineModalOpen, setDisciplineModalOpen] = useState(false)
+  const [disciplineForm, setDisciplineForm] = useState({
+    block_id: '',
+    required_teachers: 2,
+    auto_assign: true,
+    target_date: ''
+  })
   const [loading, setLoading] = useState(true)
   const [actionLoading, setActionLoading] = useState(false)
   const [error, setError] = useState(null)
@@ -90,16 +98,18 @@ export default function DutyManagement({ readOnly = false }) {
       } else if (activeTab === 'today') {
         params.target_date = selectedDate
       }
-      const [dutiesRes, metricsRes, areasRes, bpRes] = await Promise.all([
+      const [dutiesRes, metricsRes, areasRes, bpRes, blocksRes] = await Promise.all([
         campusDutiesApi.listDuties(params),
         campusDutiesApi.getMetrics({ target_date: selectedDate }),
         campusDutiesApi.getAreas(),
-        campusDutiesApi.getBreakPeriods()
+        campusDutiesApi.getBreakPeriods(),
+        campusStructureApi.listBlocks(true).catch(() => ({ data: [] }))
       ])
       setDuties(dutiesRes?.data || [])
       setMetrics(metricsRes?.data || null)
       setAreas(areasRes?.data || [])
       setBreakPeriods(bpRes?.data || [])
+      setBlocks(blocksRes?.data || [])
     } catch (err) {
       setError(err?.response?.data?.detail || err?.message || 'Failed to load duty management data')
     } finally {
@@ -211,13 +221,33 @@ export default function DutyManagement({ readOnly = false }) {
   }
 
   // Handlers
-  const handleGenerateDiscipline = async () => {
+  const handleOpenDisciplineModal = () => {
+    setDisciplineForm({
+      block_id: blocks.length > 0 ? blocks[0].id : '',
+      required_teachers: dutyRules?.max_discipline_teachers || 2,
+      auto_assign: true,
+      target_date: selectedDate
+    })
+    setDisciplineModalOpen(true)
+  }
+
+  const handleGenerateDiscipline = async (e) => {
+    if (e && e.preventDefault) e.preventDefault()
     setActionLoading(true)
     try {
-      await campusDutiesApi.generateDiscipline({ target_date: selectedDate })
+      const payload = {
+        target_date: disciplineForm.target_date || selectedDate,
+        block_id: disciplineForm.block_id ? Number(disciplineForm.block_id) : null,
+        required_teachers: Number(disciplineForm.required_teachers) || 2,
+        auto_assign: Boolean(disciplineForm.auto_assign)
+      }
+      const res = await campusDutiesApi.generateDiscipline(payload)
+      const count = res?.data?.length || 0
+      setDisciplineModalOpen(false)
       await fetchData()
+      alert(`Discipline duties configured & generated (${count} duties)! Eligible faculty from departments located in that block have been gathered and assigned with balanced workload.`)
     } catch (err) {
-      alert(err?.response?.data?.detail || 'Failed to generate discipline duties')
+      alert(err?.response?.data?.detail || 'Failed to generate block discipline duties')
     } finally {
       setActionLoading(false)
     }
@@ -513,10 +543,10 @@ export default function DutyManagement({ readOnly = false }) {
         {!readOnly && (
           <div className="flex items-center gap-2.5 flex-wrap">
             <button
-              onClick={handleGenerateDiscipline}
+              onClick={handleOpenDisciplineModal}
               disabled={actionLoading}
-              title="Generate Discipline Duties from Campus Blocks"
-              className="px-3 py-2 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-xs font-bold rounded-xl border border-indigo-200 transition-all flex items-center gap-1.5 shadow-sm"
+              title="Configure & Generate Discipline Duties by Campus Block"
+              className="px-3 py-2 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-xs font-bold rounded-xl border border-indigo-200 transition-all flex items-center gap-1.5 shadow-sm active:scale-95"
             >
               <span>🛡️</span> Discipline Duties
             </button>
@@ -1225,6 +1255,11 @@ export default function DutyManagement({ readOnly = false }) {
                               <span className="inline-block px-2 py-0.5 rounded-md text-[10px] font-black uppercase tracking-wider bg-indigo-50 text-indigo-700 border border-indigo-100">
                                 {d.duty_type.replace('_', ' ')}
                               </span>
+                              {d.block_name && (
+                                <span className="inline-block px-2 py-0.5 rounded-md text-[10px] font-black uppercase tracking-wider bg-purple-50 text-purple-700 border border-purple-200">
+                                  🏢 {d.block_name}
+                                </span>
+                              )}
                               {isDeactivated && (
                                 <span className="inline-block px-2 py-0.5 rounded-md text-[10px] font-black uppercase tracking-wider bg-rose-100 text-rose-700 border border-rose-200">
                                   DEACTIVATED
@@ -1250,9 +1285,18 @@ export default function DutyManagement({ readOnly = false }) {
                         </div>
 
                         {/* Location / Area info */}
-                        {(d.area_name || d.break_period_name) && (
+                        {(d.area_name || d.break_period_name || d.block_name || d.location_hierarchy) && (
                           <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-100 text-xs text-slate-700 space-y-0.5">
-                            {d.area_name && (
+                            {d.block_name && (
+                              <p className="font-bold flex items-center gap-1 text-purple-900">
+                                <span>🏢</span> Block: {d.block_name}
+                              </p>
+                            )}
+                            {d.location_hierarchy ? (
+                              <p className="font-semibold text-slate-600 flex items-center gap-1">
+                                <span>📍</span> {d.location_hierarchy}
+                              </p>
+                            ) : d.area_name && (
                               <p className="font-bold flex items-center gap-1">
                                 <span>📍</span> {d.area_name} {d.area_code ? `(${d.area_code})` : ''}
                               </p>
@@ -2023,6 +2067,140 @@ export default function DutyManagement({ readOnly = false }) {
             ) : (
               <p className="p-6 text-xs text-slate-400 text-center">Click the Configuration tab to load rules.</p>
             )}
+          </div>
+        </div>
+      )}
+
+      {/* ── Discipline Duty Generation Modal (Block & Required Staff) ── */}
+      {disciplineModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4 animate-in fade-in duration-150">
+          <div className="bg-white rounded-3xl shadow-2xl w-full max-w-lg overflow-hidden border border-slate-100">
+            {/* Header */}
+            <div className="px-6 py-5 bg-gradient-to-r from-indigo-900 via-indigo-800 to-slate-900 text-white flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-2xl bg-white/10 flex items-center justify-center text-xl shadow-inner">
+                  🛡️
+                </div>
+                <div>
+                  <h3 className="text-base font-black tracking-tight">Generate Block Discipline Duties</h3>
+                  <p className="text-xs text-indigo-200 mt-0.5">Principal Block Configuration & Automated Faculty Assignment</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setDisciplineModalOpen(false)}
+                className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center text-sm font-bold transition-all"
+              >
+                ✕
+              </button>
+            </div>
+
+            {/* Form */}
+            <form onSubmit={handleGenerateDiscipline} className="p-6 space-y-4">
+              {/* Informational callout */}
+              <div className="p-3.5 rounded-2xl bg-indigo-50 border border-indigo-100 flex items-start gap-2.5">
+                <span className="text-lg">💡</span>
+                <p className="text-xs text-indigo-900 font-medium leading-relaxed">
+                  A discipline duty belongs to a physical <strong>Campus Block</strong>. FaFlow automatically discovers all faculty belonging to departments located in that block, filters them through existing eligibility rules (attendance, leaves, timetable collisions), balances workload, and assigns the required number of staff.
+                </p>
+              </div>
+
+              {/* Target Date */}
+              <div>
+                <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block mb-1.5">
+                  Target Date
+                </label>
+                <input
+                  type="date"
+                  value={disciplineForm.target_date || selectedDate}
+                  onChange={e => setDisciplineForm(prev => ({ ...prev, target_date: e.target.value }))}
+                  required
+                  className="w-full px-3.5 py-2.5 text-xs font-bold bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:border-indigo-600 focus:outline-none transition-all"
+                />
+              </div>
+
+              {/* Campus Block Selection */}
+              <div>
+                <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block mb-1.5">
+                  Campus Block
+                </label>
+                <select
+                  value={disciplineForm.block_id}
+                  onChange={e => setDisciplineForm(prev => ({ ...prev, block_id: e.target.value }))}
+                  className="w-full px-3.5 py-2.5 text-xs font-bold bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:border-indigo-600 focus:outline-none transition-all"
+                >
+                  <option value="">🏢 All Active Campus Blocks (Campus-wide)</option>
+                  {blocks.map(b => (
+                    <option key={b.id} value={b.id}>
+                      🏢 {b.name} ({b.code}) {b.department ? `· Dept: ${b.department.name}` : ''}
+                    </option>
+                  ))}
+                </select>
+                <p className="text-[10px] text-slate-400 mt-1">
+                  Select a specific block, or generate duties across all campus blocks simultaneously.
+                </p>
+              </div>
+
+              {/* Staff Required per Break Period */}
+              <div>
+                <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block mb-1.5">
+                  Required Staff Count (Specified by Principal)
+                </label>
+                <div className="flex items-center gap-3">
+                  <input
+                    type="number"
+                    min="1"
+                    max="10"
+                    value={disciplineForm.required_teachers}
+                    onChange={e => setDisciplineForm(prev => ({ ...prev, required_teachers: Math.max(1, Math.min(10, Number(e.target.value))) }))}
+                    required
+                    className="w-28 px-3.5 py-2.5 text-sm font-black text-slate-900 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:border-indigo-600 focus:outline-none transition-all text-center"
+                  />
+                  <div className="text-xs text-slate-500">
+                    <p className="font-bold text-slate-700">Staff members per break period</p>
+                    <p className="text-[10px] text-slate-400">FaFlow will assign exactly this number of eligible faculty.</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Auto-Assign Toggle */}
+              <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-100 flex items-start gap-3">
+                <input
+                  type="checkbox"
+                  id="auto_assign_toggle"
+                  checked={disciplineForm.auto_assign}
+                  onChange={e => setDisciplineForm(prev => ({ ...prev, auto_assign: e.target.checked }))}
+                  className="w-4 h-4 mt-0.5 accent-indigo-600 rounded cursor-pointer"
+                />
+                <label htmlFor="auto_assign_toggle" className="cursor-pointer">
+                  <p className="text-xs font-bold text-slate-800">
+                    Automatically gather & assign eligible faculty
+                  </p>
+                  <p className="text-[11px] text-slate-500 mt-0.5">
+                    Gathers faculty from departments located in that block, filters for leaves & timetable conflicts, balances workload, and assigns immediately.
+                  </p>
+                </label>
+              </div>
+
+              {/* Actions */}
+              <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-slate-100">
+                <button
+                  type="button"
+                  onClick={() => setDisciplineModalOpen(false)}
+                  disabled={actionLoading}
+                  className="px-4 py-2.5 text-xs font-bold text-slate-600 hover:bg-slate-100 rounded-xl transition-all"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={actionLoading}
+                  className="px-5 py-2.5 text-xs font-bold bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl shadow-md shadow-indigo-600/20 transition-all flex items-center gap-1.5 active:scale-95 disabled:opacity-50"
+                >
+                  {actionLoading ? '⏳ Generating...' : disciplineForm.auto_assign ? '🛡️ Generate & Assign Staff' : '🛡️ Generate Duties'}
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}

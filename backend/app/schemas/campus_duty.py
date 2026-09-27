@@ -135,6 +135,8 @@ class CampusDutyOut(BaseModel):
     area_id: Optional[int] = None
     area_name: Optional[str] = None
     area_code: Optional[str] = None
+    block_id: Optional[int] = None
+    block_name: Optional[str] = None
     room_id: Optional[int] = None
     room_number: Optional[str] = None
     room_name: Optional[str] = None
@@ -159,6 +161,9 @@ class CampusDutyOut(BaseModel):
 class DutyGenerateRequest(BaseModel):
     target_date: date
     department_id: Optional[int] = None
+    block_id: Optional[int] = None
+    required_teachers: Optional[int] = None
+    auto_assign: Optional[bool] = False
 
 
 class DutyBulkDeleteRequest(BaseModel):

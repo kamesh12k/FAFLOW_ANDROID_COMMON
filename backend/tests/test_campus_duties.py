@@ -623,4 +623,165 @@ def test_waterfall_auto_swap_when_all_top_candidates_absent(db_session, duty_set
     assert active_assignments[0].teacher_id == resp.suggested_candidate_id
 
 
+def test_discipline_duty_belongs_to_block_auto_assign_staff(client, db_session, auth_headers_admin):
+    """
+    User Story Test:
+    "A discipline duty belongs to a BLOCK. The Principal specifies how many staff are required.
+    FaFlow automatically gathers eligible faculty belonging to departments located in that block,
+    applies the existing faculty filtering/eligibility rules, balances workload, and assigns the required number of staff."
+    """
+    from app.models.campus_structure import CampusBlock, CampusFloor
+    from app.models.room import Room
+    from app.models.day_order_calendar import DayOrderCalendar
+    from app.schemas.campus_duty import DutyGenerateRequest
+
+    today = date.today()
+    db_session.add(DayOrderCalendar(date=today, day_order=1))
+    db_session.flush()
+
+    # 1. Setup Departments
+    dept_cse = Department(name="Computer Science & Engineering", code="CSE")
+    dept_ece = Department(name="Electronics & Communication", code="ECE")
+    dept_mech = Department(name="Mechanical Engineering", code="MECH")
+    db_session.add_all([dept_cse, dept_ece, dept_mech])
+    db_session.flush()
+
+    # 2. Setup Campus Blocks
+    # Block Alpha houses CSE (primary) and ECE (floor 1 rooms)
+    block_alpha = CampusBlock(name="Alpha Technology Block", code="BLK-ALPHA", floors_count=2, department_id=dept_cse.id, is_active=True)
+    # Block Beta houses MECH
+    block_beta = CampusBlock(name="Beta Engineering Block", code="BLK-BETA", floors_count=1, department_id=dept_mech.id, is_active=True)
+    db_session.add_all([block_alpha, block_beta])
+    db_session.flush()
+
+    # Floors & Rooms
+    fl_g = CampusFloor(block_id=block_alpha.id, floor_number=0, floor_name="Ground Floor", display_order=0)
+    fl_1 = CampusFloor(block_id=block_alpha.id, floor_number=1, floor_name="First Floor", display_order=1)
+    db_session.add_all([fl_g, fl_1])
+    db_session.flush()
+
+    # Room on Floor 1 assigned to ECE (so ECE is located in Block Alpha!)
+    rm_ece = Room(room_number="A-101", block_id=block_alpha.id, floor_id=fl_1.id, department_id=dept_ece.id)
+    rm_cse = Room(room_number="A-G01", block_id=block_alpha.id, floor_id=fl_g.id, department_id=dept_cse.id)
+    db_session.add_all([rm_ece, rm_cse])
+    db_session.flush()
+
+    # Verify Block Alpha departments resolution
+    alpha_depts = CampusDutyService.get_departments_for_block(db_session, block_alpha.id)
+    assert dept_cse.id in alpha_depts
+    assert dept_ece.id in alpha_depts
+    assert dept_mech.id not in alpha_depts
+
+    # 3. Setup Faculty Members
+    # CSE Faculty 1: Perfect candidate (free before break)
+    cse_1 = User(username="cse_fac_1", name="Dr. Alan Turing", email="cse1@college.edu", password_hash="hash", role=Role.teacher, department_id=dept_cse.id, is_active=True)
+    # CSE Faculty 2: Has 1 existing duty today (workload penalty test)
+    cse_2 = User(username="cse_fac_2", name="Dr. Ada Lovelace", email="cse2@college.edu", password_hash="hash", role=Role.teacher, department_id=dept_cse.id, is_active=True)
+    # CSE Faculty 3: On approved leave (exclusion test)
+    cse_leave = User(username="cse_fac_leave", name="Prof. On Leave", email="csel@college.edu", password_hash="hash", role=Role.teacher, department_id=dept_cse.id, is_active=True)
+    # ECE Faculty 1: Has class conflict (exclusion test)
+    ece_conflict = User(username="ece_fac_conflict", name="Prof. Busy Signal", email="ece1@college.edu", password_hash="hash", role=Role.teacher, department_id=dept_ece.id, is_active=True)
+    # ECE Faculty 2: Eligible candidate (located in Block Alpha via Room A-101)
+    ece_2 = User(username="ece_fac_2", name="Dr. Claude Shannon", email="ece2@college.edu", password_hash="hash", role=Role.teacher, department_id=dept_ece.id, is_active=True)
+    # MECH Faculty: Completely separate block (Block Beta) -> MUST NEVER be assigned
+    mech_fac = User(username="mech_fac", name="Dr. Nikola Tesla", email="mech@college.edu", password_hash="hash", role=Role.teacher, department_id=dept_mech.id, is_active=True)
+
+    db_session.add_all([cse_1, cse_2, cse_leave, ece_conflict, ece_2, mech_fac])
+    db_session.flush()
+
+    # Attendance check-in for active teachers
+    for u in [cse_1, cse_2, ece_conflict, ece_2, mech_fac]:
+        db_session.add(StaffAttendanceRecord(user_id=u.id, attendance_date=today, check_in_time=datetime.now(timezone.utc)))
+
+    # Approved leave for CSE Faculty 3
+    db_session.add(LeaveRequest(teacher_id=cse_leave.id, date=today, day_order=1, period_number=1, status=LeaveStatus.approved, reason="Medical"))
+
+    # Break period: Morning Interval 10:45 - 11:05
+    bp = DutyBreakPeriod(
+        name="Morning Interval",
+        start_time=time(10, 45),
+        end_time=time(11, 5),
+        duty_type=DutyType.DISCIPLINE_DUTY.value,
+        required_teachers=1, # Default is 1, but Principal will specify 2!
+        applicable_day_orders="1,2,3,4,5,6",
+        department_id=dept_cse.id,
+        is_active=True
+    )
+    db_session.add(bp)
+    db_session.flush()
+
+    # Existing duty for cse_2 earlier today (workload penalty test)
+    early_duty = CampusDuty(
+        duty_type=DutyType.DISCIPLINE_DUTY,
+        title="Early Gate Duty",
+        duty_date=today,
+        start_time=time(8, 0),
+        end_time=time(8, 45),
+        required_teachers=1,
+        status=DutyStatus.PUBLISHED
+    )
+    db_session.add(early_duty)
+    db_session.flush()
+    db_session.add(DutyAssignment(duty_id=early_duty.id, teacher_id=cse_2.id, status=AssignmentStatus.ASSIGNED))
+
+    # Class timetable collision for ece_conflict during 10:45 - 11:05 (Period 2: 10:00 - 11:00)
+    day_ord = CampusDutyService.get_day_order_for_date(db_session, today) or 1
+    subj = Subject(name="Signal Processing", code="EC201", credits=3, semester=3, department_id=dept_ece.id)
+    cls = Class(name="ECE-2A", section="A", semester=3, department_id=dept_ece.id)
+    db_session.add_all([subj, cls])
+    db_session.flush()
+    slot = TimetableSlot(day_order=day_ord, period_number=2, teacher_id=ece_conflict.id, class_id=cls.id, subject_id=subj.id)
+    db_session.add(slot)
+    db_session.commit()
+
+    # 4. PRINCIPAL SPECIFIES HOW MANY STAFF ARE REQUIRED (e.g. 2 staff) for BLOCK Alpha
+    # Using the HTTP endpoint: POST /campus-duties/generate-discipline
+    resp = client.post(
+        "/campus-duties/generate-discipline",
+        json={
+            "target_date": str(today),
+            "block_id": block_alpha.id,
+            "required_teachers": 2,
+            "auto_assign": True
+        },
+        headers=auth_headers_admin
+    )
+    assert resp.status_code == 200, resp.text
+    duties_data = resp.json()
+    assert len(duties_data) >= 1
+
+    disc_duty = next((d for d in duties_data if "Morning Interval" in d["title"]), None)
+    assert disc_duty is not None
+    # Verify discipline duty belongs to BLOCK Alpha
+    assert disc_duty["block_id"] == block_alpha.id
+    assert disc_duty["block_name"] == block_alpha.name
+    assert "Alpha Technology Block" in disc_duty["location_hierarchy"]
+    # Verify Principal specified staff count
+    assert disc_duty["required_teachers"] == 2
+    assert disc_duty["assigned_teachers_count"] == 2
+
+    assigned_teacher_ids = [a["teacher_id"] for a in disc_duty["assignments"]]
+    assert len(assigned_teacher_ids) == 2
+
+    # RULE CHECKS:
+    # A. Mech faculty must NEVER be assigned to Block Alpha!
+    assert mech_fac.id not in assigned_teacher_ids
+
+    # B. Leave faculty must NEVER be assigned!
+    assert cse_leave.id not in assigned_teacher_ids
+
+    # C. Timetable class conflicting faculty must NEVER be assigned!
+    assert ece_conflict.id not in assigned_teacher_ids
+
+    # D. Both assigned faculty must belong to departments located in Block Alpha (CSE or ECE)
+    allowed_ids = {cse_1.id, cse_2.id, ece_2.id}
+    for t_id in assigned_teacher_ids:
+        assert t_id in allowed_ids
+
+    # E. Workload balancing: cse_1 (0 duties today) and ece_2 (0 duties today) prioritized over cse_2 (1 duty today)
+    assert cse_1.id in assigned_teacher_ids
+    assert ece_2.id in assigned_teacher_ids
+
+
+
 

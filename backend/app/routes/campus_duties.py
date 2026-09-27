@@ -178,6 +178,7 @@ def list_duties(
     date_to: Optional[date] = Query(None),
     day_order: Optional[int] = Query(None),
     duty_type: Optional[str] = Query(None),
+    block_id: Optional[int] = Query(None),
     limit: Optional[int] = Query(None),
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
@@ -193,7 +194,8 @@ def list_duties(
         date_to=date_to,
         day_order=day_order,
         duty_type=duty_type,
-        department_id=dept_id
+        department_id=dept_id,
+        block_id=block_id
     )
     if limit:
         duties = duties[:limit]
@@ -224,7 +226,15 @@ def generate_discipline_duties(
     tenant_dept_id: Optional[int] = Depends(get_tenant_department_id)
 ):
     dept_id = data.department_id or tenant_dept_id or current_user.department_id
-    duties = CampusDutyService.generate_discipline_duties(db, target_date=data.target_date, department_id=dept_id, user_id=current_user.id)
+    duties = CampusDutyService.generate_discipline_duties(
+        db,
+        target_date=data.target_date,
+        department_id=dept_id,
+        user_id=current_user.id,
+        block_id=data.block_id,
+        required_teachers=data.required_teachers,
+        auto_assign=getattr(data, "auto_assign", False)
+    )
     return [CampusDutyService.to_duty_out(d) for d in duties]
 
 
