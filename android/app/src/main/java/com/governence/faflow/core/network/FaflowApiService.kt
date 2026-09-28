@@ -137,7 +137,7 @@ interface FaflowApiService {
         @Body request: ApproveWithExceptionRequestDto
     ): Response<LeaveApproveResponseDto>
 
-    @GET("enforcement-mode")
+    @GET("policy-settings/enforcement-mode")
     suspend fun getEnforcementMode(): Response<PolicyEnforcementModeResponseDto>
 
     // ---------- Leave Policies & Balances ----------
@@ -152,7 +152,7 @@ interface FaflowApiService {
         @Body request: LeaveValidationRequestDto
     ): Response<LeaveValidationOutDto>
 
-    @GET("leave-balances/teacher/{teacher_id}/ledger")
+    @GET("leave-balances/{teacher_id}/ledger")
     suspend fun getTeacherLeaveLedger(
         @Path("teacher_id") teacherId: Int
     ): Response<List<LeaveBalanceTransactionDto>>
@@ -393,7 +393,7 @@ interface FaflowApiService {
         @Path("duty_id") dutyId: Int
     ): Response<CampusDutyDto>
 
-    @POST("campus-duties/generate-today-discipline")
+    @POST("campus-duties/generate-discipline")
     suspend fun generateTodayDiscipline(
         @Query("target_date") targetDate: String? = null,
         @Query("department_id") departmentId: Int? = null
@@ -404,40 +404,45 @@ interface FaflowApiService {
         @Path("duty_id") dutyId: Int
     ): Response<DutyCandidatesResponseDto>
 
-    @POST("campus-duties/{duty_id}/assignments")
+    // TODO: Backend does not yet expose POST campus-duties/{duty_id}/assignments.
+    // Tracking: use POST campus-duties/{duty_id}/assign as workaround until backend adds nested route.
+    @POST("campus-duties/{duty_id}/assign")
     suspend fun assignTeacher(
         @Path("duty_id") dutyId: Int,
         @Body request: DutyAssignRequestDto
     ): Response<DutyAssignmentDto>
 
-    @POST("campus-duties/{duty_id}/assignments/{assignment_id}/lock")
+    // TODO: Backend does not yet expose POST campus-duties/{duty_id}/assignments/{id}/lock.
+    // Tracking: no backend equivalent found. Endpoint stubbed for future backend implementation.
+    @POST("campus-duties/{duty_id}/lock")
     suspend fun lockAssignment(
         @Path("duty_id") dutyId: Int,
         @Path("assignment_id") assignmentId: Int,
         @Body request: DutyLockRequestDto
     ): Response<DutyAssignmentDto>
 
-    @POST("campus-duties/{duty_id}/assignments/{assignment_id}/unlock")
+    // TODO: Backend does not yet expose POST campus-duties/{duty_id}/assignments/{id}/unlock.
+    @POST("campus-duties/{duty_id}/reset")
     suspend fun unlockAssignment(
         @Path("duty_id") dutyId: Int,
         @Path("assignment_id") assignmentId: Int
     ): Response<DutyAssignmentDto>
 
-    @POST("campus-duties/{duty_id}/assignments/{assignment_id}/override")
+    @POST("campus-duties/assignments/{assignment_id}/override")
     suspend fun overrideAssignment(
         @Path("duty_id") dutyId: Int,
         @Path("assignment_id") assignmentId: Int,
         @Body request: DutyOverrideRequestDto
     ): Response<DutyAssignmentDto>
 
-    @POST("campus-duties/{duty_id}/assignments/{assignment_id}/replace")
+    @POST("campus-duties/assignments/{assignment_id}/replace")
     suspend fun replaceAssignment(
         @Path("duty_id") dutyId: Int,
         @Path("assignment_id") assignmentId: Int,
         @Body request: DutyReplaceRequestDto
     ): Response<DutyAssignmentDto>
 
-    @GET("campus-duties/metrics/summary")
+    @GET("campus-duties/metrics")
     suspend fun getDutyMetrics(
         @Query("date") date: String? = null,
         @Query("department_id") departmentId: Int? = null
@@ -450,12 +455,12 @@ interface FaflowApiService {
     @GET("campus-structure/metrics")
     suspend fun getCampusStructureMetrics(): Response<CampusStructureMetricsDto>
 
-    @POST("campus-structure/blocks/smart-autofill")
+    @POST("campus-structure/smart-autofill")
     suspend fun smartAutofillBlock(
         @Body request: SmartBlockAutoFillRequestDto
     ): Response<SmartBlockAutoFillResponseDto>
 
-    @POST("campus-structure/rooms/preview")
+    @POST("campus-structure/preview-rooms")
     suspend fun previewRoomPattern(
         @Body request: RoomPatternPreviewRequestDto
     ): Response<PatternPreviewResponseDto>

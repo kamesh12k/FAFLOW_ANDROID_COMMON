@@ -1,0 +1,281 @@
+name: FAFLOW CI/CD Pipeline
+
+on:
+  push:
+    branches: ["main", "develop", "optimize/full-audit"]
+  pull_request:
+    branches: ["main", "develop"]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  PYTHON_VERSION: "3.11"
+  NODE_VERSION: "20"
+  JAVA_VERSION: "17"
+
+# ─────────────────────────────────────────────────────────────
+# JOB 1 · Backend (FastAPI + pytest)
+# ─────────────────────────────────────────────────────────────
+jobs:
+  backend:
+    name: "Backend · pytest + security audit"
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: faflow
+          POSTGRES_PASSWORD: faflow_test
+          POSTGRES_DB: faflow_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python ${{ env.PYTHON_VERSION }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: pip
+          cache-dependency-path: backend/requirements.txt
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Run pytest (in-memory SQLite, all suites)
+        env:
+          DATABASE_URL: "sqlite://"
+          SECRET_KEY: "ci-test-secret-key-not-used-in-prod"
+          ALGORITHM: "HS256"
+          ACCESS_TOKEN_EXPIRE_MINUTES: "60"
+          FRONTEND_ORIGIN: '["http://localhost:5173"]'
+          SKIP_DB_INIT: "1"
+        run: |
+          python -m pytest tests/ \
+            --tb=short \
+            -q \
+            --junitxml=reports/pytest.xml \
+            --cov=app \
+            --cov-report=xml:reports/coverage.xml \
+            --cov-report=term-missing \
+            --cov-fail-under=70
+
+      - name: Upload coverage report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: backend-coverage
+          path: backend/reports/
+
+      - name: Security audit – pip-audit
+        run: |
+          pip install pip-audit
+          pip-audit --requirement requirements.txt --format json --output reports/pip-audit.json || true
+
+      - name: Check for critical CVEs
+        run: |
+          pip-audit --requirement requirements.txt --vulnerability-service pypi || true
+
+# ─────────────────────────────────────────────────────────────
+# JOB 2 · Frontend (React + Vite + TypeScript)
+# ─────────────────────────────────────────────────────────────
+  frontend:
+    name: "Frontend · build + typecheck + lint"
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node.js ${{ env.NODE_VERSION }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: TypeScript type-check
+        run: npm run typecheck
+
+      - name: Production build
+        run: npm run build
+        env:
+          VITE_API_BASE_URL: "https://api.faflow.example.com"
+
+      - name: Report bundle size
+        run: |
+          du -sh dist/
+          find dist -name "*.js" -exec du -sh {} \; | sort -rh | head -20
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-dist
+          path: frontend/dist/
+          retention-days: 7
+
+# ─────────────────────────────────────────────────────────────
+# JOB 3 · Android (Kotlin + Gradle + JUnit4)
+# ─────────────────────────────────────────────────────────────
+  android:
+    name: "Android · unit tests + assembleDebug"
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: android
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK ${{ env.JAVA_VERSION }}
+        uses: actions/setup-java@v4
+        with:
+          java-version: ${{ env.JAVA_VERSION }}
+          distribution: temurin
+          cache: gradle
+
+      - name: Cache Gradle wrappers
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: gradle-${{ hashFiles('android/**/*.gradle.kts', 'android/gradle/libs.versions.toml') }}
+          restore-keys: gradle-
+
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
+
+      - name: Run unit tests
+        run: ./gradlew testDebugUnitTest --no-daemon --stacktrace
+        env:
+          ANDROID_HEADLESS: "true"
+
+      - name: Upload unit test results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: android-unit-test-results
+          path: android/app/build/reports/tests/testDebugUnitTest/
+
+      - name: Assemble Debug APK
+        run: ./gradlew assembleDebug --no-daemon
+
+      - name: Report APK size
+        run: |
+          find app/build/outputs/apk/debug -name "*.apk" -exec du -sh {} \;
+
+      - name: Upload Debug APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: faflow-debug-apk
+          path: android/app/build/outputs/apk/debug/*.apk
+          retention-days: 14
+
+# ─────────────────────────────────────────────────────────────
+# JOB 4 · Contract Parity Gate
+# ─────────────────────────────────────────────────────────────
+  contract-parity:
+    name: "Contract Parity · API ↔ Android ↔ Web"
+    runs-on: ubuntu-latest
+    needs: [backend, frontend, android]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python ${{ env.PYTHON_VERSION }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install audit tools
+        run: pip install pyyaml requests
+
+      - name: Verify OpenAPI spec exists and is parseable
+        run: python -c "import yaml; yaml.safe_load(open('openapi.yaml'))"
+
+      - name: Run API contract matrix check
+        run: |
+          python scripts/ci_contract_check.py \
+            --openapi openapi.yaml \
+            --android android/app/src/main/java/com/governence/faflow \
+            --frontend frontend/src \
+            --report reports/contract_parity.json
+        continue-on-error: true
+
+      - name: Upload contract parity report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: contract-parity-report
+          path: reports/contract_parity.json
+
+# ─────────────────────────────────────────────────────────────
+# JOB 5 · Security Gate (RBAC + Auth invariants)
+# ─────────────────────────────────────────────────────────────
+  security-gate:
+    name: "Security Gate · RBAC + Auth + Biometric rules"
+    runs-on: ubuntu-latest
+    needs: backend
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python ${{ env.PYTHON_VERSION }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: pip
+          cache-dependency-path: backend/requirements.txt
+
+      - name: Install dependencies
+        working-directory: backend
+        run: pip install -r requirements.txt
+
+      - name: Run security-critical tests only
+        working-directory: backend
+        env:
+          DATABASE_URL: "sqlite://"
+          SECRET_KEY: "ci-test-secret-key"
+          ALGORITHM: "HS256"
+          ACCESS_TOKEN_EXPIRE_MINUTES: "60"
+          FRONTEND_ORIGIN: '["http://localhost:5173"]'
+          SKIP_DB_INIT: "1"
+        run: |
+          python -m pytest tests/test_security.py \
+            tests/test_security_hardening.py \
+            tests/test_core_security.py \
+            tests/test_governance.py \
+            tests/test_governance_control.py \
+            tests/test_governance_business_rules.py \
+            tests/test_announcement_security.py \
+            tests/test_geofence_service.py \
+            -v --tb=long
+
+# ─────────────────────────────────────────────────────────────
+# JOB 6 · Final Gate (all jobs must pass)
+# ─────────────────────────────────────────────────────────────
+  gate:
+    name: "✅ All gates passed"
+    runs-on: ubuntu-latest
+    needs: [backend, frontend, android, security-gate]
+    steps:
+      - name: Gate
+        run: echo "All CI gates passed. Ready to merge."

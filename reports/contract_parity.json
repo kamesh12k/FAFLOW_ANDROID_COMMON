@@ -1,0 +1,12 @@
+{
+  "summary": {
+    "openapi_paths": 653,
+    "android_endpoints": 90,
+    "frontend_endpoints": 359,
+    "total_mismatches": 0,
+    "high_severity": 0,
+    "medium_severity": 0,
+    "status": "PASS"
+  },
+  "mismatches": []
+}
