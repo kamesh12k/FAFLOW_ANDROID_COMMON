@@ -526,9 +526,50 @@ class StudentAttendanceService:
         # Check registered substitution
         if substitution_id:
             sub = db.query(AlterAssignment).filter(AlterAssignment.id == substitution_id).first()
-            if sub and sub.substitute_teacher_id == current_user.id:
-                attendance_type = AttendanceType.registered_substitution
-                scheduled_teacher_id = sub.leave_request.teacher_id
+            if not sub:
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail=f"Substitution assignment {substitution_id} not found."
+                )
+            if sub.substitute_teacher_id != current_user.id:
+                raise HTTPException(
+                    status_code=status.HTTP_403_FORBIDDEN,
+                    detail="You are not designated as the substitute teacher for this assignment."
+                )
+            leave = sub.leave_request
+            if not leave or leave.status != LeaveStatus.approved:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="The leave request for this substitution is not approved."
+                )
+            if leave.date != att_date:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail=f"Substitution assignment date ({leave.date}) does not match attendance date ({att_date})."
+                )
+            orig_slot = (
+                db.query(TimetableSlot)
+                .filter(
+                    TimetableSlot.teacher_id == leave.teacher_id,
+                    TimetableSlot.day_order == leave.day_order,
+                    TimetableSlot.period_number == leave.period_number
+                )
+                .first()
+            )
+            if not orig_slot:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="Original timetable slot for this substitution could not be resolved."
+                )
+            if orig_slot.class_id != data.class_id or orig_slot.period_number != data.period_number:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail=f"Substitution slot (Class ID {orig_slot.class_id}, Period {orig_slot.period_number}) does not match submitted (Class ID {data.class_id}, Period {data.period_number})."
+                )
+            attendance_type = AttendanceType.registered_substitution
+            scheduled_teacher_id = leave.teacher_id
+            if not subject_id:
+                subject_id = orig_slot.subject_id
         elif is_emergency:
             attendance_type = AttendanceType.emergency
             # Find if there was a scheduled teacher for this slot
