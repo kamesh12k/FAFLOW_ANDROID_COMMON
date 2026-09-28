@@ -190,7 +190,7 @@ class StudentAttendanceService:
             now_local = datetime.now(ZoneInfo("Asia/Kolkata"))
         except Exception:
             now_local = datetime.now(timezone.utc) + timedelta(hours=5, minutes=30)
-        current_period = StudentAttendanceService.determine_current_period(now_local.time())
+        current_period = StudentAttendanceService.determine_current_period(now_local.time(), db=db)
 
         scheduled_slots: List[TeacherClassSlotOut] = []
         if day_order:
@@ -1327,6 +1327,7 @@ class StudentAttendanceService:
         total_present = 0
         total_marked = 0
 
+        period_map = _build_period_map(db)
         # Sort pairs by period_number, then class_id
         for (c_id, p_num), info in sorted(combined_pairs.items(), key=lambda item: (item[0][1], item[0][0])):
             slot = info["slot"]
@@ -1339,7 +1340,7 @@ class StudentAttendanceService:
             dept_name = cls.department.name if cls.department else ""
             subj = (sess.subject if sess else None) or (slot.subject if slot else None)
             subj_name = subj.name if subj else ("Emergency Session" if (sess and sess.attendance_type == AttendanceType.emergency) else None)
-            p_time = PERIOD_SCHEDULE.get(p_num, (time(8, 0), time(9, 0), f"P{p_num}"))[2]
+            p_time = period_map.get(p_num, (time(8, 0), time(9, 0), f"P{p_num}"))[2]
 
             sched_teacher_name = (
                 (sess.scheduled_teacher.name if sess and sess.scheduled_teacher else None) or
@@ -1728,6 +1729,7 @@ class StudentAttendanceService:
                     "session": sess
                 }
 
+        period_map = _build_period_map(db)
         results: List[PrincipalSessionItemOut] = []
         for (c_id, p_num), info in combined_pairs.items():
             slot = info["slot"]
@@ -1739,7 +1741,7 @@ class StudentAttendanceService:
 
             dept = cls.department
             subj = (sess.subject if sess else None) or (slot.subject if slot else None)
-            p_time = PERIOD_SCHEDULE.get(p_num, (time(8, 0), time(9, 0), f"P{p_num}"))[2]
+            p_time = period_map.get(p_num, (time(8, 0), time(9, 0), f"P{p_num}"))[2]
 
             session_id = sess.id if sess else None
             sess_status = sess.status if sess else SessionStatus.not_open
@@ -1893,12 +1895,13 @@ class StudentAttendanceService:
         if not period_numbers:
             period_numbers = [1, 2, 3, 4, 5]
 
+        period_map = _build_period_map(db)
         period_slot_infos: List[ClassPeriodSlotInfo] = []
         slot_map = {s.period_number: s for s in slots}
         for p in period_numbers:
             sl = slot_map.get(p)
             sess = session_by_period.get(p)
-            p_time = PERIOD_SCHEDULE.get(p, (time(8, 0), time(9, 0), f"P{p}"))[2]
+            p_time = period_map.get(p, (time(8, 0), time(9, 0), f"P{p}"))[2]
             subj_name = (sess.subject.name if sess and sess.subject else None) or (sl.subject.name if sl and sl.subject else None)
             sched_t = (sess.scheduled_teacher.name if sess and sess.scheduled_teacher else None) or (sl.teacher.name if sl and sl.teacher else None)
             act_t = sess.actual_teacher.name if sess and sess.actual_teacher else None
