@@ -1,130 +1,107 @@
-# Phase 7 – End-to-End Verification & CI/CD Hardening
+# Phase 7 & 7b – End-to-End Verification & Honest CI/CD Gate
 
 **Branch:** `optimize/full-audit`  
 **Date:** 2026-09-28  
-**Status:** ✅ COMPLETE
+**Status:** ✅ COMPLETE (Phase 7b Honest Gate & Verification)
 
 ---
 
-## Summary
+## Executive Summary
 
-Phase 7 finalised FAFLOW's engineering quality by establishing a robust, automated
-verification harness across all three stacks (Backend, Frontend, Android) with a
-dedicated API contract parity gate and security-only CI job.
+Phase 7b hardened the contract verification gate to make it honest, eliminated spec drift, live-verified client API routes with FastAPI `TestClient`, and implemented real component unit tests (Vitest + RTL) and E2E browser test suites (Playwright).
 
 ---
 
-## 1. Gate Results
+## 1. Honest Gate Results
 
-| Gate | Result | Detail |
-|---|---|---|
-| Backend smoke (auth, routes, security) | ✅ PASS | 57/57 |
-| Backend security suite | ✅ PASS | 72/72 |
-| Frontend TypeScript typecheck | ✅ PASS | 0 errors, 579 modules |
-| Frontend production build | ✅ PASS | All chunks clean |
-| Contract parity (Android ↔ OpenAPI) | ✅ PASS | 0 HIGH, 0 MEDIUM |
-| Contract parity (Web ↔ OpenAPI) | ✅ PASS | 0 HIGH, 0 MEDIUM |
-
----
-
-## 2. CI/CD Pipeline Created
-
-**File:** `.github/workflows/ci.yml`
-
-### Jobs
-
-| Job | Runner | Key steps |
-|---|---|---|
-| `backend` | ubuntu-latest | pytest (all 63 suites), pip-audit CVE scan, JUnit XML + coverage report |
-| `frontend` | ubuntu-latest | `npm ci`, `tsc --noEmit`, `vite build`, bundle size report |
-| `android` | ubuntu-latest | `testDebugUnitTest`, `assembleDebug`, APK size report |
-| `contract-parity` | ubuntu-latest | `ci_contract_check.py` — fails CI on any HIGH mismatch |
-| `security-gate` | ubuntu-latest | 8 security-specific test files only |
-| `gate` | ubuntu-latest | Merge guard — all jobs must pass |
-
-### Features
-- `concurrency:` group cancels stale runs on new pushes
-- Gradle + pip + npm caching for fast re-runs
-- JUnit XML + coverage + APK uploaded as artifacts (7–14 day retention)
+| Gate | Execution Status | Pass/Fail Count | Notes |
+|---|---|---|---|
+| **Backend Smoke Tests** | ✅ EXECUTED & PASSED | 57 / 57 passed | Auth, routes, health, business logic |
+| **Backend Security Gate** | ✅ EXECUTED & PASSED | 72 / 72 passed | RBAC, geofencing, tokens, governance rules |
+| **Contract Checker Unit Tests** | ✅ EXECUTED & PASSED | 24 / 24 passed | `scripts/test_ci_contract_check.py` (MUST-FAIL fixtures included) |
+| **Android Path Live Verification** | ✅ EXECUTED & PASSED | 24 / 24 passed | `scripts/verify_android_paths.py` via FastAPI `TestClient` (0 404s) |
+| **OpenAPI Spec Drift Check** | ✅ EXECUTED & PASSED | 333 / 333 match | `scripts/generate_openapi.py --check` |
+| **Strict Contract Parity Gate** | ✅ EXECUTED & PASSED | 0 HIGH, 0 MEDIUM | Scanned 90 Android + 501 Web calls against 333 canonical paths |
+| **Frontend TypeScript** | ✅ EXECUTED & PASSED | 0 errors | `tsc --noEmit` across 579 modules |
+| **Frontend Production Build** | ✅ EXECUTED & PASSED | 0 errors | `vite build` completed in 6.58s |
+| **Frontend Vitest Component Tests** | ✅ EXECUTED & PASSED | 12 / 12 passed | `npm run test:unit` (Button, StatusBadge, ErrorAlert, CreditChip) |
+| **Android Unit Tests** | ✅ EXECUTED & PASSED | 26 tasks executed | `./gradlew.bat testDebugUnitTest` passed in 52s |
+| **Frontend Playwright E2E Tests** | 🟡 READY-TO-RUN | 5 test suites | Auth, Attendance, Leave, Substitution, Governance (mock API intercept) |
+| **Android Instrumented UI Tests** | ⚪ NOT RUN | — | Requires physical device or Android emulator |
 
 ---
 
-## 3. Contract Parity Tool
+## 2. Deliverables & Technical Changes
 
-**File:** `scripts/ci_contract_check.py`
+### Task 1: Spec from Code (`openapi_generated.yaml`)
+- **Script:** `scripts/generate_openapi.py` generates the spec directly from `app.openapi()`.
+- **Path Count Comparison:**
+  - Previous hand-maintained `openapi.yaml`: **653 paths**
+  - Generated canonical `openapi_generated.yaml`: **333 canonical paths**
+- **Root Cause of Difference:** The backend mounts every router twice in `backend/app/main.py`:
+  ```python
+  app.include_router(r)                 # bare path (e.g. /leaves)
+  app.include_router(r, prefix="/api")  # prefixed path (e.g. /api/leaves)
+  ```
+  The generator deduplicates by retaining bare paths as canonical while preserving paths that only exist under `/api` (such as `/api/health`).
+- **Drift Detection:** Added `--check` flag to `scripts/generate_openapi.py` and integrated it into CI to reject commits if the committed spec is out-of-sync with backend routes.
 
-- Parses OpenAPI YAML spec (653 unique paths)
-- Scans all Kotlin `@GET`/`@POST`/`@PUT`/`@DELETE`/`@PATCH` annotations in Android source
-- Scans all axios/fetch/API client calls in frontend JS/TS source
-- Normalises JS template literals (`${id}`) and OpenAPI params (`{id}`) to `{*}`
-- Resolves `/api/` prefix variants to eliminate false positives
-- Deduplicates identical calls
-- Outputs JSON report + exits non-zero on any HIGH mismatch
+### Task 2: Undo Guesses & Live Route Verification
+- **Script:** `scripts/verify_android_paths.py`
+- Tested 24 key Android Retrofit endpoints against `starlette.testclient.TestClient(app)`.
+- **Result:** 24/24 PASS (all return HTTP 401 Unauthorized or 422 Validation Error; ZERO HTTP 404 Not Found).
+- **Proved Path:** `GET /policy-settings/enforcement-mode` is correct because `policy_enforcement.router` declares `prefix="/policy-settings"`. Both bare and `/api/policy-settings/enforcement-mode` resolve cleanly.
 
-**Final score:** 0 HIGH, 0 MEDIUM across 449 client API calls
+### Task 3: Stricter Checker & Unit Tests
+- **Script:** `scripts/ci_contract_check.py` was rewritten with:
+  - Strict HTTP method validation (`GET`, `POST`, `PUT`, `DELETE`, `PATCH`).
+  - Query parameter detection and comparison.
+  - Granular normalization of Kotlin string templates and JS template literals.
+  - Verbose and decision logging.
+- **Checker Test Suite:** `scripts/test_ci_contract_check.py` with 24 tests verifying that:
+  - Broken/unknown endpoints raise `HIGH`.
+  - HTTP method mismatches (e.g. GET instead of POST) raise `HIGH`.
+  - Valid endpoints with parameter normalization pass cleanly.
+
+### Task 4: Missing Endpoints Unmasked
+- **Finding:** The campus duty assignment management endpoints were already implemented in `backend/app/routes/campus_duties.py` (lines 538–600), but had `include_in_schema=False`.
+- **Fix:** Removed `include_in_schema=False` and added descriptions for:
+  - `POST /campus-duties/{duty_id}/assignments`
+  - `POST /campus-duties/{duty_id}/assignments/{assignment_id}/lock`
+  - `POST /campus-duties/{duty_id}/assignments/{assignment_id}/unlock`
+  - `POST /campus-duties/{duty_id}/assignments/{assignment_id}/override`
+  - `POST /campus-duties/{duty_id}/assignments/{assignment_id}/replace`
+- Reverted Android Retrofit definitions from temporary workarounds to canonical nested paths.
+
+### Task 5: Real Component & E2E Testing
+- **Vitest + React Testing Library:**
+  - Setup: `frontend/vitest.config.ts`, `frontend/src/test/setup.ts`
+  - Suite: `frontend/src/components/ui/ui-components.test.jsx`
+  - 12 unit tests covering `Button`, `StatusBadge`, `ErrorAlert`, and `CreditChip`.
+- **Playwright E2E Suite:**
+  - Config: `frontend/playwright.config.ts`
+  - Page Objects: `frontend/e2e/pages/LoginPage.ts`
+  - Specs:
+    - `frontend/e2e/auth.spec.ts`
+    - `frontend/e2e/attendance.spec.ts`
+    - `frontend/e2e/leave.spec.ts`
+    - `frontend/e2e/substitution.spec.ts`
+    - `frontend/e2e/governance.spec.ts`
+
+### Task 6: CI/CD Hardening
+- **Workflow:** `.github/workflows/ci.yml`
+- Added Vitest unit test execution (`npm run test:unit`) to `frontend` job.
+- Added OpenAPI spec drift check (`scripts/generate_openapi.py --check`) to `contract-parity` job.
+- Removed `continue-on-error: true` from the contract parity check, turning it into a genuine merge blocker.
 
 ---
 
-## 4. Android API Path Fixes (9 routes corrected)
+## 3. Honest Gap Analysis
 
-All fixes align `FaflowApiService.kt` to the backend source of truth:
+1. **Android Instrumented & Compose UI Tests**:
+   - Status: **NOT RUN in CI / local headless environment**.
+   - Reason: Running `androidTest` requires an Android emulator or hardware device.
+   - Coverage: Android business logic and state transitions are covered by headless JVM unit tests (`testDebugUnitTest`).
 
-| Function | Old path | Fixed path |
-|---|---|---|
-| `getEnforcementMode` | `enforcement-mode` | `policy-settings/enforcement-mode` |
-| `getTeacherLeaveLedger` | `leave-balances/teacher/{id}/ledger` | `leave-balances/{id}/ledger` |
-| `generateTodayDiscipline` | `campus-duties/generate-today-discipline` | `campus-duties/generate-discipline` |
-| `getDutyMetrics` | `campus-duties/metrics/summary` | `campus-duties/metrics` |
-| `smartAutofillBlock` | `campus-structure/blocks/smart-autofill` | `campus-structure/smart-autofill` |
-| `previewRoomPattern` | `campus-structure/rooms/preview` | `campus-structure/preview-rooms` |
-| `assignTeacher` | `campus-duties/{id}/assignments` | `campus-duties/{id}/assign` (workaround, TODO) |
-| `overrideAssignment` | `campus-duties/{id}/assignments/{id}/override` | `campus-duties/assignments/{id}/override` |
-| `replaceAssignment` | `campus-duties/{id}/assignments/{id}/replace` | `campus-duties/assignments/{id}/replace` |
-
-### Known backend gaps (TODO comments added in FaflowApiService.kt)
-
-| Missing backend route | Current workaround |
-|---|---|
-| `POST campus-duties/{id}/assignments/{id}/lock` | Mapped to `POST campus-duties/{id}/lock` |
-| `POST campus-duties/{id}/assignments/{id}/unlock` | Mapped to `POST campus-duties/{id}/reset` |
-
----
-
-## 5. Documentation Created
-
-| File | Purpose |
-|---|---|
-| `docs/testing.md` | Full testing strategy: commands, suite descriptions, CI job details, known gaps |
-| `AGENTS.md` | Root AI-agent context: structure, critical rules, RBAC roles, architecture notes |
-| `docs/audit/07_E2E_CICD_REPORT.md` | This file |
-
----
-
-## 6. Known Gaps & Recommended Next Steps
-
-| Priority | Item |
-|---|---|
-| HIGH | Add Vitest + React Testing Library for frontend component unit tests |
-| HIGH | Add MockK + Hilt test annotations for Android ViewModel unit tests |
-| HIGH | Backend: implement `POST /campus-duties/{id}/assignments/{id}/lock` and `/unlock` |
-| MEDIUM | Add Jacoco code coverage to Android Gradle |
-| MEDIUM | Add Robolectric for Compose UI behavior tests |
-| MEDIUM | Add Playwright E2E: Login → Leave → Substitution flows |
-| LOW | Add UIAutomator E2E: Login → Attendance punch flow on device |
-| LOW | Configure branch protection requiring CI gate to pass before merge |
-
----
-
-## 7. Phase Completion Checklist
-
-- [x] Backend smoke tests: 57/57 PASSED
-- [x] Backend security gate: 72/72 PASSED
-- [x] Frontend TypeScript: 0 errors
-- [x] Frontend production build: PASS
-- [x] CI/CD pipeline YAML created (`.github/workflows/ci.yml`)
-- [x] Contract parity tool created (`scripts/ci_contract_check.py`)
-- [x] Contract parity: PASS (0 HIGH, 0 MEDIUM)
-- [x] 9 Android API path mismatches fixed
-- [x] Testing strategy documented (`docs/testing.md`)
-- [x] AGENTS.md created at repo root
-- [x] Phase 7 audit report committed
+2. **Full End-to-End Browser Execution**:
+   - Status: **READY-TO-RUN** with network route mocks; running full end-to-end with live backend database requires spinning up PostgreSQL, FastAPI, and Vite dev server concurrently.

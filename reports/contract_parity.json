@@ -1,12 +1,3511 @@
 {
   "summary": {
-    "openapi_paths": 653,
-    "android_endpoints": 90,
-    "frontend_endpoints": 359,
+    "spec_source": "openapi_generated.yaml",
+    "spec_paths": 333,
+    "android_raw_calls": 90,
+    "frontend_raw_calls": 501,
     "total_mismatches": 0,
     "high_severity": 0,
     "medium_severity": 0,
     "status": "PASS"
   },
-  "mismatches": []
+  "mismatches": [],
+  "norm_log": [
+    {
+      "original": "/auth/register",
+      "normalised": "/auth/register"
+    },
+    {
+      "original": "/auth/login",
+      "normalised": "/auth/login"
+    },
+    {
+      "original": "/admin/setup-readiness",
+      "normalised": "/admin/setup-readiness"
+    },
+    {
+      "original": "/admin/master-export",
+      "normalised": "/admin/master-export"
+    },
+    {
+      "original": "/admin/first-login/setup",
+      "normalised": "/admin/first-login/setup"
+    },
+    {
+      "original": "/admin/secondary-admins",
+      "normalised": "/admin/secondary-admins"
+    },
+    {
+      "original": "/admin/secondary-admins/{admin_id}/enable",
+      "normalised": "/admin/secondary-admins/{*}/enable"
+    },
+    {
+      "original": "/admin/secondary-admins/{admin_id}/disable",
+      "normalised": "/admin/secondary-admins/{*}/disable"
+    },
+    {
+      "original": "/admin/audit-logs",
+      "normalised": "/admin/audit-logs"
+    },
+    {
+      "original": "/admin/factory-reset",
+      "normalised": "/admin/factory-reset"
+    },
+    {
+      "original": "/admin/clear-credits-history",
+      "normalised": "/admin/clear-credits-history"
+    },
+    {
+      "original": "/admin/clear-leaves-history",
+      "normalised": "/admin/clear-leaves-history"
+    },
+    {
+      "original": "/admin/principal",
+      "normalised": "/admin/principal"
+    },
+    {
+      "original": "/admin/global-users",
+      "normalised": "/admin/global-users"
+    },
+    {
+      "original": "/admin/global-users/{user_id}",
+      "normalised": "/admin/global-users/{*}"
+    },
+    {
+      "original": "/admin/system-metrics",
+      "normalised": "/admin/system-metrics"
+    },
+    {
+      "original": "/admin/system-metrics/clear-traffic",
+      "normalised": "/admin/system-metrics/clear-traffic"
+    },
+    {
+      "original": "/admin/managers",
+      "normalised": "/admin/managers"
+    },
+    {
+      "original": "/admin/managers/{manager_id}",
+      "normalised": "/admin/managers/{*}"
+    },
+    {
+      "original": "/teachers/",
+      "normalised": "/teachers"
+    },
+    {
+      "original": "/teachers/bulk",
+      "normalised": "/teachers/bulk"
+    },
+    {
+      "original": "/teachers/me",
+      "normalised": "/teachers/me"
+    },
+    {
+      "original": "/teachers/{teacher_id}/credits",
+      "normalised": "/teachers/{*}/credits"
+    },
+    {
+      "original": "/teachers/{teacher_id}",
+      "normalised": "/teachers/{*}"
+    },
+    {
+      "original": "/teachers/me/biometrics/enroll",
+      "normalised": "/teachers/me/biometrics/enroll"
+    },
+    {
+      "original": "/teachers/{teacher_id}/biometrics/reset",
+      "normalised": "/teachers/{*}/biometrics/reset"
+    },
+    {
+      "original": "/timetable/submissions",
+      "normalised": "/timetable/submissions"
+    },
+    {
+      "original": "/timetable/submissions/my",
+      "normalised": "/timetable/submissions/my"
+    },
+    {
+      "original": "/timetable/submissions/pending",
+      "normalised": "/timetable/submissions/pending"
+    },
+    {
+      "original": "/timetable/submissions/{submission_id}/review",
+      "normalised": "/timetable/submissions/{*}/review"
+    },
+    {
+      "original": "/timetable/submissions/bulk-review",
+      "normalised": "/timetable/submissions/bulk-review"
+    },
+    {
+      "original": "/timetable/submissions/{submission_id}",
+      "normalised": "/timetable/submissions/{*}"
+    },
+    {
+      "original": "/timetable/slot",
+      "normalised": "/timetable/slot"
+    },
+    {
+      "original": "/timetable/slot/{slot_id}",
+      "normalised": "/timetable/slot/{*}"
+    },
+    {
+      "original": "/timetable/",
+      "normalised": "/timetable"
+    },
+    {
+      "original": "/timetable/teacher/{teacher_id}",
+      "normalised": "/timetable/teacher/{*}"
+    },
+    {
+      "original": "/timetable/class/{class_id}",
+      "normalised": "/timetable/class/{*}"
+    },
+    {
+      "original": "/timetable/{slot_id}",
+      "normalised": "/timetable/{*}"
+    },
+    {
+      "original": "/timetable/reset",
+      "normalised": "/timetable/reset"
+    },
+    {
+      "original": "/leaves/",
+      "normalised": "/leaves"
+    },
+    {
+      "original": "/leaves/batch",
+      "normalised": "/leaves/batch"
+    },
+    {
+      "original": "/leaves/my",
+      "normalised": "/leaves/my"
+    },
+    {
+      "original": "/leaves/evaluate-policy",
+      "normalised": "/leaves/evaluate-policy"
+    },
+    {
+      "original": "/leaves/{leave_id}/approve",
+      "normalised": "/leaves/{*}/approve"
+    },
+    {
+      "original": "/leaves/{leave_id}/approve-with-exception",
+      "normalised": "/leaves/{*}/approve-with-exception"
+    },
+    {
+      "original": "/leaves/{leave_id}/reject",
+      "normalised": "/leaves/{*}/reject"
+    },
+    {
+      "original": "/leaves/{leave_id}/status",
+      "normalised": "/leaves/{*}/status"
+    },
+    {
+      "original": "/leaves/bulk-approve",
+      "normalised": "/leaves/bulk-approve"
+    },
+    {
+      "original": "/leaves/bulk-reject",
+      "normalised": "/leaves/bulk-reject"
+    },
+    {
+      "original": "/leaves/{leave_id}/assign",
+      "normalised": "/leaves/{*}/assign"
+    },
+    {
+      "original": "/leaves/slot-candidates",
+      "normalised": "/leaves/slot-candidates"
+    },
+    {
+      "original": "/leaves/{leave_id}/candidates",
+      "normalised": "/leaves/{*}/candidates"
+    },
+    {
+      "original": "/leaves/{leave_id}/recommendations",
+      "normalised": "/leaves/{*}/recommendations"
+    },
+    {
+      "original": "/leaves/{leave_id}/assign-recommended",
+      "normalised": "/leaves/{*}/assign-recommended"
+    },
+    {
+      "original": "/leaves/{leave_id}/override",
+      "normalised": "/leaves/{*}/override"
+    },
+    {
+      "original": "/leaves/{leave_id}/undo-assignment",
+      "normalised": "/leaves/{*}/undo-assignment"
+    },
+    {
+      "original": "/leaves/{leave_id}/lock",
+      "normalised": "/leaves/{*}/lock"
+    },
+    {
+      "original": "/leaves/{leave_id}/free-teachers",
+      "normalised": "/leaves/{*}/free-teachers"
+    },
+    {
+      "original": "/leaves/{leave_id}",
+      "normalised": "/leaves/{*}"
+    },
+    {
+      "original": "/leaves/{leave_id}/cancel",
+      "normalised": "/leaves/{*}/cancel"
+    },
+    {
+      "original": "/leaves/{leave_id}/admin-cancel",
+      "normalised": "/leaves/{*}/admin-cancel"
+    },
+    {
+      "original": "/leaves/{leave_id}/cancel-impact",
+      "normalised": "/leaves/{*}/cancel-impact"
+    },
+    {
+      "original": "/leaves/admin-create",
+      "normalised": "/leaves/admin-create"
+    },
+    {
+      "original": "/credits/adjust",
+      "normalised": "/credits/adjust"
+    },
+    {
+      "original": "/credits/my/transactions",
+      "normalised": "/credits/my/transactions"
+    },
+    {
+      "original": "/credits/transactions",
+      "normalised": "/credits/transactions"
+    },
+    {
+      "original": "/credits/report",
+      "normalised": "/credits/report"
+    },
+    {
+      "original": "/notifications/",
+      "normalised": "/notifications"
+    },
+    {
+      "original": "/notifications/unread-count",
+      "normalised": "/notifications/unread-count"
+    },
+    {
+      "original": "/notifications/read-all",
+      "normalised": "/notifications/read-all"
+    },
+    {
+      "original": "/notifications/{notification_id}/read",
+      "normalised": "/notifications/{*}/read"
+    },
+    {
+      "original": "/notifications/{notification_id}",
+      "normalised": "/notifications/{*}"
+    },
+    {
+      "original": "/notifications/vapid-public-key",
+      "normalised": "/notifications/vapid-public-key"
+    },
+    {
+      "original": "/notifications/subscribe",
+      "normalised": "/notifications/subscribe"
+    },
+    {
+      "original": "/notifications/unsubscribe",
+      "normalised": "/notifications/unsubscribe"
+    },
+    {
+      "original": "/notifications/test-push",
+      "normalised": "/notifications/test-push"
+    },
+    {
+      "original": "/departments/",
+      "normalised": "/departments"
+    },
+    {
+      "original": "/departments/{dept_id}",
+      "normalised": "/departments/{*}"
+    },
+    {
+      "original": "/departments/{dept_id}/admin",
+      "normalised": "/departments/{*}/admin"
+    },
+    {
+      "original": "/subjects/",
+      "normalised": "/subjects"
+    },
+    {
+      "original": "/subjects/{subject_id}",
+      "normalised": "/subjects/{*}"
+    },
+    {
+      "original": "/subjects/{subject_id}/archive",
+      "normalised": "/subjects/{*}/archive"
+    },
+    {
+      "original": "/subjects/{subject_id}/unarchive",
+      "normalised": "/subjects/{*}/unarchive"
+    },
+    {
+      "original": "/classes/directory",
+      "normalised": "/classes/directory"
+    },
+    {
+      "original": "/classes/{class_id}/faculty",
+      "normalised": "/classes/{*}/faculty"
+    },
+    {
+      "original": "/classes/",
+      "normalised": "/classes"
+    },
+    {
+      "original": "/classes/bulk",
+      "normalised": "/classes/bulk"
+    },
+    {
+      "original": "/classes/{class_id}",
+      "normalised": "/classes/{*}"
+    },
+    {
+      "original": "/rooms/",
+      "normalised": "/rooms"
+    },
+    {
+      "original": "/rooms/bulk",
+      "normalised": "/rooms/bulk"
+    },
+    {
+      "original": "/rooms/bulk-assign",
+      "normalised": "/rooms/bulk-assign"
+    },
+    {
+      "original": "/rooms/{room_id}",
+      "normalised": "/rooms/{*}"
+    },
+    {
+      "original": "/rooms/availability/dashboard",
+      "normalised": "/rooms/availability/dashboard"
+    },
+    {
+      "original": "/rooms/{room_id}/check-availability",
+      "normalised": "/rooms/{*}/check-availability"
+    },
+    {
+      "original": "/rooms/occupancy",
+      "normalised": "/rooms/occupancy"
+    },
+    {
+      "original": "/rooms/occupancy/matrix",
+      "normalised": "/rooms/occupancy/matrix"
+    },
+    {
+      "original": "/day-order-calendar/",
+      "normalised": "/day-order-calendar"
+    },
+    {
+      "original": "/day-order-calendar/bulk-set",
+      "normalised": "/day-order-calendar/bulk-set"
+    },
+    {
+      "original": "/day-order-calendar/resolve",
+      "normalised": "/day-order-calendar/resolve"
+    },
+    {
+      "original": "/academic-calendar/academic-years",
+      "normalised": "/academic-calendar/academic-years"
+    },
+    {
+      "original": "/academic-calendar/semesters",
+      "normalised": "/academic-calendar/semesters"
+    },
+    {
+      "original": "/academic-calendar/days",
+      "normalised": "/academic-calendar/days"
+    },
+    {
+      "original": "/academic-calendar/days/{the_date}",
+      "normalised": "/academic-calendar/days/{*}"
+    },
+    {
+      "original": "/academic-calendar/days/mark",
+      "normalised": "/academic-calendar/days/mark"
+    },
+    {
+      "original": "/academic-calendar/days/bulk-mark",
+      "normalised": "/academic-calendar/days/bulk-mark"
+    },
+    {
+      "original": "/academic-calendar/days/day-order/assign",
+      "normalised": "/academic-calendar/days/day-order/assign"
+    },
+    {
+      "original": "/academic-calendar/days/day-order/skip",
+      "normalised": "/academic-calendar/days/day-order/skip"
+    },
+    {
+      "original": "/academic-calendar/days/{the_date}/override",
+      "normalised": "/academic-calendar/days/{*}/override"
+    },
+    {
+      "original": "/academic-calendar/resolve",
+      "normalised": "/academic-calendar/resolve"
+    },
+    {
+      "original": "/academic-calendar/today-summary",
+      "normalised": "/academic-calendar/today-summary"
+    },
+    {
+      "original": "/academic-calendar/my-today-summary",
+      "normalised": "/academic-calendar/my-today-summary"
+    },
+    {
+      "original": "/academic-calendar/reports/working-days",
+      "normalised": "/academic-calendar/reports/working-days"
+    },
+    {
+      "original": "/academic-calendar/reports/holidays",
+      "normalised": "/academic-calendar/reports/holidays"
+    },
+    {
+      "original": "/academic-calendar/reports/day-orders",
+      "normalised": "/academic-calendar/reports/day-orders"
+    },
+    {
+      "original": "/academic-calendar/reports/faculty-workload",
+      "normalised": "/academic-calendar/reports/faculty-workload"
+    },
+    {
+      "original": "/campus-operations/cross-department-substitutions",
+      "normalised": "/campus-operations/cross-department-substitutions"
+    },
+    {
+      "original": "/campus-operations/mode",
+      "normalised": "/campus-operations/mode"
+    },
+    {
+      "original": "/campus-operations/preferences/me",
+      "normalised": "/campus-operations/preferences/me"
+    },
+    {
+      "original": "/campus-operations/preferences/{teacher_id}",
+      "normalised": "/campus-operations/preferences/{*}"
+    },
+    {
+      "original": "/campus-operations/system-analytics",
+      "normalised": "/campus-operations/system-analytics"
+    },
+    {
+      "original": "/campus-operations/dry-run",
+      "normalised": "/campus-operations/dry-run"
+    },
+    {
+      "original": "/campus-operations/bulk-config",
+      "normalised": "/campus-operations/bulk-config"
+    },
+    {
+      "original": "/campus-operations/preferences/bulk-override",
+      "normalised": "/campus-operations/preferences/bulk-override"
+    },
+    {
+      "original": "/teacher/substitution/enabled",
+      "normalised": "/teacher/substitution/enabled"
+    },
+    {
+      "original": "/teacher/substitution/my-leaves",
+      "normalised": "/teacher/substitution/my-leaves"
+    },
+    {
+      "original": "/teacher/substitution/leave/{leave_id}/candidates",
+      "normalised": "/teacher/substitution/leave/{*}/candidates"
+    },
+    {
+      "original": "/teacher/substitution/leave/{leave_id}/free-teachers",
+      "normalised": "/teacher/substitution/leave/{*}/free-teachers"
+    },
+    {
+      "original": "/teacher/substitution/leave/{leave_id}/assign/{substitute_id}",
+      "normalised": "/teacher/substitution/leave/{*}/assign/{*}"
+    },
+    {
+      "original": "/teacher/substitution/leave/{leave_id}/override/{substitute_id}",
+      "normalised": "/teacher/substitution/leave/{*}/override/{*}"
+    },
+    {
+      "original": "/teacher/substitution/leave/{leave_id}/undo-assignment",
+      "normalised": "/teacher/substitution/leave/{*}/undo-assignment"
+    },
+    {
+      "original": "/teacher/substitution/leave/{leave_id}/lock",
+      "normalised": "/teacher/substitution/leave/{*}/lock"
+    },
+    {
+      "original": "/teacher/substitution/clear-all-assignments",
+      "normalised": "/teacher/substitution/clear-all-assignments"
+    },
+    {
+      "original": "/teacher/substitution/reset-preferences",
+      "normalised": "/teacher/substitution/reset-preferences"
+    },
+    {
+      "original": "/teacher/substitution/config",
+      "normalised": "/teacher/substitution/config"
+    },
+    {
+      "original": "/substitutions/today",
+      "normalised": "/substitutions/today"
+    },
+    {
+      "original": "/principal/overview",
+      "normalised": "/principal/overview"
+    },
+    {
+      "original": "/manager/dashboard",
+      "normalised": "/manager/dashboard"
+    },
+    {
+      "original": "/manager/staff",
+      "normalised": "/manager/staff"
+    },
+    {
+      "original": "/manager/staff/{staff_id}",
+      "normalised": "/manager/staff/{*}"
+    },
+    {
+      "original": "/manager/staff/{staff_id}/status",
+      "normalised": "/manager/staff/{*}/status"
+    },
+    {
+      "original": "/manager/labs",
+      "normalised": "/manager/labs"
+    },
+    {
+      "original": "/manager/leaves",
+      "normalised": "/manager/leaves"
+    },
+    {
+      "original": "/manager/leaves/{leave_id}/approve",
+      "normalised": "/manager/leaves/{*}/approve"
+    },
+    {
+      "original": "/manager/leaves/{leave_id}/reject",
+      "normalised": "/manager/leaves/{*}/reject"
+    },
+    {
+      "original": "/manager/credits",
+      "normalised": "/manager/credits"
+    },
+    {
+      "original": "/manager/credits/{staff_id}/ledger",
+      "normalised": "/manager/credits/{*}/ledger"
+    },
+    {
+      "original": "/manager/credits/adjust",
+      "normalised": "/manager/credits/adjust"
+    },
+    {
+      "original": "/manager/credits/quota",
+      "normalised": "/manager/credits/quota"
+    },
+    {
+      "original": "/staff/me",
+      "normalised": "/staff/me"
+    },
+    {
+      "original": "/staff/dashboard",
+      "normalised": "/staff/dashboard"
+    },
+    {
+      "original": "/staff/leaves",
+      "normalised": "/staff/leaves"
+    },
+    {
+      "original": "/staff/leaves/{leave_id}",
+      "normalised": "/staff/leaves/{*}"
+    },
+    {
+      "original": "/staff/ledger",
+      "normalised": "/staff/ledger"
+    },
+    {
+      "original": "/staff/me/biometrics/enroll",
+      "normalised": "/staff/me/biometrics/enroll"
+    },
+    {
+      "original": "/admin/backups/schedule",
+      "normalised": "/admin/backups/schedule"
+    },
+    {
+      "original": "/admin/backups/schedule/run-now",
+      "normalised": "/admin/backups/schedule/run-now"
+    },
+    {
+      "original": "/admin/backups/import",
+      "normalised": "/admin/backups/import"
+    },
+    {
+      "original": "/admin/backups",
+      "normalised": "/admin/backups"
+    },
+    {
+      "original": "/admin/backups/summary",
+      "normalised": "/admin/backups/summary"
+    },
+    {
+      "original": "/admin/backups/{backup_id}",
+      "normalised": "/admin/backups/{*}"
+    },
+    {
+      "original": "/admin/backups/{backup_id}/download",
+      "normalised": "/admin/backups/{*}/download"
+    },
+    {
+      "original": "/admin/backups/{backup_id}/validate",
+      "normalised": "/admin/backups/{*}/validate"
+    },
+    {
+      "original": "/admin/backups/{backup_id}/restore",
+      "normalised": "/admin/backups/{*}/restore"
+    },
+    {
+      "original": "/governance/overview",
+      "normalised": "/governance/overview"
+    },
+    {
+      "original": "/governance/search",
+      "normalised": "/governance/search"
+    },
+    {
+      "original": "/governance/candidates/{leave_id}",
+      "normalised": "/governance/candidates/{*}"
+    },
+    {
+      "original": "/governance/emergency-override",
+      "normalised": "/governance/emergency-override"
+    },
+    {
+      "original": "/governance/assign-substitute",
+      "normalised": "/governance/assign-substitute"
+    },
+    {
+      "original": "/admin/data-retention/stats",
+      "normalised": "/admin/data-retention/stats"
+    },
+    {
+      "original": "/admin/data-retention/policy",
+      "normalised": "/admin/data-retention/policy"
+    },
+    {
+      "original": "/admin/data-retention/run-auto-cleanup",
+      "normalised": "/admin/data-retention/run-auto-cleanup"
+    },
+    {
+      "original": "/admin/data-retention/preview",
+      "normalised": "/admin/data-retention/preview"
+    },
+    {
+      "original": "/admin/data-retention/purge",
+      "normalised": "/admin/data-retention/purge"
+    },
+    {
+      "original": "/geofences/test-location",
+      "normalised": "/geofences/test-location"
+    },
+    {
+      "original": "/geofences/active",
+      "normalised": "/geofences/active"
+    },
+    {
+      "original": "/geofences/",
+      "normalised": "/geofences"
+    },
+    {
+      "original": "/geofences/{geofence_id}",
+      "normalised": "/geofences/{*}"
+    },
+    {
+      "original": "/geofences/{geofence_id}/toggle",
+      "normalised": "/geofences/{*}/toggle"
+    },
+    {
+      "original": "/attendance/check-in",
+      "normalised": "/attendance/check-in"
+    },
+    {
+      "original": "/attendance/check-out",
+      "normalised": "/attendance/check-out"
+    },
+    {
+      "original": "/attendance/today",
+      "normalised": "/attendance/today"
+    },
+    {
+      "original": "/attendance/my",
+      "normalised": "/attendance/my"
+    },
+    {
+      "original": "/attendance/admin/live-status",
+      "normalised": "/attendance/admin/live-status"
+    },
+    {
+      "original": "/attendance/admin/record/{record_id}",
+      "normalised": "/attendance/admin/record/{*}"
+    },
+    {
+      "original": "/system/dashboard",
+      "normalised": "/system/dashboard"
+    },
+    {
+      "original": "/system/institutions",
+      "normalised": "/system/institutions"
+    },
+    {
+      "original": "/system/institutions/{institution_id}",
+      "normalised": "/system/institutions/{*}"
+    },
+    {
+      "original": "/system/institutions/{institution_id}/assign-plan",
+      "normalised": "/system/institutions/{*}/assign-plan"
+    },
+    {
+      "original": "/system/institutions/{institution_id}/features",
+      "normalised": "/system/institutions/{*}/features"
+    },
+    {
+      "original": "/system/institutions/{institution_id}/features/{feature_key}/enable",
+      "normalised": "/system/institutions/{*}/features/{*}/enable"
+    },
+    {
+      "original": "/system/institutions/{institution_id}/features/{feature_key}/disable",
+      "normalised": "/system/institutions/{*}/features/{*}/disable"
+    },
+    {
+      "original": "/system/institutions/{institution_id}/features/{feature_key}/lock",
+      "normalised": "/system/institutions/{*}/features/{*}/lock"
+    },
+    {
+      "original": "/system/institutions/{institution_id}/features/{feature_key}/unlock",
+      "normalised": "/system/institutions/{*}/features/{*}/unlock"
+    },
+    {
+      "original": "/system/institutions/{institution_id}/biometric-policy",
+      "normalised": "/system/institutions/{*}/biometric-policy"
+    },
+    {
+      "original": "/system/institutions/{institution_id}/policy",
+      "normalised": "/system/institutions/{*}/policy"
+    },
+    {
+      "original": "/system/audit-logs",
+      "normalised": "/system/audit-logs"
+    },
+    {
+      "original": "/system/governance/public-config",
+      "normalised": "/system/governance/public-config"
+    },
+    {
+      "original": "/system/governance/rules",
+      "normalised": "/system/governance/rules"
+    },
+    {
+      "original": "/system/governance/rules/{key}",
+      "normalised": "/system/governance/rules/{*}"
+    },
+    {
+      "original": "/system/governance/rules/validate",
+      "normalised": "/system/governance/rules/validate"
+    },
+    {
+      "original": "/system/governance/rules/reset/{key}",
+      "normalised": "/system/governance/rules/reset/{*}"
+    },
+    {
+      "original": "/system/governance/history",
+      "normalised": "/system/governance/history"
+    },
+    {
+      "original": "/system/governance/rules/{key}/history",
+      "normalised": "/system/governance/rules/{*}/history"
+    },
+    {
+      "original": "/system/governance/rollback/{history_id}",
+      "normalised": "/system/governance/rollback/{*}"
+    },
+    {
+      "original": "/system/governance/periods",
+      "normalised": "/system/governance/periods"
+    },
+    {
+      "original": "/student-attendance/today",
+      "normalised": "/student-attendance/today"
+    },
+    {
+      "original": "/student-attendance/classes/{class_id}/roster",
+      "normalised": "/student-attendance/classes/{*}/roster"
+    },
+    {
+      "original": "/student-attendance/sessions/{id}",
+      "normalised": "/student-attendance/sessions/{*}"
+    },
+    {
+      "original": "/student-attendance/sessions",
+      "normalised": "/student-attendance/sessions"
+    },
+    {
+      "original": "/student-attendance/sessions/{id}/submit",
+      "normalised": "/student-attendance/sessions/{*}/submit"
+    },
+    {
+      "original": "/student-attendance/sessions/submit",
+      "normalised": "/student-attendance/sessions/submit"
+    },
+    {
+      "original": "/student-attendance/emergency",
+      "normalised": "/student-attendance/emergency"
+    },
+    {
+      "original": "/student-attendance/sessions/{id}/students/{student_id}",
+      "normalised": "/student-attendance/sessions/{*}/students/{*}"
+    },
+    {
+      "original": "/student-attendance/sync",
+      "normalised": "/student-attendance/sync"
+    },
+    {
+      "original": "/student-attendance/hod/overview",
+      "normalised": "/student-attendance/hod/overview"
+    },
+    {
+      "original": "/student-attendance/absentees/live",
+      "normalised": "/student-attendance/absentees/live"
+    },
+    {
+      "original": "/student-attendance/classes/{class_id}/eod-summary",
+      "normalised": "/student-attendance/classes/{*}/eod-summary"
+    },
+    {
+      "original": "/student-attendance/principal/overview",
+      "normalised": "/student-attendance/principal/overview"
+    },
+    {
+      "original": "/student-attendance/principal/sessions",
+      "normalised": "/student-attendance/principal/sessions"
+    },
+    {
+      "original": "/student-attendance/principal/classes/{class_id}/matrix",
+      "normalised": "/student-attendance/principal/classes/{*}/matrix"
+    },
+    {
+      "original": "/student-attendance/principal/students/{student_id}",
+      "normalised": "/student-attendance/principal/students/{*}"
+    },
+    {
+      "original": "/student-attendance/principal/teacher-compliance",
+      "normalised": "/student-attendance/principal/teacher-compliance"
+    },
+    {
+      "original": "/student-attendance/principal/exceptions",
+      "normalised": "/student-attendance/principal/exceptions"
+    },
+    {
+      "original": "/student-attendance/principal/sessions/{id}/lock",
+      "normalised": "/student-attendance/principal/sessions/{*}/lock"
+    },
+    {
+      "original": "/student-attendance/principal/sessions/{id}/students/{student_id}/override",
+      "normalised": "/student-attendance/principal/sessions/{*}/students/{*}/override"
+    },
+    {
+      "original": "/student-attendance/principal/sessions/{id}/students/{student_id}",
+      "normalised": "/student-attendance/principal/sessions/{*}/students/{*}"
+    },
+    {
+      "original": "/student-attendance/principal/export",
+      "normalised": "/student-attendance/principal/export"
+    },
+    {
+      "original": "/intelligence/live",
+      "normalised": "/intelligence/live"
+    },
+    {
+      "original": "/intelligence/events",
+      "normalised": "/intelligence/events"
+    },
+    {
+      "original": "/intelligence/events/{id}",
+      "normalised": "/intelligence/events/{*}"
+    },
+    {
+      "original": "/intelligence/events/{id}/acknowledge",
+      "normalised": "/intelligence/events/{*}/acknowledge"
+    },
+    {
+      "original": "/classes/{class_id}/roll-rule",
+      "normalised": "/classes/{*}/roll-rule"
+    },
+    {
+      "original": "/classes/{class_id}/roll-exceptions",
+      "normalised": "/classes/{*}/roll-exceptions"
+    },
+    {
+      "original": "/classes/{class_id}/roll-exceptions/{exception_id}",
+      "normalised": "/classes/{*}/roll-exceptions/{*}"
+    },
+    {
+      "original": "/classes/{class_id}/effective-roster",
+      "normalised": "/classes/{*}/effective-roster"
+    },
+    {
+      "original": "/classes/{class_id}/students/{student_id}",
+      "normalised": "/classes/{*}/students/{*}"
+    },
+    {
+      "original": "/classes/{class_id}/roster/clear-all",
+      "normalised": "/classes/{*}/roster/clear-all"
+    },
+    {
+      "original": "/classes/{class_id}/students/import/preview",
+      "normalised": "/classes/{*}/students/import/preview"
+    },
+    {
+      "original": "/classes/{class_id}/students/import/commit",
+      "normalised": "/classes/{*}/students/import/commit"
+    },
+    {
+      "original": "/academic-years/rollover/preview",
+      "normalised": "/academic-years/rollover/preview"
+    },
+    {
+      "original": "/academic-years/rollover/execute",
+      "normalised": "/academic-years/rollover/execute"
+    },
+    {
+      "original": "/announcements",
+      "normalised": "/announcements"
+    },
+    {
+      "original": "/announcements/unread-count",
+      "normalised": "/announcements/unread-count"
+    },
+    {
+      "original": "/announcements/candidates",
+      "normalised": "/announcements/candidates"
+    },
+    {
+      "original": "/announcements/{announcement_id}",
+      "normalised": "/announcements/{*}"
+    },
+    {
+      "original": "/announcements/{announcement_id}/publish",
+      "normalised": "/announcements/{*}/publish"
+    },
+    {
+      "original": "/announcements/{announcement_id}/read",
+      "normalised": "/announcements/{*}/read"
+    },
+    {
+      "original": "/announcements/{announcement_id}/acknowledge",
+      "normalised": "/announcements/{*}/acknowledge"
+    },
+    {
+      "original": "/announcements/{announcement_id}/analytics",
+      "normalised": "/announcements/{*}/analytics"
+    },
+    {
+      "original": "/announcements/{announcement_id}/mention-candidates",
+      "normalised": "/announcements/{*}/mention-candidates"
+    },
+    {
+      "original": "/announcements/{announcement_id}/messages",
+      "normalised": "/announcements/{*}/messages"
+    },
+    {
+      "original": "/announcements/messages/{message_id}",
+      "normalised": "/announcements/messages/{*}"
+    },
+    {
+      "original": "/announcements/messages/{message_id}/pin",
+      "normalised": "/announcements/messages/{*}/pin"
+    },
+    {
+      "original": "/announcements/messages/{message_id}/reactions",
+      "normalised": "/announcements/messages/{*}/reactions"
+    },
+    {
+      "original": "/announcements/attachments/presign",
+      "normalised": "/announcements/attachments/presign"
+    },
+    {
+      "original": "/announcements/attachments/upload-stream",
+      "normalised": "/announcements/attachments/upload-stream"
+    },
+    {
+      "original": "/announcements/attachments/{attachment_id}/file",
+      "normalised": "/announcements/attachments/{*}/file"
+    },
+    {
+      "original": "/announcements/attachments/file",
+      "normalised": "/announcements/attachments/file"
+    },
+    {
+      "original": "/policy/current",
+      "normalised": "/policy/current"
+    },
+    {
+      "original": "/policy/accept",
+      "normalised": "/policy/accept"
+    },
+    {
+      "original": "/policy/onboarding/complete",
+      "normalised": "/policy/onboarding/complete"
+    },
+    {
+      "original": "/policy/onboarding/reset",
+      "normalised": "/policy/onboarding/reset"
+    },
+    {
+      "original": "/campus-duties/my",
+      "normalised": "/campus-duties/my"
+    },
+    {
+      "original": "/campus-duties/areas",
+      "normalised": "/campus-duties/areas"
+    },
+    {
+      "original": "/campus-duties/break-periods",
+      "normalised": "/campus-duties/break-periods"
+    },
+    {
+      "original": "/campus-duties/break-periods/{bp_id}",
+      "normalised": "/campus-duties/break-periods/{*}"
+    },
+    {
+      "original": "/campus-duties/reset-break-periods",
+      "normalised": "/campus-duties/reset-break-periods"
+    },
+    {
+      "original": "/campus-duties/auto-replace-absent",
+      "normalised": "/campus-duties/auto-replace-absent"
+    },
+    {
+      "original": "/campus-duties/rules",
+      "normalised": "/campus-duties/rules"
+    },
+    {
+      "original": "/campus-duties/metrics",
+      "normalised": "/campus-duties/metrics"
+    },
+    {
+      "original": "/campus-duties",
+      "normalised": "/campus-duties"
+    },
+    {
+      "original": "/campus-duties/generate-discipline",
+      "normalised": "/campus-duties/generate-discipline"
+    },
+    {
+      "original": "/campus-duties/generate-wing-duties",
+      "normalised": "/campus-duties/generate-wing-duties"
+    },
+    {
+      "original": "/campus-duties/generate-exam-duties",
+      "normalised": "/campus-duties/generate-exam-duties"
+    },
+    {
+      "original": "/campus-duties/{duty_id}",
+      "normalised": "/campus-duties/{*}"
+    },
+    {
+      "original": "/campus-duties/{duty_id}/candidates",
+      "normalised": "/campus-duties/{*}/candidates"
+    },
+    {
+      "original": "/campus-duties/{duty_id}/auto-assign",
+      "normalised": "/campus-duties/{*}/auto-assign"
+    },
+    {
+      "original": "/campus-duties/autonomous-activate",
+      "normalised": "/campus-duties/autonomous-activate"
+    },
+    {
+      "original": "/campus-duties/next-6-day-orders",
+      "normalised": "/campus-duties/next-6-day-orders"
+    },
+    {
+      "original": "/campus-duties/autonomous-toggle",
+      "normalised": "/campus-duties/autonomous-toggle"
+    },
+    {
+      "original": "/campus-duties/auto-assign-all",
+      "normalised": "/campus-duties/auto-assign-all"
+    },
+    {
+      "original": "/campus-duties/{duty_id}/assign",
+      "normalised": "/campus-duties/{*}/assign"
+    },
+    {
+      "original": "/campus-duties/assignments/{assignment_id}/override",
+      "normalised": "/campus-duties/assignments/{*}/override"
+    },
+    {
+      "original": "/campus-duties/{duty_id}/lock",
+      "normalised": "/campus-duties/{*}/lock"
+    },
+    {
+      "original": "/campus-duties/assignments/{assignment_id}/replace",
+      "normalised": "/campus-duties/assignments/{*}/replace"
+    },
+    {
+      "original": "/campus-duties/{duty_id}/reset",
+      "normalised": "/campus-duties/{*}/reset"
+    },
+    {
+      "original": "/campus-duties/{duty_id}/toggle-active",
+      "normalised": "/campus-duties/{*}/toggle-active"
+    },
+    {
+      "original": "/campus-duties/bulk-delete",
+      "normalised": "/campus-duties/bulk-delete"
+    },
+    {
+      "original": "/campus-duties/bulk-reset",
+      "normalised": "/campus-duties/bulk-reset"
+    },
+    {
+      "original": "/campus-duties/{duty_id}/assignments/{assignment_id}/lock",
+      "normalised": "/campus-duties/{*}/assignments/{*}/lock"
+    },
+    {
+      "original": "/campus-duties/{duty_id}/assignments/{assignment_id}/unlock",
+      "normalised": "/campus-duties/{*}/assignments/{*}/unlock"
+    },
+    {
+      "original": "/campus-duties/{duty_id}/assignments/{assignment_id}/override",
+      "normalised": "/campus-duties/{*}/assignments/{*}/override"
+    },
+    {
+      "original": "/campus-duties/{duty_id}/assignments/{assignment_id}/replace",
+      "normalised": "/campus-duties/{*}/assignments/{*}/replace"
+    },
+    {
+      "original": "/campus-duties/{duty_id}/assignments",
+      "normalised": "/campus-duties/{*}/assignments"
+    },
+    {
+      "original": "/campus-structure/tree",
+      "normalised": "/campus-structure/tree"
+    },
+    {
+      "original": "/campus-structure/metrics",
+      "normalised": "/campus-structure/metrics"
+    },
+    {
+      "original": "/campus-structure/search",
+      "normalised": "/campus-structure/search"
+    },
+    {
+      "original": "/campus-structure/blocks",
+      "normalised": "/campus-structure/blocks"
+    },
+    {
+      "original": "/campus-structure/blocks/{block_id}",
+      "normalised": "/campus-structure/blocks/{*}"
+    },
+    {
+      "original": "/campus-structure/blocks/{block_id}/floors",
+      "normalised": "/campus-structure/blocks/{*}/floors"
+    },
+    {
+      "original": "/campus-structure/floors",
+      "normalised": "/campus-structure/floors"
+    },
+    {
+      "original": "/campus-structure/preview-rooms",
+      "normalised": "/campus-structure/preview-rooms"
+    },
+    {
+      "original": "/campus-structure/generate-rooms",
+      "normalised": "/campus-structure/generate-rooms"
+    },
+    {
+      "original": "/campus-structure/smart-autofill",
+      "normalised": "/campus-structure/smart-autofill"
+    },
+    {
+      "original": "/campus-structure/blocks/{block_id}/duplicate",
+      "normalised": "/campus-structure/blocks/{*}/duplicate"
+    },
+    {
+      "original": "/campus-structure/rooms/bulk-assign",
+      "normalised": "/campus-structure/rooms/bulk-assign"
+    },
+    {
+      "original": "/campus-structure/floors/{floor_id}/bulk-assign-department",
+      "normalised": "/campus-structure/floors/{*}/bulk-assign-department"
+    },
+    {
+      "original": "/campus-structure/blocks/{block_id}/bulk-assign-department",
+      "normalised": "/campus-structure/blocks/{*}/bulk-assign-department"
+    },
+    {
+      "original": "/campus-structure/blocks/{block_id}/allocate-departments",
+      "normalised": "/campus-structure/blocks/{*}/allocate-departments"
+    },
+    {
+      "original": "/campus-structure/blocks/{block_id}/duties/configure-and-assign",
+      "normalised": "/campus-structure/blocks/{*}/duties/configure-and-assign"
+    },
+    {
+      "original": "/campus-structure/export",
+      "normalised": "/campus-structure/export"
+    },
+    {
+      "original": "/campus-structure/import/validate",
+      "normalised": "/campus-structure/import/validate"
+    },
+    {
+      "original": "/campus-structure/import/commit",
+      "normalised": "/campus-structure/import/commit"
+    },
+    {
+      "original": "/leave-balances/policies",
+      "normalised": "/leave-balances/policies"
+    },
+    {
+      "original": "/leave-policies/active",
+      "normalised": "/leave-policies/active"
+    },
+    {
+      "original": "/leave-policies/{policy_id}",
+      "normalised": "/leave-policies/{*}"
+    },
+    {
+      "original": "/leave-balances/me",
+      "normalised": "/leave-balances/me"
+    },
+    {
+      "original": "/leave-balances/me/{leave_type}",
+      "normalised": "/leave-balances/me/{*}"
+    },
+    {
+      "original": "/leave-balances/validate",
+      "normalised": "/leave-balances/validate"
+    },
+    {
+      "original": "/leaves/validate",
+      "normalised": "/leaves/validate"
+    },
+    {
+      "original": "/leave-balances/department",
+      "normalised": "/leave-balances/department"
+    },
+    {
+      "original": "/leave-balances/department/{teacher_id}",
+      "normalised": "/leave-balances/department/{*}"
+    },
+    {
+      "original": "/leave-balances/{teacher_id}/ledger",
+      "normalised": "/leave-balances/{*}/ledger"
+    },
+    {
+      "original": "/leave-balances/{teacher_id}/adjust",
+      "normalised": "/leave-balances/{*}/adjust"
+    },
+    {
+      "original": "/leaves/{leave_id}/consume",
+      "normalised": "/leaves/{*}/consume"
+    },
+    {
+      "original": "/leaves/consume-due",
+      "normalised": "/leaves/consume-due"
+    },
+    {
+      "original": "/policy-settings/enforcement-mode",
+      "normalised": "/policy-settings/enforcement-mode"
+    },
+    {
+      "original": "/policy-settings/enforcement-mode/audit",
+      "normalised": "/policy-settings/enforcement-mode/audit"
+    },
+    {
+      "original": "/policy-settings/enforcement-mode/compliance-report",
+      "normalised": "/policy-settings/enforcement-mode/compliance-report"
+    },
+    {
+      "original": "/api/v1/health",
+      "normalised": "/api/v1/health"
+    },
+    {
+      "original": "/health",
+      "normalised": "/health"
+    },
+    {
+      "original": "/metrics",
+      "normalised": "/metrics"
+    },
+    {
+      "original": "/settings/public",
+      "normalised": "/settings/public"
+    },
+    {
+      "original": "timetable/teacher/{teacher_id}",
+      "normalised": "/timetable/teacher/{*}"
+    },
+    {
+      "original": "timetable/",
+      "normalised": "/timetable"
+    },
+    {
+      "original": "classes/",
+      "normalised": "/classes"
+    },
+    {
+      "original": "teachers/",
+      "normalised": "/teachers"
+    },
+    {
+      "original": "leaves/",
+      "normalised": "/leaves"
+    },
+    {
+      "original": "leaves/",
+      "normalised": "/leaves"
+    },
+    {
+      "original": "leaves/{leave_id}",
+      "normalised": "/leaves/{*}"
+    },
+    {
+      "original": "leaves/{leave_id}/approve",
+      "normalised": "/leaves/{*}/approve"
+    },
+    {
+      "original": "leaves/{leave_id}/reject",
+      "normalised": "/leaves/{*}/reject"
+    },
+    {
+      "original": "leaves/{leave_id}/status",
+      "normalised": "/leaves/{*}/status"
+    },
+    {
+      "original": "leaves/{leave_id}/assign",
+      "normalised": "/leaves/{*}/assign"
+    },
+    {
+      "original": "leaves/{leave_id}/approve-with-exception",
+      "normalised": "/leaves/{*}/approve-with-exception"
+    },
+    {
+      "original": "leave-balances/{teacher_id}/ledger",
+      "normalised": "/leave-balances/{*}/ledger"
+    },
+    {
+      "original": "system/institutions/{institution_id}/policy",
+      "normalised": "/system/institutions/{*}/policy"
+    },
+    {
+      "original": "teachers/{teacher_id}/credits",
+      "normalised": "/teachers/{*}/credits"
+    },
+    {
+      "original": "teacher/substitution/leave/{leave_id}/candidates",
+      "normalised": "/teacher/substitution/leave/{*}/candidates"
+    },
+    {
+      "original": "leaves/{leave_id}/candidates",
+      "normalised": "/leaves/{*}/candidates"
+    },
+    {
+      "original": "teacher/substitution/leave/{leave_id}/assign/{substitute_id}",
+      "normalised": "/teacher/substitution/leave/{*}/assign/{*}"
+    },
+    {
+      "original": "teacher/substitution/leave/{leave_id}/undo-assignment",
+      "normalised": "/teacher/substitution/leave/{*}/undo-assignment"
+    },
+    {
+      "original": "notifications/",
+      "normalised": "/notifications"
+    },
+    {
+      "original": "notifications/{notification_id}/read",
+      "normalised": "/notifications/{*}/read"
+    },
+    {
+      "original": "notifications/",
+      "normalised": "/notifications"
+    },
+    {
+      "original": "geofences/",
+      "normalised": "/geofences"
+    },
+    {
+      "original": "geofences/",
+      "normalised": "/geofences"
+    },
+    {
+      "original": "geofences/{geofence_id}",
+      "normalised": "/geofences/{*}"
+    },
+    {
+      "original": "geofences/{geofence_id}",
+      "normalised": "/geofences/{*}"
+    },
+    {
+      "original": "student-attendance/classes/{class_id}/roster",
+      "normalised": "/student-attendance/classes/{*}/roster"
+    },
+    {
+      "original": "student-attendance/sessions/{session_id}",
+      "normalised": "/student-attendance/sessions/{*}"
+    },
+    {
+      "original": "student-attendance/sessions/{session_id}/submit",
+      "normalised": "/student-attendance/sessions/{*}/submit"
+    },
+    {
+      "original": "announcements/{id}",
+      "normalised": "/announcements/{*}"
+    },
+    {
+      "original": "announcements/{id}/acknowledge",
+      "normalised": "/announcements/{*}/acknowledge"
+    },
+    {
+      "original": "campus-duties/{duty_id}",
+      "normalised": "/campus-duties/{*}"
+    },
+    {
+      "original": "campus-duties/{duty_id}/auto-assign",
+      "normalised": "/campus-duties/{*}/auto-assign"
+    },
+    {
+      "original": "campus-duties/{duty_id}/candidates",
+      "normalised": "/campus-duties/{*}/candidates"
+    },
+    {
+      "original": "campus-duties/{duty_id}/assignments",
+      "normalised": "/campus-duties/{*}/assignments"
+    },
+    {
+      "original": "campus-duties/{duty_id}/assignments/{assignment_id}/lock",
+      "normalised": "/campus-duties/{*}/assignments/{*}/lock"
+    },
+    {
+      "original": "campus-duties/{duty_id}/assignments/{assignment_id}/unlock",
+      "normalised": "/campus-duties/{*}/assignments/{*}/unlock"
+    },
+    {
+      "original": "campus-duties/{duty_id}/assignments/{assignment_id}/override",
+      "normalised": "/campus-duties/{*}/assignments/{*}/override"
+    },
+    {
+      "original": "campus-duties/{duty_id}/assignments/{assignment_id}/replace",
+      "normalised": "/campus-duties/{*}/assignments/{*}/replace"
+    },
+    {
+      "original": "campus-structure/blocks/{block_id}/duplicate",
+      "normalised": "/campus-structure/blocks/{*}/duplicate"
+    },
+    {
+      "original": "/announcements",
+      "normalised": "/announcements"
+    },
+    {
+      "original": "/announcements/unread-count",
+      "normalised": "/announcements/unread-count"
+    },
+    {
+      "original": "/announcements/candidates",
+      "normalised": "/announcements/candidates"
+    },
+    {
+      "original": "/announcements",
+      "normalised": "/announcements"
+    },
+    {
+      "original": "/announcements/${id}",
+      "normalised": "/announcements/{*}"
+    },
+    {
+      "original": "/announcements/${id}",
+      "normalised": "/announcements/{*}"
+    },
+    {
+      "original": "/announcements/${id}",
+      "normalised": "/announcements/{*}"
+    },
+    {
+      "original": "/announcements/${id}/publish",
+      "normalised": "/announcements/{*}/publish"
+    },
+    {
+      "original": "/announcements/${id}/read",
+      "normalised": "/announcements/{*}/read"
+    },
+    {
+      "original": "/announcements/${id}/acknowledge",
+      "normalised": "/announcements/{*}/acknowledge"
+    },
+    {
+      "original": "/announcements/${id}/analytics",
+      "normalised": "/announcements/{*}/analytics"
+    },
+    {
+      "original": "/announcements/${announcementId}/messages",
+      "normalised": "/announcements/{*}/messages"
+    },
+    {
+      "original": "/announcements/${announcementId}/mention-candidates",
+      "normalised": "/announcements/{*}/mention-candidates"
+    },
+    {
+      "original": "/announcements/${announcementId}/messages",
+      "normalised": "/announcements/{*}/messages"
+    },
+    {
+      "original": "/announcements/messages/${messageId}",
+      "normalised": "/announcements/messages/{*}"
+    },
+    {
+      "original": "/announcements/messages/${messageId}/pin",
+      "normalised": "/announcements/messages/{*}/pin"
+    },
+    {
+      "original": "/announcements/messages/${messageId}/reactions",
+      "normalised": "/announcements/messages/{*}/reactions"
+    },
+    {
+      "original": "/announcements/attachments/presign",
+      "normalised": "/announcements/attachments/presign"
+    },
+    {
+      "original": "/announcements/${id}",
+      "normalised": "/announcements/{*}"
+    },
+    {
+      "original": "/announcements/${id}",
+      "normalised": "/announcements/{*}"
+    },
+    {
+      "original": "/announcements/${id}",
+      "normalised": "/announcements/{*}"
+    },
+    {
+      "original": "/announcements/${id}/publish",
+      "normalised": "/announcements/{*}/publish"
+    },
+    {
+      "original": "/announcements/${id}/read",
+      "normalised": "/announcements/{*}/read"
+    },
+    {
+      "original": "/announcements/${id}/acknowledge",
+      "normalised": "/announcements/{*}/acknowledge"
+    },
+    {
+      "original": "/announcements/${id}/analytics",
+      "normalised": "/announcements/{*}/analytics"
+    },
+    {
+      "original": "/announcements/${announcementId}/messages",
+      "normalised": "/announcements/{*}/messages"
+    },
+    {
+      "original": "/announcements/${announcementId}/mention-candidates",
+      "normalised": "/announcements/{*}/mention-candidates"
+    },
+    {
+      "original": "/announcements/${announcementId}/messages",
+      "normalised": "/announcements/{*}/messages"
+    },
+    {
+      "original": "/announcements/messages/${messageId}",
+      "normalised": "/announcements/messages/{*}"
+    },
+    {
+      "original": "/announcements/messages/${messageId}/pin",
+      "normalised": "/announcements/messages/{*}/pin"
+    },
+    {
+      "original": "/announcements/messages/${messageId}/reactions",
+      "normalised": "/announcements/messages/{*}/reactions"
+    },
+    {
+      "original": "/system/governance/rules",
+      "normalised": "/system/governance/rules"
+    },
+    {
+      "original": "/system/governance/rules/${encodeURIComponent(key)}",
+      "normalised": "/system/governance/rules/{*}"
+    },
+    {
+      "original": "/system/governance/rules/${encodeURIComponent(key)}",
+      "normalised": "/system/governance/rules/{*}"
+    },
+    {
+      "original": "/system/governance/rules/reset/${encodeURIComponent(key)}",
+      "normalised": "/system/governance/rules/reset/{*}"
+    },
+    {
+      "original": "/system/governance/rules/validate",
+      "normalised": "/system/governance/rules/validate"
+    },
+    {
+      "original": "/system/governance/history",
+      "normalised": "/system/governance/history"
+    },
+    {
+      "original": "/system/governance/rules/${encodeURIComponent(key)}/history",
+      "normalised": "/system/governance/rules/{*}/history"
+    },
+    {
+      "original": "/system/governance/rollback/${historyId}",
+      "normalised": "/system/governance/rollback/{*}"
+    },
+    {
+      "original": "/system/governance/periods",
+      "normalised": "/system/governance/periods"
+    },
+    {
+      "original": "/system/governance/periods",
+      "normalised": "/system/governance/periods"
+    },
+    {
+      "original": "/system/governance/public-config",
+      "normalised": "/system/governance/public-config"
+    },
+    {
+      "original": "/system/governance/rules/${encodeURIComponent(key)}",
+      "normalised": "/system/governance/rules/{*}"
+    },
+    {
+      "original": "/system/governance/rules/${encodeURIComponent(key)}",
+      "normalised": "/system/governance/rules/{*}"
+    },
+    {
+      "original": "/system/governance/rules/reset/${encodeURIComponent(key)}",
+      "normalised": "/system/governance/rules/reset/{*}"
+    },
+    {
+      "original": "/system/governance/rules/${encodeURIComponent(key)}/history",
+      "normalised": "/system/governance/rules/{*}/history"
+    },
+    {
+      "original": "/system/governance/rollback/${historyId}",
+      "normalised": "/system/governance/rollback/{*}"
+    },
+    {
+      "original": "/settings/public",
+      "normalised": "/settings/public"
+    },
+    {
+      "original": "/auth/login",
+      "normalised": "/auth/login"
+    },
+    {
+      "original": "/auth/register",
+      "normalised": "/auth/register"
+    },
+    {
+      "original": "/policy/current",
+      "normalised": "/policy/current"
+    },
+    {
+      "original": "/policy/accept",
+      "normalised": "/policy/accept"
+    },
+    {
+      "original": "/policy/onboarding/complete",
+      "normalised": "/policy/onboarding/complete"
+    },
+    {
+      "original": "/policy/onboarding/reset",
+      "normalised": "/policy/onboarding/reset"
+    },
+    {
+      "original": "/admin/first-login/setup",
+      "normalised": "/admin/first-login/setup"
+    },
+    {
+      "original": "/admin/secondary-admins",
+      "normalised": "/admin/secondary-admins"
+    },
+    {
+      "original": "/admin/secondary-admins",
+      "normalised": "/admin/secondary-admins"
+    },
+    {
+      "original": "/admin/secondary-admins/${id}/enable",
+      "normalised": "/admin/secondary-admins/{*}/enable"
+    },
+    {
+      "original": "/admin/secondary-admins/${id}/disable",
+      "normalised": "/admin/secondary-admins/{*}/disable"
+    },
+    {
+      "original": "/admin/audit-logs",
+      "normalised": "/admin/audit-logs"
+    },
+    {
+      "original": "/admin/factory-reset",
+      "normalised": "/admin/factory-reset"
+    },
+    {
+      "original": "/admin/clear-credits-history",
+      "normalised": "/admin/clear-credits-history"
+    },
+    {
+      "original": "/admin/clear-leaves-history",
+      "normalised": "/admin/clear-leaves-history"
+    },
+    {
+      "original": "/departments/${deptId}/admin",
+      "normalised": "/departments/{*}/admin"
+    },
+    {
+      "original": "/admin/principal",
+      "normalised": "/admin/principal"
+    },
+    {
+      "original": "/admin/global-users",
+      "normalised": "/admin/global-users"
+    },
+    {
+      "original": "/admin/global-users/${id}",
+      "normalised": "/admin/global-users/{*}"
+    },
+    {
+      "original": "/admin/system-metrics",
+      "normalised": "/admin/system-metrics"
+    },
+    {
+      "original": "/admin/system-metrics/clear-traffic",
+      "normalised": "/admin/system-metrics/clear-traffic"
+    },
+    {
+      "original": "/admin/master-export",
+      "normalised": "/admin/master-export"
+    },
+    {
+      "original": "/admin/setup-readiness",
+      "normalised": "/admin/setup-readiness"
+    },
+    {
+      "original": "/admin/backups",
+      "normalised": "/admin/backups"
+    },
+    {
+      "original": "/admin/backups/import",
+      "normalised": "/admin/backups/import"
+    },
+    {
+      "original": "/admin/backups",
+      "normalised": "/admin/backups"
+    },
+    {
+      "original": "/admin/backups/summary",
+      "normalised": "/admin/backups/summary"
+    },
+    {
+      "original": "/admin/backups/schedule",
+      "normalised": "/admin/backups/schedule"
+    },
+    {
+      "original": "/admin/backups/schedule",
+      "normalised": "/admin/backups/schedule"
+    },
+    {
+      "original": "/admin/backups/schedule/run-now",
+      "normalised": "/admin/backups/schedule/run-now"
+    },
+    {
+      "original": "/admin/backups/${id}",
+      "normalised": "/admin/backups/{*}"
+    },
+    {
+      "original": "/admin/backups/${id}/download",
+      "normalised": "/admin/backups/{*}/download"
+    },
+    {
+      "original": "/admin/backups/${id}/validate",
+      "normalised": "/admin/backups/{*}/validate"
+    },
+    {
+      "original": "/admin/backups/${id}/restore",
+      "normalised": "/admin/backups/{*}/restore"
+    },
+    {
+      "original": "/admin/backups/${id}",
+      "normalised": "/admin/backups/{*}"
+    },
+    {
+      "original": "/admin/data-retention/stats",
+      "normalised": "/admin/data-retention/stats"
+    },
+    {
+      "original": "/admin/data-retention/policy",
+      "normalised": "/admin/data-retention/policy"
+    },
+    {
+      "original": "/admin/data-retention/policy",
+      "normalised": "/admin/data-retention/policy"
+    },
+    {
+      "original": "/admin/data-retention/run-auto-cleanup",
+      "normalised": "/admin/data-retention/run-auto-cleanup"
+    },
+    {
+      "original": "/admin/data-retention/preview",
+      "normalised": "/admin/data-retention/preview"
+    },
+    {
+      "original": "/admin/data-retention/purge",
+      "normalised": "/admin/data-retention/purge"
+    },
+    {
+      "original": "/teachers/",
+      "normalised": "/teachers"
+    },
+    {
+      "original": "/teachers/",
+      "normalised": "/teachers"
+    },
+    {
+      "original": "/teachers/bulk",
+      "normalised": "/teachers/bulk"
+    },
+    {
+      "original": "/teachers/${id}",
+      "normalised": "/teachers/{*}"
+    },
+    {
+      "original": "/teachers/me",
+      "normalised": "/teachers/me"
+    },
+    {
+      "original": "/teachers/${id}/credits",
+      "normalised": "/teachers/{*}/credits"
+    },
+    {
+      "original": "/teachers/${id}",
+      "normalised": "/teachers/{*}"
+    },
+    {
+      "original": "/timetable/teacher/${teacherId}",
+      "normalised": "/timetable/teacher/{*}"
+    },
+    {
+      "original": "/timetable/class/${classId}",
+      "normalised": "/timetable/class/{*}"
+    },
+    {
+      "original": "/timetable/slot",
+      "normalised": "/timetable/slot"
+    },
+    {
+      "original": "/timetable/",
+      "normalised": "/timetable"
+    },
+    {
+      "original": "/timetable/${id}",
+      "normalised": "/timetable/{*}"
+    },
+    {
+      "original": "/timetable/teacher/${teacherId}",
+      "normalised": "/timetable/teacher/{*}"
+    },
+    {
+      "original": "/timetable/submissions",
+      "normalised": "/timetable/submissions"
+    },
+    {
+      "original": "/timetable/submissions/my",
+      "normalised": "/timetable/submissions/my"
+    },
+    {
+      "original": "/timetable/submissions/pending",
+      "normalised": "/timetable/submissions/pending"
+    },
+    {
+      "original": "/timetable/submissions/${id}/review",
+      "normalised": "/timetable/submissions/{*}/review"
+    },
+    {
+      "original": "/timetable/submissions/bulk-review",
+      "normalised": "/timetable/submissions/bulk-review"
+    },
+    {
+      "original": "/timetable/submissions/${id}",
+      "normalised": "/timetable/submissions/{*}"
+    },
+    {
+      "original": "/timetable/reset",
+      "normalised": "/timetable/reset"
+    },
+    {
+      "original": "/departments/",
+      "normalised": "/departments"
+    },
+    {
+      "original": "/departments/",
+      "normalised": "/departments"
+    },
+    {
+      "original": "/departments/${id}",
+      "normalised": "/departments/{*}"
+    },
+    {
+      "original": "/departments/${id}",
+      "normalised": "/departments/{*}"
+    },
+    {
+      "original": "/subjects/",
+      "normalised": "/subjects"
+    },
+    {
+      "original": "/subjects/",
+      "normalised": "/subjects"
+    },
+    {
+      "original": "/subjects/${id}",
+      "normalised": "/subjects/{*}"
+    },
+    {
+      "original": "/subjects/${id}",
+      "normalised": "/subjects/{*}"
+    },
+    {
+      "original": "/subjects/${id}/archive",
+      "normalised": "/subjects/{*}/archive"
+    },
+    {
+      "original": "/subjects/${id}/unarchive",
+      "normalised": "/subjects/{*}/unarchive"
+    },
+    {
+      "original": "/classes/",
+      "normalised": "/classes"
+    },
+    {
+      "original": "/classes/",
+      "normalised": "/classes"
+    },
+    {
+      "original": "/classes/bulk",
+      "normalised": "/classes/bulk"
+    },
+    {
+      "original": "/classes/${id}",
+      "normalised": "/classes/{*}"
+    },
+    {
+      "original": "/classes/${id}",
+      "normalised": "/classes/{*}"
+    },
+    {
+      "original": "/classes/directory",
+      "normalised": "/classes/directory"
+    },
+    {
+      "original": "/classes/${id}/faculty",
+      "normalised": "/classes/{*}/faculty"
+    },
+    {
+      "original": "/classes/${classId}/roll-rule",
+      "normalised": "/classes/{*}/roll-rule"
+    },
+    {
+      "original": "/classes/${classId}/roll-rule",
+      "normalised": "/classes/{*}/roll-rule"
+    },
+    {
+      "original": "/classes/${classId}/roll-exceptions",
+      "normalised": "/classes/{*}/roll-exceptions"
+    },
+    {
+      "original": "/classes/${classId}/roll-exceptions/${exceptionId}",
+      "normalised": "/classes/{*}/roll-exceptions/{*}"
+    },
+    {
+      "original": "/classes/${classId}/effective-roster",
+      "normalised": "/classes/{*}/effective-roster"
+    },
+    {
+      "original": "/classes/${classId}/students/import/preview",
+      "normalised": "/classes/{*}/students/import/preview"
+    },
+    {
+      "original": "/classes/${classId}/students/import/commit",
+      "normalised": "/classes/{*}/students/import/commit"
+    },
+    {
+      "original": "/academic-years/rollover/preview",
+      "normalised": "/academic-years/rollover/preview"
+    },
+    {
+      "original": "/academic-years/rollover/execute",
+      "normalised": "/academic-years/rollover/execute"
+    },
+    {
+      "original": "/classes/${classId}/students/${studentId}",
+      "normalised": "/classes/{*}/students/{*}"
+    },
+    {
+      "original": "/classes/${classId}/students/${studentId}",
+      "normalised": "/classes/{*}/students/{*}"
+    },
+    {
+      "original": "/classes/${classId}/roster/clear-all",
+      "normalised": "/classes/{*}/roster/clear-all"
+    },
+    {
+      "original": "/classes/${classId}/roll-rule",
+      "normalised": "/classes/{*}/roll-rule"
+    },
+    {
+      "original": "/rooms/",
+      "normalised": "/rooms"
+    },
+    {
+      "original": "/rooms/",
+      "normalised": "/rooms"
+    },
+    {
+      "original": "/rooms/bulk",
+      "normalised": "/rooms/bulk"
+    },
+    {
+      "original": "/rooms/bulk-assign",
+      "normalised": "/rooms/bulk-assign"
+    },
+    {
+      "original": "/rooms/${id}",
+      "normalised": "/rooms/{*}"
+    },
+    {
+      "original": "/rooms/${id}",
+      "normalised": "/rooms/{*}"
+    },
+    {
+      "original": "/rooms/availability/dashboard",
+      "normalised": "/rooms/availability/dashboard"
+    },
+    {
+      "original": "/rooms/${roomId}/check-availability",
+      "normalised": "/rooms/{*}/check-availability"
+    },
+    {
+      "original": "/rooms/occupancy",
+      "normalised": "/rooms/occupancy"
+    },
+    {
+      "original": "/day-order-calendar/",
+      "normalised": "/day-order-calendar"
+    },
+    {
+      "original": "/day-order-calendar/bulk-set",
+      "normalised": "/day-order-calendar/bulk-set"
+    },
+    {
+      "original": "/day-order-calendar/resolve",
+      "normalised": "/day-order-calendar/resolve"
+    },
+    {
+      "original": "/academic-calendar/academic-years",
+      "normalised": "/academic-calendar/academic-years"
+    },
+    {
+      "original": "/academic-calendar/academic-years",
+      "normalised": "/academic-calendar/academic-years"
+    },
+    {
+      "original": "/academic-calendar/semesters",
+      "normalised": "/academic-calendar/semesters"
+    },
+    {
+      "original": "/academic-calendar/semesters",
+      "normalised": "/academic-calendar/semesters"
+    },
+    {
+      "original": "/academic-calendar/days",
+      "normalised": "/academic-calendar/days"
+    },
+    {
+      "original": "/academic-calendar/days/${date}",
+      "normalised": "/academic-calendar/days/{*}"
+    },
+    {
+      "original": "/academic-calendar/days/mark",
+      "normalised": "/academic-calendar/days/mark"
+    },
+    {
+      "original": "/academic-calendar/days/bulk-mark",
+      "normalised": "/academic-calendar/days/bulk-mark"
+    },
+    {
+      "original": "/academic-calendar/days/day-order/assign",
+      "normalised": "/academic-calendar/days/day-order/assign"
+    },
+    {
+      "original": "/academic-calendar/days/day-order/skip",
+      "normalised": "/academic-calendar/days/day-order/skip"
+    },
+    {
+      "original": "/academic-calendar/days/${date}/override",
+      "normalised": "/academic-calendar/days/{*}/override"
+    },
+    {
+      "original": "/academic-calendar/days/${date}",
+      "normalised": "/academic-calendar/days/{*}"
+    },
+    {
+      "original": "/academic-calendar/resolve",
+      "normalised": "/academic-calendar/resolve"
+    },
+    {
+      "original": "/academic-calendar/reports/working-days",
+      "normalised": "/academic-calendar/reports/working-days"
+    },
+    {
+      "original": "/academic-calendar/reports/holidays",
+      "normalised": "/academic-calendar/reports/holidays"
+    },
+    {
+      "original": "/academic-calendar/reports/day-orders",
+      "normalised": "/academic-calendar/reports/day-orders"
+    },
+    {
+      "original": "/academic-calendar/reports/faculty-workload",
+      "normalised": "/academic-calendar/reports/faculty-workload"
+    },
+    {
+      "original": "/academic-calendar/today-summary",
+      "normalised": "/academic-calendar/today-summary"
+    },
+    {
+      "original": "/academic-calendar/my-today-summary",
+      "normalised": "/academic-calendar/my-today-summary"
+    },
+    {
+      "original": "/leaves/",
+      "normalised": "/leaves"
+    },
+    {
+      "original": "/leaves/batch",
+      "normalised": "/leaves/batch"
+    },
+    {
+      "original": "/leaves/my",
+      "normalised": "/leaves/my"
+    },
+    {
+      "original": "/leaves/",
+      "normalised": "/leaves"
+    },
+    {
+      "original": "/leaves/${id}/approve",
+      "normalised": "/leaves/{*}/approve"
+    },
+    {
+      "original": "/leaves/${id}/reject",
+      "normalised": "/leaves/{*}/reject"
+    },
+    {
+      "original": "/leaves/bulk-approve",
+      "normalised": "/leaves/bulk-approve"
+    },
+    {
+      "original": "/leaves/bulk-reject",
+      "normalised": "/leaves/bulk-reject"
+    },
+    {
+      "original": "/leaves/${id}/assign",
+      "normalised": "/leaves/{*}/assign"
+    },
+    {
+      "original": "/leaves/${id}/free-teachers",
+      "normalised": "/leaves/{*}/free-teachers"
+    },
+    {
+      "original": "/leaves/${id}/recommendations",
+      "normalised": "/leaves/{*}/recommendations"
+    },
+    {
+      "original": "/leaves/${id}/assign-recommended",
+      "normalised": "/leaves/{*}/assign-recommended"
+    },
+    {
+      "original": "/leaves/${id}/override",
+      "normalised": "/leaves/{*}/override"
+    },
+    {
+      "original": "/leaves/${id}/undo-assignment",
+      "normalised": "/leaves/{*}/undo-assignment"
+    },
+    {
+      "original": "/leaves/${id}/lock",
+      "normalised": "/leaves/{*}/lock"
+    },
+    {
+      "original": "/leaves/${id}/cancel",
+      "normalised": "/leaves/{*}/cancel"
+    },
+    {
+      "original": "/leaves/${id}/admin-cancel",
+      "normalised": "/leaves/{*}/admin-cancel"
+    },
+    {
+      "original": "/leaves/${id}/cancel-impact",
+      "normalised": "/leaves/{*}/cancel-impact"
+    },
+    {
+      "original": "/leaves/admin-create",
+      "normalised": "/leaves/admin-create"
+    },
+    {
+      "original": "/leaves/slot-candidates",
+      "normalised": "/leaves/slot-candidates"
+    },
+    {
+      "original": "/leaves/evaluate-policy",
+      "normalised": "/leaves/evaluate-policy"
+    },
+    {
+      "original": "/leaves/${id}/approve-with-exception",
+      "normalised": "/leaves/{*}/approve-with-exception"
+    },
+    {
+      "original": "/policy-settings/enforcement-mode",
+      "normalised": "/policy-settings/enforcement-mode"
+    },
+    {
+      "original": "/policy-settings/enforcement-mode",
+      "normalised": "/policy-settings/enforcement-mode"
+    },
+    {
+      "original": "/policy-settings/enforcement-mode/audit",
+      "normalised": "/policy-settings/enforcement-mode/audit"
+    },
+    {
+      "original": "/policy-settings/enforcement-mode/compliance-report",
+      "normalised": "/policy-settings/enforcement-mode/compliance-report"
+    },
+    {
+      "original": "/leave-policies/active",
+      "normalised": "/leave-policies/active"
+    },
+    {
+      "original": "/leave-policies/active",
+      "normalised": "/leave-policies/active"
+    },
+    {
+      "original": "/leave-policies/${id}",
+      "normalised": "/leave-policies/{*}"
+    },
+    {
+      "original": "/leave-policies/${id}",
+      "normalised": "/leave-policies/{*}"
+    },
+    {
+      "original": "/leaves/validate",
+      "normalised": "/leaves/validate"
+    },
+    {
+      "original": "/leave-balances/me",
+      "normalised": "/leave-balances/me"
+    },
+    {
+      "original": "/leave-balances/me/${leaveType}",
+      "normalised": "/leave-balances/me/{*}"
+    },
+    {
+      "original": "/leave-policies/active",
+      "normalised": "/leave-policies/active"
+    },
+    {
+      "original": "/leave-balances/department",
+      "normalised": "/leave-balances/department"
+    },
+    {
+      "original": "/leave-balances/department/${teacherId}",
+      "normalised": "/leave-balances/department/{*}"
+    },
+    {
+      "original": "/leave-balances/${teacherId}/ledger",
+      "normalised": "/leave-balances/{*}/ledger"
+    },
+    {
+      "original": "/leave-balances/${teacher_id}/adjust",
+      "normalised": "/leave-balances/{*}/adjust"
+    },
+    {
+      "original": "/leave-balances/${teacherIdOrPayload}/adjust",
+      "normalised": "/leave-balances/{*}/adjust"
+    },
+    {
+      "original": "/leaves/${leaveId}/consume",
+      "normalised": "/leaves/{*}/consume"
+    },
+    {
+      "original": "/leaves/consume-due",
+      "normalised": "/leaves/consume-due"
+    },
+    {
+      "original": "/campus-operations/mode",
+      "normalised": "/campus-operations/mode"
+    },
+    {
+      "original": "/campus-operations/mode",
+      "normalised": "/campus-operations/mode"
+    },
+    {
+      "original": "/campus-operations/preferences/me",
+      "normalised": "/campus-operations/preferences/me"
+    },
+    {
+      "original": "/campus-operations/preferences/me",
+      "normalised": "/campus-operations/preferences/me"
+    },
+    {
+      "original": "/campus-operations/preferences/${teacherId}",
+      "normalised": "/campus-operations/preferences/{*}"
+    },
+    {
+      "original": "/campus-operations/preferences/${teacherId}",
+      "normalised": "/campus-operations/preferences/{*}"
+    },
+    {
+      "original": "/campus-operations/preferences/bulk-override",
+      "normalised": "/campus-operations/preferences/bulk-override"
+    },
+    {
+      "original": "/campus-operations/system-analytics",
+      "normalised": "/campus-operations/system-analytics"
+    },
+    {
+      "original": "/campus-operations/dry-run",
+      "normalised": "/campus-operations/dry-run"
+    },
+    {
+      "original": "/campus-operations/bulk-config",
+      "normalised": "/campus-operations/bulk-config"
+    },
+    {
+      "original": "/campus-operations/cross-department-substitutions",
+      "normalised": "/campus-operations/cross-department-substitutions"
+    },
+    {
+      "original": "/campus-operations/cross-department-substitutions",
+      "normalised": "/campus-operations/cross-department-substitutions"
+    },
+    {
+      "original": "/notifications/",
+      "normalised": "/notifications"
+    },
+    {
+      "original": "/notifications/unread-count",
+      "normalised": "/notifications/unread-count"
+    },
+    {
+      "original": "/notifications/${id}/read",
+      "normalised": "/notifications/{*}/read"
+    },
+    {
+      "original": "/notifications/read-all",
+      "normalised": "/notifications/read-all"
+    },
+    {
+      "original": "/notifications/vapid-public-key",
+      "normalised": "/notifications/vapid-public-key"
+    },
+    {
+      "original": "/notifications/subscribe",
+      "normalised": "/notifications/subscribe"
+    },
+    {
+      "original": "/notifications/unsubscribe",
+      "normalised": "/notifications/unsubscribe"
+    },
+    {
+      "original": "/notifications/test-push",
+      "normalised": "/notifications/test-push"
+    },
+    {
+      "original": "/credits/my/transactions",
+      "normalised": "/credits/my/transactions"
+    },
+    {
+      "original": "/credits/transactions",
+      "normalised": "/credits/transactions"
+    },
+    {
+      "original": "/credits/report",
+      "normalised": "/credits/report"
+    },
+    {
+      "original": "/credits/adjust",
+      "normalised": "/credits/adjust"
+    },
+    {
+      "original": "/teacher/substitution/enabled",
+      "normalised": "/teacher/substitution/enabled"
+    },
+    {
+      "original": "/teacher/substitution/my-leaves",
+      "normalised": "/teacher/substitution/my-leaves"
+    },
+    {
+      "original": "/teacher/substitution/leave/${leaveId}/candidates",
+      "normalised": "/teacher/substitution/leave/{*}/candidates"
+    },
+    {
+      "original": "/teacher/substitution/leave/${leaveId}/free-teachers",
+      "normalised": "/teacher/substitution/leave/{*}/free-teachers"
+    },
+    {
+      "original": "/teacher/substitution/leave/${leaveId}/assign/${substituteId}",
+      "normalised": "/teacher/substitution/leave/{*}/assign/{*}"
+    },
+    {
+      "original": "/teacher/substitution/leave/${leaveId}/override/${substituteId}",
+      "normalised": "/teacher/substitution/leave/{*}/override/{*}"
+    },
+    {
+      "original": "/teacher/substitution/leave/${leaveId}/undo-assignment",
+      "normalised": "/teacher/substitution/leave/{*}/undo-assignment"
+    },
+    {
+      "original": "/teacher/substitution/leave/${leaveId}/lock",
+      "normalised": "/teacher/substitution/leave/{*}/lock"
+    },
+    {
+      "original": "/teacher/substitution/clear-all-assignments",
+      "normalised": "/teacher/substitution/clear-all-assignments"
+    },
+    {
+      "original": "/teacher/substitution/reset-preferences",
+      "normalised": "/teacher/substitution/reset-preferences"
+    },
+    {
+      "original": "/teacher/substitution/config",
+      "normalised": "/teacher/substitution/config"
+    },
+    {
+      "original": "/teacher/substitution/config",
+      "normalised": "/teacher/substitution/config"
+    },
+    {
+      "original": "/substitutions/today",
+      "normalised": "/substitutions/today"
+    },
+    {
+      "original": "/admin/managers",
+      "normalised": "/admin/managers"
+    },
+    {
+      "original": "/admin/managers",
+      "normalised": "/admin/managers"
+    },
+    {
+      "original": "/admin/managers/${id}",
+      "normalised": "/admin/managers/{*}"
+    },
+    {
+      "original": "/admin/managers/${id}",
+      "normalised": "/admin/managers/{*}"
+    },
+    {
+      "original": "/admin/managers/${id}",
+      "normalised": "/admin/managers/{*}"
+    },
+    {
+      "original": "/manager/dashboard",
+      "normalised": "/manager/dashboard"
+    },
+    {
+      "original": "/manager/staff",
+      "normalised": "/manager/staff"
+    },
+    {
+      "original": "/manager/staff",
+      "normalised": "/manager/staff"
+    },
+    {
+      "original": "/manager/staff/${id}",
+      "normalised": "/manager/staff/{*}"
+    },
+    {
+      "original": "/manager/staff/${id}",
+      "normalised": "/manager/staff/{*}"
+    },
+    {
+      "original": "/manager/staff/${id}/status",
+      "normalised": "/manager/staff/{*}/status"
+    },
+    {
+      "original": "/manager/staff/${id}",
+      "normalised": "/manager/staff/{*}"
+    },
+    {
+      "original": "/manager/labs",
+      "normalised": "/manager/labs"
+    },
+    {
+      "original": "/staff/me",
+      "normalised": "/staff/me"
+    },
+    {
+      "original": "/staff/dashboard",
+      "normalised": "/staff/dashboard"
+    },
+    {
+      "original": "/staff/leaves",
+      "normalised": "/staff/leaves"
+    },
+    {
+      "original": "/staff/leaves",
+      "normalised": "/staff/leaves"
+    },
+    {
+      "original": "/staff/leaves/${id}",
+      "normalised": "/staff/leaves/{*}"
+    },
+    {
+      "original": "/staff/ledger",
+      "normalised": "/staff/ledger"
+    },
+    {
+      "original": "/manager/leaves",
+      "normalised": "/manager/leaves"
+    },
+    {
+      "original": "/manager/leaves/${id}/approve",
+      "normalised": "/manager/leaves/{*}/approve"
+    },
+    {
+      "original": "/manager/leaves/${id}/reject",
+      "normalised": "/manager/leaves/{*}/reject"
+    },
+    {
+      "original": "/manager/credits",
+      "normalised": "/manager/credits"
+    },
+    {
+      "original": "/manager/credits/${staffId}/ledger",
+      "normalised": "/manager/credits/{*}/ledger"
+    },
+    {
+      "original": "/manager/credits/adjust",
+      "normalised": "/manager/credits/adjust"
+    },
+    {
+      "original": "/manager/credits/quota",
+      "normalised": "/manager/credits/quota"
+    },
+    {
+      "original": "/governance/overview",
+      "normalised": "/governance/overview"
+    },
+    {
+      "original": "/governance/search",
+      "normalised": "/governance/search"
+    },
+    {
+      "original": "/governance/candidates/${leaveId}",
+      "normalised": "/governance/candidates/{*}"
+    },
+    {
+      "original": "/governance/emergency-override",
+      "normalised": "/governance/emergency-override"
+    },
+    {
+      "original": "/governance/assign-substitute",
+      "normalised": "/governance/assign-substitute"
+    },
+    {
+      "original": "/geofences/",
+      "normalised": "/geofences"
+    },
+    {
+      "original": "/geofences/active",
+      "normalised": "/geofences/active"
+    },
+    {
+      "original": "/geofences/${id}",
+      "normalised": "/geofences/{*}"
+    },
+    {
+      "original": "/geofences/",
+      "normalised": "/geofences"
+    },
+    {
+      "original": "/geofences/${id}",
+      "normalised": "/geofences/{*}"
+    },
+    {
+      "original": "/geofences/${id}/toggle",
+      "normalised": "/geofences/{*}/toggle"
+    },
+    {
+      "original": "/geofences/${id}",
+      "normalised": "/geofences/{*}"
+    },
+    {
+      "original": "/geofences/test-location",
+      "normalised": "/geofences/test-location"
+    },
+    {
+      "original": "/teachers/",
+      "normalised": "/teachers"
+    },
+    {
+      "original": "/teachers/${id}",
+      "normalised": "/teachers/{*}"
+    },
+    {
+      "original": "/teachers/${id}/biometrics/reset",
+      "normalised": "/teachers/{*}/biometrics/reset"
+    },
+    {
+      "original": "/teachers/me/biometrics/enroll",
+      "normalised": "/teachers/me/biometrics/enroll"
+    },
+    {
+      "original": "/attendance/today",
+      "normalised": "/attendance/today"
+    },
+    {
+      "original": "/attendance/check-in",
+      "normalised": "/attendance/check-in"
+    },
+    {
+      "original": "/attendance/check-out",
+      "normalised": "/attendance/check-out"
+    },
+    {
+      "original": "/attendance/today",
+      "normalised": "/attendance/today"
+    },
+    {
+      "original": "/attendance/my",
+      "normalised": "/attendance/my"
+    },
+    {
+      "original": "/attendance/admin/live-status",
+      "normalised": "/attendance/admin/live-status"
+    },
+    {
+      "original": "/attendance/admin/record/${id}",
+      "normalised": "/attendance/admin/record/{*}"
+    },
+    {
+      "original": "/student-attendance/today",
+      "normalised": "/student-attendance/today"
+    },
+    {
+      "original": "/student-attendance/classes/${classId}/roster",
+      "normalised": "/student-attendance/classes/{*}/roster"
+    },
+    {
+      "original": "/student-attendance/sessions/${sessionId}",
+      "normalised": "/student-attendance/sessions/{*}"
+    },
+    {
+      "original": "/student-attendance/sessions",
+      "normalised": "/student-attendance/sessions"
+    },
+    {
+      "original": "/student-attendance/sessions/${sessionId}/submit",
+      "normalised": "/student-attendance/sessions/{*}/submit"
+    },
+    {
+      "original": "/student-attendance/emergency",
+      "normalised": "/student-attendance/emergency"
+    },
+    {
+      "original": "/student-attendance/sessions/${sessionId}/students/${studentId}",
+      "normalised": "/student-attendance/sessions/{*}/students/{*}"
+    },
+    {
+      "original": "/student-attendance/hod/overview",
+      "normalised": "/student-attendance/hod/overview"
+    },
+    {
+      "original": "/student-attendance/sync",
+      "normalised": "/student-attendance/sync"
+    },
+    {
+      "original": "/student-attendance/principal/overview",
+      "normalised": "/student-attendance/principal/overview"
+    },
+    {
+      "original": "/student-attendance/principal/sessions",
+      "normalised": "/student-attendance/principal/sessions"
+    },
+    {
+      "original": "/student-attendance/principal/classes/${classId}/matrix",
+      "normalised": "/student-attendance/principal/classes/{*}/matrix"
+    },
+    {
+      "original": "/student-attendance/principal/students/${studentId}",
+      "normalised": "/student-attendance/principal/students/{*}"
+    },
+    {
+      "original": "/student-attendance/principal/teacher-compliance",
+      "normalised": "/student-attendance/principal/teacher-compliance"
+    },
+    {
+      "original": "/student-attendance/principal/exceptions",
+      "normalised": "/student-attendance/principal/exceptions"
+    },
+    {
+      "original": "/student-attendance/principal/sessions/${sessionId}/lock",
+      "normalised": "/student-attendance/principal/sessions/{*}/lock"
+    },
+    {
+      "original": "/student-attendance/principal/sessions/${sessionId}/students/${studentId}/override",
+      "normalised": "/student-attendance/principal/sessions/{*}/students/{*}/override"
+    },
+    {
+      "original": "/student-attendance/principal/export",
+      "normalised": "/student-attendance/principal/export"
+    },
+    {
+      "original": "/student-attendance/absentees/live",
+      "normalised": "/student-attendance/absentees/live"
+    },
+    {
+      "original": "/student-attendance/classes/${classId}/eod-summary",
+      "normalised": "/student-attendance/classes/{*}/eod-summary"
+    },
+    {
+      "original": "/intelligence/live",
+      "normalised": "/intelligence/live"
+    },
+    {
+      "original": "/intelligence/events",
+      "normalised": "/intelligence/events"
+    },
+    {
+      "original": "/intelligence/events/${id}",
+      "normalised": "/intelligence/events/{*}"
+    },
+    {
+      "original": "/intelligence/events/${id}/acknowledge",
+      "normalised": "/intelligence/events/{*}/acknowledge"
+    },
+    {
+      "original": "/campus-structure/tree",
+      "normalised": "/campus-structure/tree"
+    },
+    {
+      "original": "/campus-structure/metrics",
+      "normalised": "/campus-structure/metrics"
+    },
+    {
+      "original": "/campus-structure/search",
+      "normalised": "/campus-structure/search"
+    },
+    {
+      "original": "/campus-structure/blocks",
+      "normalised": "/campus-structure/blocks"
+    },
+    {
+      "original": "/campus-structure/blocks",
+      "normalised": "/campus-structure/blocks"
+    },
+    {
+      "original": "/campus-structure/blocks/${id}",
+      "normalised": "/campus-structure/blocks/{*}"
+    },
+    {
+      "original": "/campus-structure/blocks/${id}",
+      "normalised": "/campus-structure/blocks/{*}"
+    },
+    {
+      "original": "/campus-structure/blocks/${id}/duplicate",
+      "normalised": "/campus-structure/blocks/{*}/duplicate"
+    },
+    {
+      "original": "/campus-structure/blocks/${blockId}/floors",
+      "normalised": "/campus-structure/blocks/{*}/floors"
+    },
+    {
+      "original": "/campus-structure/floors",
+      "normalised": "/campus-structure/floors"
+    },
+    {
+      "original": "/campus-structure/preview-rooms",
+      "normalised": "/campus-structure/preview-rooms"
+    },
+    {
+      "original": "/campus-structure/generate-rooms",
+      "normalised": "/campus-structure/generate-rooms"
+    },
+    {
+      "original": "/campus-structure/smart-autofill",
+      "normalised": "/campus-structure/smart-autofill"
+    },
+    {
+      "original": "/campus-structure/rooms/bulk-assign",
+      "normalised": "/campus-structure/rooms/bulk-assign"
+    },
+    {
+      "original": "/campus-structure/floors/${floorId}/bulk-assign-department",
+      "normalised": "/campus-structure/floors/{*}/bulk-assign-department"
+    },
+    {
+      "original": "/campus-structure/blocks/${blockId}/bulk-assign-department",
+      "normalised": "/campus-structure/blocks/{*}/bulk-assign-department"
+    },
+    {
+      "original": "/campus-structure/blocks/${blockId}/allocate-departments",
+      "normalised": "/campus-structure/blocks/{*}/allocate-departments"
+    },
+    {
+      "original": "/campus-structure/blocks/${blockId}/duties/configure-and-assign",
+      "normalised": "/campus-structure/blocks/{*}/duties/configure-and-assign"
+    },
+    {
+      "original": "/campus-structure/export",
+      "normalised": "/campus-structure/export"
+    },
+    {
+      "original": "/campus-structure/import/validate",
+      "normalised": "/campus-structure/import/validate"
+    },
+    {
+      "original": "/campus-structure/import/commit",
+      "normalised": "/campus-structure/import/commit"
+    },
+    {
+      "original": "/campus-duties/my",
+      "normalised": "/campus-duties/my"
+    },
+    {
+      "original": "/campus-duties",
+      "normalised": "/campus-duties"
+    },
+    {
+      "original": "/campus-duties/${id}",
+      "normalised": "/campus-duties/{*}"
+    },
+    {
+      "original": "/campus-duties",
+      "normalised": "/campus-duties"
+    },
+    {
+      "original": "/campus-duties/generate-discipline",
+      "normalised": "/campus-duties/generate-discipline"
+    },
+    {
+      "original": "/campus-duties/generate-wing-duties",
+      "normalised": "/campus-duties/generate-wing-duties"
+    },
+    {
+      "original": "/campus-duties/generate-exam-duties",
+      "normalised": "/campus-duties/generate-exam-duties"
+    },
+    {
+      "original": "/campus-duties/autonomous-activate",
+      "normalised": "/campus-duties/autonomous-activate"
+    },
+    {
+      "original": "/campus-duties/next-6-day-orders",
+      "normalised": "/campus-duties/next-6-day-orders"
+    },
+    {
+      "original": "/campus-duties/autonomous-toggle",
+      "normalised": "/campus-duties/autonomous-toggle"
+    },
+    {
+      "original": "/campus-duties/${dutyId}/candidates",
+      "normalised": "/campus-duties/{*}/candidates"
+    },
+    {
+      "original": "/campus-duties/${dutyId}/auto-assign",
+      "normalised": "/campus-duties/{*}/auto-assign"
+    },
+    {
+      "original": "/campus-duties/auto-assign-all",
+      "normalised": "/campus-duties/auto-assign-all"
+    },
+    {
+      "original": "/campus-duties/${dutyId}/assign",
+      "normalised": "/campus-duties/{*}/assign"
+    },
+    {
+      "original": "/campus-duties/assignments/${assignmentId}/override",
+      "normalised": "/campus-duties/assignments/{*}/override"
+    },
+    {
+      "original": "/campus-duties/${dutyId}/lock",
+      "normalised": "/campus-duties/{*}/lock"
+    },
+    {
+      "original": "/campus-duties/assignments/${assignmentId}/replace",
+      "normalised": "/campus-duties/assignments/{*}/replace"
+    },
+    {
+      "original": "/campus-duties/metrics",
+      "normalised": "/campus-duties/metrics"
+    },
+    {
+      "original": "/campus-duties/areas",
+      "normalised": "/campus-duties/areas"
+    },
+    {
+      "original": "/campus-duties/areas",
+      "normalised": "/campus-duties/areas"
+    },
+    {
+      "original": "/campus-duties/break-periods",
+      "normalised": "/campus-duties/break-periods"
+    },
+    {
+      "original": "/campus-duties/break-periods",
+      "normalised": "/campus-duties/break-periods"
+    },
+    {
+      "original": "/campus-duties/break-periods/${id}",
+      "normalised": "/campus-duties/break-periods/{*}"
+    },
+    {
+      "original": "/campus-duties/break-periods/${id}",
+      "normalised": "/campus-duties/break-periods/{*}"
+    },
+    {
+      "original": "/campus-duties/reset-break-periods",
+      "normalised": "/campus-duties/reset-break-periods"
+    },
+    {
+      "original": "/campus-duties/auto-replace-absent",
+      "normalised": "/campus-duties/auto-replace-absent"
+    },
+    {
+      "original": "/campus-duties/${dutyId}/reset",
+      "normalised": "/campus-duties/{*}/reset"
+    },
+    {
+      "original": "/campus-duties/${dutyId}/toggle-active",
+      "normalised": "/campus-duties/{*}/toggle-active"
+    },
+    {
+      "original": "/campus-duties/${dutyId}",
+      "normalised": "/campus-duties/{*}"
+    },
+    {
+      "original": "/campus-duties/bulk-delete",
+      "normalised": "/campus-duties/bulk-delete"
+    },
+    {
+      "original": "/campus-duties/bulk-reset",
+      "normalised": "/campus-duties/bulk-reset"
+    },
+    {
+      "original": "/campus-duties/rules",
+      "normalised": "/campus-duties/rules"
+    },
+    {
+      "original": "/campus-duties/rules",
+      "normalised": "/campus-duties/rules"
+    },
+    {
+      "original": "/admin/secondary-admins/${id}/enable",
+      "normalised": "/admin/secondary-admins/{*}/enable"
+    },
+    {
+      "original": "/admin/secondary-admins/${id}/disable",
+      "normalised": "/admin/secondary-admins/{*}/disable"
+    },
+    {
+      "original": "/departments/${deptId}/admin",
+      "normalised": "/departments/{*}/admin"
+    },
+    {
+      "original": "/admin/global-users/${id}",
+      "normalised": "/admin/global-users/{*}"
+    },
+    {
+      "original": "/admin/backups/${id}",
+      "normalised": "/admin/backups/{*}"
+    },
+    {
+      "original": "/admin/backups/${id}/download",
+      "normalised": "/admin/backups/{*}/download"
+    },
+    {
+      "original": "/admin/backups/${id}/validate",
+      "normalised": "/admin/backups/{*}/validate"
+    },
+    {
+      "original": "/admin/backups/${id}/restore",
+      "normalised": "/admin/backups/{*}/restore"
+    },
+    {
+      "original": "/admin/backups/${id}",
+      "normalised": "/admin/backups/{*}"
+    },
+    {
+      "original": "/teachers/${id}",
+      "normalised": "/teachers/{*}"
+    },
+    {
+      "original": "/teachers/${id}/credits",
+      "normalised": "/teachers/{*}/credits"
+    },
+    {
+      "original": "/teachers/${id}",
+      "normalised": "/teachers/{*}"
+    },
+    {
+      "original": "/timetable/teacher/${teacherId}",
+      "normalised": "/timetable/teacher/{*}"
+    },
+    {
+      "original": "/timetable/class/${classId}",
+      "normalised": "/timetable/class/{*}"
+    },
+    {
+      "original": "/timetable/${id}",
+      "normalised": "/timetable/{*}"
+    },
+    {
+      "original": "/timetable/teacher/${teacherId}",
+      "normalised": "/timetable/teacher/{*}"
+    },
+    {
+      "original": "/timetable/submissions/${id}/review",
+      "normalised": "/timetable/submissions/{*}/review"
+    },
+    {
+      "original": "/timetable/submissions/${id}",
+      "normalised": "/timetable/submissions/{*}"
+    },
+    {
+      "original": "/departments/${id}",
+      "normalised": "/departments/{*}"
+    },
+    {
+      "original": "/departments/${id}",
+      "normalised": "/departments/{*}"
+    },
+    {
+      "original": "/subjects/${id}",
+      "normalised": "/subjects/{*}"
+    },
+    {
+      "original": "/subjects/${id}",
+      "normalised": "/subjects/{*}"
+    },
+    {
+      "original": "/subjects/${id}/archive",
+      "normalised": "/subjects/{*}/archive"
+    },
+    {
+      "original": "/subjects/${id}/unarchive",
+      "normalised": "/subjects/{*}/unarchive"
+    },
+    {
+      "original": "/classes/${id}",
+      "normalised": "/classes/{*}"
+    },
+    {
+      "original": "/classes/${id}",
+      "normalised": "/classes/{*}"
+    },
+    {
+      "original": "/classes/${id}/faculty",
+      "normalised": "/classes/{*}/faculty"
+    },
+    {
+      "original": "/classes/${classId}/roll-rule",
+      "normalised": "/classes/{*}/roll-rule"
+    },
+    {
+      "original": "/classes/${classId}/roll-rule",
+      "normalised": "/classes/{*}/roll-rule"
+    },
+    {
+      "original": "/classes/${classId}/roll-exceptions",
+      "normalised": "/classes/{*}/roll-exceptions"
+    },
+    {
+      "original": "/classes/${classId}/roll-exceptions/${exceptionId}",
+      "normalised": "/classes/{*}/roll-exceptions/{*}"
+    },
+    {
+      "original": "/classes/${classId}/effective-roster",
+      "normalised": "/classes/{*}/effective-roster"
+    },
+    {
+      "original": "/classes/${classId}/students/import/preview",
+      "normalised": "/classes/{*}/students/import/preview"
+    },
+    {
+      "original": "/classes/${classId}/students/import/commit",
+      "normalised": "/classes/{*}/students/import/commit"
+    },
+    {
+      "original": "/classes/${classId}/students/${studentId}",
+      "normalised": "/classes/{*}/students/{*}"
+    },
+    {
+      "original": "/classes/${classId}/students/${studentId}",
+      "normalised": "/classes/{*}/students/{*}"
+    },
+    {
+      "original": "/classes/${classId}/roster/clear-all",
+      "normalised": "/classes/{*}/roster/clear-all"
+    },
+    {
+      "original": "/classes/${classId}/roll-rule",
+      "normalised": "/classes/{*}/roll-rule"
+    },
+    {
+      "original": "/rooms/${id}",
+      "normalised": "/rooms/{*}"
+    },
+    {
+      "original": "/rooms/${id}",
+      "normalised": "/rooms/{*}"
+    },
+    {
+      "original": "/rooms/${roomId}/check-availability",
+      "normalised": "/rooms/{*}/check-availability"
+    },
+    {
+      "original": "/academic-calendar/days/${date}",
+      "normalised": "/academic-calendar/days/{*}"
+    },
+    {
+      "original": "/academic-calendar/days/${date}/override",
+      "normalised": "/academic-calendar/days/{*}/override"
+    },
+    {
+      "original": "/academic-calendar/days/${date}",
+      "normalised": "/academic-calendar/days/{*}"
+    },
+    {
+      "original": "/leaves/${id}/approve",
+      "normalised": "/leaves/{*}/approve"
+    },
+    {
+      "original": "/leaves/${id}/reject",
+      "normalised": "/leaves/{*}/reject"
+    },
+    {
+      "original": "/leaves/${id}/assign",
+      "normalised": "/leaves/{*}/assign"
+    },
+    {
+      "original": "/leaves/${id}/free-teachers",
+      "normalised": "/leaves/{*}/free-teachers"
+    },
+    {
+      "original": "/leaves/${id}/recommendations",
+      "normalised": "/leaves/{*}/recommendations"
+    },
+    {
+      "original": "/leaves/${id}/assign-recommended",
+      "normalised": "/leaves/{*}/assign-recommended"
+    },
+    {
+      "original": "/leaves/${id}/override",
+      "normalised": "/leaves/{*}/override"
+    },
+    {
+      "original": "/leaves/${id}/undo-assignment",
+      "normalised": "/leaves/{*}/undo-assignment"
+    },
+    {
+      "original": "/leaves/${id}/lock",
+      "normalised": "/leaves/{*}/lock"
+    },
+    {
+      "original": "/leaves/${id}/cancel",
+      "normalised": "/leaves/{*}/cancel"
+    },
+    {
+      "original": "/leaves/${id}/admin-cancel",
+      "normalised": "/leaves/{*}/admin-cancel"
+    },
+    {
+      "original": "/leaves/${id}/cancel-impact",
+      "normalised": "/leaves/{*}/cancel-impact"
+    },
+    {
+      "original": "/leaves/${id}/approve-with-exception",
+      "normalised": "/leaves/{*}/approve-with-exception"
+    },
+    {
+      "original": "/leave-policies/${id}",
+      "normalised": "/leave-policies/{*}"
+    },
+    {
+      "original": "/leave-policies/${id}",
+      "normalised": "/leave-policies/{*}"
+    },
+    {
+      "original": "/leave-balances/me/${leaveType}",
+      "normalised": "/leave-balances/me/{*}"
+    },
+    {
+      "original": "/leave-balances/department/${teacherId}",
+      "normalised": "/leave-balances/department/{*}"
+    },
+    {
+      "original": "/leave-balances/${teacherId}/ledger",
+      "normalised": "/leave-balances/{*}/ledger"
+    },
+    {
+      "original": "/leave-balances/${teacher_id}/adjust",
+      "normalised": "/leave-balances/{*}/adjust"
+    },
+    {
+      "original": "/leave-balances/${teacherIdOrPayload}/adjust",
+      "normalised": "/leave-balances/{*}/adjust"
+    },
+    {
+      "original": "/leaves/${leaveId}/consume",
+      "normalised": "/leaves/{*}/consume"
+    },
+    {
+      "original": "/campus-operations/preferences/${teacherId}",
+      "normalised": "/campus-operations/preferences/{*}"
+    },
+    {
+      "original": "/campus-operations/preferences/${teacherId}",
+      "normalised": "/campus-operations/preferences/{*}"
+    },
+    {
+      "original": "/notifications/${id}/read",
+      "normalised": "/notifications/{*}/read"
+    },
+    {
+      "original": "/teacher/substitution/leave/${leaveId}/candidates",
+      "normalised": "/teacher/substitution/leave/{*}/candidates"
+    },
+    {
+      "original": "/teacher/substitution/leave/${leaveId}/free-teachers",
+      "normalised": "/teacher/substitution/leave/{*}/free-teachers"
+    },
+    {
+      "original": "/teacher/substitution/leave/${leaveId}/assign/${substituteId}",
+      "normalised": "/teacher/substitution/leave/{*}/assign/{*}"
+    },
+    {
+      "original": "/teacher/substitution/leave/${leaveId}/override/${substituteId}",
+      "normalised": "/teacher/substitution/leave/{*}/override/{*}"
+    },
+    {
+      "original": "/teacher/substitution/leave/${leaveId}/undo-assignment",
+      "normalised": "/teacher/substitution/leave/{*}/undo-assignment"
+    },
+    {
+      "original": "/teacher/substitution/leave/${leaveId}/lock",
+      "normalised": "/teacher/substitution/leave/{*}/lock"
+    },
+    {
+      "original": "/admin/managers/${id}",
+      "normalised": "/admin/managers/{*}"
+    },
+    {
+      "original": "/admin/managers/${id}",
+      "normalised": "/admin/managers/{*}"
+    },
+    {
+      "original": "/admin/managers/${id}",
+      "normalised": "/admin/managers/{*}"
+    },
+    {
+      "original": "/manager/staff/${id}",
+      "normalised": "/manager/staff/{*}"
+    },
+    {
+      "original": "/manager/staff/${id}",
+      "normalised": "/manager/staff/{*}"
+    },
+    {
+      "original": "/manager/staff/${id}/status",
+      "normalised": "/manager/staff/{*}/status"
+    },
+    {
+      "original": "/manager/staff/${id}",
+      "normalised": "/manager/staff/{*}"
+    },
+    {
+      "original": "/staff/leaves/${id}",
+      "normalised": "/staff/leaves/{*}"
+    },
+    {
+      "original": "/manager/leaves/${id}/approve",
+      "normalised": "/manager/leaves/{*}/approve"
+    },
+    {
+      "original": "/manager/leaves/${id}/reject",
+      "normalised": "/manager/leaves/{*}/reject"
+    },
+    {
+      "original": "/manager/credits/${staffId}/ledger",
+      "normalised": "/manager/credits/{*}/ledger"
+    },
+    {
+      "original": "/governance/candidates/${leaveId}",
+      "normalised": "/governance/candidates/{*}"
+    },
+    {
+      "original": "/geofences/${id}",
+      "normalised": "/geofences/{*}"
+    },
+    {
+      "original": "/geofences/${id}",
+      "normalised": "/geofences/{*}"
+    },
+    {
+      "original": "/geofences/${id}/toggle",
+      "normalised": "/geofences/{*}/toggle"
+    },
+    {
+      "original": "/geofences/${id}",
+      "normalised": "/geofences/{*}"
+    },
+    {
+      "original": "/teachers/${id}",
+      "normalised": "/teachers/{*}"
+    },
+    {
+      "original": "/teachers/${id}/biometrics/reset",
+      "normalised": "/teachers/{*}/biometrics/reset"
+    },
+    {
+      "original": "/attendance/admin/record/${id}",
+      "normalised": "/attendance/admin/record/{*}"
+    },
+    {
+      "original": "/student-attendance/classes/${classId}/roster",
+      "normalised": "/student-attendance/classes/{*}/roster"
+    },
+    {
+      "original": "/student-attendance/sessions/${sessionId}",
+      "normalised": "/student-attendance/sessions/{*}"
+    },
+    {
+      "original": "/student-attendance/sessions/${sessionId}/submit",
+      "normalised": "/student-attendance/sessions/{*}/submit"
+    },
+    {
+      "original": "/student-attendance/sessions/${sessionId}/students/${studentId}",
+      "normalised": "/student-attendance/sessions/{*}/students/{*}"
+    },
+    {
+      "original": "/student-attendance/principal/classes/${classId}/matrix",
+      "normalised": "/student-attendance/principal/classes/{*}/matrix"
+    },
+    {
+      "original": "/student-attendance/principal/students/${studentId}",
+      "normalised": "/student-attendance/principal/students/{*}"
+    },
+    {
+      "original": "/student-attendance/principal/sessions/${sessionId}/lock",
+      "normalised": "/student-attendance/principal/sessions/{*}/lock"
+    },
+    {
+      "original": "/student-attendance/principal/sessions/${sessionId}/students/${studentId}/override",
+      "normalised": "/student-attendance/principal/sessions/{*}/students/{*}/override"
+    },
+    {
+      "original": "/student-attendance/classes/${classId}/eod-summary",
+      "normalised": "/student-attendance/classes/{*}/eod-summary"
+    },
+    {
+      "original": "/intelligence/events/${id}",
+      "normalised": "/intelligence/events/{*}"
+    },
+    {
+      "original": "/intelligence/events/${id}/acknowledge",
+      "normalised": "/intelligence/events/{*}/acknowledge"
+    },
+    {
+      "original": "/campus-structure/blocks/${id}",
+      "normalised": "/campus-structure/blocks/{*}"
+    },
+    {
+      "original": "/campus-structure/blocks/${id}",
+      "normalised": "/campus-structure/blocks/{*}"
+    },
+    {
+      "original": "/campus-structure/blocks/${id}/duplicate",
+      "normalised": "/campus-structure/blocks/{*}/duplicate"
+    },
+    {
+      "original": "/campus-structure/blocks/${blockId}/floors",
+      "normalised": "/campus-structure/blocks/{*}/floors"
+    },
+    {
+      "original": "/campus-structure/floors/${floorId}/bulk-assign-department",
+      "normalised": "/campus-structure/floors/{*}/bulk-assign-department"
+    },
+    {
+      "original": "/campus-structure/blocks/${blockId}/bulk-assign-department",
+      "normalised": "/campus-structure/blocks/{*}/bulk-assign-department"
+    },
+    {
+      "original": "/campus-structure/blocks/${blockId}/allocate-departments",
+      "normalised": "/campus-structure/blocks/{*}/allocate-departments"
+    },
+    {
+      "original": "/campus-structure/blocks/${blockId}/duties/configure-and-assign",
+      "normalised": "/campus-structure/blocks/{*}/duties/configure-and-assign"
+    },
+    {
+      "original": "/campus-duties/${id}",
+      "normalised": "/campus-duties/{*}"
+    },
+    {
+      "original": "/campus-duties/${dutyId}/candidates",
+      "normalised": "/campus-duties/{*}/candidates"
+    },
+    {
+      "original": "/campus-duties/${dutyId}/auto-assign",
+      "normalised": "/campus-duties/{*}/auto-assign"
+    },
+    {
+      "original": "/campus-duties/${dutyId}/assign",
+      "normalised": "/campus-duties/{*}/assign"
+    },
+    {
+      "original": "/campus-duties/assignments/${assignmentId}/override",
+      "normalised": "/campus-duties/assignments/{*}/override"
+    },
+    {
+      "original": "/campus-duties/${dutyId}/lock",
+      "normalised": "/campus-duties/{*}/lock"
+    },
+    {
+      "original": "/campus-duties/assignments/${assignmentId}/replace",
+      "normalised": "/campus-duties/assignments/{*}/replace"
+    },
+    {
+      "original": "/campus-duties/break-periods/${id}",
+      "normalised": "/campus-duties/break-periods/{*}"
+    },
+    {
+      "original": "/campus-duties/break-periods/${id}",
+      "normalised": "/campus-duties/break-periods/{*}"
+    },
+    {
+      "original": "/campus-duties/${dutyId}/reset",
+      "normalised": "/campus-duties/{*}/reset"
+    },
+    {
+      "original": "/campus-duties/${dutyId}/toggle-active",
+      "normalised": "/campus-duties/{*}/toggle-active"
+    },
+    {
+      "original": "/campus-duties/${dutyId}",
+      "normalised": "/campus-duties/{*}"
+    },
+    {
+      "original": "/principal/overview",
+      "normalised": "/principal/overview"
+    }
+  ]
 }

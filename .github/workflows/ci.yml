@@ -114,6 +114,9 @@ jobs:
       - name: TypeScript type-check
         run: npm run typecheck
 
+      - name: Vitest component unit tests
+        run: npm run test:unit
+
       - name: Production build
         run: npm run build
         env:
@@ -205,20 +208,24 @@ jobs:
         with:
           python-version: ${{ env.PYTHON_VERSION }}
 
-      - name: Install audit tools
-        run: pip install pyyaml requests
+      - name: Install dependencies
+        run: |
+          pip install pyyaml requests
+          pip install -r backend/requirements.txt
 
-      - name: Verify OpenAPI spec exists and is parseable
-        run: python -c "import yaml; yaml.safe_load(open('openapi.yaml'))"
+      - name: OpenAPI spec drift check (code vs openapi_generated.yaml)
+        run: python scripts/generate_openapi.py --check --out openapi_generated.yaml
 
-      - name: Run API contract matrix check
+      - name: Verify generated OpenAPI spec is parseable
+        run: python -c "import yaml; yaml.safe_load(open('openapi_generated.yaml', encoding='utf-8'))"
+
+      - name: Run strict API contract matrix check
         run: |
           python scripts/ci_contract_check.py \
-            --openapi openapi.yaml \
+            --openapi openapi_generated.yaml \
             --android android/app/src/main/java/com/governence/faflow \
             --frontend frontend/src \
             --report reports/contract_parity.json
-        continue-on-error: true
 
       - name: Upload contract parity report
         uses: actions/upload-artifact@v4

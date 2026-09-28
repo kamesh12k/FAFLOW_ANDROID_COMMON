@@ -404,38 +404,33 @@ interface FaflowApiService {
         @Path("duty_id") dutyId: Int
     ): Response<DutyCandidatesResponseDto>
 
-    // TODO: Backend does not yet expose POST campus-duties/{duty_id}/assignments.
-    // Tracking: use POST campus-duties/{duty_id}/assign as workaround until backend adds nested route.
-    @POST("campus-duties/{duty_id}/assign")
+    @POST("campus-duties/{duty_id}/assignments")
     suspend fun assignTeacher(
         @Path("duty_id") dutyId: Int,
         @Body request: DutyAssignRequestDto
     ): Response<DutyAssignmentDto>
 
-    // TODO: Backend does not yet expose POST campus-duties/{duty_id}/assignments/{id}/lock.
-    // Tracking: no backend equivalent found. Endpoint stubbed for future backend implementation.
-    @POST("campus-duties/{duty_id}/lock")
+    @POST("campus-duties/{duty_id}/assignments/{assignment_id}/lock")
     suspend fun lockAssignment(
         @Path("duty_id") dutyId: Int,
         @Path("assignment_id") assignmentId: Int,
         @Body request: DutyLockRequestDto
     ): Response<DutyAssignmentDto>
 
-    // TODO: Backend does not yet expose POST campus-duties/{duty_id}/assignments/{id}/unlock.
-    @POST("campus-duties/{duty_id}/reset")
+    @POST("campus-duties/{duty_id}/assignments/{assignment_id}/unlock")
     suspend fun unlockAssignment(
         @Path("duty_id") dutyId: Int,
         @Path("assignment_id") assignmentId: Int
     ): Response<DutyAssignmentDto>
 
-    @POST("campus-duties/assignments/{assignment_id}/override")
+    @POST("campus-duties/{duty_id}/assignments/{assignment_id}/override")
     suspend fun overrideAssignment(
         @Path("duty_id") dutyId: Int,
         @Path("assignment_id") assignmentId: Int,
         @Body request: DutyOverrideRequestDto
     ): Response<DutyAssignmentDto>
 
-    @POST("campus-duties/assignments/{assignment_id}/replace")
+    @POST("campus-duties/{duty_id}/assignments/{assignment_id}/replace")
     suspend fun replaceAssignment(
         @Path("duty_id") dutyId: Int,
         @Path("assignment_id") assignmentId: Int,

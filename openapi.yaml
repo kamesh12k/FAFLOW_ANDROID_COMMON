@@ -1,3 +1,8 @@
+# =============================================================================
+# DEPRECATED: This hand-maintained file is superseded as of Phase 7b.
+# The single source of truth is openapi_generated.yaml, generated from code:
+#   python scripts/generate_openapi.py --out openapi_generated.yaml
+# =============================================================================
 openapi: 3.1.0
 info:
   title: FAFLOW

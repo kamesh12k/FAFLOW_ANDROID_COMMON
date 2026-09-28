@@ -535,7 +535,9 @@ def bulk_reset_duties(
 
 # ── Client Contract Compatibility Aliases ─────────────────────────────────────
 
-@router.post("/{duty_id}/assignments/{assignment_id}/lock", response_model=CampusDutyOut, include_in_schema=False)
+@router.post("/{duty_id}/assignments/{assignment_id}/lock", response_model=CampusDutyOut,
+             summary="Lock a duty assignment",
+             description="Locks a specific assignment within a duty. Requires admin or principal role.")
 def lock_duty_assignment_alias(
     duty_id: int,
     assignment_id: int,
@@ -548,7 +550,9 @@ def lock_duty_assignment_alias(
     return CampusDutyService.to_duty_out(duty)
 
 
-@router.post("/{duty_id}/assignments/{assignment_id}/unlock", response_model=CampusDutyOut, include_in_schema=False)
+@router.post("/{duty_id}/assignments/{assignment_id}/unlock", response_model=CampusDutyOut,
+             summary="Unlock a duty assignment",
+             description="Unlocks a specific assignment within a duty. Requires admin or principal role.")
 def unlock_duty_assignment_alias(
     duty_id: int,
     assignment_id: int,
@@ -561,7 +565,9 @@ def unlock_duty_assignment_alias(
     return CampusDutyService.to_duty_out(duty)
 
 
-@router.post("/{duty_id}/assignments/{assignment_id}/override", response_model=CampusDutyOut, include_in_schema=False)
+@router.post("/{duty_id}/assignments/{assignment_id}/override", response_model=CampusDutyOut,
+             summary="Override a duty assignment",
+             description="Replaces the assigned teacher for a specific assignment. Requires admin or principal role.")
 def override_duty_assignment_alias(
     duty_id: int,
     assignment_id: int,
@@ -574,7 +580,9 @@ def override_duty_assignment_alias(
     return CampusDutyService.to_duty_out(duty)
 
 
-@router.post("/{duty_id}/assignments/{assignment_id}/replace", response_model=CampusDutyOut, include_in_schema=False)
+@router.post("/{duty_id}/assignments/{assignment_id}/replace", response_model=CampusDutyOut,
+             summary="Replace unavailable teacher in assignment",
+             description="Replaces a teacher who is unavailable. Requires admin or principal role.")
 def replace_duty_assignment_alias(
     duty_id: int,
     assignment_id: int,
@@ -587,7 +595,9 @@ def replace_duty_assignment_alias(
     return CampusDutyService.to_duty_out(duty)
 
 
-@router.post("/{duty_id}/assignments", response_model=CampusDutyOut, include_in_schema=False)
+@router.post("/{duty_id}/assignments", response_model=CampusDutyOut,
+             summary="Manually assign teacher to duty",
+             description="Manually assigns a specific teacher to a duty slot. Requires admin or principal role.")
 def manual_assign_teacher_alias(
     duty_id: int,
     data: DutyManualAssignRequest,

@@ -1,7 +1,7 @@
 # FAFLOW Monorepo — Agent Context (AGENTS.md)
 
 > **Milestone 16** · Branch: `optimize/full-audit`  
-> Last updated: Phase 7 – End-to-End Verification & CI/CD Hardening
+> Last updated: Phase 7b – Honest Contract Gate & Real E2E Testing Infrastructure
 
 ---
 
@@ -18,7 +18,8 @@ FAFLOW_UNIFIED/
 ├── docs/               Audit reports and testing docs
 ├── scripts/            CI helpers (ci_contract_check.py, etc.)
 ├── .github/workflows/  CI/CD pipeline (ci.yml)
-└── openapi.yaml        Single OpenAPI spec (source of truth, 653 paths)
+├── openapi_generated.yaml Single generated OpenAPI spec (source of truth, 333 paths)
+└── openapi.yaml        Hand-maintained spec (deprecated, superseded by generated)
 ```
 
 ---
@@ -29,7 +30,7 @@ FAFLOW_UNIFIED/
 2. **Never weaken security**: biometrics, geofencing, RBAC, licensing controls, and the Governance Control Plane are non-negotiable.
 3. **All changes must pass all CI gates** before merging to `main`.
 4. **Design tokens** live in `design/tokens/faflow_design_tokens.json`; export to `frontend/src/tokens/designTokens.js` and `android/app/.../FaflowDesignTokens.kt`.
-5. **OpenAPI spec** (`openapi.yaml`) must be kept in sync with any new backend routes.
+5. **OpenAPI spec** (`openapi_generated.yaml`) is generated from code via `scripts/generate_openapi.py`. A CI drift check verifies it.
 
 ---
 
@@ -47,16 +48,18 @@ venv\Scripts\python.exe -m pytest tests/ -v --tb=short
 # Frontend
 cd ..\frontend
 npm run typecheck
+npm run test:unit
 npm run build
 
 # Android
 cd ..\android
 .\gradlew.bat testDebugUnitTest --no-daemon
 
-# Contract parity gate
+# Contract parity gate & OpenAPI drift check
 cd ..
+backend\venv\Scripts\python.exe scripts\generate_openapi.py --check --out openapi_generated.yaml
 backend\venv\Scripts\python.exe -X utf8 scripts\ci_contract_check.py `
-  --openapi openapi.yaml `
+  --openapi openapi_generated.yaml `
   --android android\app\src\main\java\com\governence\faflow `
   --frontend frontend\src `
   --report reports\contract_parity.json
