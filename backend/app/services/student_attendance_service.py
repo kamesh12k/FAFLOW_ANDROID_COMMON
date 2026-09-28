@@ -192,7 +192,10 @@ class StudentAttendanceService:
             now_local = datetime.now(timezone.utc) + timedelta(hours=5, minutes=30)
         current_period = StudentAttendanceService.determine_current_period(now_local.time(), db=db)
 
+        period_schedule = _build_period_map(db)
+
         scheduled_slots: List[TeacherClassSlotOut] = []
+        slots = []
         if day_order:
             slots = (
                 db.query(TimetableSlot)
@@ -200,47 +203,8 @@ class StudentAttendanceService:
                 .order_by(TimetableSlot.period_number)
                 .all()
             )
-            for slot in slots:
-                session = (
-                    db.query(AttendanceSession)
-                    .filter(
-                        AttendanceSession.attendance_date == today,
-                        AttendanceSession.class_id == slot.class_id,
-                        AttendanceSession.period_number == slot.period_number
-                    )
-                    .first()
-                )
-                period_schedule = _build_period_map(db)
-                start_t, end_t, p_time = period_schedule.get(slot.period_number, (time(9, 20), time(10, 20), f"Period {slot.period_number}"))
-                st_str = start_t.strftime("%H:%M") if start_t else None
-                et_str = end_t.strftime("%H:%M") if end_t else None
-                is_past = today < date.today()
-                is_today = today == date.today()
-                class_started = is_past or (is_today and start_t is not None and now_local.time() >= start_t)
-                can_take = class_started and (session is None or session.status not in (SessionStatus.submitted, SessionStatus.submitted_late, SessionStatus.locked))
-
-                scheduled_slots.append(
-                    TeacherClassSlotOut(
-                        timetable_slot_id=slot.id,
-                        period_number=slot.period_number,
-                        period_time=p_time,
-                        start_time=st_str,
-                        end_time=et_str,
-                        can_take_attendance=can_take,
-                        class_id=slot.class_id,
-                        class_name=slot.class_.name if slot.class_ else "",
-                        section=slot.class_.section if slot.class_ else "",
-                        subject_id=slot.subject_id,
-                        subject_name=slot.subject.name if slot.subject else "",
-                        room_number=slot.room.room_number if slot.room else None,
-                        is_substitution=False,
-                        session_id=session.id if session else None,
-                        session_status=session.status if session else None
-                    )
-                )
 
         # Registered Substitutions for this teacher today
-        substitutions: List[TeacherClassSlotOut] = []
         sub_assignments = (
             db.query(AlterAssignment)
             .join(LeaveRequest, AlterAssignment.leave_request_id == LeaveRequest.id)
@@ -251,34 +215,93 @@ class StudentAttendanceService:
             )
             .all()
         )
+
+        # Batch-fetch all original timetable slots for substitutions in a single query
+        orig_slots_map: Dict[Tuple[int, int, int], TimetableSlot] = {}
+        sub_slot_keys = [
+            (sub.leave_request.teacher_id, sub.leave_request.day_order, sub.leave_request.period_number)
+            for sub in sub_assignments if sub.leave_request
+        ]
+        if sub_slot_keys:
+            slot_filters = [
+                and_(
+                    TimetableSlot.teacher_id == tid,
+                    TimetableSlot.day_order == do,
+                    TimetableSlot.period_number == pn
+                )
+                for tid, do, pn in sub_slot_keys
+            ]
+            matching_orig_slots = db.query(TimetableSlot).filter(or_(*slot_filters)).all()
+            for sl in matching_orig_slots:
+                orig_slots_map[(sl.teacher_id, sl.day_order, sl.period_number)] = sl
+
+        # Collect target (class_id, period_number) pairs to batch-fetch AttendanceSessions
+        target_pairs: set[Tuple[int, int]] = set()
+        for slot in slots:
+            target_pairs.add((slot.class_id, slot.period_number))
+        for sub in sub_assignments:
+            if sub.leave_request:
+                key = (sub.leave_request.teacher_id, sub.leave_request.day_order, sub.leave_request.period_number)
+                orig = orig_slots_map.get(key)
+                if orig:
+                    target_pairs.add((orig.class_id, orig.period_number))
+
+        session_map: Dict[Tuple[int, int], AttendanceSession] = {}
+        if target_pairs:
+            target_class_ids = list({cid for cid, _ in target_pairs})
+            today_sessions = (
+                db.query(AttendanceSession)
+                .filter(
+                    AttendanceSession.attendance_date == today,
+                    AttendanceSession.class_id.in_(target_class_ids)
+                )
+                .all()
+            )
+            for sess in today_sessions:
+                if (sess.class_id, sess.period_number) in target_pairs:
+                    session_map[(sess.class_id, sess.period_number)] = sess
+
+        is_past = today < date.today()
+        is_today = today == date.today()
+
+        for slot in slots:
+            session = session_map.get((slot.class_id, slot.period_number))
+            start_t, end_t, p_time = period_schedule.get(slot.period_number, (time(9, 20), time(10, 20), f"Period {slot.period_number}"))
+            st_str = start_t.strftime("%H:%M") if start_t else None
+            et_str = end_t.strftime("%H:%M") if end_t else None
+            class_started = is_past or (is_today and start_t is not None and now_local.time() >= start_t)
+            can_take = class_started and (session is None or session.status not in (SessionStatus.submitted, SessionStatus.submitted_late, SessionStatus.locked))
+
+            scheduled_slots.append(
+                TeacherClassSlotOut(
+                    timetable_slot_id=slot.id,
+                    period_number=slot.period_number,
+                    period_time=p_time,
+                    start_time=st_str,
+                    end_time=et_str,
+                    can_take_attendance=can_take,
+                    class_id=slot.class_id,
+                    class_name=slot.class_.name if slot.class_ else "",
+                    section=slot.class_.section if slot.class_ else "",
+                    subject_id=slot.subject_id,
+                    subject_name=slot.subject.name if slot.subject else "",
+                    room_number=slot.room.room_number if slot.room else None,
+                    is_substitution=False,
+                    session_id=session.id if session else None,
+                    session_status=session.status if session else None
+                )
+            )
+
+        substitutions: List[TeacherClassSlotOut] = []
         for sub in sub_assignments:
             leave = sub.leave_request
-            # find original timetable slot
-            orig_slot = (
-                db.query(TimetableSlot)
-                .filter(
-                    TimetableSlot.teacher_id == leave.teacher_id,
-                    TimetableSlot.day_order == leave.day_order,
-                    TimetableSlot.period_number == leave.period_number
-                )
-                .first()
-            )
+            key = (leave.teacher_id, leave.day_order, leave.period_number)
+            orig_slot = orig_slots_map.get(key)
             if orig_slot:
-                session = (
-                    db.query(AttendanceSession)
-                    .filter(
-                        AttendanceSession.attendance_date == today,
-                        AttendanceSession.class_id == orig_slot.class_id,
-                        AttendanceSession.period_number == orig_slot.period_number
-                    )
-                    .first()
-                )
-                period_schedule = _build_period_map(db)
+                session = session_map.get((orig_slot.class_id, orig_slot.period_number))
                 start_t, end_t, p_time = period_schedule.get(orig_slot.period_number, (time(9, 20), time(10, 20), f"Period {orig_slot.period_number}"))
                 st_str = start_t.strftime("%H:%M") if start_t else None
                 et_str = end_t.strftime("%H:%M") if end_t else None
-                is_past = today < date.today()
-                is_today = today == date.today()
                 class_started = is_past or (is_today and start_t is not None and now_local.time() >= start_t)
                 can_take = class_started and (session is None or session.status not in (SessionStatus.submitted, SessionStatus.submitted_late, SessionStatus.locked))
 
