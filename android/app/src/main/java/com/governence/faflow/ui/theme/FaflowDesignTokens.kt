@@ -67,6 +67,10 @@ object FaflowRoleColors {
     val PrincipalBackground = FaflowGoldTint
     val GovernancePrimary = FaflowTeal
     val GovernanceBackground = FaflowTealTint
+    val ManagerPrimary = FaflowSlate
+    val ManagerBackground = FaflowSlateTint
+    val StaffPrimary = FaflowNavyLight
+    val StaffBackground = FaflowNavyTint
 }
 
 object FaflowStatusColors {
