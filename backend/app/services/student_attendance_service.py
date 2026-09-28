@@ -981,16 +981,46 @@ class StudentAttendanceService:
         if not session:
             raise HTTPException(status_code=404, detail="Attendance session not found")
 
-        # Check authorization: user must be actual teacher or HOD/admin
-        is_admin = current_user.role in {Role.system_admin, Role.admin, Role.governance, Role.principal}
-        if session.actual_teacher_id != current_user.id and not is_admin:
-            raise HTTPException(status_code=403, detail="You are not authorized to correct this attendance session.")
+        # Check authorization: actual teacher, class department HOD, or administrative override
+        from app.models.user import AdminLevel
+        is_super_admin = (
+            current_user.role in {Role.system_admin, Role.principal, Role.governance}
+            or (
+                current_user.role == Role.admin
+                and (
+                    getattr(current_user, "admin_level", None) == AdminLevel.super_admin
+                    or current_user.department_id is None
+                )
+            )
+        )
+        is_actual_teacher = (session.actual_teacher_id == current_user.id)
 
-        # Check correction window (unless admin)
+        cls = session.class_ or db.query(Class).filter(Class.id == session.class_id).first()
+        class_dept_id = cls.department_id if cls else None
+
+        is_class_hod = (
+            current_user.role == Role.admin
+            and current_user.department_id is not None
+            and class_dept_id is not None
+            and current_user.department_id == class_dept_id
+        )
+
+        if not is_super_admin and not is_actual_teacher and not is_class_hod:
+            if current_user.role == Role.admin and current_user.department_id is not None and current_user.department_id != class_dept_id:
+                raise HTTPException(
+                    status_code=status.HTTP_403_FORBIDDEN,
+                    detail="You are not authorized to correct attendance for a class outside your department."
+                )
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="You are not authorized to correct this attendance session."
+            )
+
+        # Check correction window (privileged admins bypass; actual teachers and HODs are subject to period deadline)
         now_utc = as_of or datetime.now(timezone.utc)
         if now_utc.tzinfo is None:
             now_utc = now_utc.replace(tzinfo=timezone.utc)
-        if not is_admin:
+        if not is_super_admin:
             if session.status == SessionStatus.locked:
                 raise HTTPException(status_code=400, detail="This session is locked and cannot be edited.")
             
