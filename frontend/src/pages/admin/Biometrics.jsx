@@ -94,7 +94,7 @@ export default function AdminBiometrics() {
           <button
             onClick={() => loadData(true)}
             disabled={refreshing || loading}
-            className="flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold rounded-xl transition shadow-sm disabled:opacity-60"
+            className="flex items-center gap-2 px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white text-sm font-semibold rounded-xl transition shadow-xs disabled:opacity-60 cursor-pointer"
           >
             <svg
               className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`}
@@ -125,29 +125,29 @@ export default function AdminBiometrics() {
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <div
           onClick={() => setStatusFilter('ALL')}
-          className={`p-5 rounded-2xl bg-white border cursor-pointer transition shadow-sm ${statusFilter === 'ALL' ? 'border-indigo-500 ring-2 ring-indigo-100' : 'border-gray-200 hover:border-gray-300'}`}
+          className={`p-5 rounded-2xl bg-white border cursor-pointer transition shadow-xs ${statusFilter === 'ALL' ? 'border-primary-600 ring-2 ring-primary-100' : 'border-slate-200 hover:border-slate-300'}`}
         >
-          <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Total Registered Faculty</span>
-          <p className="text-2xl font-bold text-gray-900 mt-1">{faculty.length}</p>
-          <span className="text-xs text-gray-500 mt-1 block">Active institutional faculty accounts</span>
+          <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Total Registered Faculty</span>
+          <p className="text-2xl font-bold text-slate-900 mt-1">{faculty.length}</p>
+          <span className="text-xs text-slate-500 mt-1 block">Active institutional faculty accounts</span>
         </div>
 
         <div
           onClick={() => setStatusFilter('ENROLLED')}
-          className={`p-5 rounded-2xl bg-white border cursor-pointer transition shadow-sm ${statusFilter === 'ENROLLED' ? 'border-emerald-500 ring-2 ring-emerald-100' : 'border-gray-200 hover:border-gray-300'}`}
+          className={`p-5 rounded-2xl bg-white border cursor-pointer transition shadow-xs ${statusFilter === 'ENROLLED' ? 'border-emerald-600 ring-2 ring-emerald-100' : 'border-slate-200 hover:border-slate-300'}`}
         >
-          <span className="text-xs font-semibold text-emerald-600 uppercase tracking-wider">Face Templates Enrolled</span>
+          <span className="text-xs font-semibold text-emerald-700 uppercase tracking-wider">Face Templates Enrolled</span>
           <p className="text-2xl font-bold text-emerald-700 mt-1">{enrolledCount}</p>
-          <span className="text-xs text-gray-500 mt-1 block">Verified 512-D ArcFace profiles in hardware Keystore</span>
+          <span className="text-xs text-slate-500 mt-1 block">Verified 512-D ArcFace profiles in hardware Keystore</span>
         </div>
 
         <div
           onClick={() => setStatusFilter('PENDING')}
-          className={`p-5 rounded-2xl bg-white border cursor-pointer transition shadow-sm ${statusFilter === 'PENDING' ? 'border-amber-500 ring-2 ring-amber-100' : 'border-gray-200 hover:border-gray-300'}`}
+          className={`p-5 rounded-2xl bg-white border cursor-pointer transition shadow-xs ${statusFilter === 'PENDING' ? 'border-amber-600 ring-2 ring-amber-100' : 'border-slate-200 hover:border-slate-300'}`}
         >
-          <span className="text-xs font-semibold text-amber-600 uppercase tracking-wider">Pending Enrollment</span>
+          <span className="text-xs font-semibold text-amber-700 uppercase tracking-wider">Pending Enrollment</span>
           <p className="text-2xl font-bold text-amber-700 mt-1">{pendingCount}</p>
-          <span className="text-xs text-gray-500 mt-1 block">Awaiting physical phone face capture</span>
+          <span className="text-xs text-slate-500 mt-1 block">Awaiting physical phone face capture</span>
         </div>
       </div>
 
@@ -156,19 +156,19 @@ export default function AdminBiometrics() {
         <div className="flex items-center gap-2">
           <button
             onClick={() => setStatusFilter('ALL')}
-            className={`px-3 py-2 rounded-xl text-xs font-semibold transition ${statusFilter === 'ALL' ? 'bg-indigo-600 text-white shadow-sm' : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-50'}`}
+            className={`px-3 py-2 rounded-xl text-xs font-semibold transition cursor-pointer ${statusFilter === 'ALL' ? 'bg-primary-600 text-white shadow-xs' : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50'}`}
           >
             All ({faculty.length})
           </button>
           <button
             onClick={() => setStatusFilter('ENROLLED')}
-            className={`px-3 py-2 rounded-xl text-xs font-semibold transition ${statusFilter === 'ENROLLED' ? 'bg-emerald-600 text-white shadow-sm' : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-50'}`}
+            className={`px-3 py-2 rounded-xl text-xs font-semibold transition cursor-pointer ${statusFilter === 'ENROLLED' ? 'bg-emerald-600 text-white shadow-xs' : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50'}`}
           >
             Enrolled ({enrolledCount})
           </button>
           <button
             onClick={() => setStatusFilter('PENDING')}
-            className={`px-3 py-2 rounded-xl text-xs font-semibold transition ${statusFilter === 'PENDING' ? 'bg-amber-600 text-white shadow-sm' : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-50'}`}
+            className={`px-3 py-2 rounded-xl text-xs font-semibold transition cursor-pointer ${statusFilter === 'PENDING' ? 'bg-amber-600 text-white shadow-xs' : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50'}`}
           >
             Pending ({pendingCount})
           </button>
@@ -180,13 +180,13 @@ export default function AdminBiometrics() {
             placeholder="Search faculty by name, email, or staff ID..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent bg-white shadow-sm"
+            className="input !py-2 text-xs w-full"
           />
         </div>
         <select
           value={selectedDept}
           onChange={(e) => setSelectedDept(e.target.value)}
-          className="px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent bg-white shadow-sm"
+          className="input !py-2 text-xs w-full sm:w-auto"
         >
           <option value="">All Departments</option>
           {departments.map(d => (
@@ -288,11 +288,11 @@ export default function AdminBiometrics() {
             <p className="text-xs text-gray-500 bg-amber-50 border border-amber-200 p-3 rounded-xl">
               This will clear their existing facial template and allow the faculty member to re-enroll their face from the FAFLOW mobile app.
             </p>
-            <div className="flex justify-end gap-3 pt-4 border-t border-gray-100">
+            <div className="flex justify-end gap-3 pt-4 border-t border-slate-100">
               <button
                 type="button"
                 onClick={() => setResetModalOpen(false)}
-                className="px-4 py-2 rounded-xl text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 transition-colors"
+                className="btn-secondary !py-2 !px-4 text-xs"
               >
                 Cancel
               </button>
@@ -300,7 +300,7 @@ export default function AdminBiometrics() {
                 type="button"
                 onClick={handleResetBiometric}
                 disabled={resetting}
-                className="px-5 py-2 rounded-xl text-sm font-semibold text-white bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 transition-all flex items-center gap-2"
+                className="btn-danger !py-2 !px-4 text-xs flex items-center gap-2"
               >
                 {resetting && <Spinner size="sm" />}
                 Confirm Reset

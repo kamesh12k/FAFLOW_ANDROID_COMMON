@@ -18,6 +18,7 @@ import {
   HelpCircleIcon,
   ChevronDownIcon,
 } from '../icons'
+import { RoleBadge } from '../ui'
 import FacultyFlowLogo from '../brand/FacultyFlowLogo'
 import { BRAND_CONFIG } from '../../config/branding'
 import { useTheme } from '../../context/ThemeContext'
@@ -97,47 +98,47 @@ export default function MobileDrawer({ open, onClose, onOpenHelp }) {
     <div className="lg:hidden fixed inset-0 z-50" role="dialog" aria-modal="true" aria-label="Navigation menu">
       {/* Backdrop */}
       <div
-        className="absolute inset-0 bg-slate-950/70 backdrop-blur-xs transition-opacity"
+        className="absolute inset-0 bg-slate-900/40 backdrop-blur-xs transition-opacity"
         onClick={onClose}
         aria-hidden="true"
       />
 
       {/* Drawer panel */}
       <div
-        className="absolute inset-y-0 right-0 w-80 max-w-[85vw] bg-slate-950 text-white flex flex-col shadow-2xl border-l border-slate-800"
+        className="absolute inset-y-0 right-0 w-80 max-w-[85vw] bg-white text-slate-800 flex flex-col shadow-dialog border-l border-[#E6E8EC]"
         style={{ animation: 'mobileDrawerSlideIn 0.2s cubic-bezier(0.16, 1, 0.3, 1)' }}
       >
         {/* Drawer header */}
-        <div className="h-14 px-4 border-b border-slate-800/80 flex items-center justify-between shrink-0 bg-slate-950">
+        <div className="h-14 px-4 border-b border-[#E6E8EC] flex items-center justify-between shrink-0 bg-white">
           <div className="flex items-center gap-2.5 min-w-0">
             <FacultyFlowLogo variant="mark" size={24} />
-            <p className="font-bold text-sm tracking-tight truncate">
+            <p className="font-bold text-sm text-slate-900 tracking-tight truncate">
               {app_name || BRAND_CONFIG.appName}
             </p>
           </div>
           <button
             onClick={onClose}
-            className="text-slate-400 hover:text-white p-1.5 rounded-lg hover:bg-slate-800 transition-colors shrink-0 outline-none focus-visible:ring-2 focus-visible:ring-primary-500"
+            className="text-slate-400 hover:text-slate-700 p-1.5 rounded-lg hover:bg-slate-100 transition-colors shrink-0 outline-none focus-visible:ring-2 focus-visible:ring-primary-600"
             aria-label="Close menu"
           >
             <CloseIcon className="w-5 h-5" />
           </button>
         </div>
 
-        {/* User Card */}
-        <div className="px-4 py-3 border-b border-slate-800/60 bg-slate-900/40 shrink-0">
+        {/* User Identity Card */}
+        <div className="px-4 py-3 border-b border-slate-100 bg-slate-50/80 shrink-0">
           <div className="flex items-center gap-2.5 min-w-0">
             <div className="relative shrink-0">
-              <div className="w-8 h-8 rounded-lg bg-primary-600/20 border border-primary-500/30 text-primary-400 flex items-center justify-center text-xs font-bold">
+              <div className="w-8 h-8 rounded-lg bg-primary-50 border border-primary-200 text-primary-700 flex items-center justify-center text-xs font-bold">
                 {userInitial}
               </div>
-              <span className="absolute -bottom-0.5 -right-0.5 w-2 h-2 rounded-full bg-emerald-500 ring-2 ring-slate-950" />
+              <span className="absolute -bottom-0.5 -right-0.5 w-2 h-2 rounded-full bg-emerald-500 ring-2 ring-white" />
             </div>
-            <div className="min-w-0">
-              <p className="text-xs font-semibold text-white truncate leading-tight">{user?.name}</p>
-              <p className="text-[10px] uppercase font-bold tracking-wider text-slate-400 mt-0.5 leading-none">
-                {user?.role?.replace(/_/g, ' ')}
-              </p>
+            <div className="min-w-0 flex-1">
+              <p className="text-xs font-bold text-slate-900 truncate leading-tight">{user?.name}</p>
+              <div className="mt-1">
+                <RoleBadge role={user?.role} className="text-[10px] py-0 px-2" />
+              </div>
             </div>
           </div>
         </div>
@@ -156,18 +157,18 @@ export default function MobileDrawer({ open, onClose, onOpenHelp }) {
                   <button
                     type="button"
                     onClick={() => toggleSection(group.section)}
-                    className="w-full flex items-center justify-between px-2 py-1 text-[11px] font-bold uppercase tracking-wider text-slate-400 hover:text-slate-200 transition-colors select-none"
+                    className="w-full flex items-center justify-between px-2 py-1 text-[11px] font-bold uppercase tracking-wider text-slate-500 hover:text-slate-800 transition-colors select-none"
                     aria-expanded={!isCollapsed}
                   >
                     <span className="flex items-center gap-1.5 truncate">
                       <ChevronDownIcon
-                        className={`w-3 h-3 text-slate-500 transition-transform duration-200 shrink-0 ${
+                        className={`w-3 h-3 text-slate-400 transition-transform duration-200 shrink-0 ${
                           isCollapsed ? '-rotate-90' : 'rotate-0'
                         }`}
                       />
                       <span className="truncate">{group.section}</span>
                     </span>
-                    <span className="text-[10px] font-mono text-slate-500">
+                    <span className="text-[10px] font-mono text-slate-400">
                       {group.items.length}
                     </span>
                   </button>
@@ -182,10 +183,10 @@ export default function MobileDrawer({ open, onClose, onOpenHelp }) {
                         end={item.end}
                         onClick={onClose}
                         className={({ isActive }) =>
-                          `relative flex items-center justify-between px-3 py-2 rounded-lg text-xs font-medium transition-all group ${
+                          `relative flex items-center justify-between px-3 py-2 rounded-lg text-xs font-semibold transition-all group ${
                             isActive
-                              ? 'bg-primary-500/15 text-primary-200 font-semibold border border-primary-500/30 shadow-2xs'
-                              : 'text-slate-300 hover:text-white hover:bg-slate-800/60 border border-transparent'
+                              ? 'bg-primary-50 text-primary-700 font-bold border border-primary-200/80 shadow-2xs'
+                              : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100/70 border border-transparent'
                           }`
                         }
                       >
@@ -193,14 +194,14 @@ export default function MobileDrawer({ open, onClose, onOpenHelp }) {
                           <>
                             {isActive && (
                               <span
-                                className="absolute left-0.5 top-1.5 bottom-1.5 w-1 rounded-full bg-primary-500"
+                                className="absolute left-0 top-1 bottom-1 w-1 rounded-r-full bg-primary-600"
                                 aria-hidden="true"
                               />
                             )}
                             <div className="flex items-center gap-3 min-w-0">
                               <span
                                 className={`w-4.5 h-4.5 shrink-0 ${
-                                  isActive ? 'text-primary-400' : 'text-slate-400 group-hover:text-slate-200'
+                                  isActive ? 'text-primary-600' : 'text-slate-500 group-hover:text-slate-800'
                                 }`}
                               >
                                 {item.icon}
@@ -208,7 +209,7 @@ export default function MobileDrawer({ open, onClose, onOpenHelp }) {
                               <span className="truncate">{item.label}</span>
                             </div>
                             {item.to === '/announcements' && unreadCount > 0 && (
-                              <span className="px-1.5 py-0.2 rounded-full text-[10px] font-bold bg-rose-500 text-white shrink-0 shadow-2xs">
+                              <span className="px-1.5 py-0.2 rounded-full text-[10px] font-bold bg-rose-600 text-white shrink-0 shadow-2xs">
                                 {unreadCount > 99 ? '99+' : unreadCount}
                               </span>
                             )}
@@ -224,20 +225,20 @@ export default function MobileDrawer({ open, onClose, onOpenHelp }) {
         </nav>
 
         {/* Drawer footer */}
-        <div className="px-3 border-t border-slate-800/80 py-3 space-y-1 shrink-0 bg-slate-950 pb-[max(20px,env(safe-area-inset-bottom))]">
+        <div className="px-3 border-t border-[#E6E8EC] py-3 space-y-1 shrink-0 bg-white pb-[max(20px,env(safe-area-inset-bottom))]">
           {isAdmin && !isPrincipal && (
             <NavLink
               to="/admin/settings"
               onClick={onClose}
               className={({ isActive }) =>
-                `flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-medium transition-colors ${
+                `flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-semibold transition-colors ${
                   isActive
-                    ? 'bg-primary-500/15 text-primary-200 font-semibold border border-primary-500/30'
-                    : 'text-slate-300 hover:text-white hover:bg-slate-800/60'
+                    ? 'bg-primary-50 text-primary-700 font-bold border border-primary-200/80'
+                    : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100/70'
                 }`
               }
             >
-              <SettingsIcon className="w-4.5 h-4.5 shrink-0" />
+              <SettingsIcon className="w-4.5 h-4.5 shrink-0 text-slate-500" />
               <span>Settings</span>
             </NavLink>
           )}
@@ -247,14 +248,14 @@ export default function MobileDrawer({ open, onClose, onOpenHelp }) {
               to="/teacher/preferences"
               onClick={onClose}
               className={({ isActive }) =>
-                `flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-medium transition-colors ${
+                `flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-semibold transition-colors ${
                   isActive
-                    ? 'bg-primary-500/15 text-primary-200 font-semibold border border-primary-500/30'
-                    : 'text-slate-300 hover:text-white hover:bg-slate-800/60'
+                    ? 'bg-primary-50 text-primary-700 font-bold border border-primary-200/80'
+                    : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100/70'
                 }`
               }
             >
-              <SettingsIcon className="w-4.5 h-4.5 shrink-0" />
+              <SettingsIcon className="w-4.5 h-4.5 shrink-0 text-slate-500" />
               <span>Substitution Preferences</span>
             </NavLink>
           )}
@@ -265,17 +266,17 @@ export default function MobileDrawer({ open, onClose, onOpenHelp }) {
               onClose()
               if (onOpenHelp) onOpenHelp()
             }}
-            className="flex items-center gap-2.5 w-full px-3 py-2 rounded-lg text-xs font-medium text-slate-300 hover:text-white hover:bg-slate-800/60 transition-colors text-left"
+            className="flex items-center gap-2.5 w-full px-3 py-2 rounded-lg text-xs font-semibold text-slate-600 hover:text-slate-900 hover:bg-slate-100/70 transition-colors text-left"
           >
-            <HelpCircleIcon className="w-4.5 h-4.5 shrink-0" />
+            <HelpCircleIcon className="w-4.5 h-4.5 shrink-0 text-slate-500" />
             <span>Help & Guides</span>
           </button>
 
           <button
             onClick={handleLogout}
-            className="flex items-center gap-2.5 w-full px-3 py-2 rounded-lg text-xs font-medium text-slate-300 hover:text-rose-400 hover:bg-rose-500/10 transition-colors"
+            className="flex items-center gap-2.5 w-full px-3 py-2 rounded-lg text-xs font-bold text-rose-600 hover:bg-rose-50 transition-colors"
           >
-            <LogoutIcon className="w-4.5 h-4.5 shrink-0" />
+            <LogoutIcon className="w-4.5 h-4.5 shrink-0 text-rose-500" />
             <span>Sign out</span>
           </button>
         </div>

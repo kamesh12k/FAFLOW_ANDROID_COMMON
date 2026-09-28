@@ -34,30 +34,30 @@ const NavItem = memo(function NavItem({ to, icon, label, end, collapsed, unreadC
       to={to}
       end={end}
       className={({ isActive }) =>
-        `relative flex items-center justify-between rounded-lg text-xs font-medium transition-all duration-150 group outline-none focus-visible:ring-2 focus-visible:ring-primary-500/60 ${
+        `relative flex items-center justify-between rounded-lg text-xs font-semibold transition-all duration-150 group outline-none focus-visible:ring-2 focus-visible:ring-primary-600 focus-visible:ring-offset-1 ${
           collapsed
             ? 'w-10 h-9 mx-auto justify-center'
-            : 'px-2.5 py-1.5'
+            : 'px-3 py-2'
         } ${
           isActive
             ? isDark
-              ? 'bg-primary-500/15 text-primary-200 font-semibold border border-primary-500/30 shadow-2xs'
-              : 'bg-primary-50 text-primary-900 font-semibold border border-primary-200/80 shadow-2xs'
+              ? 'bg-primary-500/15 text-primary-200 font-bold border border-primary-500/30 shadow-2xs'
+              : 'bg-primary-50 text-primary-700 font-bold border border-primary-200/80 shadow-2xs'
             : isDark
             ? 'text-slate-400 hover:text-slate-100 hover:bg-slate-800/60 border border-transparent'
-            : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100 border border-transparent'
+            : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100/70 border border-transparent'
         }`
       }
     >
       {({ isActive }) => (
         <>
-          {/* Active Accent Indicator Pill */}
+          {/* Active Accent Indicator Bar */}
           {isActive && (
             <span
-              className={`absolute rounded-full bg-primary-500 transition-all ${
+              className={`absolute rounded-r-full bg-primary-600 transition-all ${
                 collapsed
-                  ? 'left-0.5 top-2 bottom-2 w-1'
-                  : 'left-0.5 top-1.5 bottom-1.5 w-1'
+                  ? 'left-0 top-1.5 bottom-1.5 w-1'
+                  : 'left-0 top-1 bottom-1 w-1'
               }`}
               aria-hidden="true"
             />
@@ -68,7 +68,7 @@ const NavItem = memo(function NavItem({ to, icon, label, end, collapsed, unreadC
             <span
               className={`w-4.5 h-4.5 shrink-0 flex items-center justify-center transition-colors ${
                 isActive
-                  ? 'text-primary-500 dark:text-primary-400'
+                  ? isDark ? 'text-primary-300' : 'text-primary-600'
                   : isDark
                   ? 'text-slate-400 group-hover:text-slate-200'
                   : 'text-slate-500 group-hover:text-slate-800'
@@ -228,11 +228,11 @@ export default function Sidebar({ onOpenHelp }) {
     window.dispatchEvent(new CustomEvent('faflow:open-search'))
   }
 
-  const isDark = themePreset?.sidebarStyle !== 'light'
+  const isDark = themePreset?.sidebarStyle === 'dark' || Boolean(themePreset?.isDarkMode)
 
   const sidebarCls = isDark
-    ? 'bg-slate-950 border-slate-800/80 text-white'
-    : 'bg-white border-slate-200/80 text-slate-800'
+    ? 'bg-slate-950 border-slate-800 text-white'
+    : 'bg-white border-[#E6E8EC] text-slate-800 shadow-[1px_0_3px_0_rgba(16,24,40,0.04)]'
 
   const userInitial = user?.name ? user.name.charAt(0).toUpperCase() : 'U'
 
@@ -246,7 +246,7 @@ export default function Sidebar({ onOpenHelp }) {
       {/* ─── Header: 56px (h-14) strictly aligned with TopBar ─── */}
       <div
         className={`h-14 shrink-0 px-3.5 border-b flex items-center justify-between gap-2.5 ${
-          isDark ? 'border-slate-800/80 bg-slate-950' : 'border-slate-100 bg-white'
+          isDark ? 'border-slate-800 bg-slate-950' : 'border-[#E6E8EC] bg-white'
         }`}
       >
         {!collapsed ? (
@@ -403,7 +403,7 @@ export default function Sidebar({ onOpenHelp }) {
       {/* ─── Footer: Secondary Actions & User Profile Card ─── */}
       <div
         className={`shrink-0 px-2.5 py-2.5 border-t space-y-1 mt-auto z-10 ${
-          isDark ? 'border-slate-800/80 bg-slate-950' : 'border-slate-100 bg-white'
+          isDark ? 'border-slate-800 bg-slate-950' : 'border-[#E6E8EC] bg-white'
         }`}
       >
         {/* Settings link for Admin */}
@@ -496,21 +496,27 @@ export default function Sidebar({ onOpenHelp }) {
             className={`p-2 rounded-xl mt-1.5 flex items-center justify-between border ${
               isDark
                 ? 'bg-slate-900/60 border-slate-800/80 hover:bg-slate-900'
-                : 'bg-slate-50 border-slate-200/70 hover:bg-slate-100/60'
+                : 'bg-slate-50 border-slate-200/80 hover:bg-slate-100/70'
             } transition-colors`}
           >
             <div className="flex items-center gap-2.5 min-w-0">
               <div className="relative shrink-0">
-                <div className="w-7 h-7 rounded-lg bg-primary-600/15 border border-primary-500/30 text-primary-400 flex items-center justify-center text-xs font-bold">
+                <div
+                  className={`w-7 h-7 rounded-lg flex items-center justify-center text-xs font-bold ${
+                    isDark
+                      ? 'bg-primary-600/15 border border-primary-500/30 text-primary-400'
+                      : 'bg-primary-50 border border-primary-200 text-primary-700'
+                  }`}
+                >
                   {userInitial}
                 </div>
                 <span
-                  className="absolute -bottom-0.5 -right-0.5 w-2 h-2 rounded-full bg-emerald-500 ring-2 ring-slate-950"
+                  className="absolute -bottom-0.5 -right-0.5 w-2 h-2 rounded-full bg-emerald-500 ring-2 ring-white"
                   title="Online"
                 />
               </div>
               <div className="min-w-0">
-                <p className="text-xs font-semibold truncate leading-tight">{user?.name}</p>
+                <p className="text-xs font-semibold truncate leading-tight text-slate-900">{user?.name}</p>
                 <p
                   className={`text-[10px] uppercase font-bold tracking-wider mt-0.5 leading-none ${
                     isDark ? 'text-slate-400' : 'text-slate-500'
@@ -523,7 +529,7 @@ export default function Sidebar({ onOpenHelp }) {
             <button
               type="button"
               onClick={handleLogout}
-              className="p-1.5 rounded-lg transition-colors hover:bg-rose-500/10 text-slate-400 hover:text-rose-400 shrink-0 outline-none focus-visible:ring-2 focus-visible:ring-rose-500/50"
+              className="p-1.5 rounded-lg transition-colors hover:bg-rose-50 text-slate-400 hover:text-rose-600 shrink-0 outline-none focus-visible:ring-2 focus-visible:ring-rose-500/50"
               title="Sign out"
               aria-label="Sign out"
             >
@@ -536,7 +542,7 @@ export default function Sidebar({ onOpenHelp }) {
             onClick={handleLogout}
             aria-label="Sign out"
             title="Sign out"
-            className="w-10 h-9 mx-auto flex items-center justify-center rounded-lg text-slate-400 hover:text-rose-400 hover:bg-rose-500/10 transition-all group relative mt-1 outline-none focus-visible:ring-2 focus-visible:ring-rose-500/50"
+            className="w-10 h-9 mx-auto flex items-center justify-center rounded-lg text-slate-400 hover:text-rose-500 hover:bg-rose-50 transition-all group relative mt-1 outline-none focus-visible:ring-2 focus-visible:ring-rose-500/50"
           >
             <LogoutIcon className="w-4.5 h-4.5 shrink-0" />
             <div className="absolute left-[68px] top-1/2 -translate-y-1/2 px-2.5 py-1 bg-slate-900 text-white text-xs font-medium rounded-md shadow-xl border border-slate-800 z-50 whitespace-nowrap pointer-events-none">

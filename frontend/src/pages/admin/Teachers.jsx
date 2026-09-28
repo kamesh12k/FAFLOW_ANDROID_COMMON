@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { teachersApi, departmentsApi, campusOperationsApi } from '../../api/services'
-import { Spinner, ErrorAlert, Modal } from '../../components/ui'
+import { teachersApi, departmentsApi, campusOperationsApi, biometricsApi } from '../../api/services'
+import { Spinner, ErrorAlert, Modal, StatusBadge, Button } from '../../components/ui'
 
 // ---------- tiny inline icons (no extra deps) ----------
 const Icon = ({ children, className = 'h-4 w-4' }) => (
@@ -20,6 +20,9 @@ const IconPlus = (p) => <Icon {...p}><path d="M12 5v14M5 12h14" /></Icon>
 const IconDice = (p) => <Icon {...p}><rect x="3" y="3" width="18" height="18" rx="3" /><circle cx="8" cy="8" r="1" fill="currentColor" /><circle cx="16" cy="16" r="1" fill="currentColor" /><circle cx="12" cy="12" r="1" fill="currentColor" /></Icon>
 const IconEye = (p) => <Icon {...p}><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z" /><circle cx="12" cy="12" r="3" /></Icon>
 const IconEyeOff = (p) => <Icon {...p}><path d="M17.94 17.94A10.9 10.9 0 0 1 12 19c-6.5 0-10-7-10-7a18.6 18.6 0 0 1 4.22-5.15M9.9 4.24A9.9 9.9 0 0 1 12 4c6.5 0 10 7 10 7a18.5 18.5 0 0 1-2.16 3.19M14.12 14.12a3 3 0 1 1-4.24-4.24" /><path d="M2 2l20 20" /></Icon>
+const IconGrid = (p) => <Icon {...p}><rect x="3" y="3" width="7" height="7" rx="1" /><rect x="14" y="3" width="7" height="7" rx="1" /><rect x="14" y="14" width="7" height="7" rx="1" /><rect x="3" y="14" width="7" height="7" rx="1" /></Icon>
+const IconList = (p) => <Icon {...p}><line x1="8" y1="6" x2="21" y2="6" /><line x1="8" y1="12" x2="21" y2="12" /><line x1="8" y1="18" x2="21" y2="18" /><line x1="3" y1="6" x2="3.01" y2="6" /><line x1="3" y1="12" x2="3.01" y2="12" /><line x1="3" y1="18" x2="3.01" y2="18" /></Icon>
+const IconShield = (p) => <Icon {...p}><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" /></Icon>
 
 // ---------- helpers ----------
 const PALETTE = [
@@ -103,10 +106,33 @@ export default function Teachers() {
   const [search, setSearch] = useState('')
   const [deptFilter, setDeptFilter] = useState('all')
   const [statusFilter, setStatusFilter] = useState('all')
+  const [biometricFilter, setBiometricFilter] = useState('all') // 'all' | 'enrolled' | 'pending'
+  const [viewMode, setViewMode] = useState('table') // 'table' | 'grid'
   const [sortConfig, setSortConfig] = useState({ key: 'name', direction: 'asc' })
   const [page, setPage] = useState(1)
   const [pageSize, setPageSize] = useState(10)
   const searchInputRef = useRef(null)
+
+  // Reset Biometrics State
+  const [resetBioTeacher, setResetBioTeacher] = useState(null)
+  const [resetBioBusy, setResetBioBusy] = useState(false)
+  const [resetBioError, setResetBioError] = useState('')
+
+  const handleResetBiometrics = async () => {
+    if (!resetBioTeacher) return
+    setResetBioBusy(true)
+    setResetBioError('')
+    try {
+      await biometricsApi.resetBiometrics(resetBioTeacher.id)
+      setResetBioTeacher(null)
+      load()
+      showBanner('success', `Biometric face credentials reset for ${resetBioTeacher.name}. They will be prompted to re-enroll.`)
+    } catch (err) {
+      setResetBioError(err.response?.data?.detail || 'Failed to reset biometrics.')
+    } finally {
+      setResetBioBusy(false)
+    }
+  }
 
   // Selection / bulk actions
   const [selected, setSelected] = useState(() => new Set())
@@ -271,7 +297,7 @@ export default function Teachers() {
   useEffect(() => {
     setPage(1)
     setSelected(new Set())
-  }, [search, deptFilter, statusFilter, pageSize])
+  }, [search, deptFilter, statusFilter, biometricFilter, pageSize])
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase()
@@ -279,9 +305,10 @@ export default function Teachers() {
       const matchesSearch = !q || t.name.toLowerCase().includes(q) || t.email.toLowerCase().includes(q)
       const matchesDept = deptFilter === 'all' || (t.department || '') === deptFilter
       const matchesStatus = statusFilter === 'all' || (statusFilter === 'active' ? t.is_active : !t.is_active)
-      return matchesSearch && matchesDept && matchesStatus
+      const matchesBiometric = biometricFilter === 'all' || (biometricFilter === 'enrolled' ? Boolean(t.has_face_enrolled) : !t.has_face_enrolled)
+      return matchesSearch && matchesDept && matchesStatus && matchesBiometric
     })
-  }, [teachers, search, deptFilter, statusFilter])
+  }, [teachers, search, deptFilter, statusFilter, biometricFilter])
 
   const sorted = useMemo(() => {
     const arr = [...filtered]
@@ -290,6 +317,7 @@ export default function Teachers() {
     arr.sort((a, b) => {
       let av, bv
       if (key === 'is_active') { av = a.is_active ? 1 : 0; bv = b.is_active ? 1 : 0 }
+      else if (key === 'has_face_enrolled') { av = a.has_face_enrolled ? 1 : 0; bv = b.has_face_enrolled ? 1 : 0 }
       else { av = String(a[key] || '').toLowerCase(); bv = String(b[key] || '').toLowerCase() }
       if (av < bv) return -1 * dir
       if (av > bv) return 1 * dir
@@ -308,11 +336,12 @@ export default function Teachers() {
     total: teachers.length,
     active: teachers.filter(t => t.is_active).length,
     disabled: teachers.filter(t => !t.is_active).length,
+    enrolled: teachers.filter(t => t.has_face_enrolled).length,
     departments: departments.length,
   }), [teachers, departments])
 
-  const filtersActive = search.trim() !== '' || deptFilter !== 'all' || statusFilter !== 'all'
-  const resetFilters = () => { setSearch(''); setDeptFilter('all'); setStatusFilter('all') }
+  const filtersActive = search.trim() !== '' || deptFilter !== 'all' || statusFilter !== 'all' || biometricFilter !== 'all'
+  const resetFilters = () => { setSearch(''); setDeptFilter('all'); setStatusFilter('all'); setBiometricFilter('all') }
 
   const handleSort = (key) => {
     setSortConfig(prev => prev.key === key ? { key, direction: prev.direction === 'asc' ? 'desc' : 'asc' } : { key, direction: 'asc' })
@@ -497,167 +526,270 @@ export default function Teachers() {
       {/* Stats */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         <StatCard label="Total Teachers" value={stats.total} />
-        <StatCard label="Active" value={stats.active} accent="text-green-600" />
-        <StatCard label="Disabled" value={stats.disabled} accent="text-gray-500" />
-        <StatCard label="Departments" value={stats.departments} accent="text-primary-600" />
+        <StatCard label="Active" value={stats.active} accent="text-emerald-700" />
+        <StatCard label="Biometrics Enrolled" value={`${stats.enrolled}/${stats.total}`} accent="text-primary-700" />
+        <StatCard label="Departments" value={stats.departments} accent="text-slate-800" />
       </div>
 
       {/* Toolbar */}
-      <div className="card p-3 flex flex-col sm:flex-row sm:items-center gap-3">
+      <div className="card p-3 flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">
         <div className="relative flex-1 min-w-[200px]">
-          <IconSearch className="h-4 w-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+          <IconSearch className="h-4 w-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
           <input
             ref={searchInputRef}
             type="text"
             value={search}
             onChange={e => setSearch(e.target.value)}
-            placeholder="Search by name or email…  (press / to focus)"
+            placeholder="Search by name or email… (press / to focus)"
             className="input pl-9"
           />
           {search && (
-            <button onClick={() => setSearch('')} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
+            <button onClick={() => setSearch('')} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">
               <IconX className="h-4 w-4" />
             </button>
           )}
         </div>
-        <select value={deptFilter} onChange={e => setDeptFilter(e.target.value)} className="input sm:w-48">
-          <option value="all">All departments</option>
-          {departments.map(d => <option key={d.id} value={d.name}>{d.name}</option>)}
-        </select>
-        <select value={statusFilter} onChange={e => setStatusFilter(e.target.value)} className="input sm:w-40">
-          <option value="all">All statuses</option>
-          <option value="active">Active only</option>
-          <option value="disabled">Disabled only</option>
-        </select>
-        {filtersActive && (
-          <button
-            onClick={resetFilters}
-            className="text-xs text-rose-600 hover:text-rose-800 font-bold px-2.5 py-1.5 bg-rose-50 hover:bg-rose-100 rounded-lg transition-colors"
-          >
-            ✕ Clear All Filters
+        <div className="flex flex-wrap items-center gap-2">
+          <select value={deptFilter} onChange={e => setDeptFilter(e.target.value)} className="input sm:w-44 text-xs font-semibold">
+            <option value="all">All departments</option>
+            {departments.map(d => <option key={d.id} value={d.name}>{d.name}</option>)}
+          </select>
+          <select value={statusFilter} onChange={e => setStatusFilter(e.target.value)} className="input sm:w-36 text-xs font-semibold">
+            <option value="all">All statuses</option>
+            <option value="active">Active only</option>
+            <option value="disabled">Disabled only</option>
+          </select>
+          <select value={biometricFilter} onChange={e => setBiometricFilter(e.target.value)} className="input sm:w-36 text-xs font-semibold">
+            <option value="all">All biometrics</option>
+            <option value="enrolled">Enrolled only</option>
+            <option value="pending">Pending only</option>
+          </select>
+
+          {/* Grid / Table View Mode Toggle */}
+          <div className="inline-flex rounded-xl border border-[var(--color-border-control,#828C99)] p-0.5 bg-slate-50">
+            <button
+              type="button"
+              onClick={() => setViewMode('table')}
+              className={`p-1.5 rounded-lg transition-colors ${viewMode === 'table' ? 'bg-white text-primary-700 shadow-2xs font-bold' : 'text-slate-500 hover:text-slate-800'}`}
+              title="Table view"
+              aria-label="Table view"
+            >
+              <IconList className="w-4 h-4" />
+            </button>
+            <button
+              type="button"
+              onClick={() => setViewMode('grid')}
+              className={`p-1.5 rounded-lg transition-colors ${viewMode === 'grid' ? 'bg-white text-primary-700 shadow-2xs font-bold' : 'text-slate-500 hover:text-slate-800'}`}
+              title="Grid card view"
+              aria-label="Grid card view"
+            >
+              <IconGrid className="w-4 h-4" />
+            </button>
+          </div>
+
+          {filtersActive && (
+            <button
+              onClick={resetFilters}
+              className="text-xs text-rose-700 hover:text-rose-800 font-bold px-2.5 py-1.5 bg-rose-50 hover:bg-rose-100 rounded-xl transition-colors"
+            >
+              ✕ Reset
+            </button>
+          )}
+          <button onClick={handleExportCsv} disabled={sorted.length === 0} className="btn-secondary text-xs inline-flex items-center gap-1.5 disabled:opacity-50">
+            <IconDownload className="h-4 w-4" /> CSV
           </button>
-        )}
-        <button onClick={handleExportCsv} disabled={sorted.length === 0} className="btn-secondary text-sm inline-flex items-center gap-1.5 disabled:opacity-50">
-          <IconDownload className="h-4 w-4" /> Export CSV
-        </button>
+        </div>
       </div>
 
       {/* Bulk action bar */}
       {selected.size > 0 && (
-        <div className="card p-3 flex flex-wrap items-center gap-3 bg-primary-50 border-primary-100">
-          <span className="text-sm font-semibold text-primary-800">{selected.size} selected</span>
-          <button disabled={bulkBusy} onClick={() => handleBulkStatus(true)} className="text-xs font-semibold text-green-700 hover:underline disabled:opacity-50">Activate</button>
-          <button disabled={bulkBusy} onClick={() => handleBulkStatus(false)} className="text-xs font-semibold text-gray-600 hover:underline disabled:opacity-50">Disable</button>
-          <button disabled={bulkBusy} onClick={() => setBulkDeleteOpen(true)} className="text-xs font-semibold text-red-600 hover:underline disabled:opacity-50">Delete</button>
-          <button onClick={() => setSelected(new Set())} className="ml-auto text-xs text-rose-600 hover:underline font-semibold">Clear All Selected</button>
+        <div className="card p-3 flex flex-wrap items-center gap-3 bg-primary-50 border-primary-200">
+          <span className="text-sm font-bold text-primary-900">{selected.size} selected</span>
+          <button disabled={bulkBusy} onClick={() => handleBulkStatus(true)} className="text-xs font-bold text-emerald-800 hover:underline disabled:opacity-50">Activate</button>
+          <button disabled={bulkBusy} onClick={() => handleBulkStatus(false)} className="text-xs font-bold text-slate-700 hover:underline disabled:opacity-50">Disable</button>
+          <button disabled={bulkBusy} onClick={() => setBulkDeleteOpen(true)} className="text-xs font-bold text-rose-700 hover:underline disabled:opacity-50">Delete</button>
+          <button onClick={() => setSelected(new Set())} className="ml-auto text-xs text-rose-700 hover:underline font-bold">Clear Selected</button>
         </div>
       )}
 
-      <div className="card overflow-hidden">
-        {loading ? (
-          <div className="flex justify-center py-12"><Spinner /></div>
-        ) : (
-          <>
-            <div className="overflow-x-auto" style={{ WebkitOverflowScrolling: 'touch' }}>
-              <table className="w-full text-sm" style={{ minWidth: '640px' }}>
-                <thead className="bg-gray-50 border-b border-gray-100">
-                  <tr>
-                    <th className="px-5 py-3 w-10">
-                      <input
-                        type="checkbox"
-                        checked={allOnPageSelected}
-                        onChange={toggleSelectAllOnPage}
-                        disabled={pageItems.length === 0}
-                        aria-label="Select all teachers on this page"
-                      />
-                    </th>
-                    <SortHeader label="Name" sortKey="name" sortConfig={sortConfig} onSort={handleSort} />
-                    <SortHeader label="Email" sortKey="email" sortConfig={sortConfig} onSort={handleSort} className="hidden sm:table-cell" />
-                    <SortHeader label="Department" sortKey="department" sortConfig={sortConfig} onSort={handleSort} className="hidden md:table-cell" />
-                    <SortHeader label="Status" sortKey="is_active" sortConfig={sortConfig} onSort={handleSort} />
-                    <th className="px-5 py-3" />
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-50">
-                  {pageItems.map(t => {
-                    const dc = colorFor(t.department || '')
-                    return (
-                      <tr key={t.id} className={`hover:bg-gray-50/50 ${selected.has(t.id) ? 'bg-primary-50/40' : ''}`}>
-                        <td className="px-5 py-3">
-                          <input type="checkbox" checked={selected.has(t.id)} onChange={() => toggleSelectOne(t.id)} aria-label={`Select ${t.name}`} />
-                        </td>
-                        <td className="px-5 py-3">
-                          <div className="flex items-center gap-2.5">
-                            <Avatar name={t.name} />
-                            <div>
-                              <div className="font-medium text-gray-800">{t.name}</div>
-                              <div className="text-xs text-gray-400 sm:hidden">{t.email}</div>
-                            </div>
-                          </div>
-                        </td>
-                        <td className="px-5 py-3 text-gray-500 hidden sm:table-cell">
-                          <div className="flex items-center gap-1.5">
-                            <span>{t.email}</span>
-                            <button onClick={() => handleCopyEmail(t)} className="text-gray-300 hover:text-gray-500" title="Copy email">
-                              {copiedId === t.id ? <IconCheck className="h-3.5 w-3.5 text-green-500" /> : <IconCopy className="h-3.5 w-3.5" />}
-                            </button>
-                          </div>
-                        </td>
-                        <td className="px-5 py-3 hidden md:table-cell">
-                          {t.department
-                            ? <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${dc.bg} ${dc.text}`}>{t.department}</span>
-                            : <span className="text-gray-400">—</span>}
-                        </td>
-                        <td className="px-5 py-3">
-                          <span className={`text-xs font-semibold px-2.5 py-0.5 rounded-full ${t.is_active ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}`}>
-                            {t.is_active ? 'Active' : 'Disabled'}
-                          </span>
-                        </td>
-                        <td className="px-5 py-3 text-right">
-                          <div className="flex justify-end gap-3">
-                            <button onClick={() => handleOpenPreferencesModal(t)} className="text-xs text-amber-600 hover:text-amber-800 font-semibold hover:underline">Preferences</button>
-                            <button onClick={() => handleOpenEditModal(t)} className="text-xs text-primary-600 hover:text-primary-800 font-semibold hover:underline">Edit</button>
-                            <button onClick={() => handleOpenDelete(t)} className="text-xs text-red-500 hover:text-red-700 font-semibold hover:underline">Remove</button>
-                          </div>
-                        </td>
-                      </tr>
-                    )
-                  })}
-                  {teachers.length === 0 && (
-                    <tr><td colSpan={6} className="px-5 py-10 text-center text-sm text-gray-400">No teachers yet. Add one above.</td></tr>
-                  )}
-                  {teachers.length > 0 && sorted.length === 0 && (
-                    <tr>
-                      <td colSpan={6} className="px-5 py-10 text-center text-sm text-gray-400">
-                        No teachers match your search or filters.{' '}
-                        {filtersActive && <button onClick={resetFilters} className="text-primary-600 font-semibold hover:underline">Reset filters</button>}
-                      </td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
+      {/* Main Content Area: Table vs Grid Card View */}
+      {loading ? (
+        <div className="flex justify-center py-12"><Spinner /></div>
+      ) : viewMode === 'grid' ? (
+        /* GRID CARD VIEW */
+        <div className="space-y-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {pageItems.map((t) => {
+              const dc = colorFor(t.department || '')
+              return (
+                <div key={t.id} className="card p-5 flex flex-col justify-between gap-4 hover:shadow-card-hover transition-all">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex items-center gap-3 min-w-0">
+                      <Avatar name={t.name} />
+                      <div className="min-w-0">
+                        <h4 className="text-sm font-bold text-slate-900 truncate">{t.name}</h4>
+                        <div className="flex items-center gap-1 text-xs text-slate-500 truncate mt-0.5">
+                          <span className="truncate">{t.email}</span>
+                          <button onClick={() => handleCopyEmail(t)} className="text-slate-400 hover:text-slate-700 shrink-0" title="Copy email">
+                            {copiedId === t.id ? <IconCheck className="h-3 w-3 text-emerald-600" /> : <IconCopy className="h-3 w-3" />}
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                    <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full shrink-0 ${t.is_active ? 'bg-emerald-50 text-emerald-800 border border-emerald-200' : 'bg-slate-100 text-slate-600 border border-slate-200'}`}>
+                      {t.is_active ? 'Active' : 'Disabled'}
+                    </span>
+                  </div>
 
-            {sorted.length > 0 && (
-              <div className="flex flex-col sm:flex-row items-center justify-between gap-3 px-5 py-3 border-t border-gray-100 text-xs text-gray-500">
-                <span>Showing {startIdx}–{endIdx} of {sorted.length}</span>
-                <div className="flex items-center gap-3">
-                  <select value={pageSize} onChange={e => setPageSize(Number(e.target.value))} className="input !py-1 !text-xs w-auto">
-                    <option value={10}>10 / page</option>
-                    <option value={25}>25 / page</option>
-                    <option value={50}>50 / page</option>
-                  </select>
-                  <div className="flex items-center gap-2">
-                    <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={currentPage === 1} className="btn-secondary !py-1 !px-2.5 text-xs disabled:opacity-40">Prev</button>
-                    <span>Page {currentPage} of {totalPages}</span>
-                    <button onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={currentPage === totalPages} className="btn-secondary !py-1 !px-2.5 text-xs disabled:opacity-40">Next</button>
+                  <div className="flex items-center justify-between gap-2 pt-3 border-t border-slate-100 text-xs">
+                    <span className={`font-semibold px-2 py-0.5 rounded-full text-[11px] truncate ${dc.bg} ${dc.text}`}>
+                      {t.department || 'General'}
+                    </span>
+                    <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold border ${t.has_face_enrolled ? 'bg-emerald-50 text-emerald-800 border-emerald-200' : 'bg-amber-50 text-amber-800 border-amber-200'}`}>
+                      <span className={`w-1.5 h-1.5 rounded-full ${t.has_face_enrolled ? 'bg-emerald-600' : 'bg-amber-600'}`} />
+                      {t.has_face_enrolled ? 'Biometric Enrolled' : 'Biometric Pending'}
+                    </span>
+                  </div>
+
+                  <div className="flex items-center justify-end gap-1.5 pt-2 border-t border-slate-100">
+                    <button onClick={() => handleOpenPreferencesModal(t)} className="text-xs text-slate-600 hover:text-slate-900 font-semibold px-2 py-1 rounded-lg hover:bg-slate-100">Prefs</button>
+                    <button onClick={() => setResetBioTeacher(t)} className="text-xs text-amber-700 hover:text-amber-900 font-semibold px-2 py-1 rounded-lg hover:bg-amber-50">Reset Bio</button>
+                    <button onClick={() => handleOpenEditModal(t)} className="text-xs text-primary-700 hover:text-primary-900 font-semibold px-2 py-1 rounded-lg hover:bg-primary-50">Edit</button>
+                    <button onClick={() => handleOpenDelete(t)} className="text-xs text-rose-600 hover:text-rose-800 font-semibold px-2 py-1 rounded-lg hover:bg-rose-50">Remove</button>
                   </div>
                 </div>
+              )
+            })}
+          </div>
+
+          {sorted.length > 0 && (
+            <div className="card flex flex-col sm:flex-row items-center justify-between gap-3 px-5 py-3 text-xs text-slate-500 font-medium">
+              <span>Showing {startIdx}–{endIdx} of {sorted.length}</span>
+              <div className="flex items-center gap-3">
+                <select value={pageSize} onChange={e => setPageSize(Number(e.target.value))} className="input !py-1 !text-xs w-auto">
+                  <option value={10}>10 / page</option>
+                  <option value={25}>25 / page</option>
+                  <option value={50}>50 / page</option>
+                </select>
+                <div className="flex items-center gap-2">
+                  <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={currentPage === 1} className="btn-secondary !py-1 !px-2.5 text-xs disabled:opacity-40">Prev</button>
+                  <span className="font-semibold text-slate-700">Page {currentPage} of {totalPages}</span>
+                  <button onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={currentPage === totalPages} className="btn-secondary !py-1 !px-2.5 text-xs disabled:opacity-40">Next</button>
+                </div>
               </div>
-            )}
-          </>
-        )}
-      </div>
+            </div>
+          )}
+        </div>
+      ) : (
+        /* TABLE VIEW */
+        <div className="card overflow-hidden">
+          <div className="overflow-x-auto" style={{ WebkitOverflowScrolling: 'touch' }}>
+            <table className="w-full text-sm min-w-[720px]">
+              <thead className="sticky top-0 z-10 bg-slate-50 border-b border-[#E6E8EC] text-slate-700 font-bold uppercase tracking-wider text-xs">
+                <tr>
+                  <th className="px-5 py-3 w-10">
+                    <input
+                      type="checkbox"
+                      checked={allOnPageSelected}
+                      onChange={toggleSelectAllOnPage}
+                      disabled={pageItems.length === 0}
+                      aria-label="Select all teachers on this page"
+                    />
+                  </th>
+                  <SortHeader label="Name" sortKey="name" sortConfig={sortConfig} onSort={handleSort} />
+                  <SortHeader label="Email" sortKey="email" sortConfig={sortConfig} onSort={handleSort} className="hidden sm:table-cell" />
+                  <SortHeader label="Department" sortKey="department" sortConfig={sortConfig} onSort={handleSort} className="hidden md:table-cell" />
+                  <SortHeader label="Biometrics" sortKey="has_face_enrolled" sortConfig={sortConfig} onSort={handleSort} />
+                  <SortHeader label="Status" sortKey="is_active" sortConfig={sortConfig} onSort={handleSort} />
+                  <th className="px-5 py-3 text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {pageItems.map(t => {
+                  const dc = colorFor(t.department || '')
+                  return (
+                    <tr key={t.id} className={`hover:bg-slate-50/70 transition-colors ${selected.has(t.id) ? 'bg-primary-50/40' : ''}`}>
+                      <td className="px-5 py-3">
+                        <input type="checkbox" checked={selected.has(t.id)} onChange={() => toggleSelectOne(t.id)} aria-label={`Select ${t.name}`} />
+                      </td>
+                      <td className="px-5 py-3">
+                        <div className="flex items-center gap-2.5">
+                          <Avatar name={t.name} />
+                          <div>
+                            <div className="font-bold text-slate-900">{t.name}</div>
+                            <div className="text-xs text-slate-400 sm:hidden">{t.email}</div>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-5 py-3 text-slate-600 hidden sm:table-cell font-medium">
+                        <div className="flex items-center gap-1.5">
+                          <span>{t.email}</span>
+                          <button onClick={() => handleCopyEmail(t)} className="text-slate-400 hover:text-slate-700" title="Copy email">
+                            {copiedId === t.id ? <IconCheck className="h-3.5 w-3.5 text-emerald-600" /> : <IconCopy className="h-3.5 w-3.5" />}
+                          </button>
+                        </div>
+                      </td>
+                      <td className="px-5 py-3 hidden md:table-cell">
+                        {t.department
+                          ? <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${dc.bg} ${dc.text}`}>{t.department}</span>
+                          : <span className="text-slate-400">—</span>}
+                      </td>
+                      <td className="px-5 py-3">
+                        <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold border ${t.has_face_enrolled ? 'bg-emerald-50 text-emerald-800 border-emerald-200' : 'bg-amber-50 text-amber-800 border-amber-200'}`}>
+                          <span className={`w-1.5 h-1.5 rounded-full ${t.has_face_enrolled ? 'bg-emerald-600' : 'bg-amber-600'}`} />
+                          {t.has_face_enrolled ? 'Enrolled' : 'Pending'}
+                        </span>
+                      </td>
+                      <td className="px-5 py-3">
+                        <span className={`text-xs font-bold px-2.5 py-0.5 rounded-full border ${t.is_active ? 'bg-emerald-50 text-emerald-800 border-emerald-200' : 'bg-slate-100 text-slate-600 border-slate-200'}`}>
+                          {t.is_active ? 'Active' : 'Disabled'}
+                        </span>
+                      </td>
+                      <td className="px-5 py-3 text-right">
+                        <div className="flex justify-end items-center gap-2">
+                          <button onClick={() => handleOpenPreferencesModal(t)} className="text-xs text-slate-600 hover:text-slate-900 font-semibold px-1.5 py-1 rounded hover:bg-slate-100">Prefs</button>
+                          <button onClick={() => setResetBioTeacher(t)} className="text-xs text-amber-700 hover:text-amber-900 font-semibold px-1.5 py-1 rounded hover:bg-amber-50">Reset Bio</button>
+                          <button onClick={() => handleOpenEditModal(t)} className="text-xs text-primary-700 hover:text-primary-900 font-semibold px-1.5 py-1 rounded hover:bg-primary-50">Edit</button>
+                          <button onClick={() => handleOpenDelete(t)} className="text-xs text-rose-600 hover:text-rose-800 font-semibold px-1.5 py-1 rounded hover:bg-rose-50">Remove</button>
+                        </div>
+                      </td>
+                    </tr>
+                  )
+                })}
+                {teachers.length === 0 && (
+                  <tr><td colSpan={7} className="px-5 py-10 text-center text-sm text-slate-400 font-medium">No teachers yet. Add one above.</td></tr>
+                )}
+                {teachers.length > 0 && sorted.length === 0 && (
+                  <tr>
+                    <td colSpan={7} className="px-5 py-10 text-center text-sm text-slate-500 font-medium">
+                      No teachers match your search or filters.{' '}
+                      {filtersActive && <button onClick={resetFilters} className="text-primary-600 font-bold hover:underline">Reset filters</button>}
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+
+          {sorted.length > 0 && (
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-3 px-5 py-3 border-t border-slate-100 text-xs text-slate-500 font-medium">
+              <span>Showing {startIdx}–{endIdx} of {sorted.length}</span>
+              <div className="flex items-center gap-3">
+                <select value={pageSize} onChange={e => setPageSize(Number(e.target.value))} className="input !py-1 !text-xs w-auto">
+                  <option value={10}>10 / page</option>
+                  <option value={25}>25 / page</option>
+                  <option value={50}>50 / page</option>
+                </select>
+                <div className="flex items-center gap-2">
+                  <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={currentPage === 1} className="btn-secondary !py-1 !px-2.5 text-xs disabled:opacity-40">Prev</button>
+                  <span className="font-semibold text-slate-700">Page {currentPage} of {totalPages}</span>
+                  <button onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={currentPage === totalPages} className="btn-secondary !py-1 !px-2.5 text-xs disabled:opacity-40">Next</button>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Add Teacher Modal */}
       <Modal open={modalOpen} onClose={() => setModalOpen(false)} title="Add Teacher">
@@ -962,6 +1094,32 @@ export default function Teachers() {
             </button>
           </div>
         </form>
+      </Modal>
+
+      {/* Reset Biometrics Confirmation Modal */}
+      <Modal open={Boolean(resetBioTeacher)} onClose={() => setResetBioTeacher(null)} title="Reset Biometrics">
+        <div className="space-y-4">
+          <ErrorAlert message={resetBioError} />
+          <p className="text-sm text-slate-600">
+            Are you sure you want to reset facial biometrics for <strong className="text-slate-900 font-semibold">{resetBioTeacher?.name}</strong>?
+          </p>
+          <p className="text-xs text-amber-800 bg-amber-50 p-2.5 rounded-lg border border-amber-200">
+            This will permanently revoke their enrolled facial embedding. They will need to complete facial enrollment before they can clock in using kiosk or mobile recognition.
+          </p>
+          <div className="flex gap-2 pt-2">
+            <button type="button" onClick={() => setResetBioTeacher(null)} className="btn-secondary flex-1">
+              Cancel
+            </button>
+            <button
+              type="button"
+              onClick={handleResetBiometrics}
+              disabled={resetBioBusy}
+              className="btn-danger flex-1"
+            >
+              {resetBioBusy ? 'Resetting…' : 'Confirm Reset'}
+            </button>
+          </div>
+        </div>
       </Modal>
     </div>
   )

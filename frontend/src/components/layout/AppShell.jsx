@@ -55,12 +55,25 @@ export default function AppShell() {
   const needsOnboardingTour = user && user.policy_version_accepted && !user.onboarding_completed
 
   return (
-    <div className="flex h-screen max-h-screen overflow-hidden bg-surface">
+    <div className="flex h-screen max-h-screen overflow-hidden bg-[var(--color-bg,#F5F6F8)] text-slate-800">
+      {/* Keyboard Accessibility Skip Link */}
+      <a
+        href="#main-content"
+        className="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 focus:z-50 focus:px-4 focus:py-2 focus:bg-white focus:text-primary-700 focus:font-bold focus:shadow-xl focus:rounded-xl focus:border-2 focus:border-primary-600 focus:outline-none"
+      >
+        Skip to main content
+      </a>
+
       <Sidebar onOpenHelp={() => setHelpOpen(true)} />
       <div className="flex-1 flex flex-col min-w-0 h-full overflow-hidden">
-        <TopBar onOpenHelp={() => setHelpOpen(true)} />
-        <main ref={mainRef} className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden pb-20 lg:pb-8">
-          <div className="max-w-5xl mx-auto px-3 sm:px-6 py-4 sm:py-8">
+        <TopBar onOpenHelp={() => setHelpOpen(true)} onMenuClick={() => setDrawerOpen(true)} />
+        <main
+          id="main-content"
+          ref={mainRef}
+          className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden pb-24 lg:pb-8"
+          tabIndex={-1}
+        >
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6">
             <Outlet />
           </div>
         </main>

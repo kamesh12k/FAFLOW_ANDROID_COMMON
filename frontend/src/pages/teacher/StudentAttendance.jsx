@@ -288,26 +288,26 @@ export default function StudentAttendance() {
   return (
     <div className="max-w-7xl mx-auto px-4 py-6 space-y-6">
       {/* Page Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 text-white p-6 rounded-2xl shadow-xl border border-indigo-800/40">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white p-6 rounded-2xl border border-slate-200 shadow-xs">
         <div>
           <div className="flex items-center gap-3">
-            <span className="p-2.5 bg-indigo-500/20 text-indigo-300 rounded-xl border border-indigo-400/30">
+            <span className="p-2.5 bg-primary-50 text-primary-700 rounded-xl border border-primary-200">
               <UsersIcon className="w-6 h-6" />
             </span>
             <div>
-              <h1 className="text-2xl font-black tracking-tight">Student Attendance</h1>
-              <p className="text-sm text-indigo-200/80">Per-Hour Academic Attendance & Compliance</p>
+              <h1 className="text-xl font-black text-slate-900 tracking-tight">Student Attendance</h1>
+              <p className="text-xs text-slate-500 font-medium">Per-Hour Academic Attendance & Compliance</p>
             </div>
           </div>
         </div>
 
         <div className="flex flex-wrap items-center gap-3">
           {scheduleData && (
-            <div className="flex items-center gap-2 bg-white/10 backdrop-blur-md px-3.5 py-1.5 rounded-xl border border-white/10 text-xs">
-              <CalIcon className="w-4 h-4 text-indigo-300" />
+            <div className="flex items-center gap-2 bg-slate-50 px-3.5 py-1.5 rounded-xl border border-slate-200 text-xs text-slate-700 font-medium">
+              <CalIcon className="w-4 h-4 text-primary-700" />
               <span>{scheduleData.date}</span>
-              <span className="w-1 h-1 rounded-full bg-indigo-400"></span>
-              <span className="font-bold text-indigo-200">
+              <span className="w-1 h-1 rounded-full bg-slate-300"></span>
+              <span className="font-bold text-slate-900">
                 {isHoliday ? 'Holiday' : `Day Order ${scheduleData.day_order ?? '-'}`}
               </span>
             </div>
@@ -315,7 +315,7 @@ export default function StudentAttendance() {
 
           <button
             onClick={() => setShowEmergencyModal(true)}
-            className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-rose-600 to-amber-600 hover:from-rose-500 hover:to-amber-500 text-white font-bold text-xs rounded-xl shadow-lg shadow-rose-900/40 transition-all active:scale-95 border border-rose-400/30"
+            className="flex items-center gap-2 px-3.5 py-2 bg-rose-50 hover:bg-rose-100 text-rose-700 font-bold text-xs rounded-xl transition-all border border-rose-200 cursor-pointer shadow-xs"
           >
             <span>🚨</span>
             <span>Emergency Attendance</span>

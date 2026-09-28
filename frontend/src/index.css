@@ -84,43 +84,46 @@
   /* ─── FORM INPUTS ───────────────────────────────────────────── */
 
   .input {
-    @apply w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm
-           bg-white placeholder:text-slate-400 transition-all duration-200
+    @apply w-full px-4 py-2.5 rounded-xl text-sm
+           bg-white text-slate-800 placeholder:text-slate-400 transition-all duration-200
            disabled:opacity-60 disabled:bg-slate-50 disabled:cursor-not-allowed;
+    border: 1px solid var(--color-border-control, #828C99);
     outline: none;
   }
   .input:focus {
-    border-color: var(--color-primary-500, #6366f1);
-    box-shadow: 0 0 0 2px var(--color-primary-200, #c7d2fe);
+    border-color: var(--faflow-navy-600, #1B3A6B);
+    box-shadow: 0 0 0 2px var(--faflow-navy-100, #D5E2F4);
   }
 
   .input-error {
-    @apply border-red-400;
+    @apply border-red-500;
   }
   .input-error:focus {
-    border-color: #f87171;
-    box-shadow: 0 0 0 2px #fecaca;
+    border-color: #ef4444;
+    box-shadow: 0 0 0 2px #fee2e2;
   }
 
   .select {
-    @apply w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm
-           bg-white text-slate-700 appearance-none cursor-pointer transition-all duration-200
+    @apply w-full px-4 py-2.5 rounded-xl text-sm
+           bg-white text-slate-800 appearance-none cursor-pointer transition-all duration-200
            disabled:opacity-60 disabled:bg-slate-50 disabled:cursor-not-allowed;
+    border: 1px solid var(--color-border-control, #828C99);
     outline: none;
   }
   .select:focus {
-    border-color: var(--color-primary-500, #6366f1);
-    box-shadow: 0 0 0 2px var(--color-primary-200, #c7d2fe);
+    border-color: var(--faflow-navy-600, #1B3A6B);
+    box-shadow: 0 0 0 2px var(--faflow-navy-100, #D5E2F4);
   }
 
   .textarea {
-    @apply w-full px-4 py-3 border border-slate-200 rounded-xl text-sm
-           bg-white placeholder:text-slate-400 transition-all duration-200 resize-none;
+    @apply w-full px-4 py-3 rounded-xl text-sm
+           bg-white text-slate-800 placeholder:text-slate-400 transition-all duration-200 resize-none;
+    border: 1px solid var(--color-border-control, #828C99);
     outline: none;
   }
   .textarea:focus {
-    border-color: var(--color-primary-500, #6366f1);
-    box-shadow: 0 0 0 2px var(--color-primary-200, #c7d2fe);
+    border-color: var(--faflow-navy-600, #1B3A6B);
+    box-shadow: 0 0 0 2px var(--faflow-navy-100, #D5E2F4);
   }
 
   /* Form field group: label + input + helper/error text */
@@ -133,7 +136,7 @@
   }
 
   .form-helper {
-    @apply text-[11px] text-slate-400 font-medium;
+    @apply text-[11px] text-slate-500 font-medium;
   }
 
   .form-error {
@@ -143,7 +146,7 @@
   /* ─── CARDS ─────────────────────────────────────────────────── */
 
   .card {
-    @apply bg-white rounded-2xl border border-slate-100 shadow-card;
+    @apply bg-white rounded-2xl border border-[#E6E8EC] shadow-card;
   }
 
   .card-hover {
@@ -366,3 +369,16 @@
   scrollbar-width: thin;
   scrollbar-color: #cbd5e1 #f1f5f9;
 }
+
+/* ─── PREFERS-REDUCED-MOTION SUPPORT ─────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+

@@ -62,17 +62,17 @@ function PlusIcon(props) {
 /* ── Shared building blocks ───────────────────────────────────────────── */
 function SettingsSection({ icon: Icon, tint, title, description, action, children }) {
   return (
-    <section className="rounded-[28px] bg-white border border-gray-100 shadow-[0_1px_2px_rgba(15,23,42,0.04)] overflow-hidden">
+    <section className="rounded-2xl bg-white border border-slate-200 shadow-xs overflow-hidden">
       <div className="flex items-start gap-3.5 px-6 pt-6 pb-5">
         <div className={`w-11 h-11 shrink-0 rounded-2xl flex items-center justify-center ${tint}`}>
           <Icon className="w-5 h-5" />
         </div>
         <div className="flex-1 min-w-0 pt-0.5">
           <div className="flex items-center justify-between gap-3">
-            <h2 className="text-[15px] font-semibold text-gray-900 tracking-tight">{title}</h2>
+            <h2 className="text-[15px] font-bold text-slate-900 tracking-tight">{title}</h2>
             {action}
           </div>
-          {description && <p className="text-[13px] text-gray-500 mt-1 leading-snug">{description}</p>}
+          {description && <p className="text-[13px] text-slate-500 mt-1 leading-snug">{description}</p>}
         </div>
       </div>
       {children}
@@ -88,22 +88,24 @@ function ToggleSwitch({ checked, onChange, disabled }) {
       aria-checked={checked}
       onClick={() => !disabled && onChange(!checked)}
       disabled={disabled}
-      className={`relative inline-flex h-7 w-12 shrink-0 items-center rounded-full transition-colors duration-300 ease-out focus:outline-none ${checked ? 'bg-primary-600' : 'bg-gray-200'
-        } disabled:opacity-40 disabled:cursor-not-allowed`}
+      className={`relative inline-flex h-7 w-12 shrink-0 items-center rounded-full border transition-colors duration-200 ease-out focus:outline-none focus:ring-2 focus:ring-primary-600 focus:ring-offset-2 ${
+        checked ? 'bg-primary-600 border-primary-600' : 'bg-slate-200 border-slate-400'
+      } disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer`}
     >
       <span
-        className={`inline-block h-5 w-5 transform rounded-full bg-white shadow-md transition-transform duration-300 ease-out ${checked ? 'translate-x-6' : 'translate-x-1'
-          }`}
+        className={`inline-block h-5 w-5 transform rounded-full bg-white shadow-xs transition-transform duration-200 ease-out ${
+          checked ? 'translate-x-6' : 'translate-x-0.5'
+        }`}
       />
     </button>
   )
 }
 
-const btnPrimary = 'inline-flex items-center justify-center rounded-full bg-primary-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-primary-700 active:scale-[0.98] transition disabled:opacity-40 disabled:pointer-events-none'
-const btnSecondary = 'inline-flex items-center justify-center rounded-full bg-gray-100 px-5 py-2.5 text-sm font-semibold text-gray-700 hover:bg-gray-200 active:scale-[0.98] transition'
-const btnDanger = 'inline-flex items-center justify-center rounded-full bg-red-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-red-700 active:scale-[0.98] transition disabled:opacity-40 disabled:pointer-events-none'
-const inputCls = 'w-full rounded-2xl border border-gray-200 px-4 py-2.5 text-sm text-gray-800 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500/30 focus:border-primary-400 transition'
-const labelCls = 'block text-xs font-medium text-gray-700 mb-1.5'
+const btnPrimary = 'inline-flex items-center justify-center rounded-xl bg-primary-600 px-5 py-2.5 text-sm font-bold text-white shadow-xs hover:bg-primary-700 active:scale-[0.98] transition disabled:opacity-40 disabled:pointer-events-none cursor-pointer'
+const btnSecondary = 'inline-flex items-center justify-center rounded-xl bg-slate-100 border border-slate-300 px-5 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-200 active:scale-[0.98] transition cursor-pointer'
+const btnDanger = 'inline-flex items-center justify-center rounded-xl bg-rose-600 px-5 py-2.5 text-sm font-bold text-white shadow-xs hover:bg-rose-700 active:scale-[0.98] transition disabled:opacity-40 disabled:pointer-events-none cursor-pointer'
+const inputCls = 'input w-full'
+const labelCls = 'block text-xs font-semibold text-slate-700 mb-1.5'
 
 /* ── Campus Operations Mode ──────────────────────────────────────────── */
 const MODE_INFO = {

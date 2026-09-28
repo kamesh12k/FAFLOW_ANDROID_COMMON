@@ -1009,3 +1009,35 @@ export function SkeletonTable({ rows = 5, cols = 4, className = '' }) {
   )
 }
 
+// 28. Pagination Controls
+export function Pagination({ page = 1, totalPages = 1, onChange, className = '' }) {
+  if (totalPages <= 1) return null
+
+  return (
+    <div className={`flex items-center gap-2 ${className}`}>
+      <button
+        type="button"
+        onClick={() => onChange(Math.max(1, page - 1))}
+        disabled={page <= 1}
+        className="btn-secondary !py-1 !px-2.5 text-xs disabled:opacity-40 cursor-pointer"
+        aria-label="Previous page"
+      >
+        Prev
+      </button>
+      <span className="text-xs font-semibold text-slate-700">
+        Page {page} of {totalPages}
+      </span>
+      <button
+        type="button"
+        onClick={() => onChange(Math.min(totalPages, page + 1))}
+        disabled={page >= totalPages}
+        className="btn-secondary !py-1 !px-2.5 text-xs disabled:opacity-40 cursor-pointer"
+        aria-label="Next page"
+      >
+        Next
+      </button>
+    </div>
+  )
+}
+
+

@@ -1,13 +1,21 @@
 import { useEffect, useState, useMemo, useCallback } from 'react'
 import { attendanceApi, departmentsApi } from '../../api/services'
 import { getApiErrorMessage } from '../../api/client'
-import { Spinner, ErrorAlert, EmptyState, Modal, Button } from '../../components/ui'
+import { 
+  ErrorAlert, 
+  EmptyState, 
+  Modal, 
+  Button, 
+  StatusBadge, 
+  SkeletonTable,
+  Pagination 
+} from '../../components/ui'
 
 export default function AdminAttendance() {
   const [liveData, setLiveData] = useState(null)
   const [departments, setDepartments] = useState([])
   const [selectedDept, setSelectedDept] = useState('')
-  const [statusFilter, setStatusFilter] = useState('ALL') // ALL, CHECKED_IN, CHECKED_OUT, NOT_REPORTED
+  const [statusFilter, setStatusFilter] = useState('ALL') // ALL, CHECKED_IN, CHECKED_OUT
   const [searchQuery, setSearchQuery] = useState('')
   const [loading, setLoading] = useState(true)
   const [refreshing, setRefreshing] = useState(false)
@@ -17,6 +25,10 @@ export default function AdminAttendance() {
   const [recordToDelete, setRecordToDelete] = useState(null)
   const [deleting, setDeleting] = useState(false)
   const [deleteError, setDeleteError] = useState('')
+
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1)
+  const [pageSize, setPageSize] = useState(10)
 
   const handleDeleteRecord = async () => {
     if (!recordToDelete) return
@@ -103,19 +115,52 @@ export default function AdminAttendance() {
     })
   }, [records, searchQuery, selectedDept, statusFilter])
 
+  // Paginated records
+  const paginatedRecords = useMemo(() => {
+    const start = (currentPage - 1) * pageSize
+    return filteredRecords.slice(start, start + pageSize)
+  }, [filteredRecords, currentPage, pageSize])
+
+  // CSV Export handler
+  const handleExportCsv = () => {
+    if (filteredRecords.length === 0) return
+    const headers = ['Record ID', 'User ID', 'Staff Name', 'Department', 'Date', 'Check In', 'Check Out', 'Working Hours', 'Geofence', 'Similarity %', 'Liveness']
+    const rows = filteredRecords.map(r => [
+      r.id,
+      r.user_id,
+      `"${r.staff_name || ''}"`,
+      `"${r.department_name || ''}"`,
+      r.attendance_date || '',
+      r.check_in_time || '',
+      r.check_out_time || '',
+      r.working_hours || '',
+      `"${r.check_in_geofence_name || ''}"`,
+      r.face_similarity_score != null ? Math.round(r.face_similarity_score * 100) : '',
+      r.liveness_verified ? 'YES' : 'NO'
+    ])
+    const csvContent = 'data:text/csv;charset=utf-8,' + [headers.join(','), ...rows.map(e => e.join(','))].join('\n')
+    const encodedUri = encodeURI(csvContent)
+    const link = document.createElement('a')
+    link.setAttribute('href', encodedUri)
+    link.setAttribute('download', `faflow_attendance_${new Date().toISOString().slice(0, 10)}.csv`)
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+  }
+
   return (
     <div className="space-y-6">
       {/* Header & Controls */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900 tracking-tight">Real-Time Attendance & Shift Monitor</h1>
-          <p className="text-sm text-gray-500 mt-1">
-            Authoritative institutional attendance ledger. Tracks live faculty and staff presence, on-campus geofence verification, and shift duration.
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">Real-Time Attendance & Shift Monitor</h1>
+          <p className="text-xs sm:text-sm text-slate-500 font-medium mt-1">
+            Authoritative institutional attendance ledger with on-campus geofencing and biometric verification.
           </p>
         </div>
 
-        <div className="flex items-center gap-3">
-          <label className="flex items-center gap-2 text-xs font-semibold text-gray-600 cursor-pointer bg-white px-3 py-2 rounded-xl border border-gray-200 shadow-sm">
+        <div className="flex items-center gap-3 self-start sm:self-auto flex-wrap">
+          <label className="flex items-center gap-2 text-xs font-bold text-slate-700 cursor-pointer bg-white px-3 py-2 rounded-xl border border-[#E6E8EC] shadow-xs">
             <input
               type="checkbox"
               checked={autoRefresh}
@@ -125,98 +170,100 @@ export default function AdminAttendance() {
             <span>Auto-refresh (20s)</span>
           </label>
 
-          <button
-            onClick={() => loadData(true)}
-            disabled={refreshing || loading}
-            className="flex items-center gap-2 px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white text-sm font-semibold rounded-xl transition shadow-sm disabled:opacity-60"
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleExportCsv}
+            disabled={filteredRecords.length === 0}
           >
-            <svg
-              className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`}
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <path d="M21 12a9 9 0 1 1-2.64-6.36" />
-              <path d="M21 3v6h-6" />
-            </svg>
-            <span>{refreshing ? 'Refreshing...' : 'Refresh'}</span>
-          </button>
+            Export CSV
+          </Button>
+
+          <Button
+            variant="primary"
+            size="sm"
+            onClick={() => loadData(true)}
+            loading={refreshing}
+            disabled={loading}
+          >
+            {refreshing ? 'Refreshing...' : 'Refresh'}
+          </Button>
         </div>
       </div>
 
       {error && <ErrorAlert message={error} onClose={() => setError('')} />}
 
       {/* Metric Cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="p-5 rounded-2xl bg-white border border-gray-200 shadow-sm">
-          <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Total Active Staff</span>
-          <p className="text-2xl font-bold text-gray-900 mt-1">{liveData?.total_staff ?? '—'}</p>
-          <span className="text-xs text-gray-500 mt-1 block">Registered institutional personnel</span>
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+        <div className="p-4 sm:p-5 rounded-2xl bg-white border border-[#E6E8EC] shadow-card">
+          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Total Active Staff</span>
+          <p className="text-2xl sm:text-3xl font-extrabold text-slate-900 mt-1">{liveData?.total_staff ?? '—'}</p>
+          <span className="text-xs text-slate-500 mt-1 block font-medium">Registered personnel</span>
         </div>
 
-        <div className="p-5 rounded-2xl bg-white border border-gray-200 shadow-sm">
-          <span className="text-xs font-semibold text-emerald-600 uppercase tracking-wider">Currently On-Campus</span>
-          <p className="text-2xl font-bold text-emerald-700 mt-1">{liveData?.checked_in_count ?? '—'}</p>
-          <span className="text-xs text-emerald-600 mt-1 block">Checked in & working</span>
+        <div className="p-4 sm:p-5 rounded-2xl bg-white border border-[#E6E8EC] shadow-card">
+          <span className="text-[10px] font-bold text-emerald-700 uppercase tracking-wider">Currently On-Campus</span>
+          <p className="text-2xl sm:text-3xl font-extrabold text-emerald-800 mt-1">{liveData?.checked_in_count ?? '—'}</p>
+          <span className="text-xs text-emerald-700 mt-1 block font-medium">Checked in & verified</span>
         </div>
 
-        <div className="p-5 rounded-2xl bg-white border border-gray-200 shadow-sm">
-          <span className="text-xs font-semibold text-sky-600 uppercase tracking-wider">Shifts Completed</span>
-          <p className="text-2xl font-bold text-sky-700 mt-1">{liveData?.checked_out_count ?? '—'}</p>
-          <span className="text-xs text-sky-600 mt-1 block">Checked out for today</span>
+        <div className="p-4 sm:p-5 rounded-2xl bg-white border border-[#E6E8EC] shadow-card">
+          <span className="text-[10px] font-bold text-primary-700 uppercase tracking-wider">Shifts Completed</span>
+          <p className="text-2xl sm:text-3xl font-extrabold text-primary-800 mt-1">{liveData?.checked_out_count ?? '—'}</p>
+          <span className="text-xs text-primary-700 mt-1 block font-medium">Checked out for today</span>
         </div>
 
-        <div className="p-5 rounded-2xl bg-white border border-gray-200 shadow-sm">
-          <span className="text-xs font-semibold text-amber-600 uppercase tracking-wider">Not Reported Yet</span>
-          <p className="text-2xl font-bold text-amber-700 mt-1">{liveData?.absent_count ?? '—'}</p>
-          <span className="text-xs text-amber-600 mt-1 block">Pending check-in or on leave</span>
+        <div className="p-4 sm:p-5 rounded-2xl bg-white border border-[#E6E8EC] shadow-card">
+          <span className="text-[10px] font-bold text-amber-700 uppercase tracking-wider">Not Reported Yet</span>
+          <p className="text-2xl sm:text-3xl font-extrabold text-amber-800 mt-1">{liveData?.absent_count ?? '—'}</p>
+          <span className="text-xs text-amber-700 mt-1 block font-medium">Pending check-in or on leave</span>
         </div>
       </div>
 
       {/* Filter & Search Toolbar */}
-      <div className="p-4 bg-white rounded-2xl border border-gray-200 shadow-sm flex flex-col md:flex-row items-center justify-between gap-3">
-        <div className="flex flex-wrap items-center gap-2 w-full md:w-auto">
+      <div className="p-4 bg-white rounded-2xl border border-[#E6E8EC] shadow-card flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">
+        <div className="flex flex-wrap items-center gap-2">
           <button
-            onClick={() => setStatusFilter('ALL')}
-            className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition ${
+            type="button"
+            onClick={() => { setStatusFilter('ALL'); setCurrentPage(1); }}
+            className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
               statusFilter === 'ALL'
-                ? 'bg-primary-600 text-white shadow-sm'
-                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                ? 'bg-primary-600 text-white shadow-xs'
+                : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
             }`}
           >
             All Today ({records.length})
           </button>
           <button
-            onClick={() => setStatusFilter('CHECKED_IN')}
-            className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition ${
+            type="button"
+            onClick={() => { setStatusFilter('CHECKED_IN'); setCurrentPage(1); }}
+            className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
               statusFilter === 'CHECKED_IN'
-                ? 'bg-emerald-600 text-white shadow-sm'
-                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                ? 'bg-emerald-700 text-white shadow-xs'
+                : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
             }`}
           >
             Checked In ({liveData?.checked_in_count ?? 0})
           </button>
           <button
-            onClick={() => setStatusFilter('CHECKED_OUT')}
-            className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition ${
+            type="button"
+            onClick={() => { setStatusFilter('CHECKED_OUT'); setCurrentPage(1); }}
+            className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
               statusFilter === 'CHECKED_OUT'
-                ? 'bg-sky-600 text-white shadow-sm'
-                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                ? 'bg-primary-700 text-white shadow-xs'
+                : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
             }`}
           >
             Completed ({liveData?.checked_out_count ?? 0})
           </button>
         </div>
 
-        <div className="flex flex-col sm:flex-row items-center gap-3 w-full md:w-auto">
+        <div className="flex flex-col sm:flex-row items-center gap-2.5">
           {departments.length > 0 && (
             <select
               value={selectedDept}
-              onChange={(e) => setSelectedDept(e.target.value)}
-              className="text-xs bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-gray-700 focus:outline-none focus:ring-2 focus:ring-primary-500 w-full sm:w-auto"
+              onChange={(e) => { setSelectedDept(e.target.value); setCurrentPage(1); }}
+              className="text-xs bg-white border border-[var(--color-border-control,#828C99)] rounded-xl px-3 py-2 text-slate-800 font-semibold focus:outline-none focus:ring-2 focus:ring-primary-600 w-full sm:w-auto min-h-[38px]"
             >
               <option value="">All Departments</option>
               {departments.map((d) => (
@@ -232,31 +279,26 @@ export default function AdminAttendance() {
               type="text"
               placeholder="Search faculty or staff..."
               value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-9 pr-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs text-gray-800 focus:outline-none focus:ring-2 focus:ring-primary-500"
+              onChange={(e) => { setSearchQuery(e.target.value); setCurrentPage(1); }}
+              className="w-full pl-9 pr-3 py-2 bg-white border border-[var(--color-border-control,#828C99)] rounded-xl text-xs text-slate-900 font-medium focus:outline-none focus:ring-2 focus:ring-primary-600 min-h-[38px]"
             />
             <svg
-              className="w-4 h-4 text-gray-400 absolute left-3 top-2.5"
+              className="w-4 h-4 text-slate-400 absolute left-3 top-2.5"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
             >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth="2"
-                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-              />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
             </svg>
           </div>
         </div>
       </div>
 
       {/* Attendance Table */}
-      <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
+      <div className="bg-white rounded-2xl border border-[#E6E8EC] shadow-card overflow-hidden">
         {loading ? (
-          <div className="p-12 flex justify-center items-center">
-            <Spinner />
+          <div className="p-4 sm:p-6">
+            <SkeletonTable rows={6} cols={6} />
           </div>
         ) : filteredRecords.length === 0 ? (
           <div className="p-8">
@@ -267,50 +309,50 @@ export default function AdminAttendance() {
           </div>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs text-gray-600">
-              <thead className="bg-gray-50 text-gray-500 font-semibold border-b border-gray-200 uppercase tracking-wider">
+            <table className="w-full text-left text-xs text-slate-700 min-w-[700px]">
+              <thead className="sticky top-0 z-10 bg-slate-50 text-slate-700 font-bold border-b border-[#E6E8EC] uppercase tracking-wider">
                 <tr>
-                  <th className="px-5 py-3">Staff Name</th>
-                  <th className="px-5 py-3">Check-In Time</th>
-                  <th className="px-5 py-3">Check-Out Time</th>
-                  <th className="px-5 py-3">Duration</th>
-                  <th className="px-5 py-3">Campus Perimeter</th>
-                  <th className="px-5 py-3">Biometric & Liveness</th>
-                  <th className="px-5 py-3 text-center">Status</th>
-                  <th className="px-5 py-3 text-right">Actions</th>
+                  <th className="px-5 py-3.5">Staff Member</th>
+                  <th className="px-5 py-3.5">Check-In</th>
+                  <th className="px-5 py-3.5">Check-Out</th>
+                  <th className="px-5 py-3.5">Duration</th>
+                  <th className="px-5 py-3.5">Perimeter</th>
+                  <th className="px-5 py-3.5">Liveness & PAD</th>
+                  <th className="px-5 py-3.5 text-center">Status</th>
+                  <th className="px-5 py-3.5 text-right">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-100 font-medium">
-                {filteredRecords.map((rec) => {
+              <tbody className="divide-y divide-[#E6E8EC] font-medium">
+                {paginatedRecords.map((rec) => {
                   const isPresent = rec.check_in_time && !rec.check_out_time
                   const isCompleted = Boolean(rec.check_out_time)
 
                   return (
-                    <tr key={rec.id} className="hover:bg-gray-50/70 transition">
+                    <tr key={rec.id} className="hover:bg-slate-50/80 transition-colors">
                       <td className="px-5 py-3.5">
-                        <div className="font-bold text-gray-900">{rec.staff_name || 'Staff Member'}</div>
-                        <div className="text-[11px] text-gray-400">ID: {rec.user_id}</div>
+                        <div className="font-bold text-slate-900">{rec.staff_name || 'Staff Member'}</div>
+                        <div className="text-[11px] text-slate-500 font-medium">ID: {rec.user_id} • {rec.department_name || 'General'}</div>
                       </td>
-                      <td className="px-5 py-3.5 text-gray-800 font-mono">
+                      <td className="px-5 py-3.5 text-slate-800 font-mono font-semibold">
                         {formatTime(rec.check_in_time)}
                       </td>
-                      <td className="px-5 py-3.5 text-gray-800 font-mono">
+                      <td className="px-5 py-3.5 text-slate-800 font-mono font-semibold">
                         {formatTime(rec.check_out_time)}
                       </td>
-                      <td className="px-5 py-3.5 text-gray-700">
+                      <td className="px-5 py-3.5 text-slate-700 font-semibold">
                         {typeof rec.working_hours === 'number'
                           ? `${rec.working_hours.toFixed(1)} hrs`
                           : (rec.working_hours || (isPresent ? 'In Progress' : '—'))}
                       </td>
                       <td className="px-5 py-3.5">
-                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold bg-emerald-50 text-emerald-800 border border-emerald-200">
+                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-600" />
                           {rec.check_in_geofence_name || 'Campus Geofence'}
                         </span>
                       </td>
                       <td className="px-5 py-3.5">
                         <div className="flex items-center gap-2">
-                          <span className="text-[11px] font-bold text-gray-800">
+                          <span className="text-[11px] font-bold text-slate-800 font-mono">
                             {Number(rec.face_similarity_score != null ? rec.face_similarity_score * 100 : 0).toFixed(0)}%
                           </span>
                           {rec.liveness_verified && (
@@ -321,16 +363,9 @@ export default function AdminAttendance() {
                         </div>
                       </td>
                       <td className="px-5 py-3.5 text-center">
-                        {isPresent && (
-                          <span className="inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-bold bg-emerald-100 text-emerald-800">
-                            Present
-                          </span>
-                        )}
-                        {isCompleted && (
-                          <span className="inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-bold bg-sky-100 text-sky-800">
-                            Completed
-                          </span>
-                        )}
+                        {isPresent && <StatusBadge status="present" />}
+                        {isCompleted && <StatusBadge status="approved" />}
+                        {!isPresent && !isCompleted && <StatusBadge status="pending" />}
                       </td>
                       <td className="px-5 py-3.5 text-right">
                         <button
@@ -339,7 +374,7 @@ export default function AdminAttendance() {
                             setRecordToDelete(rec)
                             setDeleteError('')
                           }}
-                          className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold text-rose-600 hover:text-rose-700 bg-rose-50 hover:bg-rose-100/80 border border-rose-200 transition-colors shadow-sm"
+                          className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-xs font-bold text-rose-700 hover:text-rose-800 bg-rose-50 hover:bg-rose-100 border border-rose-200 transition-colors shadow-2xs"
                           title={`Delete record #${rec.id}`}
                         >
                           <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -356,12 +391,29 @@ export default function AdminAttendance() {
           </div>
         )}
 
-        {lastRefreshed && (
-          <div className="px-5 py-2.5 bg-gray-50 border-t border-gray-100 text-[11px] text-gray-400 flex items-center justify-between">
-            <span>Last synchronized: {lastRefreshed.toLocaleTimeString()}</span>
-            <span>Server Authoritative Geofence & Biometric Gate Active</span>
+        {/* Pagination & Status Footer */}
+        <div className="px-5 py-3 bg-slate-50 border-t border-[#E6E8EC] flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-500 font-medium">
+          <div className="flex items-center gap-3">
+            <span>
+              Showing {filteredRecords.length > 0 ? (currentPage - 1) * pageSize + 1 : 0} - {Math.min(currentPage * pageSize, filteredRecords.length)} of {filteredRecords.length} records
+            </span>
+            <select
+              value={pageSize}
+              onChange={(e) => { setPageSize(Number(e.target.value)); setCurrentPage(1); }}
+              className="bg-white border border-[var(--color-border-control,#828C99)] rounded-lg px-2 py-1 text-xs font-semibold text-slate-700"
+            >
+              <option value={10}>10 / page</option>
+              <option value={25}>25 / page</option>
+              <option value={50}>50 / page</option>
+            </select>
           </div>
-        )}
+
+          <Pagination
+            page={currentPage}
+            totalPages={Math.max(1, Math.ceil(filteredRecords.length / pageSize))}
+            onChange={setCurrentPage}
+          />
+        </div>
       </div>
 
       {/* Delete Record Confirmation Modal */}
@@ -378,41 +430,41 @@ export default function AdminAttendance() {
       >
         <div className="space-y-4">
           {deleteError && (
-            <div className="p-3 text-xs bg-rose-50 text-rose-700 border border-rose-200 rounded-xl">
+            <div className="p-3 text-xs bg-rose-50 text-rose-700 border border-rose-200 rounded-xl font-semibold">
               {deleteError}
             </div>
           )}
 
-          <p className="text-sm text-gray-600">
-            Are you sure you want to permanently delete this individual attendance entry? This action is intended for testing and manual record clearance.
+          <p className="text-sm text-slate-600 font-medium leading-relaxed">
+            Are you sure you want to permanently delete this individual attendance entry? This action will remove the shift record from the institutional ledger.
           </p>
 
           {recordToDelete && (
-            <div className="bg-gray-50 rounded-xl p-4 border border-gray-200 space-y-2 text-xs">
-              <div className="flex justify-between items-center py-1 border-b border-gray-200/60">
-                <span className="text-gray-500 font-medium">Staff Name:</span>
-                <span className="font-bold text-gray-900">{recordToDelete.staff_name || 'Staff Member'}</span>
+            <div className="bg-slate-50 rounded-xl p-4 border border-[#E6E8EC] space-y-2 text-xs">
+              <div className="flex justify-between items-center py-1 border-b border-slate-200">
+                <span className="text-slate-500 font-semibold">Staff Name:</span>
+                <span className="font-bold text-slate-900">{recordToDelete.staff_name || 'Staff Member'}</span>
               </div>
-              <div className="flex justify-between items-center py-1 border-b border-gray-200/60">
-                <span className="text-gray-500 font-medium">Record ID:</span>
-                <span className="font-mono text-gray-700">#{recordToDelete.id} (User #{recordToDelete.user_id})</span>
+              <div className="flex justify-between items-center py-1 border-b border-slate-200">
+                <span className="text-slate-500 font-semibold">Record ID:</span>
+                <span className="font-mono text-slate-700 font-bold">#{recordToDelete.id} (User #{recordToDelete.user_id})</span>
               </div>
-              <div className="flex justify-between items-center py-1 border-b border-gray-200/60">
-                <span className="text-gray-500 font-medium">Date:</span>
-                <span className="font-medium text-gray-800">{recordToDelete.attendance_date || 'Today'}</span>
+              <div className="flex justify-between items-center py-1 border-b border-slate-200">
+                <span className="text-slate-500 font-semibold">Date:</span>
+                <span className="font-semibold text-slate-800">{recordToDelete.attendance_date || 'Today'}</span>
               </div>
-              <div className="flex justify-between items-center py-1 border-b border-gray-200/60">
-                <span className="text-gray-500 font-medium">Check-In Time:</span>
-                <span className="font-mono text-gray-800">{formatTime(recordToDelete.check_in_time)}</span>
+              <div className="flex justify-between items-center py-1 border-b border-slate-200">
+                <span className="text-slate-500 font-semibold">Check-In Time:</span>
+                <span className="font-mono text-slate-800 font-bold">{formatTime(recordToDelete.check_in_time)}</span>
               </div>
               <div className="flex justify-between items-center py-1">
-                <span className="text-gray-500 font-medium">Check-Out Time:</span>
-                <span className="font-mono text-gray-800">{formatTime(recordToDelete.check_out_time)}</span>
+                <span className="text-slate-500 font-semibold">Check-Out Time:</span>
+                <span className="font-mono text-slate-800 font-bold">{formatTime(recordToDelete.check_out_time)}</span>
               </div>
             </div>
           )}
 
-          <div className="flex items-center justify-end gap-3 pt-3 border-t border-gray-100">
+          <div className="flex items-center justify-end gap-3 pt-3 border-t border-slate-100">
             <Button
               variant="secondary"
               size="sm"

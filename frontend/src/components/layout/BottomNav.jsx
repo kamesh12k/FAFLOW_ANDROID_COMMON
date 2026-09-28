@@ -83,11 +83,11 @@ export default function BottomNav({ onMoreClick }) {
 
   return (
     <nav
-      className="lg:hidden fixed bottom-0 inset-x-0 z-30 bg-white/95 backdrop-blur-sm border-t border-slate-100 pb-[env(safe-area-inset-bottom)]"
+      className="lg:hidden fixed bottom-0 inset-x-0 z-30 bg-white/95 backdrop-blur-md border-t border-[#E6E8EC] pb-[env(safe-area-inset-bottom)] shadow-[0_-2px_8px_rgba(16,24,40,0.04)]"
       aria-label="Mobile navigation"
     >
       <div
-        className="grid"
+        className="grid items-stretch"
         style={{ gridTemplateColumns: `repeat(${tabs.length + 1}, minmax(0, 1fr))` }}
       >
         {tabs.map(({ to, label, icon: Icon, end, badgeKey }) => (
@@ -96,14 +96,14 @@ export default function BottomNav({ onMoreClick }) {
             to={to}
             end={end}
             className={({ isActive }) =>
-              `flex flex-col items-center justify-center gap-0.5 py-2.5 text-[10px] font-semibold transition-colors ${
-                isActive ? 'text-primary-600' : 'text-slate-400'
+              `flex flex-col items-center justify-center gap-1 min-h-[48px] py-2 text-[10px] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-600 ${
+                isActive ? 'text-primary-700 font-bold' : 'text-slate-600 hover:text-slate-900 font-semibold'
               }`
             }
           >
             {({ isActive }) => (
               <>
-                <span className={`w-5 h-5 transition-transform relative ${isActive ? 'scale-110' : ''}`}>
+                <span className={`w-5 h-5 transition-transform relative ${isActive ? 'scale-110 text-primary-600' : 'text-slate-500'}`}>
                   <Icon className="w-full h-full" />
                   {badgeKey === 'announcements' && unreadCount > 0 && (
                     <span className="absolute -top-1.5 -right-2 min-w-[15px] h-3.5 px-1 rounded-full bg-rose-600 text-white text-[8px] font-black flex items-center justify-center shadow-xs">
@@ -118,11 +118,11 @@ export default function BottomNav({ onMoreClick }) {
         ))}
         <button
           onClick={onMoreClick}
-          className="flex flex-col items-center justify-center gap-0.5 py-2.5 text-[10px] font-semibold text-slate-400 hover:text-slate-600 transition-colors"
+          className="flex flex-col items-center justify-center gap-1 min-h-[48px] py-2 text-[10px] font-semibold text-slate-600 hover:text-slate-900 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-600"
           aria-label="Open navigation menu"
         >
-          <MenuIcon className="w-5 h-5" />
-          More
+          <MenuIcon className="w-5 h-5 text-slate-500" />
+          <span>More</span>
         </button>
       </div>
     </nav>
