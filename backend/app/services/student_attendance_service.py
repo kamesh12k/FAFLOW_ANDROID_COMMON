@@ -752,6 +752,19 @@ class StudentAttendanceService:
         db.commit()
         db.refresh(session)
 
+        # Dispatch in-app notification to Class department HOD(s) if emergency or late
+        try:
+            StudentAttendanceService._notify_hod_emergency_or_late(
+                db=db,
+                session=session,
+                cls=cls,
+                submitting_teacher=current_user,
+                attendance_date=att_date,
+                scheduled_teacher_id=scheduled_teacher_id
+            )
+        except Exception as notif_exc:
+            logger.warning("Notification dispatch failed for session %s: %s", session.id, notif_exc)
+
         # Trigger academic intelligence evaluation asynchronously
         try:
             from app.services.academic_intelligence_service import AcademicIntelligenceService
@@ -760,6 +773,91 @@ class StudentAttendanceService:
             pass
 
         return StudentAttendanceService.get_session_details(db, session.id)
+
+    @staticmethod
+    def _notify_hod_emergency_or_late(
+        db: Session,
+        session: AttendanceSession,
+        cls: Class,
+        submitting_teacher: User,
+        attendance_date: date,
+        scheduled_teacher_id: Optional[int] = None
+    ) -> None:
+        """Notifies the HOD(s) of the Class's department on emergency or late attendance submission.
+        Does not notify on normal on-time submissions. Failure must never fail or roll back attendance."""
+        is_emergency = (session.attendance_type == AttendanceType.emergency)
+        is_late = (session.status == SessionStatus.submitted_late)
+
+        if not is_emergency and not is_late:
+            return
+
+        if not cls or not cls.department_id:
+            return
+
+        # Lookup HOD(s) of the CLASS's department (Role.admin with matching department_id)
+        hods = (
+            db.query(User)
+            .filter(
+                User.role == Role.admin,
+                User.department_id == cls.department_id
+            )
+            .all()
+        )
+        if not hods:
+            return
+
+        # Resolve scheduled teacher name if any
+        sched_name = "None (Unscheduled)"
+        if scheduled_teacher_id:
+            sched_user = db.query(User).filter(User.id == scheduled_teacher_id).first()
+            if sched_user:
+                sched_name = sched_user.name
+        elif session.scheduled_teacher:
+            sched_name = session.scheduled_teacher.name
+
+        cls_display = f"{cls.name} {cls.section}".strip()
+        faculty_name = submitting_teacher.name or "Faculty"
+
+        if is_emergency and is_late:
+            title = f"Emergency Attendance (Late): {cls_display} (P{session.period_number})"
+            event_type = "attendance_emergency"
+            body = (
+                f"Emergency faculty {faculty_name} submitted attendance late for {cls_display}, "
+                f"Period {session.period_number} on {attendance_date}. Scheduled faculty: {sched_name}."
+            )
+        elif is_emergency:
+            title = f"Emergency Attendance: {cls_display} (P{session.period_number})"
+            event_type = "attendance_emergency"
+            body = (
+                f"Emergency faculty {faculty_name} submitted attendance for {cls_display}, "
+                f"Period {session.period_number} on {attendance_date}. Scheduled faculty: {sched_name}."
+            )
+        else:
+            title = f"Late Attendance Submission: {cls_display} (P{session.period_number})"
+            event_type = "attendance_late"
+            body = (
+                f"Faculty {faculty_name} submitted attendance late for {cls_display}, "
+                f"Period {session.period_number} on {attendance_date}. Scheduled faculty: {sched_name}."
+            )
+
+        from app.services import notification_service
+        for hod in hods:
+            try:
+                notification_service.create_notification(
+                    db=db,
+                    user_id=hod.id,
+                    title=title,
+                    body=body,
+                    event_type=event_type,
+                    send_push=True
+                )
+            except Exception as e:
+                logger.warning("Failed to create notification for HOD user %s: %s", hod.id, e)
+
+        try:
+            db.commit()
+        except Exception as e:
+            logger.warning("Failed to commit notification transaction for session %s: %s", session.id, e)
 
     @staticmethod
     def emergency_attendance(
