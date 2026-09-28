@@ -288,6 +288,29 @@ def sync_table_constraints_and_columns():
                                 ALTER TABLE leave_requests ADD COLUMN ood_details JSONB;
                             END IF;
                         END IF;
+
+                        -- 7. High-frequency query path performance indexes
+                        IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'attendance_sessions') THEN
+                            CREATE INDEX IF NOT EXISTS idx_attendance_sessions_date_teacher ON attendance_sessions(attendance_date, actual_teacher_id);
+                            CREATE INDEX IF NOT EXISTS idx_attendance_sessions_status_date ON attendance_sessions(status, attendance_date);
+                        END IF;
+                        IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'student_attendance') THEN
+                            CREATE INDEX IF NOT EXISTS idx_student_attendance_session_student ON student_attendance(attendance_session_id, student_id);
+                            CREATE INDEX IF NOT EXISTS idx_student_attendance_student_status ON student_attendance(student_id, status);
+                        END IF;
+                        IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'students') THEN
+                            CREATE INDEX IF NOT EXISTS idx_students_class_active ON students(class_id, is_active);
+                        END IF;
+                        IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'campus_duties') THEN
+                            CREATE INDEX IF NOT EXISTS idx_campus_duties_date_type ON campus_duties(duty_date, duty_type);
+                            CREATE INDEX IF NOT EXISTS idx_campus_duties_dept ON campus_duties(department_id);
+                        END IF;
+                        IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'duty_assignments') THEN
+                            CREATE INDEX IF NOT EXISTS idx_duty_assignments_teacher_status ON duty_assignments(teacher_id, status);
+                        END IF;
+                        IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'users') THEN
+                            CREATE INDEX IF NOT EXISTS idx_users_dept_role_active ON users(department_id, role, is_active);
+                        END IF;
                     END $$;
                 """))
             except Exception as e:
@@ -497,13 +520,15 @@ app.add_exception_handler(DomainException, domain_exception_handler)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=get_allowed_origins(),
-    allow_origin_regex=r"https?://.*",
+    allow_origin_regex=r"^https?://(localhost|127\.0\.0\.1|10\.0\.2\.2|192\.168\.\d+\.\d+|172\.\d+\.\d+\.\d+|10\.\d+\.\d+\.\d+|.*\.vercel\.app)(:\d+)?$",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
 import uuid
+
+APP_START_TIME = time.time()
 
 @app.exception_handler(Exception)
 async def global_unhandled_exception_handler(request: Request, exc: Exception):
@@ -525,6 +550,10 @@ async def traffic_logger_middleware(request: Request, call_next):
         response = await call_next(request)
         status_code = response.status_code
         response.headers["X-Request-ID"] = request_id
+        response.headers["X-Content-Type-Options"] = "nosniff"
+        response.headers["X-Frame-Options"] = "DENY"
+        response.headers["X-XSS-Protection"] = "1; mode=block"
+        response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
         return response
     except Exception as e:
         status_code = 500
@@ -589,14 +618,19 @@ for r in ROUTERS:
 @app.get("/api/health", tags=["Health"])
 @app.get("/api/v1/health", tags=["Health"])
 def health():
-    """Liveness and database readiness probe."""
+    """Liveness, readiness, and latency probe."""
+    t0 = time.time()
     try:
         with engine.connect() as conn:
             conn.execute(text("SELECT 1"))
+        db_latency_ms = round((time.time() - t0) * 1000, 2)
         return {
             "status": "ok",
             "service": "FAFLOW API",
             "database": "connected",
+            "db_latency_ms": db_latency_ms,
+            "uptime_seconds": int(time.time() - APP_START_TIME),
+            "version": "3.1.0-ENTERPRISE",
         }
     except Exception as e:
         logging.getLogger(__name__).warning("Health check DB probe failed: %s", e)
@@ -608,6 +642,52 @@ def health():
                 "database": "unreachable",
             },
         )
+
+
+@app.get("/metrics", tags=["Metrics"])
+@app.get("/api/metrics", tags=["Metrics"])
+def get_prometheus_metrics():
+    """Prometheus-compatible plain text RED metrics endpoint."""
+    from fastapi.responses import PlainTextResponse
+    stats = traffic_manager.get_stats()
+    checked_in = 0
+    checked_out = 0
+    pool_size = 0
+    if hasattr(engine, "pool"):
+        try:
+            checked_in = engine.pool.checkedin()
+            checked_out = engine.pool.checkedout()
+            pool_size = engine.pool.size()
+        except Exception:
+            pass
+
+    status_counts = stats.get("status_counts", {})
+    error_count = status_counts.get("4xx", 0) + status_counts.get("5xx", 0)
+
+    lines = [
+        "# HELP faflow_uptime_seconds Process uptime in seconds",
+        "# TYPE faflow_uptime_seconds gauge",
+        f"faflow_uptime_seconds {int(time.time() - APP_START_TIME)}",
+        "# HELP faflow_http_requests_total Total HTTP requests recorded",
+        "# TYPE faflow_http_requests_total counter",
+        f"faflow_http_requests_total {stats.get('total_requests', 0)}",
+        "# HELP faflow_http_error_requests_total Total 4xx and 5xx HTTP requests",
+        "# TYPE faflow_http_error_requests_total counter",
+        f"faflow_http_error_requests_total {error_count}",
+        "# HELP faflow_avg_response_time_ms Rolling average response time in ms",
+        "# TYPE faflow_avg_response_time_ms gauge",
+        f"faflow_avg_response_time_ms {stats.get('avg_latency_ms', 0.0)}",
+        "# HELP faflow_db_pool_size Total database pool connections",
+        "# TYPE faflow_db_pool_size gauge",
+        f"faflow_db_pool_size {pool_size}",
+        "# HELP faflow_db_pool_checked_out Checked out active database connections",
+        "# TYPE faflow_db_pool_checked_out gauge",
+        f"faflow_db_pool_checked_out {checked_out}",
+        "# HELP faflow_db_pool_checked_in Idle database connections in pool",
+        "# TYPE faflow_db_pool_checked_in gauge",
+        f"faflow_db_pool_checked_in {checked_in}",
+    ]
+    return PlainTextResponse("\n".join(lines) + "\n", media_type="text/plain; version=0.0.4")
 
 
 @app.get("/settings/public", tags=["Settings"])

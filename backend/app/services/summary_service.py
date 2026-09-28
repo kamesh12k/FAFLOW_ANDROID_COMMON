@@ -1,5 +1,6 @@
 from datetime import date, timedelta
-from sqlalchemy.orm import Session
+from sqlalchemy import func
+from sqlalchemy.orm import Session, joinedload
 
 from app.models.leave import LeaveRequest, LeaveStatus
 from app.models.user import User
@@ -29,14 +30,28 @@ def get_today_summary(db: Session, today: date, tenant_department_id: int | None
         if tenant_department_id is not None:
             leaves_query = leaves_query.filter(User.department_id == tenant_department_id)
         leaves_today = (
-            leaves_query.filter(LeaveRequest.date == today, LeaveRequest.status == LeaveStatus.approved)
+            leaves_query.options(joinedload(LeaveRequest.alter_assignment))
+            .filter(LeaveRequest.date == today, LeaveRequest.status == LeaveStatus.approved)
             .all()
         )
+        
+        all_user_ids = set()
         for leave in leaves_today:
-            teacher = db.query(User).filter(User.id == leave.teacher_id).first()
+            all_user_ids.add(leave.teacher_id)
+            if leave.alter_assignment and leave.alter_assignment.substitute_teacher_id:
+                all_user_ids.add(leave.alter_assignment.substitute_teacher_id)
+                
+        users_by_id = {}
+        if all_user_ids:
+            users_by_id = {
+                u.id: u for u in db.query(User).options(joinedload(User.department_rel)).filter(User.id.in_(all_user_ids)).all()
+            }
+            
+        for leave in leaves_today:
+            teacher = users_by_id.get(leave.teacher_id)
             sub_name = None
             if leave.alter_assignment:
-                sub = db.query(User).filter(User.id == leave.alter_assignment.substitute_teacher_id).first()
+                sub = users_by_id.get(leave.alter_assignment.substitute_teacher_id)
                 sub_name = sub.name if sub else None
             teachers_on_leave.append(
                 TeacherOnLeaveToday(
@@ -196,44 +211,58 @@ def get_principal_overview(db: Session) -> dict:
     if leave_periods_today > 0:
         overall_coverage_rate = round((covered_periods_today / leave_periods_today) * 100.0, 1)
     
-    # Department-wise breakdown
+    # Department-wise breakdown (batch pre-aggregated in O(1) queries)
     depts = db.query(Department).order_by(Department.name).all()
-    dept_summaries = []
     
+    teacher_counts = dict(
+        db.query(User.department_id, func.count(User.id))
+        .filter(User.role == Role.teacher, User.department_id.isnot(None))
+        .group_by(User.department_id)
+        .all()
+    )
+    class_counts = dict(
+        db.query(Class.department_id, func.count(Class.id))
+        .filter(Class.department_id.isnot(None))
+        .group_by(Class.department_id)
+        .all()
+    )
+    pending_leaves_counts = dict(
+        db.query(User.department_id, func.count(LeaveRequest.id))
+        .join(User, LeaveRequest.teacher_id == User.id)
+        .filter(User.department_id.isnot(None), LeaveRequest.status == LeaveStatus.pending)
+        .group_by(User.department_id)
+        .all()
+    )
+    leaves_today_counts = dict(
+        db.query(User.department_id, func.count(LeaveRequest.id))
+        .join(User, LeaveRequest.teacher_id == User.id)
+        .filter(User.department_id.isnot(None), LeaveRequest.date == today, LeaveRequest.status == LeaveStatus.approved)
+        .group_by(User.department_id)
+        .all()
+    )
+    teachers_today_counts = dict(
+        db.query(User.department_id, func.count(func.distinct(LeaveRequest.teacher_id)))
+        .join(User, LeaveRequest.teacher_id == User.id)
+        .filter(User.department_id.isnot(None), LeaveRequest.date == today, LeaveRequest.status == LeaveStatus.approved)
+        .group_by(User.department_id)
+        .all()
+    )
+    pending_teachers_counts = dict(
+        db.query(User.department_id, func.count(func.distinct(LeaveRequest.teacher_id)))
+        .join(User, LeaveRequest.teacher_id == User.id)
+        .filter(User.department_id.isnot(None), LeaveRequest.status == LeaveStatus.pending)
+        .group_by(User.department_id)
+        .all()
+    )
+    
+    dept_summaries = []
     for dept in depts:
-        teacher_count = db.query(User).filter(User.role == Role.teacher, User.department_id == dept.id).count()
-        class_count = db.query(Class).filter(Class.department_id == dept.id).count()
-        
-        pending_leaves_count = (
-            db.query(LeaveRequest)
-            .join(User, LeaveRequest.teacher_id == User.id)
-            .filter(User.department_id == dept.id, LeaveRequest.status == LeaveStatus.pending)
-            .count()
-        )
-        
-        leaves_today_count = (
-            db.query(LeaveRequest)
-            .join(User, LeaveRequest.teacher_id == User.id)
-            .filter(User.department_id == dept.id, LeaveRequest.date == today, LeaveRequest.status == LeaveStatus.approved)
-            .count()
-        )
-        
-        # New standardized dept metrics
-        teachers_today_count = (
-            db.query(LeaveRequest.teacher_id)
-            .join(User, LeaveRequest.teacher_id == User.id)
-            .filter(User.department_id == dept.id, LeaveRequest.date == today, LeaveRequest.status == LeaveStatus.approved)
-            .distinct()
-            .count()
-        )
-        
-        pending_teachers_count = (
-            db.query(LeaveRequest.teacher_id)
-            .join(User, LeaveRequest.teacher_id == User.id)
-            .filter(User.department_id == dept.id, LeaveRequest.status == LeaveStatus.pending)
-            .distinct()
-            .count()
-        )
+        teacher_count = teacher_counts.get(dept.id, 0)
+        class_count = class_counts.get(dept.id, 0)
+        pending_leaves_count = pending_leaves_counts.get(dept.id, 0)
+        leaves_today_count = leaves_today_counts.get(dept.id, 0)
+        teachers_today_count = teachers_today_counts.get(dept.id, 0)
+        pending_teachers_count = pending_teachers_counts.get(dept.id, 0)
         
         dept_summaries.append({
             "id": dept.id,

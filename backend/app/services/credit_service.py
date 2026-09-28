@@ -1,4 +1,4 @@
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 
 from app.models.credit import TeacherCredit, CreditTransaction
 from app.models.user import User, Role
@@ -67,7 +67,12 @@ def get_all_transactions(db: Session, tenant_department_id: int | None = None) -
 
 
 def get_credit_report(db: Session, tenant_department_id: int | None = None) -> list[CreditReportEntry]:
-    query = db.query(User, TeacherCredit).outerjoin(TeacherCredit, TeacherCredit.teacher_id == User.id).filter(User.role == Role.teacher)
+    query = (
+        db.query(User, TeacherCredit)
+        .options(joinedload(User.department_rel))
+        .outerjoin(TeacherCredit, TeacherCredit.teacher_id == User.id)
+        .filter(User.role == Role.teacher)
+    )
     if tenant_department_id is not None:
         query = query.filter(User.department_id == tenant_department_id)
     rows = query.all()

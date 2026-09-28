@@ -3,7 +3,7 @@ import io
 import logging
 from datetime import date, datetime, time, timedelta, timezone
 from typing import List, Optional, Dict, Any, Tuple
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload, selectinload
 from sqlalchemy import func, or_, and_
 from fastapi import HTTPException, status
 
@@ -1327,6 +1327,13 @@ class StudentAttendanceService:
 
         sessions = (
             db.query(AttendanceSession)
+            .options(
+                joinedload(AttendanceSession.class_).joinedload(Class.department),
+                joinedload(AttendanceSession.subject),
+                joinedload(AttendanceSession.scheduled_teacher),
+                joinedload(AttendanceSession.actual_teacher),
+                selectinload(AttendanceSession.records).joinedload(StudentAttendance.student),
+            )
             .filter(
                 AttendanceSession.attendance_date == target_date,
                 AttendanceSession.class_id.in_(class_ids)
@@ -1340,7 +1347,15 @@ class StudentAttendanceService:
         # Timetable expected slots
         expected_slots = []
         if day_order:
-            slot_query = db.query(TimetableSlot).filter(TimetableSlot.day_order == day_order, TimetableSlot.class_id.in_(class_ids))
+            slot_query = (
+                db.query(TimetableSlot)
+                .options(
+                    joinedload(TimetableSlot.class_).joinedload(Class.department),
+                    joinedload(TimetableSlot.subject),
+                    joinedload(TimetableSlot.teacher),
+                )
+                .filter(TimetableSlot.day_order == day_order, TimetableSlot.class_id.in_(class_ids))
+            )
             expected_slots = slot_query.all()
 
         total_classes = len(expected_slots)
@@ -1577,7 +1592,12 @@ class StudentAttendanceService:
 
         expected_slots = []
         if day_order:
-            expected_slots = db.query(TimetableSlot).filter(TimetableSlot.day_order == day_order).all()
+            expected_slots = (
+                db.query(TimetableSlot)
+                .options(joinedload(TimetableSlot.class_))
+                .filter(TimetableSlot.day_order == day_order)
+                .all()
+            )
         
         slots_by_dept: Dict[int, List[TimetableSlot]] = {}
         for slot in expected_slots:
@@ -1586,6 +1606,10 @@ class StudentAttendanceService:
 
         sessions = (
             db.query(AttendanceSession)
+            .options(
+                joinedload(AttendanceSession.class_),
+                selectinload(AttendanceSession.records)
+            )
             .filter(AttendanceSession.attendance_date == target_date)
             .all()
         )
@@ -1597,6 +1621,14 @@ class StudentAttendanceService:
         # HODs by department
         hod_users = db.query(User).filter(User.role == Role.admin, User.department_id != None).all()
         hod_by_dept = {u.department_id: u.name for u in hod_users}
+
+        # Pre-aggregate student counts across all active classes in a single query
+        all_class_student_counts = dict(
+            db.query(Student.class_id, func.count(Student.id))
+            .filter(Student.is_active == True)
+            .group_by(Student.class_id)
+            .all()
+        )
 
         dept_summaries: List[PrincipalDepartmentSummaryOut] = []
         inst_total_students_enrolled = 0
@@ -1613,11 +1645,7 @@ class StudentAttendanceService:
             dept_sessions = sessions_by_dept.get(dept.id, [])
 
             dept_class_ids = [c.id for c in dept_classes]
-            dept_student_count = (
-                db.query(func.count(Student.id))
-                .filter(Student.class_id.in_(dept_class_ids), Student.is_active == True)
-                .scalar() or 0
-            ) if dept_class_ids else 0
+            dept_student_count = sum(all_class_student_counts.get(cid, 0) for cid in dept_class_ids)
             inst_total_students_enrolled += dept_student_count
 
             sched_count = len(dept_slots)
