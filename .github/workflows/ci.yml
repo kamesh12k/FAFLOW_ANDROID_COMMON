@@ -2,9 +2,9 @@ name: FAFLOW CI/CD Pipeline
 
 on:
   push:
-    branches: ["main", "develop", "optimize/full-audit"]
+    branches: ["main", "develop", "optimize/full-audit", "redesign/light-professional"]
   pull_request:
-    branches: ["main", "develop"]
+    branches: ["main", "develop", "redesign/light-professional"]
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -212,6 +212,12 @@ jobs:
         run: |
           pip install pyyaml requests
           pip install -r backend/requirements.txt
+
+      - name: Design tokens drift check (design/tokens/faflow_design_tokens.json vs code)
+        run: python scripts/generate_design_tokens.py --check
+
+      - name: Design tokens WCAG 2.2 AA contrast verification
+        run: python scripts/test_design_tokens_contrast.py
 
       - name: OpenAPI spec drift check (code vs openapi_generated.yaml)
         run: python scripts/generate_openapi.py --check --out openapi_generated.yaml

@@ -24,7 +24,7 @@ fun DayOrderBadge(
     modifier: Modifier = Modifier,
     isWorkingDay: Boolean = true
 ) {
-    val bgColor = if (isWorkingDay && dayOrder != null) Color(0xFF4F46E5) else FaflowStatusColors.Holiday
+    val bgColor = if (isWorkingDay && dayOrder != null) com.governence.faflow.ui.theme.PrimaryNavy else FaflowStatusColors.Holiday
     val text = if (isWorkingDay && dayOrder != null) "DO $dayOrder" else "HOLIDAY"
     
     Box(

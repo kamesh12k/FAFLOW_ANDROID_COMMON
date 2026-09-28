@@ -1,0 +1,138 @@
+/**
+ * FAFLOW Unified Design System CSS Custom Properties
+ * AUTO-GENERATED from design/tokens/faflow_design_tokens.json
+ * DO NOT EDIT DIRECTLY. Run: python scripts/generate_design_tokens.py
+ */
+:root {
+  --faflow-navy-50: #EAF0F9;
+  --faflow-navy-100: #D5E2F4;
+  --faflow-navy-200: #ABC4E9;
+  --faflow-navy-300: #81A6DE;
+  --faflow-navy-400: #5788D3;
+  --faflow-navy-500: #2E5490;
+  --faflow-navy-600: #1B3A6B;
+  --faflow-navy-700: #162E56;
+  --faflow-navy-800: #102340;
+  --faflow-navy-900: #0B172B;
+  --faflow-teal-50: #E4F3F1;
+  --faflow-teal-100: #C9E8E4;
+  --faflow-teal-200: #94D1C9;
+  --faflow-teal-300: #5FBAAE;
+  --faflow-teal-400: #2AA393;
+  --faflow-teal-500: #128C7E;
+  --faflow-teal-600: #0E8074;
+  --faflow-teal-700: #0B665D;
+  --faflow-teal-800: #084C46;
+  --faflow-teal-900: #05332F;
+  --faflow-violet-50: #EFEBFC;
+  --faflow-violet-100: #DFD7FA;
+  --faflow-violet-200: #BFAFF5;
+  --faflow-violet-300: #9F87F0;
+  --faflow-violet-400: #7F5FEB;
+  --faflow-violet-500: #6C4FCE;
+  --faflow-violet-600: #5B42AE;
+  --faflow-violet-700: #49358C;
+  --faflow-violet-800: #37286B;
+  --faflow-violet-900: #251B49;
+  --faflow-gold-50: #FBF1DF;
+  --faflow-gold-100: #F6E3BE;
+  --faflow-gold-200: #EDC87D;
+  --faflow-gold-300: #E3AC3C;
+  --faflow-gold-400: #C4901C;
+  --faflow-gold-500: #A6790A;
+  --faflow-gold-600: #876208;
+  --faflow-gold-700: #7A5806;
+  --faflow-gold-800: #5A4004;
+  --faflow-gold-900: #3A2902;
+  --faflow-slate-50: #F8FAFC;
+  --faflow-slate-100: #F1F5F9;
+  --faflow-slate-200: #E2E8F0;
+  --faflow-slate-300: #CBD5E1;
+  --faflow-slate-400: #94A3B8;
+  --faflow-slate-500: #64748B;
+  --faflow-slate-600: #475569;
+  --faflow-slate-700: #334155;
+  --faflow-slate-800: #1E293B;
+  --faflow-slate-900: #0F172A;
+  --faflow-slate-950: #020617;
+  --faflow-emerald-50: #ECFDF5;
+  --faflow-emerald-100: #D1FAE5;
+  --faflow-emerald-200: #A7F3D0;
+  --faflow-emerald-300: #6EE7B7;
+  --faflow-emerald-400: #34D399;
+  --faflow-emerald-500: #10B981;
+  --faflow-emerald-600: #059669;
+  --faflow-emerald-700: #166B45;
+  --faflow-emerald-800: #0F5234;
+  --faflow-emerald-900: #064E3B;
+  --faflow-rose-50: #FFF1F2;
+  --faflow-rose-100: #FFE4E6;
+  --faflow-rose-200: #FECDD3;
+  --faflow-rose-300: #FDA4AF;
+  --faflow-rose-400: #FB7185;
+  --faflow-rose-500: #F43F5E;
+  --faflow-rose-600: #E11D48;
+  --faflow-rose-700: #B02A2A;
+  --faflow-rose-800: #8C1D1D;
+  --faflow-rose-900: #681212;
+  --faflow-blue-50: #EFF6FF;
+  --faflow-blue-100: #DBEAFE;
+  --faflow-blue-200: #BFDBFE;
+  --faflow-blue-300: #93C5FD;
+  --faflow-blue-400: #60A5FA;
+  --faflow-blue-500: #3B82F6;
+  --faflow-blue-600: #2563EB;
+  --faflow-blue-700: #1D4ED8;
+  --faflow-blue-800: #1E40AF;
+  --faflow-blue-900: #1E3A8A;
+  --faflow-coral-500: #E05638;
+  --faflow-coral-600: #C44327;
+  --faflow-coral-700: #A2321A;
+
+  --color-primary: #1B3A6B;
+  --color-primary-light: #2E5490;
+  --color-primary-tint: #EAF0F9;
+  --color-secondary: #0E8074;
+  --color-secondary-tint: #E4F3F1;
+  --color-tertiary: #6C4FCE;
+  --color-tertiary-tint: #EFEBFC;
+  --color-accent: #876208;
+  --color-accent-tint: #FBF1DF;
+
+  --color-bg: #F5F6F8;
+  --color-card: #FFFFFF;
+  --color-card-hover: #F9FAFC;
+  --color-sidebar: #FFFFFF;
+  --color-sidebar-border: #E6E8EC;
+  --color-sidebar-active: #EAF0F9;
+  --color-sidebar-active-text: #1B3A6B;
+
+  --color-text-primary: #1A1D21;
+  --color-text-secondary: #5B6169;
+  --color-text-muted: #667085;
+  --color-text-inverse: #FFFFFF;
+
+  --color-border-default: #E6E8EC;
+  --color-border-divider: #EEF0F3;
+  --color-border-control: #828C99;
+  --color-border-focus: #1B3A6B;
+
+  --color-status-success-text: #166B45;
+  --color-status-success-bg: #ECFDF5;
+  --color-status-success-border: #A7F3D0;
+  --color-status-warning-text: #7A5806;
+  --color-status-warning-bg: #FBF1DF;
+  --color-status-warning-border: #EDC87D;
+  --color-status-error-text: #B02A2A;
+  --color-status-error-bg: #FFF1F2;
+  --color-status-error-border: #FECDD3;
+  --color-status-info-text: #1B3A6B;
+  --color-status-info-bg: #EAF0F9;
+  --color-status-info-border: #ABC4E9;
+
+  --shadow-sm: 0 1px 2px 0 rgba(16, 24, 40, 0.05);
+  --shadow-card: 0 1px 3px 0 rgba(16, 24, 40, 0.06), 0 1px 2px -1px rgba(16, 24, 40, 0.04);
+  --shadow-card-hover: 0 8px 20px -4px rgba(27, 58, 107, 0.08), 0 4px 6px -2px rgba(27, 58, 107, 0.04);
+  --shadow-raised: 0 4px 8px -2px rgba(16, 24, 40, 0.08), 0 2px 4px -2px rgba(16, 24, 40, 0.04);
+  --shadow-dialog: 0 20px 25px -5px rgba(16, 24, 40, 0.1), 0 8px 10px -6px rgba(16, 24, 40, 0.08);
+}

@@ -1,8 +1,8 @@
 {
   "$schema": "https://json.schemastore.org/design-tokens.json",
   "name": "FAFLOW Design System Tokens",
-  "version": "2.0.0",
-  "description": "Unified design tokens shared between React Web (Tailwind CSS) and Android Mobile (Jetpack Compose).",
+  "version": "2.1.0",
+  "description": "Unified authoritative design tokens shared between React Web (Tailwind CSS) and Android Mobile (Jetpack Compose). Fully WCAG 2.2 AA compliant light institutional design system.",
   "primitive": {
     "color": {
       "navy": {
@@ -49,9 +49,9 @@
         "400": "#C4901C",
         "500": "#A6790A",
         "600": "#876208",
-        "700": "#674B06",
-        "800": "#483404",
-        "900": "#281D02"
+        "700": "#7A5806",
+        "800": "#5A4004",
+        "900": "#3A2902"
       },
       "slate": {
         "50": "#F8FAFC",
@@ -74,8 +74,8 @@
         "400": "#34D399",
         "500": "#10B981",
         "600": "#059669",
-        "700": "#047857",
-        "800": "#065F46",
+        "700": "#166B45",
+        "800": "#0F5234",
         "900": "#064E3B"
       },
       "rose": {
@@ -86,9 +86,26 @@
         "400": "#FB7185",
         "500": "#F43F5E",
         "600": "#E11D48",
-        "700": "#BE123C",
-        "800": "#9F1239",
-        "900": "#881337"
+        "700": "#B02A2A",
+        "800": "#8C1D1D",
+        "900": "#681212"
+      },
+      "blue": {
+        "50": "#EFF6FF",
+        "100": "#DBEAFE",
+        "200": "#BFDBFE",
+        "300": "#93C5FD",
+        "400": "#60A5FA",
+        "500": "#3B82F6",
+        "600": "#2563EB",
+        "700": "#1D4ED8",
+        "800": "#1E40AF",
+        "900": "#1E3A8A"
+      },
+      "coral": {
+        "500": "#E05638",
+        "600": "#C44327",
+        "700": "#A2321A"
       }
     },
     "spacing": {
@@ -110,8 +127,8 @@
       "button": "10px",
       "badge": "11px",
       "md": "12px",
-      "card": "13px",
-      "hero": "14px",
+      "card": "14px",
+      "hero": "16px",
       "lg": "16px",
       "xl": "20px",
       "sheet": "24px",
@@ -156,44 +173,47 @@
         "secondaryTint": "{primitive.color.teal.50}",
         "tertiary": "{primitive.color.violet.500}",
         "tertiaryTint": "{primitive.color.violet.50}",
-        "accent": "{primitive.color.gold.500}",
+        "accent": "{primitive.color.gold.600}",
         "accentTint": "{primitive.color.gold.50}"
       },
       "surface": {
         "background": "#F5F6F8",
         "card": "#FFFFFF",
-        "cardHover": "#FAFAFC",
-        "overlay": "rgba(2, 6, 23, 0.6)",
-        "sidebarDark": "{primitive.color.slate.950}",
-        "sidebarBorder": "{primitive.color.slate.800}"
+        "cardHover": "#F9FAFC",
+        "overlay": "rgba(15, 23, 42, 0.5)",
+        "sidebar": "#FFFFFF",
+        "sidebarBorder": "#E6E8EC",
+        "sidebarActive": "{primitive.color.navy.50}",
+        "sidebarActiveText": "{primitive.color.navy.600}"
       },
       "text": {
         "primary": "#1A1D21",
         "secondary": "#5B6169",
-        "muted": "#9AA1A9",
+        "muted": "#667085",
         "inverse": "#FFFFFF",
         "brand": "{primitive.color.navy.600}"
       },
       "border": {
         "default": "#E6E8EC",
         "divider": "#EEF0F3",
-        "focus": "{primitive.color.navy.500}",
-        "card": "{primitive.color.slate.100}"
+        "control": "#828C99",
+        "focus": "{primitive.color.navy.600}",
+        "card": "#E6E8EC"
       },
       "status": {
         "success": {
-          "text": "#1E8E5A",
-          "bg": "#E4F3F1",
+          "text": "#166B45",
+          "bg": "#ECFDF5",
           "border": "#A7F3D0"
         },
         "warning": {
-          "text": "#A6790A",
+          "text": "#7A5806",
           "bg": "#FBF1DF",
           "border": "#EDC87D"
         },
         "error": {
-          "text": "#C13F3F",
-          "bg": "#FDE8E8",
+          "text": "#B02A2A",
+          "bg": "#FFF1F2",
           "border": "#FECDD3"
         },
         "info": {
@@ -202,37 +222,78 @@
           "border": "#ABC4E9"
         },
         "neutral": {
-          "text": "#55606B",
-          "bg": "#EEF0F2",
+          "text": "#475569",
+          "bg": "#F1F5F9",
           "border": "#CBD5E1"
         }
       },
       "roles": {
         "teacher": {
           "primary": "#1B3A6B",
-          "bg": "#EAF0F9"
+          "bg": "#EAF0F9",
+          "border": "#ABC4E9"
         },
         "hod": {
           "primary": "#6C4FCE",
-          "bg": "#EFEBFC"
+          "bg": "#EFEBFC",
+          "border": "#BFAFF5"
         },
         "principal": {
-          "primary": "#A6790A",
-          "bg": "#FBF1DF"
+          "primary": "#7A5806",
+          "bg": "#FBF1DF",
+          "border": "#EDC87D"
         },
         "governance": {
-          "primary": "#0E8074",
-          "bg": "#E4F3F1"
+          "primary": "#0B665D",
+          "bg": "#E4F3F1",
+          "border": "#94D1C9"
         },
         "manager": {
-          "primary": "#475569",
-          "bg": "#F1F5F9"
+          "primary": "#334155",
+          "bg": "#F1F5F9",
+          "border": "#CBD5E1"
         },
         "staff": {
-          "primary": "#334155",
-          "bg": "#F8FAFC"
+          "primary": "#1B3A6B",
+          "bg": "#EAF0F9",
+          "border": "#ABC4E9"
         }
-      }
+      },
+      "disabled": {
+        "text": "#94A3B8",
+        "bg": "#F1F5F9",
+        "border": "#E2E8F0"
+      },
+      "focus": {
+        "ring": "{primitive.color.navy.600}",
+        "ringOffset": "#FFFFFF"
+      },
+      "skeleton": {
+        "base": "#E2E8F0",
+        "highlight": "#F1F5F9"
+      },
+      "tooltip": {
+        "bg": "#0F172A",
+        "text": "#FFFFFF",
+        "border": "#334155"
+      },
+      "charts": [
+        "#1B3A6B",
+        "#0E8074",
+        "#6C4FCE",
+        "#7A5806",
+        "#2563EB",
+        "#E05638"
+      ]
+    },
+    "elevation": {
+      "flat": "none",
+      "sm": "0 1px 2px 0 rgba(16, 24, 40, 0.05)",
+      "card": "0 1px 3px 0 rgba(16, 24, 40, 0.06), 0 1px 2px -1px rgba(16, 24, 40, 0.04)",
+      "cardHover": "0 8px 20px -4px rgba(27, 58, 107, 0.08), 0 4px 6px -2px rgba(27, 58, 107, 0.04)",
+      "raised": "0 4px 8px -2px rgba(16, 24, 40, 0.08), 0 2px 4px -2px rgba(16, 24, 40, 0.04)",
+      "dialog": "0 20px 25px -5px rgba(16, 24, 40, 0.1), 0 8px 10px -6px rgba(16, 24, 40, 0.08)",
+      "sheet": "0 -8px 24px -4px rgba(16, 24, 40, 0.12)"
     },
     "interaction": {
       "minTouchTarget": "48px",

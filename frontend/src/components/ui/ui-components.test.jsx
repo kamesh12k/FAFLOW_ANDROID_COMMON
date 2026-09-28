@@ -1,7 +1,7 @@
 import React from 'react'
 import { describe, it, expect } from 'vitest'
 import { render, screen } from '@testing-library/react'
-import { Button, StatusBadge, ErrorAlert, CreditChip } from './index'
+import { Button, StatusBadge, ErrorAlert, CreditChip, RoleBadge, Chip } from './index'
 
 describe('UI Components', () => {
   describe('Button', () => {
@@ -74,6 +74,34 @@ describe('UI Components', () => {
     it('displays negative values correctly', () => {
       render(<CreditChip value={-3} />)
       expect(screen.getByText('-3')).toBeInTheDocument()
+    })
+  })
+
+  describe('RoleBadge', () => {
+    it('renders Teacher role badge', () => {
+      render(<RoleBadge role="teacher" />)
+      expect(screen.getByText(/Teacher/i)).toBeInTheDocument()
+    })
+
+    it('renders Principal role badge', () => {
+      render(<RoleBadge role="principal" />)
+      expect(screen.getByText(/Principal/i)).toBeInTheDocument()
+    })
+
+    it('renders Governance role badge', () => {
+      render(<RoleBadge role="governance" />)
+      expect(screen.getByText(/Governance/i)).toBeInTheDocument()
+    })
+  })
+
+  describe('Chip', () => {
+    it('renders label and handles remove click', () => {
+      let removed = false
+      render(<Chip label="Biometrics" onRemove={() => { removed = true }} />)
+      expect(screen.getByText('Biometrics')).toBeInTheDocument()
+      const removeBtn = screen.getByRole('button', { name: /remove biometrics/i })
+      removeBtn.click()
+      expect(removed).toBe(true)
     })
   })
 })

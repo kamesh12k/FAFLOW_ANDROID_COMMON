@@ -66,6 +66,7 @@ const StaffMyLeaves = lazy(() => import('./pages/staff/Leaves'))
 const TodaySubstitutions = lazy(() => import('./pages/common/TodaySubstitutions'))
 const ClassFacultyDirectory = lazy(() => import('./pages/common/ClassFacultyDirectory'))
 const ClasswiseTimetable = lazy(() => import('./pages/common/ClasswiseTimetable'))
+const ComponentPreview = lazy(() => import('./pages/common/ComponentPreview'))
 
 // Teacher pages (lazy loaded)
 const TeacherDashboard = lazy(() => import('./pages/teacher/Dashboard'))
@@ -112,6 +113,9 @@ export default function App() {
           <Route element={<FirstLoginSetupRoute />}>
             <Route path="/first-login-setup" element={<FirstLoginSetup />} />
           </Route>
+
+          {/* Living Design System Component Gallery */}
+          <Route path="/design-system" element={<ComponentPreview />} />
 
           {/* Admin routes — RequireCredentialsSet bounces anyone still on
               default/reset credentials to /first-login-setup before they can

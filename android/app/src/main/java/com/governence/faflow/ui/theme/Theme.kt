@@ -34,24 +34,7 @@ private val DarkColorScheme = lightColorScheme(
     onError = FaflowSurface
 )
 
-private val LightColorScheme = lightColorScheme(
-    primary = FaflowNavy,
-    onPrimary = FaflowSurface,
-    primaryContainer = FaflowDivider,
-    onPrimaryContainer = FaflowNavy,
-    secondary = FaflowTeal,
-    onSecondary = FaflowSurface,
-    tertiary = FaflowViolet,
-    background = FaflowBg,
-    onBackground = FaflowText1,
-    surface = FaflowSurface,
-    onSurface = FaflowText1,
-    surfaceVariant = FaflowDivider,
-    onSurfaceVariant = FaflowText2,
-    outline = FaflowBorder,
-    error = FaflowDanger,
-    onError = FaflowSurface
-)
+private val LightColorScheme = FaflowLightColorScheme
 
 @Composable
 fun FAFLOWTheme(
@@ -69,8 +52,8 @@ fun FAFLOWTheme(
                 window.statusBarColor = androidx.compose.ui.graphics.Color.Transparent.toArgb()
                 window.navigationBarColor = androidx.compose.ui.graphics.Color.Transparent.toArgb()
                 val controller = WindowCompat.getInsetsController(window, view)
-                controller.isAppearanceLightStatusBars = !darkTheme
-                controller.isAppearanceLightNavigationBars = !darkTheme
+                controller.isAppearanceLightStatusBars = true
+                controller.isAppearanceLightNavigationBars = true
             }
         }
     }
@@ -78,6 +61,7 @@ fun FAFLOWTheme(
     MaterialTheme(
         colorScheme = colorScheme,
         typography = Typography,
+        shapes = FaflowMaterialShapes,
         content = content
     )
 }

@@ -5,14 +5,14 @@
 export const THEMES = {
   enterprise: {
     name: 'Enterprise',
-    primaryColor: '#0f172a', // Slate 900
-    secondaryColor: '#475569', // Slate 600
-    accentColor: '#3b82f6', // Blue 500
+    primaryColor: '#1B3A6B', // Navy 600
+    secondaryColor: '#0E8074', // Teal 600
+    accentColor: '#876208', // Gold 600
     borderRadius: 'rounded-xl',
     fontFamily: 'font-sans',
-    sidebarStyle: 'dark',
-    cardShadow: 'shadow-sm border border-slate-100',
-    loginBg: 'bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900',
+    sidebarStyle: 'light border-r border-slate-200',
+    cardShadow: 'shadow-sm border border-slate-200/60',
+    loginBg: 'bg-slate-50',
   },
   university: {
     name: 'University',

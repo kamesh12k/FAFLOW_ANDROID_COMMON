@@ -1,6 +1,7 @@
 import { useState, useMemo, useEffect, useRef } from 'react'
 import { Link } from 'react-router-dom'
 import { ChevronDownIcon, SearchIcon, CloseIcon, CheckCircleIcon, AlertTriangleIcon } from '../icons'
+import { FaflowColors, FaflowRoleColors, FaflowStatusColors } from '../../tokens/designTokens'
 
 // 1. Spinner Loader
 export function Spinner({ size = 'md', className = '' }) {
@@ -10,23 +11,58 @@ export function Spinner({ size = 'md', className = '' }) {
   )
 }
 
-// 2. Status Badge
-export function StatusBadge({ status }) {
-  const styles = {
-    pending: 'bg-amber-50 text-amber-700 border-amber-200/60',
-    approved: 'bg-emerald-50 text-emerald-700 border-emerald-200/60',
-    approved_with_exception: 'bg-amber-50 text-amber-800 border-amber-300 font-bold',
-    rejected: 'bg-red-50 text-red-700 border-red-200/60',
-    cancelled: 'bg-slate-50 text-slate-600 border-slate-200/60',
+// 2. Status Badge (WCAG 2.2 AA Verified via FaflowStatusColors)
+export function StatusBadge({ status, className = '' }) {
+  const normalized = (status || '').toLowerCase()
+  let config = FaflowStatusColors.neutral
+  if (['approved', 'present', 'success', 'verified'].includes(normalized)) {
+    config = FaflowStatusColors.success
+  } else if (['pending', 'warning', 'settling', 'submitted', 'approved_with_exception'].includes(normalized)) {
+    config = FaflowStatusColors.warning
+  } else if (['rejected', 'absent', 'error', 'failed'].includes(normalized)) {
+    config = FaflowStatusColors.error
+  } else if (['info', 'excused', 'leave'].includes(normalized)) {
+    config = FaflowStatusColors.info
   }
-  const labels = {
+
+  const specialLabels = {
     approved_with_exception: 'Approved w/ Exception',
   }
-  const cls = styles[status] || 'bg-gray-50 text-gray-700 border-gray-200'
-  const text = labels[status] || (status ? (status.charAt(0).toUpperCase() + status.slice(1).replace(/_/g, ' ')) : '')
+  const label = specialLabels[normalized] || (normalized ? (normalized.charAt(0).toUpperCase() + normalized.slice(1).replace(/_/g, ' ')) : 'Unknown')
   return (
-    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold border ${cls}`}>
-      {text}
+    <span
+      className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold border transition-colors ${className}`}
+      style={{
+        color: config.text,
+        backgroundColor: config.bg,
+        borderColor: config.border,
+      }}
+    >
+      {label}
+    </span>
+  )
+}
+
+// 2b. Role Badge (WCAG 2.2 AA Verified via FaflowRoleColors)
+export function RoleBadge({ role, className = '' }) {
+  const normalized = (role || '').toLowerCase()
+  const roleConfig = FaflowRoleColors[normalized] || {
+    primary: FaflowColors.navy['600'],
+    bg: FaflowColors.navy['50'],
+    border: FaflowColors.navy['200'],
+    label: role ? (role.charAt(0).toUpperCase() + role.slice(1)) : 'Staff',
+  }
+
+  return (
+    <span
+      className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold border transition-colors ${className}`}
+      style={{
+        color: roleConfig.primary,
+        backgroundColor: roleConfig.bg,
+        borderColor: roleConfig.border,
+      }}
+    >
+      {roleConfig.label}
     </span>
   )
 }
@@ -175,26 +211,36 @@ export function StatCard({ label, value, sub, accent, className = '' }) {
   )
 }
 
-// 9. Button Component
-export function Button({ children, variant = 'primary', size = 'md', loading = false, disabled = false, className = '', ...props }) {
-  const baseStyle = 'inline-flex items-center justify-center font-bold tracking-tight rounded-xl transition-all duration-150 active:scale-[0.98]'
+// 9. Button Component (WCAG 2.2 AA compliant with min 48px touch target support)
+export function Button({ 
+  children, 
+  variant = 'primary', 
+  size = 'md', 
+  loading = false, 
+  disabled = false, 
+  className = '', 
+  ...props 
+}) {
+  const baseStyle = 'inline-flex items-center justify-center font-bold tracking-tight rounded-xl transition-all duration-150 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-600 focus-visible:ring-offset-2'
   
   const variants = {
-    primary: 'bg-primary-600 hover:bg-primary-700 text-white shadow-sm border border-primary-700/10 disabled:bg-primary-400',
-    secondary: 'bg-slate-100 hover:bg-slate-200 text-slate-800 border border-slate-250/20 disabled:bg-slate-50 disabled:text-slate-400',
-    outline: 'bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 shadow-[0_1px_2px_0_rgba(0,0,0,0.02)] disabled:text-slate-400 disabled:border-slate-150',
-    danger: 'bg-rose-650 hover:bg-rose-700 text-white shadow-sm border border-rose-700/10 disabled:bg-rose-400',
+    primary: 'bg-primary-600 hover:bg-primary-700 text-white shadow-sm border border-primary-700/20 disabled:bg-slate-200 disabled:text-slate-400 disabled:cursor-not-allowed',
+    secondary: 'bg-white hover:bg-slate-50 text-slate-800 border border-[var(--color-border-control,#828C99)] shadow-sm disabled:opacity-50 disabled:cursor-not-allowed',
+    outline: 'bg-white hover:bg-slate-50 text-slate-700 border border-[var(--color-border-control,#828C99)] shadow-sm disabled:opacity-50 disabled:cursor-not-allowed',
+    ghost: 'bg-transparent hover:bg-slate-100 text-slate-700 disabled:opacity-50 disabled:cursor-not-allowed',
+    danger: 'bg-rose-600 hover:bg-rose-700 text-white shadow-sm border border-rose-700/20 disabled:bg-rose-300 disabled:cursor-not-allowed',
+    destructive: 'bg-rose-600 hover:bg-rose-700 text-white shadow-sm border border-rose-700/20 disabled:bg-rose-300 disabled:cursor-not-allowed',
   }
 
   const sizes = {
-    sm: 'px-3 py-1.5 text-xs',
-    md: 'px-4 py-2.5 text-sm',
-    lg: 'px-5 py-3 text-base',
+    sm: 'px-3 py-1.5 text-xs min-h-[32px]',
+    md: 'px-4 py-2.5 text-sm min-h-[42px]',
+    lg: 'px-5 py-3 text-base min-h-[48px]',
   }
 
   return (
     <button
-      className={`${baseStyle} ${variants[variant]} ${sizes[size]} ${className}`}
+      className={`${baseStyle} ${variants[variant] || variants.primary} ${sizes[size]} ${className}`}
       disabled={disabled || loading}
       {...props}
     >
@@ -207,10 +253,10 @@ export function Button({ children, variant = 'primary', size = 'md', loading = f
 // 10. Card Container
 export function Card({ children, className = '', title, headerAction }) {
   return (
-    <div className={`rounded-2xl border border-slate-100 bg-white shadow-sm overflow-hidden ${className}`}>
+    <div className={`rounded-2xl border border-slate-200/80 bg-white shadow-card overflow-hidden ${className}`}>
       {title && (
-        <div className="flex items-center justify-between px-4 py-4 sm:px-6 sm:py-5 border-b border-slate-100 bg-slate-50/20 gap-3">
-          <h3 className="text-sm font-bold text-slate-800 tracking-tight">{title}</h3>
+        <div className="flex items-center justify-between px-4 py-4 sm:px-6 sm:py-5 border-b border-slate-100 bg-slate-50/40 gap-3">
+          <h3 className="text-sm font-bold text-slate-900 tracking-tight">{title}</h3>
           {headerAction}
         </div>
       )}
@@ -219,19 +265,21 @@ export function Card({ children, className = '', title, headerAction }) {
   )
 }
 
-// 11. Input Field
+// 11. Input Field (WCAG AA Control Border >= 3:1)
 export function Input({ label, error, helperText, className = '', ...props }) {
   return (
     <div className={`space-y-1.5 ${className}`}>
-      {label && <label className="block text-xs font-bold text-slate-550 uppercase tracking-wide">{label}</label>}
+      {label && <label className="block text-xs font-bold text-slate-700 uppercase tracking-wide">{label}</label>}
       <input
-        className={`w-full rounded-xl border px-3.5 py-2.5 text-sm font-medium transition-colors outline-none placeholder:text-slate-400 bg-white ${
-          error ? 'border-rose-350 hover:border-rose-450 focus:border-rose-500' : 'border-slate-200 hover:border-slate-300 focus:border-primary-500'
+        className={`w-full rounded-xl border px-3.5 py-2.5 text-sm font-medium transition-colors outline-none placeholder:text-slate-400 bg-white min-h-[42px] focus:ring-2 focus:ring-offset-1 ${
+          error 
+            ? 'border-rose-400 hover:border-rose-500 focus:border-rose-600 focus:ring-rose-200' 
+            : 'border-[var(--color-border-control,#828C99)] hover:border-slate-500 focus:border-primary-600 focus:ring-primary-100'
         }`}
         {...props}
       />
       {error && <p className="text-xs text-rose-600 font-semibold">{error}</p>}
-      {helperText && !error && <p className="text-xs text-slate-450 font-medium">{helperText}</p>}
+      {helperText && !error && <p className="text-xs text-slate-500 font-medium">{helperText}</p>}
     </div>
   )
 }
@@ -240,16 +288,18 @@ export function Input({ label, error, helperText, className = '', ...props }) {
 export function Textarea({ label, error, helperText, className = '', ...props }) {
   return (
     <div className={`space-y-1.5 ${className}`}>
-      {label && <label className="block text-xs font-bold text-slate-550 uppercase tracking-wide">{label}</label>}
+      {label && <label className="block text-xs font-bold text-slate-700 uppercase tracking-wide">{label}</label>}
       <textarea
-        className={`w-full rounded-xl border px-3.5 py-2.5 text-sm font-medium transition-colors outline-none placeholder:text-slate-400 bg-white ${
-          error ? 'border-rose-350 hover:border-rose-450 focus:border-rose-500' : 'border-slate-200 hover:border-slate-300 focus:border-primary-500'
+        className={`w-full rounded-xl border px-3.5 py-2.5 text-sm font-medium transition-colors outline-none placeholder:text-slate-400 bg-white focus:ring-2 focus:ring-offset-1 ${
+          error 
+            ? 'border-rose-400 hover:border-rose-500 focus:border-rose-600 focus:ring-rose-200' 
+            : 'border-[var(--color-border-control,#828C99)] hover:border-slate-500 focus:border-primary-600 focus:ring-primary-100'
         }`}
         rows={3}
         {...props}
       />
       {error && <p className="text-xs text-rose-600 font-semibold">{error}</p>}
-      {helperText && !error && <p className="text-xs text-slate-450 font-medium">{helperText}</p>}
+      {helperText && !error && <p className="text-xs text-slate-500 font-medium">{helperText}</p>}
     </div>
   )
 }
@@ -258,11 +308,13 @@ export function Textarea({ label, error, helperText, className = '', ...props })
 export function Select({ label, options = [], error, helperText, className = '', ...props }) {
   return (
     <div className={`space-y-1.5 ${className}`}>
-      {label && <label className="block text-xs font-bold text-slate-550 uppercase tracking-wide">{label}</label>}
+      {label && <label className="block text-xs font-bold text-slate-700 uppercase tracking-wide">{label}</label>}
       <div className="relative">
         <select
-          className={`w-full appearance-none rounded-xl border px-3.5 py-2.5 text-sm font-medium transition-colors outline-none bg-white ${
-            error ? 'border-rose-350 hover:border-rose-450 focus:border-rose-500' : 'border-slate-200 hover:border-slate-300 focus:border-primary-500'
+          className={`w-full appearance-none rounded-xl border px-3.5 py-2.5 text-sm font-medium transition-colors outline-none bg-white min-h-[42px] focus:ring-2 focus:ring-offset-1 ${
+            error 
+              ? 'border-rose-400 hover:border-rose-500 focus:border-rose-600 focus:ring-rose-200' 
+              : 'border-[var(--color-border-control,#828C99)] hover:border-slate-500 focus:border-primary-600 focus:ring-primary-100'
           }`}
           {...props}
         >
@@ -272,13 +324,39 @@ export function Select({ label, options = [], error, helperText, className = '',
             </option>
           ))}
         </select>
-        <div className="absolute inset-y-0 right-3.5 flex items-center pointer-events-none text-slate-450">
+        <div className="absolute inset-y-0 right-3.5 flex items-center pointer-events-none text-slate-500">
           <ChevronDownIcon className="w-4 h-4" />
         </div>
       </div>
       {error && <p className="text-xs text-rose-600 font-semibold">{error}</p>}
-      {helperText && !error && <p className="text-xs text-slate-450 font-medium">{helperText}</p>}
+      {helperText && !error && <p className="text-xs text-slate-500 font-medium">{helperText}</p>}
     </div>
+  )
+}
+
+// 13b. Chip Component
+export function Chip({ label, active = false, onClick, onRemove, className = '' }) {
+  return (
+    <span
+      onClick={onClick}
+      className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold border transition-all ${
+        active
+          ? 'bg-primary-50 text-primary-700 border-primary-300 shadow-xs'
+          : 'bg-white text-slate-700 border-[var(--color-border-control,#828C99)] hover:bg-slate-50'
+      } ${onClick ? 'cursor-pointer' : ''} ${className}`}
+    >
+      <span>{label}</span>
+      {onRemove && (
+        <button
+          type="button"
+          onClick={(e) => { e.stopPropagation(); onRemove(); }}
+          className="hover:text-rose-600 rounded-full p-0.5 focus:outline-none"
+          aria-label={`Remove ${label}`}
+        >
+          <CloseIcon className="w-3 h-3" />
+        </button>
+      )}
+    </span>
   )
 }
 
@@ -311,11 +389,11 @@ export function MultiSelect({ label, options = [], selected = [], onChange, plac
 
   return (
     <div className={`space-y-1.5 relative ${className}`} ref={containerRef}>
-      {label && <label className="block text-xs font-bold text-slate-550 uppercase tracking-wide">{label}</label>}
+      {label && <label className="block text-xs font-bold text-slate-700 uppercase tracking-wide">{label}</label>}
       
       <div 
         onClick={() => setIsOpen(!isOpen)}
-        className="w-full min-h-[42px] cursor-pointer rounded-xl border border-slate-200 px-3.5 py-2 flex flex-wrap items-center gap-1.5 bg-white hover:border-slate-300 focus-within:border-primary-500"
+        className="w-full min-h-[42px] cursor-pointer rounded-xl border border-[var(--color-border-control,#828C99)] px-3.5 py-2 flex flex-wrap items-center gap-1.5 bg-white hover:border-slate-400 focus-within:border-primary-600"
       >
         {selected.length === 0 ? (
           <span className="text-sm text-slate-400 font-medium">{placeholder}</span>
@@ -326,7 +404,7 @@ export function MultiSelect({ label, options = [], selected = [], onChange, plac
             </span>
           ))
         )}
-        <div className="ml-auto pointer-events-none text-slate-450">
+        <div className="ml-auto pointer-events-none text-slate-500">
           <ChevronDownIcon className="w-4 h-4" />
         </div>
       </div>
@@ -343,7 +421,7 @@ export function MultiSelect({ label, options = [], selected = [], onChange, plac
                 type="checkbox" 
                 checked={selected.includes(opt.value)} 
                 onChange={() => {}} 
-                className="rounded border-slate-200 text-primary-600 focus:ring-primary-500"
+                className="rounded border-[var(--color-border-control,#828C99)] text-primary-600 focus:ring-primary-500"
               />
               {opt.label}
             </div>
@@ -363,6 +441,17 @@ export function DatePicker({ label, ...props }) {
     <Input
       label={label}
       type="date"
+      {...props}
+    />
+  )
+}
+
+// 15b. Time Picker Input
+export function TimePicker({ label, ...props }) {
+  return (
+    <Input
+      label={label}
+      type="time"
       {...props}
     />
   )
@@ -763,7 +852,7 @@ export function Tabs({ tabs = [], activeTab, onChange, className = '' }) {
             onClick={() => onChange(tab.id)}
             className={`pb-2.5 text-xs font-bold transition-all relative border-b-2 -mb-px shrink-0 whitespace-nowrap flex items-center gap-1.5 min-h-[40px] cursor-pointer ${
               activeTab === tab.id
-                ? 'border-indigo-600 text-indigo-600'
+                ? 'border-primary-600 text-primary-600 font-extrabold'
                 : 'border-transparent text-slate-500 hover:text-slate-800'
             }`}
           >
