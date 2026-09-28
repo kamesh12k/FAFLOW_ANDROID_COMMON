@@ -896,7 +896,8 @@ class StudentAttendanceService:
             exceptions=data.exceptions,
             student_exceptions=data.student_exceptions,
             idempotency_key=data.idempotency_key,
-            device_id=data.device_id
+            device_id=data.device_id,
+            client_timestamp=data.client_timestamp
         )
         return StudentAttendanceService.submit_attendance(
             db=db,

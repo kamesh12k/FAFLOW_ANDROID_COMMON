@@ -88,7 +88,7 @@ def gap_fixture(db_session: Session):
     db_session.add_all([slot_a3, slot_b1])
 
     # Calendar Day: Today is Day Order 1, Working
-    today = date(2026, 9, 28)
+    today = date.today()
     cal_day = CalendarDay(date=today, day_type=DayType.working, day_order=1)
     db_session.add(cal_day)
     db_session.commit()

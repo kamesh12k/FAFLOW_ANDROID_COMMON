@@ -159,6 +159,7 @@ class EmergencyAttendanceRequest(BaseModel):
     idempotency_key: Optional[str] = None
     device_id: Optional[str] = None
     notes: Optional[str] = None
+    client_timestamp: Optional[datetime] = None
 
 
 class AttendanceCorrectionRequest(BaseModel):
