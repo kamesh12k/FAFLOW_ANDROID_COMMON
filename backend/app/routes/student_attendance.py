@@ -71,7 +71,11 @@ def submit_attendance_by_id(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    """Submits per-period student attendance for an existing session using 3-digit roll suffixes."""
+    """Submits per-period student attendance for an existing session using 3-digit roll suffixes.
+    
+    Restricted to the scheduled teacher, authorized substitute, or administrator.
+    Unscheduled teachers must use the /emergency endpoint.
+    """
     return StudentAttendanceService.submit_attendance_by_session_id(db, id, current_user, data)
 
 
@@ -81,7 +85,12 @@ def submit_attendance(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    """Submits per-period student attendance using 3-digit absent roll suffixes with 15-minute compliance validation."""
+    """Submits per-period student attendance using 3-digit absent roll suffixes with 15-minute compliance validation.
+    
+    - Normal attendance: restricted to the scheduled timetable teacher (HTTP 403 with guidance if unscheduled).
+    - Registered substitution: validated against approved leave request and assigned slot.
+    - Notifies class department HOD asynchronously if submitted past the 15-minute grace period.
+    """
     return StudentAttendanceService.submit_attendance(db, current_user, data)
 
 
@@ -91,7 +100,10 @@ def emergency_attendance(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    """Autonomous emergency attendance for any class across the institution without pre-registration."""
+    """Autonomous emergency attendance for any class across the institution without pre-registration.
+    
+    Immediately dispatches an informational notification to the department HOD(s) of the affected class.
+    """
     return StudentAttendanceService.emergency_attendance(db, current_user, data)
 
 
@@ -103,7 +115,14 @@ def correct_student_attendance(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    """Frictionless in-window correction of student attendance without requiring HOD/Admin approval."""
+    """Frictionless in-window correction of student attendance before period deadline.
+    
+    Authorized for:
+    - Session teacher (within period deadline)
+    - Class department HOD (within period deadline; cross-department HODs rejected with HTTP 403)
+    - Institutional administrators / Principals (anytime)
+    Every edit records an immutable audit log entry.
+    """
     return StudentAttendanceService.correct_student_attendance(db, id, student_id, current_user, data)
 
 
