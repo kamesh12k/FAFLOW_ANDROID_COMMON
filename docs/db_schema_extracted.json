@@ -1,0 +1,7399 @@
+{
+  "users": {
+    "columns": [
+      {
+        "name": "id",
+        "type": "INTEGER",
+        "nullable": false,
+        "default": null
+      },
+      {
+        "name": "name",
+        "type": "VARCHAR(100)",
+        "nullable": false,
+        "default": null
+      },
+      {
+        "name": "email",
+        "type": "VARCHAR(150)",
+        "nullable": true,
+        "default": null
+      },
+      {
+        "name": "username",
+        "type": "VARCHAR(50)",
+        "nullable": true,
+        "default": null
+      },
+      {
+        "name": "password_hash",
+        "type": "VARCHAR(255)",
+        "nullable": false,
+        "default": null
+      },
+      {
+        "name": "role",
+        "type": "VARCHAR(18)",
+        "nullable": false,
+        "default": "ScalarElementColumnDefault(<Role.teacher: 'teacher'>)"
+      },
+      {
+        "name": "admin_level",
+        "type": "VARCHAR(15)",
+        "nullable": true,
+        "default": null
+      },
+      {
+        "name": "department",
+        "type": "VARCHAR(100)",
+        "nullable": true,
+        "default": null
+      },
+      {
+        "name": "department_id",
+        "type": "INTEGER",
+        "nullable": true,
+        "default": null
+      },
+      {
+        "name": "must_change_credentials",
+        "type": "BOOLEAN",
+        "nullable": false,
+        "default": "ScalarElementColumnDefault(False)"
+      },
+      {
+        "name": "policy_version_accepted",
+        "type": "VARCHAR(20)",
+        "nullable": true,
+        "default": null
+      },
+      {
+        "name": "policy_accepted_at",
+        "type": "DATETIME",
+        "nullable": true,
+        "default": null
+      },
+      {
+        "name": "onboarding_completed",
+        "type": "BOOLEAN",
+        "nullable": true,
+        "default": "ScalarElementColumnDefault(False)"
+      },
+      {
+        "name": "is_active",
+        "type": "BOOLEAN",
+        "nullable": false,
+        "default": "ScalarElementColumnDefault(True)"
+      },
+      {
+        "name": "has_face_enrolled",
+        "type": "BOOLEAN",
+        "nullable": false,
+        "default": "ScalarElementColumnDefault(False)"
+      },
+      {
+        "name": "face_enrolled_at",
+        "type": "DATETIME",
+        "nullable": true,
+        "default": null
+      },
+      {
+        "name": "created_by_admin_id",
+        "type": "INTEGER",
+        "nullable": true,
+        "default": null
+      },
+      {
+        "name": "created_at",
+        "type": "DATETIME",
+        "nullable": true,
+        "default": null
+      }
+    ],
+    "primary_keys": [
+      "id"
+    ],
+    "foreign_keys": [
+      {
+        "col": "created_by_admin_id",
+        "target": "users.id"
+      },
+      {
+        "col": "department_id",
+        "target": "departments.id"
+      }
+    ],
+    "indexes": [
+      {
+        "name": "ix_users_id",
+        "columns": [
+          "id"
+        ],
+        "unique": false
+      },
+      {
+        "name": "ix_users_email",
+        "columns": [
+          "email"
+        ],
+        "unique": true
+      },
+      {
+        "name": "ix_users_username",
+        "columns": [
+          "username"
+        ],
+        "unique": true
+      }
+    ],
+    "constraints": [
+      {
+        "name": null,
+        "type": "ForeignKeyConstraint"
+      },
+      {
+        "name": null,
+        "type": "PrimaryKeyConstraint"
+      },
+      {
+        "name": "chk_admin_level",
+        "type": "CheckConstraint"
+      },
+      {
+        "name": null,
+        "type": "ForeignKeyConstraint"
+      },
+      {
+        "name": "chk_user_identity",
+        "type": "CheckConstraint"
+      },
+      {
+        "name": "chk_user_department_role",
+        "type": "CheckConstraint"
+      }
+    ]
+  },
+  "departments": {
+    "columns": [
+      {
+        "name": "id",
+        "type": "INTEGER",
+        "nullable": false,
+        "default": null
+      },
+      {
+        "name": "name",
+        "type": "VARCHAR(100)",
+        "nullable": false,
+        "default": null
+      },
+      {
+        "name": "code",
+        "type": "VARCHAR(20)",
+        "nullable": true,
+        "default": null
+      },
+      {
+        "name": "created_at",
+        "type": "DATETIME",
+        "nullable": true,
+        "default": null
+      }
+    ],
+    "primary_keys": [
+      "id"
+    ],
+    "foreign_keys": [],
+    "indexes": [
+      {
+        "name": "ix_departments_id",
+        "columns": [
+          "id"
+        ],
+        "unique": false
+      }
+    ],
+    "constraints": [
+      {
+        "name": null,
+        "type": "UniqueConstraint"
+      },
+      {
+        "name": null,
+        "type": "UniqueConstraint"
+      },
+      {
+        "name": null,
+        "type": "PrimaryKeyConstraint"
+      }
+    ]
+  },
+  "subjects": {
+    "columns": [
+      {
+        "name": "id",
+        "type": "INTEGER",
+        "nullable": false,
+        "default": null
+      },
+      {
+        "name": "code",
+        "type": "VARCHAR(20)",
+        "nullable": false,
+        "default": null
+      },
+      {
+        "name": "name",
+        "type": "VARCHAR(150)",
+        "nullable": false,
+        "default": null
+      },
+      {
+        "name": "subject_type",
+        "type": "VARCHAR(6)",
+        "nullable": false,
+        "default": "ScalarElementColumnDefault(<SubjectType.theory: 'theory'>)"
+      },
+      {
+        "name": "credits",
+        "type": "INTEGER",
+        "nullable": false,
+        "default": null
+      },
+      {
+        "name": "department_id",
+        "type": "INTEGER",
+        "nullable": false,
+        "default": null
+      },
+      {
+        "name": "semester",
+        "type": "INTEGER",
+        "nullable": false,
+        "default": null
+      },
+      {
+        "name": "is_archived",
+        "type": "BOOLEAN",
+        "nullable": false,
+        "default": "ScalarElementColumnDefault(False)"
+      },
+      {
+        "name": "created_at",
+        "type": "DATETIME",
+        "nullable": true,
+        "default": null
+      }
+    ],
+    "primary_keys": [
+      "id"
+    ],
+    "foreign_keys": [
+      {
+        "col": "department_id",
+        "target": "departments.id"
+      }
+    ],
+    "indexes": [
+      {
+        "name": "ix_subjects_id",
+        "columns": [
+          "id"
+        ],
+        "unique": false
+      }
+    ],
+    "constraints": [
+      {
+        "name": "uq_subject_dept_code",
+        "type": "UniqueConstraint"
+      },
+      {
+        "name": null,
+        "type": "ForeignKeyConstraint"
+      },
+      {
+        "name": null,
+        "type": "PrimaryKeyConstraint"
+      }
+    ]
+  },
+  "classes": {
+    "columns": [
+      {
+        "name": "id",
+        "type": "INTEGER",
+        "nullable": false,
+        "default": null
+      },
+      {
+        "name": "name",
+        "type": "VARCHAR(100)",
+        "nullable": false,
+        "default": null
+      },
+      {
+        "name": "section",
+        "type": "VARCHAR(10)",
+        "nullable": false,
+        "default": null
+      },
+      {
+        "name": "department_id",
+        "type": "INTEGER",
+        "nullable": false,
+        "default": null
+      },
+      {
+        "name": "semester",
+        "type": "INTEGER",
+        "nullable": false,
+        "default": null
+      },
+      {
+        "name": "default_room_id",
+        "type": "INTEGER",
+        "nullable": true,
+        "default": null
+      },
+      {
+        "name": "created_at",
+        "type": "DATETIME",
+        "nullable": true,
+        "default": null
+      }
+    ],
+    "primary_keys": [
+      "id"
+    ],
+    "foreign_keys": [
+      {
+        "col": "default_room_id",
+        "target": "rooms.id"
+      },
+      {
+        "col": "department_id",
+        "target": "departments.id"
+      }
+    ],
+    "indexes": [
+      {
+        "name": "ix_classes_id",
+        "columns": [
+          "id"
+        ],
+        "unique": false
+      }
+    ],
+    "constraints": [
+      {
+        "name": null,
+        "type": "ForeignKeyConstraint"
+      },
+      {
+        "name": null,
+        "type": "PrimaryKeyConstraint"
+      },
+      {
+        "name": "uq_global_class_name_section",
+        "type": "UniqueConstraint"
+      },
+      {
+        "name": null,
+        "type": "ForeignKeyConstraint"
+      }
+    ]
+  },
+  "rooms": {
+    "columns": [
+      {
+        "name": "id",
+        "type": "INTEGER",
+        "nullable": false,
+        "default": null
+      },
+      {
+        "name": "room_number",
+        "type": "VARCHAR(50)",
+        "nullable": false,
+        "default": null
+      },
+      {
+        "name": "room_name",
+        "type": "VARCHAR(150)",
+        "nullable": true,
+        "default": null
+      },
+      {
+        "name": "room_type",
+        "type": "VARCHAR(16)",
+        "nullable": false,
+        "default": "ScalarElementColumnDefault(<RoomType.classroom: 'classroom'>)"
+      },
+      {
+        "name": "capacity",
+        "type": "INTEGER",
+        "nullable": false,
+        "default": "ScalarElementColumnDefault(60)"
+      },
+      {
+        "name": "block_id",
+        "type": "INTEGER",
+        "nullable": true,
+        "default": null
+      },
+      {
+        "name": "floor_id",
+        "type": "INTEGER",
+        "nullable": true,
+        "default": null
+      },
+      {
+        "name": "area_id",
+        "type": "INTEGER",
+        "nullable": true,
+        "default": null
+      },
+      {
+        "name": "department_id",
+        "type": "INTEGER",
+        "nullable": true,
+        "default": null
+      },
+      {
+        "name": "primary_class_id",
+        "type": "INTEGER",
+        "nullable": true,
+        "default": null
+      },
+      {
+        "name": "is_exam_eligible",
+        "type": "BOOLEAN",
+        "nullable": false,
+        "default": "ScalarElementColumnDefault(False)"
+      },
+      {
+        "name": "exam_capacity",
+        "type": "INTEGER",
+        "nullable": true,
+        "default": null
+      },
+      {
+        "name": "required_invigilators",
+        "type": "INTEGER",
+        "nullable": false,
+        "default": "ScalarElementColumnDefault(1)"
+      },
+      {
+        "name": "lab_type",
+        "type": "VARCHAR(100)",
+        "nullable": true,
+        "default": null
+      },
+      {
+        "name": "equipment_category",
+        "type": "VARCHAR(100)",
+        "nullable": true,
+        "default": null
+      },
+      {
+        "name": "is_timetable_eligible",
+        "type": "BOOLEAN",
+        "nullable": false,
+        "default": "ScalarElementColumnDefault(True)"
+      },
+      {
+        "name": "is_active",
+        "type": "BOOLEAN",
+        "nullable": false,
+        "default": "ScalarElementColumnDefault(True)"
+      },
+      {
+        "name": "notes",
+        "type": "TEXT",
+        "nullable": true,
+        "default": null
+      },
+      {
+        "name": "created_at",
+        "type": "DATETIME",
+        "nullable": true,
+        "default": null
+      },
+      {
+        "name": "updated_at",
+        "type": "DATETIME",
+        "nullable": true,
+        "default": null
+      }
+    ],
+    "primary_keys": [
+      "id"
+    ],
+    "foreign_keys": [
+      {
+        "col": "area_id",
+        "target": "campus_areas.id"
+      },
+      {
+        "col": "block_id",
+        "target": "campus_blocks.id"
+      },
+      {
+        "col": "department_id",
+        "target": "departments.id"
+      },
+      {
+        "col": "floor_id",
+        "target": "campus_floors.id"
+      },
+      {
+        "col": "primary_class_id",
+        "target": "classes.id"
+      }
+    ],
+    "indexes": [
+      {
+        "name": "ix_rooms_is_exam_eligible",
+        "columns": [
+          "is_exam_eligible"
+        ],
+        "unique": false
+      },
+      {
+        "name": "ix_rooms_block_id",
+        "columns": [
+          "block_id"
+        ],
+        "unique": false
+      },
+      {
+        "name": "ix_rooms_area_id",
+        "columns": [
+          "area_id"
+        ],
+        "unique": false
+      },
+      {
+        "name": "ix_rooms_room_number",
+        "columns": [
+          "room_number"
+        ],
+        "unique": true
+      },
+      {
+        "name": "ix_rooms_primary_class_id",
+        "columns": [
+          "primary_class_id"
+        ],
+        "unique": false
+      },
+      {
+        "name": "ix_rooms_floor_id",
+        "columns": [
+          "floor_id"
+        ],
+        "unique": false
+      },
+      {
+        "name": "ix_rooms_is_active",
+        "columns": [
+          "is_active"
+        ],
+        "unique": false
+      },
+      {
+        "name": "ix_rooms_department_id",
+        "columns": [
+          "department_id"
+        ],
+        "unique": false
+      },
+      {
+        "name": "ix_rooms_id",
+        "columns": [
+          "id"
+        ],
+        "unique": false
+      }
+    ],
+    "constraints": [
+      {
+        "name": null,
+        "type": "ForeignKeyConstraint"
+      },
+      {
+        "name": "fk_rooms_primary_class_id",
+        "type": "ForeignKeyConstraint"
+      },
+      {
+        "name": null,
+        "type": "PrimaryKeyConstraint"
+      },
+      {
+        "name": null,
+        "type": "ForeignKeyConstraint"
+      },
+      {
+        "name": null,
+        "type": "ForeignKeyConstraint"
+      },
+      {
+        "name": null,
+        "type": "ForeignKeyConstraint"
+      }
+    ]
+  },
+  "academic_years": {
+    "columns": [
+      {
+        "name": "id",
+        "type": "INTEGER",
+        "nullable": false,
+        "default": null
+      },
+      {
+        "name": "name",
+        "type": "VARCHAR(20)",
+        "nullable": false,
+        "default": null
+      },
+      {
+        "name": "start_date",
+        "type": "DATE",
+        "nullable": false,
+        "default": null
+      },
+      {
+        "name": "end_date",
+        "type": "DATE",
+        "nullable": false,
+        "default": null
+      },
+      {
+        "name": "is_active",
+        "type": "BOOLEAN",
+        "nullable": false,
+        "default": "ScalarElementColumnDefault(True)"
+      },
+      {
+        "name": "created_at",
+        "type": "DATETIME",
+        "nullable": true,
+        "default": null
+      }
+    ],
+    "primary_keys": [
+      "id"
+    ],
+    "foreign_keys": [],
+    "indexes": [
+      {
+        "name": "ix_academic_years_id",
+        "columns": [
+          "id"
+        ],
+        "unique": false
+      }
+    ],
+    "constraints": [
+      {
+        "name": null,
+        "type": "UniqueConstraint"
+      },
+      {
+        "name": null,
+        "type": "PrimaryKeyConstraint"
+      }
+    ]
+  },
+  "semesters": {
+    "columns": [
+      {
+        "name": "id",
+        "type": "INTEGER",
+        "nullable": false,
+        "default": null
+      },
+      {
+        "name": "academic_year_id",
+        "type": "INTEGER",
+        "nullable": false,
+        "default": null
+      },
+      {
+        "name": "name",
+        "type": "VARCHAR(50)",
+        "nullable": false,
+        "default": null
+      },
+      {
+        "name": "start_date",
+        "type": "DATE",
+        "nullable": false,
+        "default": null
+      },
+      {
+        "name": "end_date",
+        "type": "DATE",
+        "nullable": false,
+        "default": null
+      },
+      {
+        "name": "is_active",
+        "type": "BOOLEAN",
+        "nullable": false,
+        "default": "ScalarElementColumnDefault(True)"
+      },
+      {
+        "name": "created_at",
+        "type": "DATETIME",
+        "nullable": true,
+        "default": null
+      }
+    ],
+    "primary_keys": [
+      "id"
+    ],
+    "foreign_keys": [
+      {
+        "col": "academic_year_id",
+        "target": "academic_years.id"
+      }
+    ],
+    "indexes": [
+      {
+        "name": "ix_semesters_id",
+        "columns": [
+          "id"
+        ],
+        "unique": false
+      }
+    ],
+    "constraints": [
+      {
+        "name": null,
+        "type": "ForeignKeyConstraint"
+      },
+      {
+        "name": null,
+        "type": "PrimaryKeyConstraint"
+      }
+    ]
+  },
+  "calendar_days": {
+    "columns": [
+      {
+        "name": "id",
+        "type": "INTEGER",
+        "nullable": false,
+        "default": null
+      },
+      {
+        "name": "date",
+        "type": "DATE",
+        "nullable": false,
+        "default": null
+      },
+      {
+        "name": "day_type",
+        "type": "VARCHAR(19)",
+        "nullable": false,
+        "default": "ScalarElementColumnDefault(<DayType.working: 'working'>)"
+      },
+      {
+        "name": "day_order",
+        "type": "INTEGER",
+        "nullable": true,
+        "default": null
+      },
+      {
+        "name": "academic_year_id",
+        "type": "INTEGER",
+        "nullable": true,
+        "default": null
+      },
+      {
+        "name": "semester_id",
+        "type": "INTEGER",
+        "nullable": true,
+        "default": null
+      },
+      {
+        "name": "is_manual_override",
+        "type": "BOOLEAN",
+        "nullable": false,
+        "default": "ScalarElementColumnDefault(False)"
+      },
+      {
+        "name": "label",
+        "type": "VARCHAR(200)",
+        "nullable": true,
+        "default": null
+      },
+      {
+        "name": "notes",
+        "type": "VARCHAR(500)",
+        "nullable": true,
+        "default": null
+      },
+      {
+        "name": "created_by_admin_id",
+        "type": "INTEGER",
+        "nullable": true,
+        "default": null
+      },
+      {
+        "name": "created_at",
+        "type": "DATETIME",
+        "nullable": true,
+        "default": null
+      },
+      {
+        "name": "updated_at",
+        "type": "DATETIME",
+        "nullable": true,
+        "default": null
+      }
+    ],
+    "primary_keys": [
+      "id"
+    ],
+    "foreign_keys": [
+      {
+        "col": "academic_year_id",
+        "target": "academic_years.id"
+      },
+      {
+        "col": "semester_id",
+        "target": "semesters.id"
+      },
+      {
+        "col": "created_by_admin_id",
+        "target": "users.id"
+      }
+    ],
+    "indexes": [
+      {
+        "name": "ix_calendar_days_id",
+        "columns": [
+          "id"
+        ],
+        "unique": false
+      }
+    ],
+    "constraints": [
+      {
+        "name": null,
+        "type": "ForeignKeyConstraint"
+      },
+      {
+        "name": null,
+        "type": "ForeignKeyConstraint"
+      },
+      {
+        "name": null,
+        "type": "PrimaryKeyConstraint"
+      },
+      {
+        "name": null,
+        "type": "ForeignKeyConstraint"
+      },
+      {
+        "name": "uq_calendar_day_date",
+        "type": "UniqueConstraint"
+      },
+      {
+        "name": null,
+        "type": "UniqueConstraint"
+      }
+    ]
+  },
+  "timetable_slots": {
+    "columns": [
+      {
+        "name": "id",
+        "type": "INTEGER",
+        "nullable": false,
+        "default": null
+      },
+      {
+        "name": "teacher_id",
+        "type": "INTEGER",
+        "nullable": false,
+        "default": null
+      },
+      {
+        "name": "subject_id",
+        "type": "INTEGER",
+        "nullable": true,
+        "default": null
+      },
+      {
+        "name": "class_id",
+        "type": "INTEGER",
+        "nullable": false,
+        "default": null
+      },
+      {
+        "name": "room_id",
+        "type": "INTEGER",
+        "nullable": true,
+        "default": null
+      },
+      {
+        "name": "day_order",
+        "type": "INTEGER",
+        "nullable": false,
+        "default": null
+      },
+      {
+        "name": "period_number",
+        "type": "INTEGER",
+        "nullable": false,
+        "default": null
+      }
+    ],
+    "primary_keys": [
+      "id"
+    ],
+    "foreign_keys": [
+      {
+        "col": "class_id",
+        "target": "classes.id"
+      },
+      {
+        "col": "teacher_id",
+        "target": "users.id"
+      },
+      {
+        "col": "room_id",
+        "target": "rooms.id"
+      },
+      {
+        "col": "subject_id",
+        "target": "subjects.id"
+      }
+    ],
+    "indexes": [
+      {
+        "name": "ix_timetable_slots_id",
+        "columns": [
+          "id"
+        ],
+        "unique": false
+      }
+    ],
+    "constraints": [
+      {
+        "name": "chk_timetable_period_number",
+        "type": "CheckConstraint"
+      },
+      {
+        "name": "uq_teacher_class_day_period",
+        "type": "UniqueConstraint"
+      },
+      {
+        "name": null,
+        "type": "ForeignKeyConstraint"
+      },
+      {
+        "name": null,
+        "type": "PrimaryKeyConstraint"
+      },
+      {
+        "name": null,
+        "type": "ForeignKeyConstraint"
+      },
+      {
+        "name": "chk_timetable_day_order",
+        "type": "CheckConstraint"
+      },
+      {
+        "name": null,
+        "type": "ForeignKeyConstraint"
+      },
+      {
+        "name": null,
+        "type": "ForeignKeyConstraint"
+      }
+    ]
+  },
+  "leave_requests": {
+    "columns": [
+      {
+        "name": "id",
+        "type": "INTEGER",
+        "nullable": false,
+        "default": null
+      },
+      {
+        "name": "teacher_id",
+        "type": "INTEGER",
+        "nullable": false,
+        "default": null
+      },
+      {
+        "name": "leave_policy_id",
+        "type": "INTEGER",
+        "nullable": true,
+        "default": null
+      },
+      {
+        "name": "date",
+        "type": "DATE",
+        "nullable": false,
+        "default": null
+      },
+      {
+        "name": "day_order",
+        "type": "INTEGER",
+        "nullable": false,
+        "default": null
+      },
+      {
+        "name": "period_number",
+        "type": "INTEGER",
+        "nullable": false,
+        "default": null
+      },
+      {
+        "name": "reason",
+        "type": "VARCHAR(500)",
+        "nullable": false,
+        "default": null
+      },
+      {
+        "name": "status",
+        "type": "VARCHAR(23)",
+        "nullable": false,
+        "default": "ScalarElementColumnDefault(<LeaveStatus.pending: 'pending'>)"
+      },
+      {
+        "name": "created_at",
+        "type": "DATETIME",
+        "nullable": true,
+        "default": null
+      },
+      {
+        "name": "consumed_at",
+        "type": "DATETIME",
+        "nullable": true,
+        "default": null
+      },
+      {
+        "name": "batch_id",
+        "type": "UUID",
+        "nullable": true,
+        "default": null
+      },
+      {
+        "name": "is_emergency",
+        "type": "BOOLEAN",
+        "nullable": false,
+        "default": "ScalarElementColumnDefault(False)"
+      },
+      {
+        "name": "proposed_substitute_id",
+        "type": "INTEGER",
+        "nullable": true,
+        "default": null
+      },
+      {
+        "name": "document_url",
+        "type": "VARCHAR(500)",
+        "nullable": true,
+        "default": null
+      },
+      {
+        "name": "ood_details",
+        "type": "JSONB",
+        "nullable": true,
+        "default": null
+      },
+      {
+        "name": "policy_compliant",
+        "type": "BOOLEAN",
+        "nullable": true,
+        "default": null
+      },
+      {
+        "name": "policy_violation",
+        "type": "BOOLEAN",
+        "nullable": true,
+        "default": null
+      },
+      {
+        "name": "policy_enforcement_mode",
+        "type": "VARCHAR(20)",
+        "nullable": true,
+        "default": null
+      },
+      {
+        "name": "policy_warning_acknowledged",
+        "type": "BOOLEAN",
+        "nullable": false,
+        "default": "ScalarElementColumnDefault(False)"
+      },
+      {
+        "name": "policy_warning_acknowledged_at",
+        "type": "DATETIME",
+        "nullable": true,
+        "default": null
+      },
+      {
+        "name": "policy_evaluation_snapshot",
+        "type": "JSONB",
+        "nullable": true,
+        "default": null
+      },
+      {
+        "name": "policy_version_id",
+        "type": "INTEGER",
+        "nullable": true,
+        "default": null
+      },
+      {
+        "name": "exception_reason",
+        "type": "VARCHAR(500)",
+        "nullable": true,
+        "default": null
+      },
+      {
+        "name": "exception_approved_by_id",
+        "type": "INTEGER",
+        "nullable": true,
+        "default": null
+      },
+      {
+        "name": "exception_approved_at",
+        "type": "DATETIME",
+        "nullable": true,
+        "default": null
+      }
+    ],
+    "primary_keys": [
+      "id"
+    ],
+    "foreign_keys": [
+      {
+        "col": "proposed_substitute_id",
+        "target": "users.id"
+      },
+      {
+        "col": "exception_approved_by_id",
+        "target": "users.id"
+      },
+      {
+        "col": "policy_version_id",
+        "target": "leave_policies.id"
+      },
+      {
+        "col": "teacher_id",
+        "target": "users.id"
+      },
+      {
+        "col": "leave_policy_id",
+        "target": "leave_policies.id"
+      }
+    ],
+    "indexes": [
+      {
+        "name": "ix_leave_requests_proposed_substitute_id",
+        "columns": [
+          "proposed_substitute_id"
+        ],
+        "unique": false
+      },
+      {
+        "name": "ix_leave_requests_id",
+        "columns": [
+          "id"
+        ],
+        "unique": false
+      },
+      {
+        "name": "ix_leave_requests_leave_policy_id",
+        "columns": [
+          "leave_policy_id"
+        ],
+        "unique": false
+      }
+    ],
+    "constraints": [
+      {
+        "name": "chk_leave_period_number",
+        "type": "CheckConstraint"
+      },
+      {
+        "name": null,
+        "type": "ForeignKeyConstraint"
+      },
+      {
+        "name": null,
+        "type": "ForeignKeyConstraint"
+      },
+      {
+        "name": null,
+        "type": "ForeignKeyConstraint"
+      },
+      {
+        "name": null,
+        "type": "ForeignKeyConstraint"
+      },
+      {
+        "name": null,
+        "type": "PrimaryKeyConstraint"
+      },
+      {
+        "name": null,
+        "type": "ForeignKeyConstraint"
+      }
+    ]
+  },
+  "alter_assignments": {
+    "columns": [
+      {
+        "name": "id",
+        "type": "INTEGER",
+        "nullable": false,
+        "default": null
+      },
+      {
+        "name": "leave_request_id",
+        "type": "INTEGER",
+        "nullable": false,
+        "default": null
+      },
+      {
+        "name": "substitute_teacher_id",
+        "type": "INTEGER",
+        "nullable": false,
+        "default": null
+      },
+      {
+        "name": "assigned_at",
+        "type": "DATETIME",
+        "nullable": true,
+        "default": null
+      },
+      {
+        "name": "assignment_type",
+        "type": "VARCHAR(19)",
+        "nullable": false,
+        "default": "ScalarElementColumnDefault(<AssignmentType.admin_assigned: 'admin_assigned'>)"
+      },
+      {
+        "name": "compatibility_score",
+        "type": "FLOAT",
+        "nullable": true,
+        "default": null
+      },
+      {
+        "name": "is_locked",
+        "type": "BOOLEAN",
+        "nullable": false,
+        "default": "ScalarElementColumnDefault(False)"
+      }
+    ],
+    "primary_keys": [
+      "id"
+    ],
+    "foreign_keys": [
+      {
+        "col": "substitute_teacher_id",
+        "target": "users.id"
+      },
+      {
+        "col": "leave_request_id",
+        "target": "leave_requests.id"
+      }
+    ],
+    "indexes": [
+      {
+        "name": "ix_alter_assignments_id",
+        "columns": [
+          "id"
+        ],
+        "unique": false
+      }
+    ],
+    "constraints": [
+      {
+        "name": null,
+        "type": "UniqueConstraint"
+      },
+      {
+        "name": null,
+        "type": "ForeignKeyConstraint"
+      },
+      {
+        "name": null,
+        "type": "PrimaryKeyConstraint"
+      },
+      {
+        "name": null,
+        "type": "ForeignKeyConstraint"
+      }
+    ]
+  },
+  "policy_enforcement_audit": {
+    "columns": [
+      {
+        "name": "id",
+        "type": "INTEGER",
+        "nullable": false,
+        "default": null
+      },
+      {
+        "name": "actor_user_id",
+        "type": "INTEGER",
+        "nullable": true,
+        "default": null
+      },
+      {
+        "name": "previous_mode",
+        "type": "VARCHAR(20)",
+        "nullable": false,
+        "default": null
+      },
+      {
+        "name": "new_mode",
+        "type": "VARCHAR(20)",
+        "nullable": false,
+        "default": null
+      },
+      {
+        "name": "reason",
+        "type": "VARCHAR(500)",
+        "nullable": true,
+        "default": null
+      },
+      {
+        "name": "created_at",
+        "type": "DATETIME",
+        "nullable": true,
+        "default": null
+      }
+    ],
+    "primary_keys": [
+      "id"
+    ],
+    "foreign_keys": [
+      {
+        "col": "actor_user_id",
+        "target": "users.id"
+      }
+    ],
+    "indexes": [
+      {
+        "name": "ix_policy_enforcement_audit_id",
+        "columns": [
+          "id"
+        ],
+        "unique": false
+      }
+    ],
+    "constraints": [
+      {
+        "name": null,
+        "type": "ForeignKeyConstraint"
+      },
+      {
+        "name": null,
+        "type": "PrimaryKeyConstraint"
+      }
+    ]
+  },
+  "leave_policies": {
+    "columns": [
+      {
+        "name": "id",
+        "type": "INTEGER",
+        "nullable": false,
+        "default": null
+      },
+      {
+        "name": "code",
+        "type": "VARCHAR(20)",
+        "nullable": false,
+        "default": null
+      },
+      {
+        "name": "name",
+        "type": "VARCHAR(100)",
+        "nullable": false,
+        "default": null
+      },
+      {
+        "name": "description",
+        "type": "TEXT",
+        "nullable": true,
+        "default": null
+      },
+      {
+        "name": "entitlement",
+        "type": "FLOAT",
+        "nullable": false,
+        "default": null
+      },
+      {
+        "name": "period",
+        "type": "VARCHAR(20)",
+        "nullable": false,
+        "default": "ScalarElementColumnDefault('YEAR')"
+      },
+      {
+        "name": "monthly_limit",
+        "type": "FLOAT",
+        "nullable": true,
+        "default": null
+      },
+      {
+        "name": "semester_limit",
+        "type": "FLOAT",
+        "nullable": true,
+        "default": null
+      },
+      {
+        "name": "annual_limit",
+        "type": "FLOAT",
+        "nullable": true,
+        "default": null
+      },
+      {
+        "name": "approval_required",
+        "type": "BOOLEAN",
+        "nullable": false,
+        "default": "ScalarElementColumnDefault(True)"
+      },
+      {
+        "name": "document_required",
+        "type": "BOOLEAN",
+        "nullable": false,
+        "default": "ScalarElementColumnDefault(False)"
+      },
+      {
+        "name": "is_on_duty",
+        "type": "BOOLEAN",
+        "nullable": false,
+        "default": "ScalarElementColumnDefault(False)"
+      },
+      {
+        "name": "is_active",
+        "type": "BOOLEAN",
+        "nullable": false,
+        "default": "ScalarElementColumnDefault(True)"
+      },
+      {
+        "name": "advisory_allowed",
+        "type": "VARCHAR(20)",
+        "nullable": false,
+        "default": "ScalarElementColumnDefault('ADVISORY')"
+      },
+      {
+        "name": "created_at",
+        "type": "DATETIME",
+        "nullable": true,
+        "default": null
+      },
+      {
+        "name": "updated_at",
+        "type": "DATETIME",
+        "nullable": true,
+        "default": null
+      }
+    ],
+    "primary_keys": [
+      "id"
+    ],
+    "foreign_keys": [],
+    "indexes": [
+      {
+        "name": "ix_leave_policies_code",
+        "columns": [
+          "code"
+        ],
+        "unique": true
+      },
+      {
+        "name": "ix_leave_policies_id",
+        "columns": [
+          "id"
+        ],
+        "unique": false
+      }
+    ],
+    "constraints": [
+      {
+        "name": null,
+        "type": "PrimaryKeyConstraint"
+      }
+    ]
+  },
+  "teacher_leave_balances": {
+    "columns": [
+      {
+        "name": "id",
+        "type": "INTEGER",
+        "nullable": false,
+        "default": null
+      },
+      {
+        "name": "teacher_id",
+        "type": "INTEGER",
+        "nullable": false,
+        "default": null
+      },
+      {
+        "name": "leave_policy_id",
+        "type": "INTEGER",
+        "nullable": false,
+        "default": null
+      },
+      {
+        "name": "academic_year",
+        "type": "VARCHAR(20)",
+        "nullable": false,
+        "default": null
+      },
+      {
+        "name": "entitlement",
+        "type": "FLOAT",
+        "nullable": false,
+        "default": null
+      },
+      {
+        "name": "consumed",
+        "type": "FLOAT",
+        "nullable": false,
+        "default": "ScalarElementColumnDefault(0.0)"
+      },
+      {
+        "name": "remaining",
+        "type": "FLOAT",
+        "nullable": false,
+        "default": null
+      },
+      {
+        "name": "created_at",
+        "type": "DATETIME",
+        "nullable": true,
+        "default": null
+      },
+      {
+        "name": "updated_at",
+        "type": "DATETIME",
+        "nullable": true,
+        "default": null
+      }
+    ],
+    "primary_keys": [
+      "id"
+    ],
+    "foreign_keys": [
+      {
+        "col": "teacher_id",
+        "target": "users.id"
+      },
+      {
+        "col": "leave_policy_id",
+        "target": "leave_policies.id"
+      }
+    ],
+    "indexes": [
+      {
+        "name": "ix_teacher_leave_balances_teacher_id",
+        "columns": [
+          "teacher_id"
+        ],
+        "unique": false
+      },
+      {
+        "name": "ix_teacher_leave_balances_leave_policy_id",
+        "columns": [
+          "leave_policy_id"
+        ],
+        "unique": false
+      },
+      {
+        "name": "ix_teacher_leave_balances_id",
+        "columns": [
+          "id"
+        ],
+        "unique": false
+      }
+    ],
+    "constraints": [
+      {
+        "name": null,
+        "type": "ForeignKeyConstraint"
+      },
+      {
+        "name": null,
+        "type": "PrimaryKeyConstraint"
+      },
+      {
+        "name": null,
+        "type": "ForeignKeyConstraint"
+      },
+      {
+        "name": "uq_teacher_policy_year",
+        "type": "UniqueConstraint"
+      }
+    ]
+  },
+  "leave_balance_transactions": {
+    "columns": [
+      {
+        "name": "id",
+        "type": "INTEGER",
+        "nullable": false,
+        "default": null
+      },
+      {
+        "name": "teacher_id",
+        "type": "INTEGER",
+        "nullable": false,
+        "default": null
+      },
+      {
+        "name": "leave_policy_id",
+        "type": "INTEGER",
+        "nullable": false,
+        "default": null
+      },
+      {
+        "name": "leave_request_id",
+        "type": "INTEGER",
+        "nullable": true,
+        "default": null
+      },
+      {
+        "name": "transaction_type",
+        "type": "VARCHAR(50)",
+        "nullable": false,
+        "default": null
+      },
+      {
+        "name": "days",
+        "type": "FLOAT",
+        "nullable": false,
+        "default": null
+      },
+      {
+        "name": "balance_before",
+        "type": "FLOAT",
+        "nullable": false,
+        "default": null
+      },
+      {
+        "name": "balance_after",
+        "type": "FLOAT",
+        "nullable": false,
+        "default": null
+      },
+      {
+        "name": "reason",
+        "type": "TEXT",
+        "nullable": false,
+        "default": null
+      },
+      {
+        "name": "created_by_id",
+        "type": "INTEGER",
+        "nullable": true,
+        "default": null
+      },
+      {
+        "name": "created_at",
+        "type": "DATETIME",
+        "nullable": true,
+        "default": null
+      }
+    ],
+    "primary_keys": [
+      "id"
+    ],
+    "foreign_keys": [
+      {
+        "col": "leave_request_id",
+        "target": "leave_requests.id"
+      },
+      {
+        "col": "leave_policy_id",
+        "target": "leave_policies.id"
+      },
+      {
+        "col": "created_by_id",
+        "target": "users.id"
+      },
+      {
+        "col": "teacher_id",
+        "target": "users.id"
+      }
+    ],
+    "indexes": [
+      {
+        "name": "ix_leave_balance_transactions_leave_request_id",
+        "columns": [
+          "leave_request_id"
+        ],
+        "unique": false
+      },
+      {
+        "name": "ix_leave_balance_transactions_teacher_id",
+        "columns": [
+          "teacher_id"
+        ],
+        "unique": false
+      },
+      {
+        "name": "ix_leave_balance_transactions_leave_policy_id",
+        "columns": [
+          "leave_policy_id"
+        ],
+        "unique": false
+      },
+      {
+        "name": "ix_leave_balance_transactions_id",
+        "columns": [
+          "id"
+        ],
+        "unique": false
+      }
+    ],
+    "constraints": [
+      {
+        "name": null,
+        "type": "ForeignKeyConstraint"
+      },
+      {
+        "name": null,
+        "type": "ForeignKeyConstraint"
+      },
+      {
+        "name": null,
+        "type": "ForeignKeyConstraint"
+      },
+      {
+        "name": null,
+        "type": "PrimaryKeyConstraint"
+      },
+      {
+        "name": null,
+        "type": "ForeignKeyConstraint"
+      }
+    ]
+  },
+  "teacher_credits": {
+    "columns": [
+      {
+        "name": "id",
+        "type": "INTEGER",
+        "nullable": false,
+        "default": null
+      },
+      {
+        "name": "teacher_id",
+        "type": "INTEGER",
+        "nullable": false,
+        "default": null
+      },
+      {
+        "name": "balance",
+        "type": "INTEGER",
+        "nullable": false,
+        "default": "ScalarElementColumnDefault(0)"
+      }
+    ],
+    "primary_keys": [
+      "id"
+    ],
+    "foreign_keys": [
+      {
+        "col": "teacher_id",
+        "target": "users.id"
+      }
+    ],
+    "indexes": [
+      {
+        "name": "ix_teacher_credits_id",
+        "columns": [
+          "id"
+        ],
+        "unique": false
+      }
+    ],
+    "constraints": [
+      {
+        "name": null,
+        "type": "PrimaryKeyConstraint"
+      },
+      {
+        "name": null,
+        "type": "ForeignKeyConstraint"
+      },
+      {
+        "name": null,
+        "type": "UniqueConstraint"
+      }
+    ]
+  },
+  "credit_transactions": {
+    "columns": [
+      {
+        "name": "id",
+        "type": "INTEGER",
+        "nullable": false,
+        "default": null
+      },
+      {
+        "name": "teacher_id",
+        "type": "INTEGER",
+        "nullable": false,
+        "default": null
+      },
+      {
+        "name": "change",
+        "type": "INTEGER",
+        "nullable": false,
+        "default": null
+      },
+      {
+        "name": "reason",
+        "type": "VARCHAR(255)",
+        "nullable": false,
+        "default": null
+      },
+      {
+        "name": "category",
+        "type": "VARCHAR(50)",
+        "nullable": true,
+        "default": "ScalarElementColumnDefault('other')"
+      },
+      {
+        "name": "related_leave_id",
+        "type": "INTEGER",
+        "nullable": true,
+        "default": null
+      },
+      {
+        "name": "created_at",
+        "type": "DATETIME",
+        "nullable": true,
+        "default": null
+      }
+    ],
+    "primary_keys": [
+      "id"
+    ],
+    "foreign_keys": [
+      {
+        "col": "related_leave_id",
+        "target": "leave_requests.id"
+      },
+      {
+        "col": "teacher_id",
+        "target": "users.id"
+      }
+    ],
+    "indexes": [
+      {
+        "name": "ix_credit_transactions_id",
+        "columns": [
+          "id"
+        ],
+        "unique": false
+      }
+    ],
+    "constraints": [
+      {
+        "name": null,
+        "type": "ForeignKeyConstraint"
+      },
+      {
+        "name": null,
+        "type": "ForeignKeyConstraint"
+      },
+      {
+        "name": null,
+        "type": "PrimaryKeyConstraint"
+      }
+    ]
+  },
+  "notifications": {
+    "columns": [
+      {
+        "name": "id",
+        "type": "INTEGER",
+        "nullable": false,
+        "default": null
+      },
+      {
+        "name": "user_id",
+        "type": "INTEGER",
+        "nullable": false,
+        "default": null
+      },
+      {
+        "name": "title",
+        "type": "VARCHAR(150)",
+        "nullable": false,
+        "default": null
+      },
+      {
+        "name": "body",
+        "type": "VARCHAR(500)",
+        "nullable": false,
+        "default": null
+      },
+      {
+        "name": "event_type",
+        "type": "VARCHAR(50)",
+        "nullable": false,
+        "default": null
+      },
+      {
+        "name": "related_leave_id",
+        "type": "INTEGER",
+        "nullable": true,
+        "default": null
+      },
+      {
+        "name": "is_read",
+        "type": "BOOLEAN",
+        "nullable": false,
+        "default": "ScalarElementColumnDefault(False)"
+      },
+      {
+        "name": "created_at",
+        "type": "DATETIME",
+        "nullable": true,
+        "default": null
+      }
+    ],
+    "primary_keys": [
+      "id"
+    ],
+    "foreign_keys": [
+      {
+        "col": "user_id",
+        "target": "users.id"
+      },
+      {
+        "col": "related_leave_id",
+        "target": "leave_requests.id"
+      }
+    ],
+    "indexes": [
+      {
+        "name": "ix_notifications_id",
+        "columns": [
+          "id"
+        ],
+        "unique": false
+      }
+    ],
+    "constraints": [
+      {
+        "name": null,
+        "type": "ForeignKeyConstraint"
+      },
+      {
+        "name": null,
+        "type": "ForeignKeyConstraint"
+      },
+      {
+        "name": null,
+        "type": "PrimaryKeyConstraint"
+      }
+    ]
+  },
+  "push_subscriptions": {
+    "columns": [
+      {
+        "name": "id",
+        "type": "INTEGER",
+        "nullable": false,
+        "default": null
+      },
+      {
+        "name": "user_id",
+        "type": "INTEGER",
+        "nullable": false,
+        "default": null
+      },
+      {
+        "name": "endpoint",
+        "type": "TEXT",
+        "nullable": false,
+        "default": null
+      },
+      {
+        "name": "p256dh_key",
+        "type": "VARCHAR(255)",
+        "nullable": false,
+        "default": null
+      },
+      {
+        "name": "auth_key",
+        "type": "VARCHAR(255)",
+        "nullable": false,
+        "default": null
+      },
+      {
+        "name": "created_at",
+        "type": "DATETIME",
+        "nullable": true,
+        "default": null
+      }
+    ],
+    "primary_keys": [
+      "id"
+    ],
+    "foreign_keys": [
+      {
+        "col": "user_id",
+        "target": "users.id"
+      }
+    ],
+    "indexes": [
+      {
+        "name": "ix_push_subscriptions_id",
+        "columns": [
+          "id"
+        ],
+        "unique": false
+      }
+    ],
+    "constraints": [
+      {
+        "name": null,
+        "type": "ForeignKeyConstraint"
+      },
+      {
+        "name": null,
+        "type": "PrimaryKeyConstraint"
+      },
+      {
+        "name": null,
+        "type": "UniqueConstraint"
+      }
+    ]
+  },
+  "audit_logs": {
+    "columns": [
+      {
+        "name": "id",
+        "type": "INTEGER",
+        "nullable": false,
+        "default": null
+      },
+      {
+        "name": "actor_user_id",
+        "type": "INTEGER",
+        "nullable": true,
+        "default": null
+      },
+      {
+        "name": "department_id",
+        "type": "INTEGER",
+        "nullable": true,
+        "default": null
+      },
+      {
+        "name": "action",
+        "type": "VARCHAR(100)",
+        "nullable": false,
+        "default": null
+      },
+      {
+        "name": "target_type",
+        "type": "VARCHAR(50)",
+        "nullable": true,
+        "default": null
+      },
+      {
+        "name": "target_id",
+        "type": "INTEGER",
+        "nullable": true,
+        "default": null
+      },
+      {
+        "name": "details",
+        "type": "JSONB",
+        "nullable": true,
+        "default": null
+      },
+      {
+        "name": "created_at",
+        "type": "DATETIME",
+        "nullable": true,
+        "default": null
+      }
+    ],
+    "primary_keys": [
+      "id"
+    ],
+    "foreign_keys": [
+      {
+        "col": "department_id",
+        "target": "departments.id"
+      },
+      {
+        "col": "actor_user_id",
+        "target": "users.id"
+      }
+    ],
+    "indexes": [
+      {
+        "name": "ix_audit_logs_id",
+        "columns": [
+          "id"
+        ],
+        "unique": false
+      }
+    ],
+    "constraints": [
+      {
+        "name": null,
+        "type": "ForeignKeyConstraint"
+      },
+      {
+        "name": null,
+        "type": "ForeignKeyConstraint"
+      },
+      {
+        "name": null,
+        "type": "PrimaryKeyConstraint"
+      }
+    ]
+  },
+  "system_settings": {
+    "columns": [
+      {
+        "name": "id",
+        "type": "INTEGER",
+        "nullable": false,
+        "default": null
+      },
+      {
+        "name": "key",
+        "type": "VARCHAR(100)",
+        "nullable": false,
+        "default": null
+      },
+      {
+        "name": "value",
+        "type": "TEXT",
+        "nullable": false,
+        "default": null
+      },
+      {
+        "name": "department_id",
+        "type": "INTEGER",
+        "nullable": true,
+        "default": null
+      },
+      {
+        "name": "updated_at",
+        "type": "DATETIME",
+        "nullable": true,
+        "default": null
+      }
+    ],
+    "primary_keys": [
+      "id"
+    ],
+    "foreign_keys": [
+      {
+        "col": "department_id",
+        "target": "departments.id"
+      }
+    ],
+    "indexes": [
+      {
+        "name": "ix_system_settings_id",
+        "columns": [
+          "id"
+        ],
+        "unique": false
+      }
+    ],
+    "constraints": [
+      {
+        "name": "uq_system_settings_key_dept",
+        "type": "UniqueConstraint"
+      },
+      {
+        "name": null,
+        "type": "ForeignKeyConstraint"
+      },
+      {
+        "name": null,
+        "type": "PrimaryKeyConstraint"
+      }
+    ]
+  },
+  "substitution_preferences": {
+    "columns": [
+      {
+        "name": "id",
+        "type": "INTEGER",
+        "nullable": false,
+        "default": null
+      },
+      {
+        "name": "teacher_id",
+        "type": "INTEGER",
+        "nullable": false,
+        "default": null
+      },
+      {
+        "name": "accept_auto_assignments",
+        "type": "BOOLEAN",
+        "nullable": false,
+        "default": "ScalarElementColumnDefault(True)"
+      },
+      {
+        "name": "allow_emergency_assignments",
+        "type": "BOOLEAN",
+        "nullable": false,
+        "default": "ScalarElementColumnDefault(True)"
+      },
+      {
+        "name": "max_weekly_substitutions",
+        "type": "INTEGER",
+        "nullable": true,
+        "default": null
+      },
+      {
+        "name": "prefer_morning_classes",
+        "type": "BOOLEAN",
+        "nullable": false,
+        "default": "ScalarElementColumnDefault(False)"
+      },
+      {
+        "name": "prefer_same_department",
+        "type": "BOOLEAN",
+        "nullable": false,
+        "default": "ScalarElementColumnDefault(True)"
+      },
+      {
+        "name": "only_my_classes",
+        "type": "BOOLEAN",
+        "nullable": false,
+        "default": "ScalarElementColumnDefault(False)"
+      }
+    ],
+    "primary_keys": [
+      "id"
+    ],
+    "foreign_keys": [
+      {
+        "col": "teacher_id",
+        "target": "users.id"
+      }
+    ],
+    "indexes": [
+      {
+        "name": "ix_substitution_preferences_id",
+        "columns": [
+          "id"
+        ],
+        "unique": false
+      }
+    ],
+    "constraints": [
+      {
+        "name": null,
+        "type": "UniqueConstraint"
+      },
+      {
+        "name": null,
+        "type": "ForeignKeyConstraint"
+      },
+      {
+        "name": null,
+        "type": "PrimaryKeyConstraint"
+      }
+    ]
+  },
+  "timetable_submissions": {
+    "columns": [
+      {
+        "name": "id",
+        "type": "INTEGER",
+        "nullable": false,
+        "default": null
+      },
+      {
+        "name": "teacher_id",
+        "type": "INTEGER",
+        "nullable": false,
+        "default": null
+      },
+      {
+        "name": "subject_id",
+        "type": "INTEGER",
+        "nullable": true,
+        "default": null
+      },
+      {
+        "name": "class_id",
+        "type": "INTEGER",
+        "nullable": false,
+        "default": null
+      },
+      {
+        "name": "room_id",
+        "type": "INTEGER",
+        "nullable": true,
+        "default": null
+      },
+      {
+        "name": "day_order",
+        "type": "INTEGER",
+        "nullable": false,
+        "default": null
+      },
+      {
+        "name": "period_number",
+        "type": "INTEGER",
+        "nullable": false,
+        "default": null
+      },
+      {
+        "name": "status",
+        "type": "VARCHAR(9)",
+        "nullable": false,
+        "default": "ScalarElementColumnDefault(<TimetableSubmissionStatus.pending: 'pending'>)"
+      },
+      {
+        "name": "review_note",
+        "type": "VARCHAR(500)",
+        "nullable": true,
+        "default": null
+      },
+      {
+        "name": "reviewed_by_id",
+        "type": "INTEGER",
+        "nullable": true,
+        "default": null
+      },
+      {
+        "name": "created_at",
+        "type": "DATETIME",
+        "nullable": true,
+        "default": null
+      },
+      {
+        "name": "reviewed_at",
+        "type": "DATETIME",
+        "nullable": true,
+        "default": null
+      }
+    ],
+    "primary_keys": [
+      "id"
+    ],
+    "foreign_keys": [
+      {
+        "col": "room_id",
+        "target": "rooms.id"
+      },
+      {
+        "col": "reviewed_by_id",
+        "target": "users.id"
+      },
+      {
+        "col": "subject_id",
+        "target": "subjects.id"
+      },
+      {
+        "col": "teacher_id",
+        "target": "users.id"
+      },
+      {
+        "col": "class_id",
+        "target": "classes.id"
+      }
+    ],
+    "indexes": [
+      {
+        "name": "ix_timetable_submissions_id",
+        "columns": [
+          "id"
+        ],
+        "unique": false
+      }
+    ],
+    "constraints": [
+      {
+        "name": null,
+        "type": "PrimaryKeyConstraint"
+      },
+      {
+        "name": null,
+        "type": "ForeignKeyConstraint"
+      },
+      {
+        "name": null,
+        "type": "ForeignKeyConstraint"
+      },
+      {
+        "name": null,
+        "type": "ForeignKeyConstraint"
+      },
+      {
+        "name": null,
+        "type": "ForeignKeyConstraint"
+      },
+      {
+        "name": null,
+        "type": "ForeignKeyConstraint"
+      }
+    ]
+  },
+  "operational_staff": {
+    "columns": [
+      {
+        "name": "id",
+        "type": "INTEGER",
+        "nullable": false,
+        "default": null
+      },
+      {
+        "name": "employee_code",
+        "type": "VARCHAR(50)",
+        "nullable": false,
+        "default": null
+      },
+      {
+        "name": "full_name",
+        "type": "VARCHAR(150)",
+        "nullable": false,
+        "default": null
+      },
+      {
+        "name": "category",
+        "type": "VARCHAR(12)",
+        "nullable": false,
+        "default": null
+      },
+      {
+        "name": "designation",
+        "type": "VARCHAR(100)",
+        "nullable": false,
+        "default": null
+      },
+      {
+        "name": "department_id",
+        "type": "INTEGER",
+        "nullable": true,
+        "default": null
+      },
+      {
+        "name": "assigned_room_id",
+        "type": "INTEGER",
+        "nullable": true,
+        "default": null
+      },
+      {
+        "name": "assigned_room_ids",
+        "type": "JSON",
+        "nullable": true,
+        "default": "CallableColumnDefault(<function list at 0x0000027F68B6F9C0>)"
+      },
+      {
+        "name": "phone_number",
+        "type": "VARCHAR(20)",
+        "nullable": true,
+        "default": null
+      },
+      {
+        "name": "email",
+        "type": "VARCHAR(150)",
+        "nullable": true,
+        "default": null
+      },
+      {
+        "name": "employment_status",
+        "type": "VARCHAR(11)",
+        "nullable": false,
+        "default": "ScalarElementColumnDefault(<EmploymentStatus.active: 'active'>)"
+      },
+      {
+        "name": "shift_type",
+        "type": "VARCHAR(7)",
+        "nullable": false,
+        "default": "ScalarElementColumnDefault(<ShiftType.general: 'general'>)"
+      },
+      {
+        "name": "joining_date",
+        "type": "DATE",
+        "nullable": true,
+        "default": null
+      },
+      {
+        "name": "user_id",
+        "type": "INTEGER",
+        "nullable": true,
+        "default": null
+      },
+      {
+        "name": "created_by_manager_id",
+        "type": "INTEGER",
+        "nullable": true,
+        "default": null
+      },
+      {
+        "name": "notes",
+        "type": "TEXT",
+        "nullable": true,
+        "default": null
+      },
+      {
+        "name": "created_at",
+        "type": "DATETIME",
+        "nullable": true,
+        "default": null
+      },
+      {
+        "name": "updated_at",
+        "type": "DATETIME",
+        "nullable": true,
+        "default": null
+      }
+    ],
+    "primary_keys": [
+      "id"
+    ],
+    "foreign_keys": [
+      {
+        "col": "user_id",
+        "target": "users.id"
+      },
+      {
+        "col": "assigned_room_id",
+        "target": "rooms.id"
+      },
+      {
+        "col": "created_by_manager_id",
+        "target": "users.id"
+      },
+      {
+        "col": "department_id",
+        "target": "departments.id"
+      }
+    ],
+    "indexes": [
+      {
+        "name": "ix_operational_staff_full_name",
+        "columns": [
+          "full_name"
+        ],
+        "unique": false
+      },
+      {
+        "name": "ix_operational_staff_id",
+        "columns": [
+          "id"
+        ],
+        "unique": false
+      },
+      {
+        "name": "ix_operational_staff_category",
+        "columns": [
+          "category"
+        ],
+        "unique": false
+      },
+      {
+        "name": "ix_operational_staff_assigned_room_id",
+        "columns": [
+          "assigned_room_id"
+        ],
+        "unique": false
+      },
+      {
+        "name": "ix_operational_staff_employment_status",
+        "columns": [
+          "employment_status"
+        ],
+        "unique": false
+      },
+      {
+        "name": "ix_operational_staff_employee_code",
+        "columns": [
+          "employee_code"
+        ],
+        "unique": true
+      },
+      {
+        "name": "ix_operational_staff_department_id",
+        "columns": [
+          "department_id"
+        ],
+        "unique": false
+      }
+    ],
+    "constraints": [
+      {
+        "name": null,
+        "type": "PrimaryKeyConstraint"
+      },
+      {
+        "name": null,
+        "type": "ForeignKeyConstraint"
+      },
+      {
+        "name": null,
+        "type": "ForeignKeyConstraint"
+      },
+      {
+        "name": null,
+        "type": "ForeignKeyConstraint"
+      },
+      {
+        "name": null,
+        "type": "ForeignKeyConstraint"
+      }
+    ]
+  },
+  "staff_leave_requests": {
+    "columns": [
+      {
+        "name": "id",
+        "type": "INTEGER",
+        "nullable": false,
+        "default": null
+      },
+      {
+        "name": "staff_id",
+        "type": "INTEGER",
+        "nullable": false,
+        "default": null
+      },
+      {
+        "name": "start_date",
+        "type": "DATE",
+        "nullable": false,
+        "default": null
+      },
+      {
+        "name": "end_date",
+        "type": "DATE",
+        "nullable": false,
+        "default": null
+      },
+      {
+        "name": "leave_type",
+        "type": "VARCHAR(50)",
+        "nullable": false,
+        "default": "ScalarElementColumnDefault('casual')"
+      },
+      {
+        "name": "is_half_day",
+        "type": "BOOLEAN",
+        "nullable": false,
+        "default": "ScalarElementColumnDefault(False)"
+      },
+      {
+        "name": "half_day_session",
+        "type": "VARCHAR(20)",
+        "nullable": true,
+        "default": null
+      },
+      {
+        "name": "days_count",
+        "type": "FLOAT",
+        "nullable": false,
+        "default": "ScalarElementColumnDefault(1.0)"
+      },
+      {
+        "name": "reason",
+        "type": "TEXT",
+        "nullable": false,
+        "default": null
+      },
+      {
+        "name": "status",
+        "type": "VARCHAR(20)",
+        "nullable": false,
+        "default": "ScalarElementColumnDefault('pending')"
+      },
+      {
+        "name": "approved_by_id",
+        "type": "INTEGER",
+        "nullable": true,
+        "default": null
+      },
+      {
+        "name": "approval_remarks",
+        "type": "TEXT",
+        "nullable": true,
+        "default": null
+      },
+      {
+        "name": "created_at",
+        "type": "DATETIME",
+        "nullable": true,
+        "default": null
+      },
+      {
+        "name": "updated_at",
+        "type": "DATETIME",
+        "nullable": true,
+        "default": null
+      }
+    ],
+    "primary_keys": [
+      "id"
+    ],
+    "foreign_keys": [
+      {
+        "col": "approved_by_id",
+        "target": "users.id"
+      },
+      {
+        "col": "staff_id",
+        "target": "operational_staff.id"
+      }
+    ],
+    "indexes": [
+      {
+        "name": "ix_staff_leave_requests_id",
+        "columns": [
+          "id"
+        ],
+        "unique": false
+      },
+      {
+        "name": "ix_staff_leave_requests_start_date",
+        "columns": [
+          "start_date"
+        ],
+        "unique": false
+      },
+      {
+        "name": "ix_staff_leave_requests_status",
+        "columns": [
+          "status"
+        ],
+        "unique": false
+      },
+      {
+        "name": "ix_staff_leave_requests_staff_id",
+        "columns": [
+          "staff_id"
+        ],
+        "unique": false
+      },
+      {
+        "name": "ix_staff_leave_requests_end_date",
+        "columns": [
+          "end_date"
+        ],
+        "unique": false
+      }
+    ],
+    "constraints": [
+      {
+        "name": null,
+        "type": "ForeignKeyConstraint"
+      },
+      {
+        "name": null,
+        "type": "ForeignKeyConstraint"
+      },
+      {
+        "name": null,
+        "type": "PrimaryKeyConstraint"
+      }
+    ]
+  },
+  "staff_credits": {
+    "columns": [
+      {
+        "name": "id",
+        "type": "INTEGER",
+        "nullable": false,
+        "default": null
+      },
+      {
+        "name": "staff_id",
+        "type": "INTEGER",
+        "nullable": false,
+        "default": null
+      },
+      {
+        "name": "annual_quota",
+        "type": "FLOAT",
+        "nullable": false,
+        "default": "ScalarElementColumnDefault(12.0)"
+      },
+      {
+        "name": "balance",
+        "type": "FLOAT",
+        "nullable": false,
+        "default": "ScalarElementColumnDefault(12.0)"
+      },
+      {
+        "name": "created_at",
+        "type": "DATETIME",
+        "nullable": true,
+        "default": null
+      },
+      {
+        "name": "updated_at",
+        "type": "DATETIME",
+        "nullable": true,
+        "default": null
+      }
+    ],
+    "primary_keys": [
+      "id"
+    ],
+    "foreign_keys": [
+      {
+        "col": "staff_id",
+        "target": "operational_staff.id"
+      }
+    ],
+    "indexes": [
+      {
+        "name": "ix_staff_credits_id",
+        "columns": [
+          "id"
+        ],
+        "unique": false
+      },
+      {
+        "name": "ix_staff_credits_staff_id",
+        "columns": [
+          "staff_id"
+        ],
+        "unique": true
+      }
+    ],
+    "constraints": [
+      {
+        "name": null,
+        "type": "ForeignKeyConstraint"
+      },
+      {
+        "name": null,
+        "type": "PrimaryKeyConstraint"
+      }
+    ]
+  },
+  "staff_credit_transactions": {
+    "columns": [
+      {
+        "name": "id",
+        "type": "INTEGER",
+        "nullable": false,
+        "default": null
+      },
+      {
+        "name": "staff_id",
+        "type": "INTEGER",
+        "nullable": false,
+        "default": null
+      },
+      {
+        "name": "change",
+        "type": "FLOAT",
+        "nullable": false,
+        "default": null
+      },
+      {
+        "name": "balance_after",
+        "type": "FLOAT",
+        "nullable": false,
+        "default": null
+      },
+      {
+        "name": "category",
+        "type": "VARCHAR(50)",
+        "nullable": false,
+        "default": "ScalarElementColumnDefault('manual_adjustment')"
+      },
+      {
+        "name": "reason",
+        "type": "TEXT",
+        "nullable": false,
+        "default": null
+      },
+      {
+        "name": "related_leave_id",
+        "type": "INTEGER",
+        "nullable": true,
+        "default": null
+      },
+      {
+        "name": "created_by_user_id",
+        "type": "INTEGER",
+        "nullable": true,
+        "default": null
+      },
+      {
+        "name": "created_at",
+        "type": "DATETIME",
+        "nullable": true,
+        "default": null
+      }
+    ],
+    "primary_keys": [
+      "id"
+    ],
+    "foreign_keys": [
+      {
+        "col": "related_leave_id",
+        "target": "staff_leave_requests.id"
+      },
+      {
+        "col": "staff_id",
+        "target": "operational_staff.id"
+      },
+      {
+        "col": "created_by_user_id",
+        "target": "users.id"
+      }
+    ],
+    "indexes": [
+      {
+        "name": "ix_staff_credit_transactions_created_at",
+        "columns": [
+          "created_at"
+        ],
+        "unique": false
+      },
+      {
+        "name": "ix_staff_credit_transactions_staff_id",
+        "columns": [
+          "staff_id"
+        ],
+        "unique": false
+      },
+      {
+        "name": "ix_staff_credit_transactions_id",
+        "columns": [
+          "id"
+        ],
+        "unique": false
+      }
+    ],
+    "constraints": [
+      {
+        "name": null,
+        "type": "PrimaryKeyConstraint"
+      },
+      {
+        "name": null,
+        "type": "ForeignKeyConstraint"
+      },
+      {
+        "name": null,
+        "type": "ForeignKeyConstraint"
+      },
+      {
+        "name": null,
+        "type": "ForeignKeyConstraint"
+      }
+    ]
+  },
+  "campus_geofences": {
+    "columns": [
+      {
+        "name": "id",
+        "type": "INTEGER",
+        "nullable": false,
+        "default": null
+      },
+      {
+        "name": "name",
+        "type": "VARCHAR(100)",
+        "nullable": false,
+        "default": null
+      },
+      {
+        "name": "description",
+        "type": "VARCHAR(255)",
+        "nullable": true,
+        "default": null
+      },
+      {
+        "name": "type",
+        "type": "VARCHAR(20)",
+        "nullable": false,
+        "default": "ScalarElementColumnDefault('circle')"
+      },
+      {
+        "name": "center_latitude",
+        "type": "FLOAT",
+        "nullable": false,
+        "default": null
+      },
+      {
+        "name": "center_longitude",
+        "type": "FLOAT",
+        "nullable": false,
+        "default": null
+      },
+      {
+        "name": "radius_meters",
+        "type": "FLOAT",
+        "nullable": true,
+        "default": "ScalarElementColumnDefault(150.0)"
+      },
+      {
+        "name": "geometry",
+        "type": "JSONB",
+        "nullable": false,
+        "default": null
+      },
+      {
+        "name": "tolerance_meters",
+        "type": "FLOAT",
+        "nullable": false,
+        "default": "ScalarElementColumnDefault(15.0)"
+      },
+      {
+        "name": "area_sq_meters",
+        "type": "FLOAT",
+        "nullable": true,
+        "default": null
+      },
+      {
+        "name": "perimeter_meters",
+        "type": "FLOAT",
+        "nullable": true,
+        "default": null
+      },
+      {
+        "name": "is_active",
+        "type": "BOOLEAN",
+        "nullable": false,
+        "default": "ScalarElementColumnDefault(True)"
+      },
+      {
+        "name": "created_by",
+        "type": "INTEGER",
+        "nullable": true,
+        "default": null
+      },
+      {
+        "name": "updated_by",
+        "type": "INTEGER",
+        "nullable": true,
+        "default": null
+      },
+      {
+        "name": "created_at",
+        "type": "DATETIME",
+        "nullable": true,
+        "default": null
+      },
+      {
+        "name": "updated_at",
+        "type": "DATETIME",
+        "nullable": true,
+        "default": null
+      }
+    ],
+    "primary_keys": [
+      "id"
+    ],
+    "foreign_keys": [
+      {
+        "col": "created_by",
+        "target": "users.id"
+      },
+      {
+        "col": "updated_by",
+        "target": "users.id"
+      }
+    ],
+    "indexes": [
+      {
+        "name": "ix_campus_geofences_name",
+        "columns": [
+          "name"
+        ],
+        "unique": true
+      },
+      {
+        "name": "ix_campus_geofences_is_active",
+        "columns": [
+          "is_active"
+        ],
+        "unique": false
+      },
+      {
+        "name": "ix_campus_geofences_id",
+        "columns": [
+          "id"
+        ],
+        "unique": false
+      }
+    ],
+    "constraints": [
+      {
+        "name": null,
+        "type": "ForeignKeyConstraint"
+      },
+      {
+        "name": null,
+        "type": "ForeignKeyConstraint"
+      },
+      {
+        "name": null,
+        "type": "PrimaryKeyConstraint"
+      }
+    ]
+  },
+  "staff_attendance_records": {
+    "columns": [
+      {
+        "name": "id",
+        "type": "INTEGER",
+        "nullable": false,
+        "default": null
+      },
+      {
+        "name": "user_id",
+        "type": "INTEGER",
+        "nullable": false,
+        "default": null
+      },
+      {
+        "name": "attendance_date",
+        "type": "DATE",
+        "nullable": false,
+        "default": null
+      },
+      {
+        "name": "check_in_time",
+        "type": "DATETIME",
+        "nullable": true,
+        "default": null
+      },
+      {
+        "name": "check_out_time",
+        "type": "DATETIME",
+        "nullable": true,
+        "default": null
+      },
+      {
+        "name": "status",
+        "type": "VARCHAR(20)",
+        "nullable": false,
+        "default": "ScalarElementColumnDefault('PRESENT')"
+      },
+      {
+        "name": "check_in_latitude",
+        "type": "FLOAT",
+        "nullable": true,
+        "default": null
+      },
+      {
+        "name": "check_in_longitude",
+        "type": "FLOAT",
+        "nullable": true,
+        "default": null
+      },
+      {
+        "name": "check_in_accuracy",
+        "type": "FLOAT",
+        "nullable": true,
+        "default": null
+      },
+      {
+        "name": "check_in_geofence_id",
+        "type": "INTEGER",
+        "nullable": true,
+        "default": null
+      },
+      {
+        "name": "check_out_latitude",
+        "type": "FLOAT",
+        "nullable": true,
+        "default": null
+      },
+      {
+        "name": "check_out_longitude",
+        "type": "FLOAT",
+        "nullable": true,
+        "default": null
+      },
+      {
+        "name": "check_out_accuracy",
+        "type": "FLOAT",
+        "nullable": true,
+        "default": null
+      },
+      {
+        "name": "check_out_geofence_id",
+        "type": "INTEGER",
+        "nullable": true,
+        "default": null
+      },
+      {
+        "name": "face_similarity_score",
+        "type": "FLOAT",
+        "nullable": true,
+        "default": null
+      },
+      {
+        "name": "liveness_verified",
+        "type": "BOOLEAN",
+        "nullable": false,
+        "default": "ScalarElementColumnDefault(False)"
+      },
+      {
+        "name": "verification_method",
+        "type": "VARCHAR(50)",
+        "nullable": false,
+        "default": "ScalarElementColumnDefault('FACE_ON_DEVICE')"
+      },
+      {
+        "name": "idempotency_key",
+        "type": "VARCHAR(64)",
+        "nullable": true,
+        "default": null
+      },
+      {
+        "name": "device_reference",
+        "type": "VARCHAR(100)",
+        "nullable": true,
+        "default": null
+      },
+      {
+        "name": "sync_source",
+        "type": "VARCHAR(20)",
+        "nullable": false,
+        "default": "ScalarElementColumnDefault('DIRECT')"
+      },
+      {
+        "name": "working_hours",
+        "type": "VARCHAR(50)",
+        "nullable": true,
+        "default": null
+      },
+      {
+        "name": "created_at",
+        "type": "DATETIME",
+        "nullable": true,
+        "default": null
+      },
+      {
+        "name": "updated_at",
+        "type": "DATETIME",
+        "nullable": true,
+        "default": null
+      }
+    ],
+    "primary_keys": [
+      "id"
+    ],
+    "foreign_keys": [
+      {
+        "col": "user_id",
+        "target": "users.id"
+      },
+      {
+        "col": "check_in_geofence_id",
+        "target": "campus_geofences.id"
+      },
+      {
+        "col": "check_out_geofence_id",
+        "target": "campus_geofences.id"
+      }
+    ],
+    "indexes": [
+      {
+        "name": "ix_staff_attendance_records_attendance_date",
+        "columns": [
+          "attendance_date"
+        ],
+        "unique": false
+      },
+      {
+        "name": "ix_staff_attendance_records_id",
+        "columns": [
+          "id"
+        ],
+        "unique": false
+      },
+      {
+        "name": "ix_staff_attendance_records_idempotency_key",
+        "columns": [
+          "idempotency_key"
+        ],
+        "unique": true
+      },
+      {
+        "name": "ix_staff_attendance_records_user_id",
+        "columns": [
+          "user_id"
+        ],
+        "unique": false
+      }
+    ],
+    "constraints": [
+      {
+        "name": null,
+        "type": "ForeignKeyConstraint"
+      },
+      {
+        "name": null,
+        "type": "ForeignKeyConstraint"
+      },
+      {
+        "name": null,
+        "type": "PrimaryKeyConstraint"
+      },
+      {
+        "name": null,
+        "type": "ForeignKeyConstraint"
+      }
+    ]
+  },
+  "students": {
+    "columns": [
+      {
+        "name": "id",
+        "type": "INTEGER",
+        "nullable": false,
+        "default": null
+      },
+      {
+        "name": "roll_number",
+        "type": "VARCHAR(50)",
+        "nullable": false,
+        "default": null
+      },
+      {
+        "name": "name",
+        "type": "VARCHAR(150)",
+        "nullable": false,
+        "default": null
+      },
+      {
+        "name": "class_id",
+        "type": "INTEGER",
+        "nullable": false,
+        "default": null
+      },
+      {
+        "name": "department_id",
+        "type": "INTEGER",
+        "nullable": false,
+        "default": null
+      },
+      {
+        "name": "admission_year",
+        "type": "INTEGER",
+        "nullable": true,
+        "default": null
+      },
+      {
+        "name": "is_active",
+        "type": "BOOLEAN",
+        "nullable": false,
+        "default": "ScalarElementColumnDefault(True)"
+      },
+      {
+        "name": "created_at",
+        "type": "DATETIME",
+        "nullable": true,
+        "default": null
+      },
+      {
+        "name": "updated_at",
+        "type": "DATETIME",
+        "nullable": true,
+        "default": null
+      }
+    ],
+    "primary_keys": [
+      "id"
+    ],
+    "foreign_keys": [
+      {
+        "col": "class_id",
+        "target": "classes.id"
+      },
+      {
+        "col": "department_id",
+        "target": "departments.id"
+      }
+    ],
+    "indexes": [
+      {
+        "name": "ix_students_class_id",
+        "columns": [
+          "class_id"
+        ],
+        "unique": false
+      },
+      {
+        "name": "ix_students_admission_year",
+        "columns": [
+          "admission_year"
+        ],
+        "unique": false
+      },
+      {
+        "name": "ix_students_id",
+        "columns": [
+          "id"
+        ],
+        "unique": false
+      },
+      {
+        "name": "ix_students_roll_number",
+        "columns": [
+          "roll_number"
+        ],
+        "unique": true
+      },
+      {
+        "name": "ix_students_department_id",
+        "columns": [
+          "department_id"
+        ],
+        "unique": false
+      }
+    ],
+    "constraints": [
+      {
+        "name": null,
+        "type": "PrimaryKeyConstraint"
+      },
+      {
+        "name": "uq_class_roll_number",
+        "type": "UniqueConstraint"
+      },
+      {
+        "name": null,
+        "type": "ForeignKeyConstraint"
+      },
+      {
+        "name": null,
+        "type": "ForeignKeyConstraint"
+      }
+    ]
+  },
+  "student_enrollments": {
+    "columns": [
+      {
+        "name": "id",
+        "type": "INTEGER",
+        "nullable": false,
+        "default": null
+      },
+      {
+        "name": "student_id",
+        "type": "INTEGER",
+        "nullable": false,
+        "default": null
+      },
+      {
+        "name": "academic_year_id",
+        "type": "INTEGER",
+        "nullable": false,
+        "default": null
+      },
+      {
+        "name": "class_id",
+        "type": "INTEGER",
+        "nullable": false,
+        "default": null
+      },
+      {
+        "name": "roll_number",
+        "type": "VARCHAR(50)",
+        "nullable": false,
+        "default": null
+      },
+      {
+        "name": "status",
+        "type": "VARCHAR(20)",
+        "nullable": false,
+        "default": "ScalarElementColumnDefault('active')"
+      },
+      {
+        "name": "joined_at",
+        "type": "DATETIME",
+        "nullable": true,
+        "default": null
+      },
+      {
+        "name": "left_at",
+        "type": "DATETIME",
+        "nullable": true,
+        "default": null
+      },
+      {
+        "name": "created_at",
+        "type": "DATETIME",
+        "nullable": true,
+        "default": null
+      },
+      {
+        "name": "updated_at",
+        "type": "DATETIME",
+        "nullable": true,
+        "default": null
+      }
+    ],
+    "primary_keys": [
+      "id"
+    ],
+    "foreign_keys": [
+      {
+        "col": "student_id",
+        "target": "students.id"
+      },
+      {
+        "col": "academic_year_id",
+        "target": "academic_years.id"
+      },
+      {
+        "col": "class_id",
+        "target": "classes.id"
+      }
+    ],
+    "indexes": [
+      {
+        "name": "ix_student_enrollments_class_id",
+        "columns": [
+          "class_id"
+        ],
+        "unique": false
+      },
+      {
+        "name": "ix_student_enrollments_id",
+        "columns": [
+          "id"
+        ],
+        "unique": false
+      },
+      {
+        "name": "ix_student_enrollments_academic_year_id",
+        "columns": [
+          "academic_year_id"
+        ],
+        "unique": false
+      },
+      {
+        "name": "ix_student_enrollments_student_id",
+        "columns": [
+          "student_id"
+        ],
+        "unique": false
+      },
+      {
+        "name": "ix_student_enrollments_roll_number",
+        "columns": [
+          "roll_number"
+        ],
+        "unique": false
+      }
+    ],
+    "constraints": [
+      {
+        "name": null,
+        "type": "ForeignKeyConstraint"
+      },
+      {
+        "name": "uq_student_academic_year",
+        "type": "UniqueConstraint"
+      },
+      {
+        "name": null,
+        "type": "ForeignKeyConstraint"
+      },
+      {
+        "name": null,
+        "type": "PrimaryKeyConstraint"
+      },
+      {
+        "name": null,
+        "type": "ForeignKeyConstraint"
+      }
+    ]
+  },
+  "class_roll_rules": {
+    "columns": [
+      {
+        "name": "id",
+        "type": "INTEGER",
+        "nullable": false,
+        "default": null
+      },
+      {
+        "name": "class_id",
+        "type": "INTEGER",
+        "nullable": false,
+        "default": null
+      },
+      {
+        "name": "academic_year_id",
+        "type": "INTEGER",
+        "nullable": false,
+        "default": null
+      },
+      {
+        "name": "prefix",
+        "type": "VARCHAR(20)",
+        "nullable": false,
+        "default": null
+      },
+      {
+        "name": "start_number",
+        "type": "INTEGER",
+        "nullable": false,
+        "default": null
+      },
+      {
+        "name": "end_number",
+        "type": "INTEGER",
+        "nullable": false,
+        "default": null
+      },
+      {
+        "name": "padding",
+        "type": "INTEGER",
+        "nullable": false,
+        "default": "ScalarElementColumnDefault(3)"
+      },
+      {
+        "name": "is_active",
+        "type": "BOOLEAN",
+        "nullable": false,
+        "default": "ScalarElementColumnDefault(True)"
+      },
+      {
+        "name": "created_by_id",
+        "type": "INTEGER",
+        "nullable": true,
+        "default": null
+      },
+      {
+        "name": "created_at",
+        "type": "DATETIME",
+        "nullable": true,
+        "default": null
+      },
+      {
+        "name": "updated_at",
+        "type": "DATETIME",
+        "nullable": true,
+        "default": null
+      }
+    ],
+    "primary_keys": [
+      "id"
+    ],
+    "foreign_keys": [
+      {
+        "col": "created_by_id",
+        "target": "users.id"
+      },
+      {
+        "col": "academic_year_id",
+        "target": "academic_years.id"
+      },
+      {
+        "col": "class_id",
+        "target": "classes.id"
+      }
+    ],
+    "indexes": [
+      {
+        "name": "ix_class_roll_rules_academic_year_id",
+        "columns": [
+          "academic_year_id"
+        ],
+        "unique": false
+      },
+      {
+        "name": "ix_class_roll_rules_class_id",
+        "columns": [
+          "class_id"
+        ],
+        "unique": false
+      },
+      {
+        "name": "ix_class_roll_rules_id",
+        "columns": [
+          "id"
+        ],
+        "unique": false
+      }
+    ],
+    "constraints": [
+      {
+        "name": null,
+        "type": "ForeignKeyConstraint"
+      },
+      {
+        "name": null,
+        "type": "PrimaryKeyConstraint"
+      },
+      {
+        "name": null,
+        "type": "ForeignKeyConstraint"
+      },
+      {
+        "name": null,
+        "type": "ForeignKeyConstraint"
+      },
+      {
+        "name": "uq_class_academic_year_rule",
+        "type": "UniqueConstraint"
+      }
+    ]
+  },
+  "class_roll_exceptions": {
+    "columns": [
+      {
+        "name": "id",
+        "type": "INTEGER",
+        "nullable": false,
+        "default": null
+      },
+      {
+        "name": "class_roll_rule_id",
+        "type": "INTEGER",
+        "nullable": false,
+        "default": null
+      },
+      {
+        "name": "roll_number",
+        "type": "VARCHAR(50)",
+        "nullable": false,
+        "default": null
+      },
+      {
+        "name": "exception_type",
+        "type": "VARCHAR(20)",
+        "nullable": false,
+        "default": null
+      },
+      {
+        "name": "reason",
+        "type": "VARCHAR(255)",
+        "nullable": true,
+        "default": null
+      },
+      {
+        "name": "student_id",
+        "type": "INTEGER",
+        "nullable": true,
+        "default": null
+      },
+      {
+        "name": "created_by_id",
+        "type": "INTEGER",
+        "nullable": true,
+        "default": null
+      },
+      {
+        "name": "created_at",
+        "type": "DATETIME",
+        "nullable": true,
+        "default": null
+      }
+    ],
+    "primary_keys": [
+      "id"
+    ],
+    "foreign_keys": [
+      {
+        "col": "class_roll_rule_id",
+        "target": "class_roll_rules.id"
+      },
+      {
+        "col": "created_by_id",
+        "target": "users.id"
+      },
+      {
+        "col": "student_id",
+        "target": "students.id"
+      }
+    ],
+    "indexes": [
+      {
+        "name": "ix_class_roll_exceptions_id",
+        "columns": [
+          "id"
+        ],
+        "unique": false
+      },
+      {
+        "name": "ix_class_roll_exceptions_class_roll_rule_id",
+        "columns": [
+          "class_roll_rule_id"
+        ],
+        "unique": false
+      },
+      {
+        "name": "ix_class_roll_exceptions_roll_number",
+        "columns": [
+          "roll_number"
+        ],
+        "unique": false
+      }
+    ],
+    "constraints": [
+      {
+        "name": null,
+        "type": "ForeignKeyConstraint"
+      },
+      {
+        "name": null,
+        "type": "ForeignKeyConstraint"
+      },
+      {
+        "name": null,
+        "type": "ForeignKeyConstraint"
+      },
+      {
+        "name": null,
+        "type": "PrimaryKeyConstraint"
+      },
+      {
+        "name": "uq_rule_roll_exception",
+        "type": "UniqueConstraint"
+      }
+    ]
+  },
+  "attendance_sessions": {
+    "columns": [
+      {
+        "name": "id",
+        "type": "INTEGER",
+        "nullable": false,
+        "default": null
+      },
+      {
+        "name": "attendance_date",
+        "type": "DATE",
+        "nullable": false,
+        "default": null
+      },
+      {
+        "name": "calendar_day_id",
+        "type": "INTEGER",
+        "nullable": true,
+        "default": null
+      },
+      {
+        "name": "timetable_slot_id",
+        "type": "INTEGER",
+        "nullable": true,
+        "default": null
+      },
+      {
+        "name": "class_id",
+        "type": "INTEGER",
+        "nullable": false,
+        "default": null
+      },
+      {
+        "name": "subject_id",
+        "type": "INTEGER",
+        "nullable": true,
+        "default": null
+      },
+      {
+        "name": "period_number",
+        "type": "INTEGER",
+        "nullable": false,
+        "default": null
+      },
+      {
+        "name": "day_order",
+        "type": "INTEGER",
+        "nullable": true,
+        "default": null
+      },
+      {
+        "name": "scheduled_teacher_id",
+        "type": "INTEGER",
+        "nullable": true,
+        "default": null
+      },
+      {
+        "name": "actual_teacher_id",
+        "type": "INTEGER",
+        "nullable": false,
+        "default": null
+      },
+      {
+        "name": "substitution_id",
+        "type": "INTEGER",
+        "nullable": true,
+        "default": null
+      },
+      {
+        "name": "attendance_type",
+        "type": "VARCHAR(23)",
+        "nullable": false,
+        "default": "ScalarElementColumnDefault(<AttendanceType.normal: 'normal'>)"
+      },
+      {
+        "name": "status",
+        "type": "VARCHAR(14)",
+        "nullable": false,
+        "default": "ScalarElementColumnDefault(<SessionStatus.open: 'open'>)"
+      },
+      {
+        "name": "scheduled_start_time",
+        "type": "DATETIME",
+        "nullable": true,
+        "default": null
+      },
+      {
+        "name": "scheduled_end_time",
+        "type": "DATETIME",
+        "nullable": true,
+        "default": null
+      },
+      {
+        "name": "submitted_at",
+        "type": "DATETIME",
+        "nullable": true,
+        "default": null
+      },
+      {
+        "name": "submitted_by_id",
+        "type": "INTEGER",
+        "nullable": true,
+        "default": null
+      },
+      {
+        "name": "correction_deadline",
+        "type": "DATETIME",
+        "nullable": true,
+        "default": null
+      },
+      {
+        "name": "idempotency_key",
+        "type": "VARCHAR(100)",
+        "nullable": true,
+        "default": null
+      },
+      {
+        "name": "notes",
+        "type": "VARCHAR(500)",
+        "nullable": true,
+        "default": null
+      },
+      {
+        "name": "created_at",
+        "type": "DATETIME",
+        "nullable": true,
+        "default": null
+      },
+      {
+        "name": "updated_at",
+        "type": "DATETIME",
+        "nullable": true,
+        "default": null
+      }
+    ],
+    "primary_keys": [
+      "id"
+    ],
+    "foreign_keys": [
+      {
+        "col": "substitution_id",
+        "target": "alter_assignments.id"
+      },
+      {
+        "col": "scheduled_teacher_id",
+        "target": "users.id"
+      },
+      {
+        "col": "class_id",
+        "target": "classes.id"
+      },
+      {
+        "col": "submitted_by_id",
+        "target": "users.id"
+      },
+      {
+        "col": "actual_teacher_id",
+        "target": "users.id"
+      },
+      {
+        "col": "calendar_day_id",
+        "target": "calendar_days.id"
+      },
+      {
+        "col": "timetable_slot_id",
+        "target": "timetable_slots.id"
+      },
+      {
+        "col": "subject_id",
+        "target": "subjects.id"
+      }
+    ],
+    "indexes": [
+      {
+        "name": "ix_attendance_sessions_id",
+        "columns": [
+          "id"
+        ],
+        "unique": false
+      },
+      {
+        "name": "ix_attendance_sessions_attendance_date",
+        "columns": [
+          "attendance_date"
+        ],
+        "unique": false
+      },
+      {
+        "name": "ix_attendance_sessions_class_id",
+        "columns": [
+          "class_id"
+        ],
+        "unique": false
+      },
+      {
+        "name": "ix_attendance_sessions_actual_teacher_id",
+        "columns": [
+          "actual_teacher_id"
+        ],
+        "unique": false
+      },
+      {
+        "name": "ix_attendance_sessions_idempotency_key",
+        "columns": [
+          "idempotency_key"
+        ],
+        "unique": true
+      },
+      {
+        "name": "ix_attendance_sessions_scheduled_teacher_id",
+        "columns": [
+          "scheduled_teacher_id"
+        ],
+        "unique": false
+      },
+      {
+        "name": "ix_attendance_sessions_subject_id",
+        "columns": [
+          "subject_id"
+        ],
+        "unique": false
+      }
+    ],
+    "constraints": [
+      {
+        "name": null,
+        "type": "ForeignKeyConstraint"
+      },
+      {
+        "name": null,
+        "type": "ForeignKeyConstraint"
+      },
+      {
+        "name": null,
+        "type": "ForeignKeyConstraint"
+      },
+      {
+        "name": null,
+        "type": "ForeignKeyConstraint"
+      },
+      {
+        "name": "uq_session_date_class_period",
+        "type": "UniqueConstraint"
+      },
+      {
+        "name": null,
+        "type": "ForeignKeyConstraint"
+      },
+      {
+        "name": null,
+        "type": "PrimaryKeyConstraint"
+      },
+      {
+        "name": null,
+        "type": "ForeignKeyConstraint"
+      },
+      {
+        "name": "chk_session_period_number",
+        "type": "CheckConstraint"
+      },
+      {
+        "name": null,
+        "type": "ForeignKeyConstraint"
+      },
+      {
+        "name": null,
+        "type": "ForeignKeyConstraint"
+      }
+    ]
+  },
+  "student_attendance": {
+    "columns": [
+      {
+        "name": "id",
+        "type": "INTEGER",
+        "nullable": false,
+        "default": null
+      },
+      {
+        "name": "attendance_session_id",
+        "type": "INTEGER",
+        "nullable": false,
+        "default": null
+      },
+      {
+        "name": "student_id",
+        "type": "INTEGER",
+        "nullable": false,
+        "default": null
+      },
+      {
+        "name": "status",
+        "type": "VARCHAR(7)",
+        "nullable": false,
+        "default": "ScalarElementColumnDefault(<StudentAttendanceStatus.present: 'present'>)"
+      },
+      {
+        "name": "marked_at",
+        "type": "DATETIME",
+        "nullable": true,
+        "default": null
+      },
+      {
+        "name": "created_at",
+        "type": "DATETIME",
+        "nullable": true,
+        "default": null
+      },
+      {
+        "name": "updated_at",
+        "type": "DATETIME",
+        "nullable": true,
+        "default": null
+      }
+    ],
+    "primary_keys": [
+      "id"
+    ],
+    "foreign_keys": [
+      {
+        "col": "student_id",
+        "target": "students.id"
+      },
+      {
+        "col": "attendance_session_id",
+        "target": "attendance_sessions.id"
+      }
+    ],
+    "indexes": [
+      {
+        "name": "ix_student_attendance_student_id",
+        "columns": [
+          "student_id"
+        ],
+        "unique": false
+      },
+      {
+        "name": "ix_student_attendance_id",
+        "columns": [
+          "id"
+        ],
+        "unique": false
+      },
+      {
+        "name": "ix_student_attendance_attendance_session_id",
+        "columns": [
+          "attendance_session_id"
+        ],
+        "unique": false
+      }
+    ],
+    "constraints": [
+      {
+        "name": null,
+        "type": "ForeignKeyConstraint"
+      },
+      {
+        "name": null,
+        "type": "ForeignKeyConstraint"
+      },
+      {
+        "name": null,
+        "type": "PrimaryKeyConstraint"
+      },
+      {
+        "name": "uq_session_student",
+        "type": "UniqueConstraint"
+      }
+    ]
+  },
+  "attendance_correction_audits": {
+    "columns": [
+      {
+        "name": "id",
+        "type": "INTEGER",
+        "nullable": false,
+        "default": null
+      },
+      {
+        "name": "attendance_session_id",
+        "type": "INTEGER",
+        "nullable": false,
+        "default": null
+      },
+      {
+        "name": "student_id",
+        "type": "INTEGER",
+        "nullable": true,
+        "default": null
+      },
+      {
+        "name": "old_status",
+        "type": "VARCHAR(50)",
+        "nullable": false,
+        "default": null
+      },
+      {
+        "name": "new_status",
+        "type": "VARCHAR(50)",
+        "nullable": false,
+        "default": null
+      },
+      {
+        "name": "changed_by_id",
+        "type": "INTEGER",
+        "nullable": true,
+        "default": null
+      },
+      {
+        "name": "reason",
+        "type": "VARCHAR(500)",
+        "nullable": true,
+        "default": null
+      },
+      {
+        "name": "device_id",
+        "type": "VARCHAR(100)",
+        "nullable": true,
+        "default": null
+      },
+      {
+        "name": "changed_at",
+        "type": "DATETIME",
+        "nullable": true,
+        "default": null
+      }
+    ],
+    "primary_keys": [
+      "id"
+    ],
+    "foreign_keys": [
+      {
+        "col": "attendance_session_id",
+        "target": "attendance_sessions.id"
+      },
+      {
+        "col": "student_id",
+        "target": "students.id"
+      },
+      {
+        "col": "changed_by_id",
+        "target": "users.id"
+      }
+    ],
+    "indexes": [
+      {
+        "name": "ix_attendance_correction_audits_attendance_session_id",
+        "columns": [
+          "attendance_session_id"
+        ],
+        "unique": false
+      },
+      {
+        "name": "ix_attendance_correction_audits_id",
+        "columns": [
+          "id"
+        ],
+        "unique": false
+      },
+      {
+        "name": "ix_attendance_correction_audits_student_id",
+        "columns": [
+          "student_id"
+        ],
+        "unique": false
+      }
+    ],
+    "constraints": [
+      {
+        "name": null,
+        "type": "ForeignKeyConstraint"
+      },
+      {
+        "name": null,
+        "type": "PrimaryKeyConstraint"
+      },
+      {
+        "name": null,
+        "type": "ForeignKeyConstraint"
+      },
+      {
+        "name": null,
+        "type": "ForeignKeyConstraint"
+      }
+    ]
+  },
+  "institutions": {
+    "columns": [
+      {
+        "name": "id",
+        "type": "INTEGER",
+        "nullable": false,
+        "default": null
+      },
+      {
+        "name": "name",
+        "type": "VARCHAR(200)",
+        "nullable": false,
+        "default": null
+      },
+      {
+        "name": "short_code",
+        "type": "VARCHAR(20)",
+        "nullable": false,
+        "default": null
+      },
+      {
+        "name": "contact_email",
+        "type": "VARCHAR(150)",
+        "nullable": true,
+        "default": null
+      },
+      {
+        "name": "contact_phone",
+        "type": "VARCHAR(30)",
+        "nullable": true,
+        "default": null
+      },
+      {
+        "name": "status",
+        "type": "VARCHAR(11)",
+        "nullable": false,
+        "default": "ScalarElementColumnDefault(<InstitutionStatus.active: 'active'>)"
+      },
+      {
+        "name": "plan",
+        "type": "VARCHAR(10)",
+        "nullable": false,
+        "default": "ScalarElementColumnDefault(<PlanTier.basic: 'basic'>)"
+      },
+      {
+        "name": "plan_assigned_at",
+        "type": "DATETIME",
+        "nullable": true,
+        "default": null
+      },
+      {
+        "name": "plan_expires_at",
+        "type": "DATETIME",
+        "nullable": true,
+        "default": null
+      },
+      {
+        "name": "created_at",
+        "type": "DATETIME",
+        "nullable": true,
+        "default": null
+      },
+      {
+        "name": "updated_at",
+        "type": "DATETIME",
+        "nullable": true,
+        "default": null
+      },
+      {
+        "name": "created_by_id",
+        "type": "INTEGER",
+        "nullable": true,
+        "default": null
+      }
+    ],
+    "primary_keys": [
+      "id"
+    ],
+    "foreign_keys": [
+      {
+        "col": "created_by_id",
+        "target": "users.id"
+      }
+    ],
+    "indexes": [
+      {
+        "name": "ix_institutions_id",
+        "columns": [
+          "id"
+        ],
+        "unique": false
+      }
+    ],
+    "constraints": [
+      {
+        "name": null,
+        "type": "PrimaryKeyConstraint"
+      },
+      {
+        "name": null,
+        "type": "UniqueConstraint"
+      },
+      {
+        "name": null,
+        "type": "ForeignKeyConstraint"
+      },
+      {
+        "name": null,
+        "type": "UniqueConstraint"
+      }
+    ]
+  },
+  "plan_definitions": {
+    "columns": [
+      {
+        "name": "id",
+        "type": "INTEGER",
+        "nullable": false,
+        "default": null
+      },
+      {
+        "name": "plan_tier",
+        "type": "VARCHAR(10)",
+        "nullable": false,
+        "default": null
+      },
+      {
+        "name": "display_name",
+        "type": "VARCHAR(100)",
+        "nullable": false,
+        "default": null
+      },
+      {
+        "name": "description",
+        "type": "TEXT",
+        "nullable": true,
+        "default": null
+      },
+      {
+        "name": "included_features",
+        "type": "TEXT",
+        "nullable": true,
+        "default": null
+      },
+      {
+        "name": "created_at",
+        "type": "DATETIME",
+        "nullable": true,
+        "default": null
+      },
+      {
+        "name": "updated_at",
+        "type": "DATETIME",
+        "nullable": true,
+        "default": null
+      }
+    ],
+    "primary_keys": [
+      "id"
+    ],
+    "foreign_keys": [],
+    "indexes": [
+      {
+        "name": "ix_plan_definitions_id",
+        "columns": [
+          "id"
+        ],
+        "unique": false
+      }
+    ],
+    "constraints": [
+      {
+        "name": null,
+        "type": "UniqueConstraint"
+      },
+      {
+        "name": null,
+        "type": "PrimaryKeyConstraint"
+      }
+    ]
+  },
+  "feature_entitlements": {
+    "columns": [
+      {
+        "name": "id",
+        "type": "INTEGER",
+        "nullable": false,
+        "default": null
+      },
+      {
+        "name": "institution_id",
+        "type": "INTEGER",
+        "nullable": false,
+        "default": null
+      },
+      {
+        "name": "feature_key",
+        "type": "VARCHAR(20)",
+        "nullable": false,
+        "default": null
+      },
+      {
+        "name": "status",
+        "type": "VARCHAR(8)",
+        "nullable": false,
+        "default": "ScalarElementColumnDefault(<FeatureStatus.ENABLED: 'ENABLED'>)"
+      },
+      {
+        "name": "display_name",
+        "type": "VARCHAR(100)",
+        "nullable": true,
+        "default": null
+      },
+      {
+        "name": "description",
+        "type": "TEXT",
+        "nullable": true,
+        "default": null
+      },
+      {
+        "name": "activation_date",
+        "type": "DATETIME",
+        "nullable": true,
+        "default": null
+      },
+      {
+        "name": "expiry_date",
+        "type": "DATETIME",
+        "nullable": true,
+        "default": null
+      },
+      {
+        "name": "locked_by_id",
+        "type": "INTEGER",
+        "nullable": true,
+        "default": null
+      },
+      {
+        "name": "updated_at",
+        "type": "DATETIME",
+        "nullable": true,
+        "default": null
+      }
+    ],
+    "primary_keys": [
+      "id"
+    ],
+    "foreign_keys": [
+      {
+        "col": "locked_by_id",
+        "target": "users.id"
+      },
+      {
+        "col": "institution_id",
+        "target": "institutions.id"
+      }
+    ],
+    "indexes": [
+      {
+        "name": "ix_feature_entitlements_id",
+        "columns": [
+          "id"
+        ],
+        "unique": false
+      },
+      {
+        "name": "ix_feature_entitlements_institution_id",
+        "columns": [
+          "institution_id"
+        ],
+        "unique": false
+      }
+    ],
+    "constraints": [
+      {
+        "name": null,
+        "type": "PrimaryKeyConstraint"
+      },
+      {
+        "name": null,
+        "type": "ForeignKeyConstraint"
+      },
+      {
+        "name": "uq_institution_feature",
+        "type": "UniqueConstraint"
+      },
+      {
+        "name": null,
+        "type": "ForeignKeyConstraint"
+      }
+    ]
+  },
+  "biometric_policies": {
+    "columns": [
+      {
+        "name": "id",
+        "type": "INTEGER",
+        "nullable": false,
+        "default": null
+      },
+      {
+        "name": "institution_id",
+        "type": "INTEGER",
+        "nullable": false,
+        "default": null
+      },
+      {
+        "name": "allow_face_enrollment",
+        "type": "BOOLEAN",
+        "nullable": false,
+        "default": "ScalarElementColumnDefault(True)"
+      },
+      {
+        "name": "allow_face_enrollment_update",
+        "type": "BOOLEAN",
+        "nullable": false,
+        "default": "ScalarElementColumnDefault(True)"
+      },
+      {
+        "name": "allow_face_reenrollment",
+        "type": "BOOLEAN",
+        "nullable": false,
+        "default": "ScalarElementColumnDefault(False)"
+      },
+      {
+        "name": "require_admin_approval_for_enrollment",
+        "type": "BOOLEAN",
+        "nullable": false,
+        "default": "ScalarElementColumnDefault(False)"
+      },
+      {
+        "name": "require_admin_approval_for_update",
+        "type": "BOOLEAN",
+        "nullable": false,
+        "default": "ScalarElementColumnDefault(False)"
+      },
+      {
+        "name": "updated_at",
+        "type": "DATETIME",
+        "nullable": true,
+        "default": null
+      },
+      {
+        "name": "updated_by_id",
+        "type": "INTEGER",
+        "nullable": true,
+        "default": null
+      }
+    ],
+    "primary_keys": [
+      "id"
+    ],
+    "foreign_keys": [
+      {
+        "col": "updated_by_id",
+        "target": "users.id"
+      },
+      {
+        "col": "institution_id",
+        "target": "institutions.id"
+      }
+    ],
+    "indexes": [
+      {
+        "name": "ix_biometric_policies_institution_id",
+        "columns": [
+          "institution_id"
+        ],
+        "unique": true
+      },
+      {
+        "name": "ix_biometric_policies_id",
+        "columns": [
+          "id"
+        ],
+        "unique": false
+      }
+    ],
+    "constraints": [
+      {
+        "name": null,
+        "type": "ForeignKeyConstraint"
+      },
+      {
+        "name": null,
+        "type": "ForeignKeyConstraint"
+      },
+      {
+        "name": null,
+        "type": "PrimaryKeyConstraint"
+      }
+    ]
+  },
+  "system_audit_logs": {
+    "columns": [
+      {
+        "name": "id",
+        "type": "INTEGER",
+        "nullable": false,
+        "default": null
+      },
+      {
+        "name": "event_id",
+        "type": "VARCHAR(36)",
+        "nullable": false,
+        "default": null
+      },
+      {
+        "name": "timestamp",
+        "type": "DATETIME",
+        "nullable": false,
+        "default": null
+      },
+      {
+        "name": "system_admin_id",
+        "type": "INTEGER",
+        "nullable": true,
+        "default": null
+      },
+      {
+        "name": "institution_id",
+        "type": "INTEGER",
+        "nullable": true,
+        "default": null
+      },
+      {
+        "name": "action",
+        "type": "VARCHAR(26)",
+        "nullable": false,
+        "default": null
+      },
+      {
+        "name": "affected_resource",
+        "type": "VARCHAR(200)",
+        "nullable": true,
+        "default": null
+      },
+      {
+        "name": "old_value",
+        "type": "TEXT",
+        "nullable": true,
+        "default": null
+      },
+      {
+        "name": "new_value",
+        "type": "TEXT",
+        "nullable": true,
+        "default": null
+      },
+      {
+        "name": "request_id",
+        "type": "VARCHAR(36)",
+        "nullable": true,
+        "default": null
+      },
+      {
+        "name": "ip_address",
+        "type": "VARCHAR(50)",
+        "nullable": true,
+        "default": null
+      },
+      {
+        "name": "notes",
+        "type": "TEXT",
+        "nullable": true,
+        "default": null
+      }
+    ],
+    "primary_keys": [
+      "id"
+    ],
+    "foreign_keys": [
+      {
+        "col": "system_admin_id",
+        "target": "users.id"
+      },
+      {
+        "col": "institution_id",
+        "target": "institutions.id"
+      }
+    ],
+    "indexes": [
+      {
+        "name": "ix_system_audit_logs_id",
+        "columns": [
+          "id"
+        ],
+        "unique": false
+      },
+      {
+        "name": "ix_system_audit_logs_event_id",
+        "columns": [
+          "event_id"
+        ],
+        "unique": true
+      },
+      {
+        "name": "ix_system_audit_logs_timestamp",
+        "columns": [
+          "timestamp"
+        ],
+        "unique": false
+      },
+      {
+        "name": "ix_system_audit_logs_institution_id",
+        "columns": [
+          "institution_id"
+        ],
+        "unique": false
+      },
+      {
+        "name": "ix_system_audit_logs_system_admin_id",
+        "columns": [
+          "system_admin_id"
+        ],
+        "unique": false
+      }
+    ],
+    "constraints": [
+      {
+        "name": null,
+        "type": "PrimaryKeyConstraint"
+      },
+      {
+        "name": null,
+        "type": "ForeignKeyConstraint"
+      },
+      {
+        "name": null,
+        "type": "ForeignKeyConstraint"
+      }
+    ]
+  },
+  "academic_intelligence_events": {
+    "columns": [
+      {
+        "name": "id",
+        "type": "INTEGER",
+        "nullable": false,
+        "default": null
+      },
+      {
+        "name": "department_id",
+        "type": "INTEGER",
+        "nullable": false,
+        "default": null
+      },
+      {
+        "name": "class_id",
+        "type": "INTEGER",
+        "nullable": true,
+        "default": null
+      },
+      {
+        "name": "attendance_session_id",
+        "type": "INTEGER",
+        "nullable": true,
+        "default": null
+      },
+      {
+        "name": "timetable_slot_id",
+        "type": "INTEGER",
+        "nullable": true,
+        "default": null
+      },
+      {
+        "name": "event_type",
+        "type": "VARCHAR(26)",
+        "nullable": false,
+        "default": null
+      },
+      {
+        "name": "severity",
+        "type": "VARCHAR(8)",
+        "nullable": false,
+        "default": "ScalarElementColumnDefault(<IntelligenceSeverity.medium: 'medium'>)"
+      },
+      {
+        "name": "state",
+        "type": "VARCHAR(12)",
+        "nullable": false,
+        "default": "ScalarElementColumnDefault(<IntelligenceEventState.active: 'active'>)"
+      },
+      {
+        "name": "source_key",
+        "type": "VARCHAR(160)",
+        "nullable": false,
+        "default": null
+      },
+      {
+        "name": "title",
+        "type": "VARCHAR(255)",
+        "nullable": false,
+        "default": null
+      },
+      {
+        "name": "detail",
+        "type": "VARCHAR(1000)",
+        "nullable": true,
+        "default": null
+      },
+      {
+        "name": "attendance_percentage",
+        "type": "FLOAT",
+        "nullable": true,
+        "default": null
+      },
+      {
+        "name": "absent_count",
+        "type": "INTEGER",
+        "nullable": true,
+        "default": null
+      },
+      {
+        "name": "total_count",
+        "type": "INTEGER",
+        "nullable": true,
+        "default": null
+      },
+      {
+        "name": "relevant_date",
+        "type": "DATE",
+        "nullable": false,
+        "default": null
+      },
+      {
+        "name": "period_number",
+        "type": "INTEGER",
+        "nullable": true,
+        "default": null
+      },
+      {
+        "name": "detected_at",
+        "type": "DATETIME",
+        "nullable": true,
+        "default": null
+      },
+      {
+        "name": "last_evaluated_at",
+        "type": "DATETIME",
+        "nullable": true,
+        "default": null
+      },
+      {
+        "name": "resolved_at",
+        "type": "DATETIME",
+        "nullable": true,
+        "default": null
+      },
+      {
+        "name": "acknowledged_at",
+        "type": "DATETIME",
+        "nullable": true,
+        "default": null
+      },
+      {
+        "name": "acknowledged_by_id",
+        "type": "INTEGER",
+        "nullable": true,
+        "default": null
+      },
+      {
+        "name": "notified_at",
+        "type": "DATETIME",
+        "nullable": true,
+        "default": null
+      }
+    ],
+    "primary_keys": [
+      "id"
+    ],
+    "foreign_keys": [
+      {
+        "col": "timetable_slot_id",
+        "target": "timetable_slots.id"
+      },
+      {
+        "col": "acknowledged_by_id",
+        "target": "users.id"
+      },
+      {
+        "col": "department_id",
+        "target": "departments.id"
+      },
+      {
+        "col": "class_id",
+        "target": "classes.id"
+      },
+      {
+        "col": "attendance_session_id",
+        "target": "attendance_sessions.id"
+      }
+    ],
+    "indexes": [
+      {
+        "name": "ix_academic_intelligence_events_class_id",
+        "columns": [
+          "class_id"
+        ],
+        "unique": false
+      },
+      {
+        "name": "ix_academic_intelligence_events_source_key",
+        "columns": [
+          "source_key"
+        ],
+        "unique": true
+      },
+      {
+        "name": "ix_academic_intelligence_events_severity",
+        "columns": [
+          "severity"
+        ],
+        "unique": false
+      },
+      {
+        "name": "ix_academic_intelligence_events_timetable_slot_id",
+        "columns": [
+          "timetable_slot_id"
+        ],
+        "unique": false
+      },
+      {
+        "name": "ix_academic_intelligence_events_department_id",
+        "columns": [
+          "department_id"
+        ],
+        "unique": false
+      },
+      {
+        "name": "ix_academic_intelligence_events_state",
+        "columns": [
+          "state"
+        ],
+        "unique": false
+      },
+      {
+        "name": "ix_academic_intelligence_events_id",
+        "columns": [
+          "id"
+        ],
+        "unique": false
+      },
+      {
+        "name": "ix_academic_intelligence_events_attendance_session_id",
+        "columns": [
+          "attendance_session_id"
+        ],
+        "unique": false
+      },
+      {
+        "name": "ix_academic_intelligence_events_relevant_date",
+        "columns": [
+          "relevant_date"
+        ],
+        "unique": false
+      },
+      {
+        "name": "ix_academic_intelligence_events_event_type",
+        "columns": [
+          "event_type"
+        ],
+        "unique": false
+      }
+    ],
+    "constraints": [
+      {
+        "name": null,
+        "type": "ForeignKeyConstraint"
+      },
+      {
+        "name": null,
+        "type": "ForeignKeyConstraint"
+      },
+      {
+        "name": null,
+        "type": "PrimaryKeyConstraint"
+      },
+      {
+        "name": null,
+        "type": "ForeignKeyConstraint"
+      },
+      {
+        "name": null,
+        "type": "ForeignKeyConstraint"
+      },
+      {
+        "name": null,
+        "type": "ForeignKeyConstraint"
+      }
+    ]
+  },
+  "announcements": {
+    "columns": [
+      {
+        "name": "id",
+        "type": "INTEGER",
+        "nullable": false,
+        "default": null
+      },
+      {
+        "name": "tenant_id",
+        "type": "VARCHAR(50)",
+        "nullable": false,
+        "default": "ScalarElementColumnDefault('default')"
+      },
+      {
+        "name": "title",
+        "type": "VARCHAR(255)",
+        "nullable": false,
+        "default": null
+      },
+      {
+        "name": "body",
+        "type": "TEXT",
+        "nullable": false,
+        "default": null
+      },
+      {
+        "name": "type",
+        "type": "VARCHAR(30)",
+        "nullable": false,
+        "default": "ScalarElementColumnDefault('GENERAL')"
+      },
+      {
+        "name": "priority",
+        "type": "VARCHAR(20)",
+        "nullable": false,
+        "default": "ScalarElementColumnDefault('NORMAL')"
+      },
+      {
+        "name": "status",
+        "type": "VARCHAR(20)",
+        "nullable": false,
+        "default": "ScalarElementColumnDefault('DRAFT')"
+      },
+      {
+        "name": "created_by_id",
+        "type": "INTEGER",
+        "nullable": true,
+        "default": null
+      },
+      {
+        "name": "department_id",
+        "type": "INTEGER",
+        "nullable": true,
+        "default": null
+      },
+      {
+        "name": "target_summary",
+        "type": "VARCHAR(50)",
+        "nullable": false,
+        "default": "ScalarElementColumnDefault('COLLEGE')"
+      },
+      {
+        "name": "is_pinned",
+        "type": "BOOLEAN",
+        "nullable": false,
+        "default": "ScalarElementColumnDefault(False)"
+      },
+      {
+        "name": "requires_acknowledgement",
+        "type": "BOOLEAN",
+        "nullable": false,
+        "default": "ScalarElementColumnDefault(False)"
+      },
+      {
+        "name": "allow_replies",
+        "type": "BOOLEAN",
+        "nullable": false,
+        "default": "ScalarElementColumnDefault(True)"
+      },
+      {
+        "name": "allow_reactions",
+        "type": "BOOLEAN",
+        "nullable": false,
+        "default": "ScalarElementColumnDefault(True)"
+      },
+      {
+        "name": "allow_download",
+        "type": "BOOLEAN",
+        "nullable": false,
+        "default": "ScalarElementColumnDefault(True)"
+      },
+      {
+        "name": "is_locked",
+        "type": "BOOLEAN",
+        "nullable": false,
+        "default": "ScalarElementColumnDefault(False)"
+      },
+      {
+        "name": "version",
+        "type": "INTEGER",
+        "nullable": false,
+        "default": "ScalarElementColumnDefault(1)"
+      },
+      {
+        "name": "previous_version_id",
+        "type": "INTEGER",
+        "nullable": true,
+        "default": null
+      },
+      {
+        "name": "revision_notes",
+        "type": "TEXT",
+        "nullable": true,
+        "default": null
+      },
+      {
+        "name": "published_at",
+        "type": "DATETIME",
+        "nullable": true,
+        "default": null
+      },
+      {
+        "name": "scheduled_at",
+        "type": "DATETIME",
+        "nullable": true,
+        "default": null
+      },
+      {
+        "name": "expires_at",
+        "type": "DATETIME",
+        "nullable": true,
+        "default": null
+      },
+      {
+        "name": "created_at",
+        "type": "DATETIME",
+        "nullable": false,
+        "default": null
+      },
+      {
+        "name": "updated_at",
+        "type": "DATETIME",
+        "nullable": false,
+        "default": null
+      }
+    ],
+    "primary_keys": [
+      "id"
+    ],
+    "foreign_keys": [
+      {
+        "col": "created_by_id",
+        "target": "users.id"
+      },
+      {
+        "col": "previous_version_id",
+        "target": "announcements.id"
+      },
+      {
+        "col": "department_id",
+        "target": "departments.id"
+      }
+    ],
+    "indexes": [
+      {
+        "name": "ix_announcements_created_by_id",
+        "columns": [
+          "created_by_id"
+        ],
+        "unique": false
+      },
+      {
+        "name": "ix_announcements_id",
+        "columns": [
+          "id"
+        ],
+        "unique": false
+      },
+      {
+        "name": "ix_announcements_scheduled_at",
+        "columns": [
+          "scheduled_at"
+        ],
+        "unique": false
+      },
+      {
+        "name": "idx_announcements_feed",
+        "columns": [
+          "tenant_id",
+          "status",
+          "published_at"
+        ],
+        "unique": false
+      },
+      {
+        "name": "ix_announcements_type",
+        "columns": [
+          "type"
+        ],
+        "unique": false
+      },
+      {
+        "name": "ix_announcements_expires_at",
+        "columns": [
+          "expires_at"
+        ],
+        "unique": false
+      },
+      {
+        "name": "ix_announcements_is_pinned",
+        "columns": [
+          "is_pinned"
+        ],
+        "unique": false
+      },
+      {
+        "name": "ix_announcements_priority",
+        "columns": [
+          "priority"
+        ],
+        "unique": false
+      },
+      {
+        "name": "ix_announcements_tenant_id",
+        "columns": [
+          "tenant_id"
+        ],
+        "unique": false
+      },
+      {
+        "name": "ix_announcements_requires_acknowledgement",
+        "columns": [
+          "requires_acknowledgement"
+        ],
+        "unique": false
+      },
+      {
+        "name": "ix_announcements_status",
+        "columns": [
+          "status"
+        ],
+        "unique": false
+      },
+      {
+        "name": "ix_announcements_department_id",
+        "columns": [
+          "department_id"
+        ],
+        "unique": false
+      },
+      {
+        "name": "ix_announcements_published_at",
+        "columns": [
+          "published_at"
+        ],
+        "unique": false
+      }
+    ],
+    "constraints": [
+      {
+        "name": null,
+        "type": "ForeignKeyConstraint"
+      },
+      {
+        "name": null,
+        "type": "PrimaryKeyConstraint"
+      },
+      {
+        "name": null,
+        "type": "ForeignKeyConstraint"
+      },
+      {
+        "name": null,
+        "type": "ForeignKeyConstraint"
+      }
+    ]
+  },
+  "announcement_targets": {
+    "columns": [
+      {
+        "name": "id",
+        "type": "INTEGER",
+        "nullable": false,
+        "default": null
+      },
+      {
+        "name": "announcement_id",
+        "type": "INTEGER",
+        "nullable": false,
+        "default": null
+      },
+      {
+        "name": "target_type",
+        "type": "VARCHAR(20)",
+        "nullable": false,
+        "default": null
+      },
+      {
+        "name": "department_id",
+        "type": "INTEGER",
+        "nullable": true,
+        "default": null
+      },
+      {
+        "name": "user_id",
+        "type": "INTEGER",
+        "nullable": true,
+        "default": null
+      },
+      {
+        "name": "created_at",
+        "type": "DATETIME",
+        "nullable": false,
+        "default": null
+      }
+    ],
+    "primary_keys": [
+      "id"
+    ],
+    "foreign_keys": [
+      {
+        "col": "department_id",
+        "target": "departments.id"
+      },
+      {
+        "col": "announcement_id",
+        "target": "announcements.id"
+      },
+      {
+        "col": "user_id",
+        "target": "users.id"
+      }
+    ],
+    "indexes": [
+      {
+        "name": "ix_announcement_targets_announcement_id",
+        "columns": [
+          "announcement_id"
+        ],
+        "unique": false
+      },
+      {
+        "name": "ix_announcement_targets_department_id",
+        "columns": [
+          "department_id"
+        ],
+        "unique": false
+      },
+      {
+        "name": "ix_announcement_targets_id",
+        "columns": [
+          "id"
+        ],
+        "unique": false
+      },
+      {
+        "name": "ix_announcement_targets_target_type",
+        "columns": [
+          "target_type"
+        ],
+        "unique": false
+      },
+      {
+        "name": "ix_announcement_targets_user_id",
+        "columns": [
+          "user_id"
+        ],
+        "unique": false
+      },
+      {
+        "name": "idx_announcement_targets_lookup",
+        "columns": [
+          "target_type",
+          "department_id",
+          "user_id"
+        ],
+        "unique": false
+      }
+    ],
+    "constraints": [
+      {
+        "name": null,
+        "type": "ForeignKeyConstraint"
+      },
+      {
+        "name": null,
+        "type": "ForeignKeyConstraint"
+      },
+      {
+        "name": null,
+        "type": "ForeignKeyConstraint"
+      },
+      {
+        "name": null,
+        "type": "PrimaryKeyConstraint"
+      }
+    ]
+  },
+  "announcement_attachments": {
+    "columns": [
+      {
+        "name": "id",
+        "type": "INTEGER",
+        "nullable": false,
+        "default": null
+      },
+      {
+        "name": "announcement_id",
+        "type": "INTEGER",
+        "nullable": false,
+        "default": null
+      },
+      {
+        "name": "file_name",
+        "type": "VARCHAR(255)",
+        "nullable": false,
+        "default": null
+      },
+      {
+        "name": "file_type",
+        "type": "VARCHAR(100)",
+        "nullable": false,
+        "default": null
+      },
+      {
+        "name": "file_size",
+        "type": "INTEGER",
+        "nullable": false,
+        "default": null
+      },
+      {
+        "name": "storage_key",
+        "type": "VARCHAR(500)",
+        "nullable": false,
+        "default": null
+      },
+      {
+        "name": "checksum_sha256",
+        "type": "VARCHAR(64)",
+        "nullable": true,
+        "default": null
+      },
+      {
+        "name": "uploaded_by_id",
+        "type": "INTEGER",
+        "nullable": true,
+        "default": null
+      },
+      {
+        "name": "created_at",
+        "type": "DATETIME",
+        "nullable": false,
+        "default": null
+      }
+    ],
+    "primary_keys": [
+      "id"
+    ],
+    "foreign_keys": [
+      {
+        "col": "announcement_id",
+        "target": "announcements.id"
+      },
+      {
+        "col": "uploaded_by_id",
+        "target": "users.id"
+      }
+    ],
+    "indexes": [
+      {
+        "name": "ix_announcement_attachments_id",
+        "columns": [
+          "id"
+        ],
+        "unique": false
+      },
+      {
+        "name": "ix_announcement_attachments_announcement_id",
+        "columns": [
+          "announcement_id"
+        ],
+        "unique": false
+      }
+    ],
+    "constraints": [
+      {
+        "name": null,
+        "type": "ForeignKeyConstraint"
+      },
+      {
+        "name": null,
+        "type": "ForeignKeyConstraint"
+      },
+      {
+        "name": null,
+        "type": "PrimaryKeyConstraint"
+      }
+    ]
+  },
+  "announcement_reads": {
+    "columns": [
+      {
+        "name": "id",
+        "type": "INTEGER",
+        "nullable": false,
+        "default": null
+      },
+      {
+        "name": "announcement_id",
+        "type": "INTEGER",
+        "nullable": false,
+        "default": null
+      },
+      {
+        "name": "user_id",
+        "type": "INTEGER",
+        "nullable": false,
+        "default": null
+      },
+      {
+        "name": "first_viewed_at",
+        "type": "DATETIME",
+        "nullable": false,
+        "default": null
+      },
+      {
+        "name": "last_viewed_at",
+        "type": "DATETIME",
+        "nullable": false,
+        "default": null
+      }
+    ],
+    "primary_keys": [
+      "id"
+    ],
+    "foreign_keys": [
+      {
+        "col": "user_id",
+        "target": "users.id"
+      },
+      {
+        "col": "announcement_id",
+        "target": "announcements.id"
+      }
+    ],
+    "indexes": [
+      {
+        "name": "ix_announcement_reads_id",
+        "columns": [
+          "id"
+        ],
+        "unique": false
+      },
+      {
+        "name": "ix_announcement_reads_user_id",
+        "columns": [
+          "user_id"
+        ],
+        "unique": false
+      },
+      {
+        "name": "ix_announcement_reads_announcement_id",
+        "columns": [
+          "announcement_id"
+        ],
+        "unique": false
+      }
+    ],
+    "constraints": [
+      {
+        "name": null,
+        "type": "ForeignKeyConstraint"
+      },
+      {
+        "name": "uq_announcement_user_read",
+        "type": "UniqueConstraint"
+      },
+      {
+        "name": null,
+        "type": "ForeignKeyConstraint"
+      },
+      {
+        "name": null,
+        "type": "PrimaryKeyConstraint"
+      }
+    ]
+  },
+  "announcement_acknowledgements": {
+    "columns": [
+      {
+        "name": "id",
+        "type": "INTEGER",
+        "nullable": false,
+        "default": null
+      },
+      {
+        "name": "announcement_id",
+        "type": "INTEGER",
+        "nullable": false,
+        "default": null
+      },
+      {
+        "name": "user_id",
+        "type": "INTEGER",
+        "nullable": false,
+        "default": null
+      },
+      {
+        "name": "acknowledged_at",
+        "type": "DATETIME",
+        "nullable": false,
+        "default": null
+      },
+      {
+        "name": "ip_address",
+        "type": "VARCHAR(50)",
+        "nullable": true,
+        "default": null
+      },
+      {
+        "name": "user_agent",
+        "type": "VARCHAR(255)",
+        "nullable": true,
+        "default": null
+      }
+    ],
+    "primary_keys": [
+      "id"
+    ],
+    "foreign_keys": [
+      {
+        "col": "announcement_id",
+        "target": "announcements.id"
+      },
+      {
+        "col": "user_id",
+        "target": "users.id"
+      }
+    ],
+    "indexes": [
+      {
+        "name": "ix_announcement_acknowledgements_user_id",
+        "columns": [
+          "user_id"
+        ],
+        "unique": false
+      },
+      {
+        "name": "ix_announcement_acknowledgements_announcement_id",
+        "columns": [
+          "announcement_id"
+        ],
+        "unique": false
+      },
+      {
+        "name": "ix_announcement_acknowledgements_id",
+        "columns": [
+          "id"
+        ],
+        "unique": false
+      }
+    ],
+    "constraints": [
+      {
+        "name": "uq_announcement_user_ack",
+        "type": "UniqueConstraint"
+      },
+      {
+        "name": null,
+        "type": "ForeignKeyConstraint"
+      },
+      {
+        "name": null,
+        "type": "PrimaryKeyConstraint"
+      },
+      {
+        "name": null,
+        "type": "ForeignKeyConstraint"
+      }
+    ]
+  },
+  "announcement_messages": {
+    "columns": [
+      {
+        "name": "id",
+        "type": "INTEGER",
+        "nullable": false,
+        "default": null
+      },
+      {
+        "name": "announcement_id",
+        "type": "INTEGER",
+        "nullable": false,
+        "default": null
+      },
+      {
+        "name": "parent_message_id",
+        "type": "INTEGER",
+        "nullable": true,
+        "default": null
+      },
+      {
+        "name": "author_id",
+        "type": "INTEGER",
+        "nullable": true,
+        "default": null
+      },
+      {
+        "name": "content",
+        "type": "TEXT",
+        "nullable": false,
+        "default": null
+      },
+      {
+        "name": "is_pinned",
+        "type": "BOOLEAN",
+        "nullable": false,
+        "default": "ScalarElementColumnDefault(False)"
+      },
+      {
+        "name": "is_deleted",
+        "type": "BOOLEAN",
+        "nullable": false,
+        "default": "ScalarElementColumnDefault(False)"
+      },
+      {
+        "name": "is_edited",
+        "type": "BOOLEAN",
+        "nullable": false,
+        "default": "ScalarElementColumnDefault(False)"
+      },
+      {
+        "name": "created_at",
+        "type": "DATETIME",
+        "nullable": false,
+        "default": null
+      },
+      {
+        "name": "updated_at",
+        "type": "DATETIME",
+        "nullable": false,
+        "default": null
+      }
+    ],
+    "primary_keys": [
+      "id"
+    ],
+    "foreign_keys": [
+      {
+        "col": "announcement_id",
+        "target": "announcements.id"
+      },
+      {
+        "col": "parent_message_id",
+        "target": "announcement_messages.id"
+      },
+      {
+        "col": "author_id",
+        "target": "users.id"
+      }
+    ],
+    "indexes": [
+      {
+        "name": "ix_announcement_messages_is_pinned",
+        "columns": [
+          "is_pinned"
+        ],
+        "unique": false
+      },
+      {
+        "name": "ix_announcement_messages_id",
+        "columns": [
+          "id"
+        ],
+        "unique": false
+      },
+      {
+        "name": "ix_announcement_messages_author_id",
+        "columns": [
+          "author_id"
+        ],
+        "unique": false
+      },
+      {
+        "name": "ix_announcement_messages_parent_message_id",
+        "columns": [
+          "parent_message_id"
+        ],
+        "unique": false
+      },
+      {
+        "name": "ix_announcement_messages_announcement_id",
+        "columns": [
+          "announcement_id"
+        ],
+        "unique": false
+      },
+      {
+        "name": "ix_announcement_messages_created_at",
+        "columns": [
+          "created_at"
+        ],
+        "unique": false
+      }
+    ],
+    "constraints": [
+      {
+        "name": null,
+        "type": "ForeignKeyConstraint"
+      },
+      {
+        "name": null,
+        "type": "ForeignKeyConstraint"
+      },
+      {
+        "name": null,
+        "type": "PrimaryKeyConstraint"
+      },
+      {
+        "name": null,
+        "type": "ForeignKeyConstraint"
+      }
+    ]
+  },
+  "message_reactions": {
+    "columns": [
+      {
+        "name": "id",
+        "type": "INTEGER",
+        "nullable": false,
+        "default": null
+      },
+      {
+        "name": "message_id",
+        "type": "INTEGER",
+        "nullable": false,
+        "default": null
+      },
+      {
+        "name": "user_id",
+        "type": "INTEGER",
+        "nullable": false,
+        "default": null
+      },
+      {
+        "name": "reaction",
+        "type": "VARCHAR(20)",
+        "nullable": false,
+        "default": null
+      },
+      {
+        "name": "created_at",
+        "type": "DATETIME",
+        "nullable": false,
+        "default": null
+      }
+    ],
+    "primary_keys": [
+      "id"
+    ],
+    "foreign_keys": [
+      {
+        "col": "user_id",
+        "target": "users.id"
+      },
+      {
+        "col": "message_id",
+        "target": "announcement_messages.id"
+      }
+    ],
+    "indexes": [
+      {
+        "name": "ix_message_reactions_message_id",
+        "columns": [
+          "message_id"
+        ],
+        "unique": false
+      },
+      {
+        "name": "ix_message_reactions_user_id",
+        "columns": [
+          "user_id"
+        ],
+        "unique": false
+      },
+      {
+        "name": "ix_message_reactions_id",
+        "columns": [
+          "id"
+        ],
+        "unique": false
+      }
+    ],
+    "constraints": [
+      {
+        "name": null,
+        "type": "ForeignKeyConstraint"
+      },
+      {
+        "name": null,
+        "type": "PrimaryKeyConstraint"
+      },
+      {
+        "name": null,
+        "type": "ForeignKeyConstraint"
+      },
+      {
+        "name": "uq_message_user_reaction",
+        "type": "UniqueConstraint"
+      }
+    ]
+  },
+  "message_mentions": {
+    "columns": [
+      {
+        "name": "id",
+        "type": "INTEGER",
+        "nullable": false,
+        "default": null
+      },
+      {
+        "name": "message_id",
+        "type": "INTEGER",
+        "nullable": false,
+        "default": null
+      },
+      {
+        "name": "mentioned_user_id",
+        "type": "INTEGER",
+        "nullable": false,
+        "default": null
+      },
+      {
+        "name": "mention_text",
+        "type": "VARCHAR(100)",
+        "nullable": false,
+        "default": null
+      },
+      {
+        "name": "created_at",
+        "type": "DATETIME",
+        "nullable": false,
+        "default": null
+      }
+    ],
+    "primary_keys": [
+      "id"
+    ],
+    "foreign_keys": [
+      {
+        "col": "mentioned_user_id",
+        "target": "users.id"
+      },
+      {
+        "col": "message_id",
+        "target": "announcement_messages.id"
+      }
+    ],
+    "indexes": [
+      {
+        "name": "ix_message_mentions_mentioned_user_id",
+        "columns": [
+          "mentioned_user_id"
+        ],
+        "unique": false
+      },
+      {
+        "name": "ix_message_mentions_id",
+        "columns": [
+          "id"
+        ],
+        "unique": false
+      },
+      {
+        "name": "ix_message_mentions_message_id",
+        "columns": [
+          "message_id"
+        ],
+        "unique": false
+      }
+    ],
+    "constraints": [
+      {
+        "name": "uq_message_user_mention",
+        "type": "UniqueConstraint"
+      },
+      {
+        "name": null,
+        "type": "ForeignKeyConstraint"
+      },
+      {
+        "name": null,
+        "type": "ForeignKeyConstraint"
+      },
+      {
+        "name": null,
+        "type": "PrimaryKeyConstraint"
+      }
+    ]
+  },
+  "campus_areas": {
+    "columns": [
+      {
+        "name": "id",
+        "type": "INTEGER",
+        "nullable": false,
+        "default": null
+      },
+      {
+        "name": "name",
+        "type": "VARCHAR(150)",
+        "nullable": false,
+        "default": null
+      },
+      {
+        "name": "code",
+        "type": "VARCHAR(50)",
+        "nullable": false,
+        "default": null
+      },
+      {
+        "name": "duty_type",
+        "type": "VARCHAR(50)",
+        "nullable": false,
+        "default": "ScalarElementColumnDefault('WING_DUTY')"
+      },
+      {
+        "name": "block_id",
+        "type": "INTEGER",
+        "nullable": true,
+        "default": null
+      },
+      {
+        "name": "floor_id",
+        "type": "INTEGER",
+        "nullable": true,
+        "default": null
+      },
+      {
+        "name": "building_or_block",
+        "type": "VARCHAR(100)",
+        "nullable": true,
+        "default": null
+      },
+      {
+        "name": "floor",
+        "type": "VARCHAR(50)",
+        "nullable": true,
+        "default": null
+      },
+      {
+        "name": "required_teachers",
+        "type": "INTEGER",
+        "nullable": false,
+        "default": "ScalarElementColumnDefault(1)"
+      },
+      {
+        "name": "department_id",
+        "type": "INTEGER",
+        "nullable": true,
+        "default": null
+      },
+      {
+        "name": "is_active",
+        "type": "BOOLEAN",
+        "nullable": false,
+        "default": "ScalarElementColumnDefault(True)"
+      },
+      {
+        "name": "created_at",
+        "type": "DATETIME",
+        "nullable": true,
+        "default": null
+      }
+    ],
+    "primary_keys": [
+      "id"
+    ],
+    "foreign_keys": [
+      {
+        "col": "department_id",
+        "target": "departments.id"
+      },
+      {
+        "col": "block_id",
+        "target": "campus_blocks.id"
+      },
+      {
+        "col": "floor_id",
+        "target": "campus_floors.id"
+      }
+    ],
+    "indexes": [
+      {
+        "name": "ix_campus_areas_floor_id",
+        "columns": [
+          "floor_id"
+        ],
+        "unique": false
+      },
+      {
+        "name": "ix_campus_areas_code",
+        "columns": [
+          "code"
+        ],
+        "unique": true
+      },
+      {
+        "name": "ix_campus_areas_id",
+        "columns": [
+          "id"
+        ],
+        "unique": false
+      },
+      {
+        "name": "ix_campus_areas_block_id",
+        "columns": [
+          "block_id"
+        ],
+        "unique": false
+      }
+    ],
+    "constraints": [
+      {
+        "name": null,
+        "type": "PrimaryKeyConstraint"
+      },
+      {
+        "name": null,
+        "type": "ForeignKeyConstraint"
+      },
+      {
+        "name": null,
+        "type": "ForeignKeyConstraint"
+      },
+      {
+        "name": null,
+        "type": "ForeignKeyConstraint"
+      }
+    ]
+  },
+  "duty_break_periods": {
+    "columns": [
+      {
+        "name": "id",
+        "type": "INTEGER",
+        "nullable": false,
+        "default": null
+      },
+      {
+        "name": "name",
+        "type": "VARCHAR(100)",
+        "nullable": false,
+        "default": null
+      },
+      {
+        "name": "start_time",
+        "type": "TIME",
+        "nullable": false,
+        "default": null
+      },
+      {
+        "name": "end_time",
+        "type": "TIME",
+        "nullable": false,
+        "default": null
+      },
+      {
+        "name": "duty_type",
+        "type": "VARCHAR(50)",
+        "nullable": false,
+        "default": "ScalarElementColumnDefault('DISCIPLINE_DUTY')"
+      },
+      {
+        "name": "required_teachers",
+        "type": "INTEGER",
+        "nullable": false,
+        "default": "ScalarElementColumnDefault(3)"
+      },
+      {
+        "name": "min_teachers",
+        "type": "INTEGER",
+        "nullable": false,
+        "default": "ScalarElementColumnDefault(1)"
+      },
+      {
+        "name": "max_teachers",
+        "type": "INTEGER",
+        "nullable": false,
+        "default": "ScalarElementColumnDefault(10)"
+      },
+      {
+        "name": "preceding_period_number",
+        "type": "INTEGER",
+        "nullable": true,
+        "default": null
+      },
+      {
+        "name": "applicable_day_orders",
+        "type": "VARCHAR(100)",
+        "nullable": false,
+        "default": "ScalarElementColumnDefault('1,2,3,4,5,6')"
+      },
+      {
+        "name": "department_id",
+        "type": "INTEGER",
+        "nullable": true,
+        "default": null
+      },
+      {
+        "name": "is_active",
+        "type": "BOOLEAN",
+        "nullable": false,
+        "default": "ScalarElementColumnDefault(True)"
+      },
+      {
+        "name": "created_at",
+        "type": "DATETIME",
+        "nullable": true,
+        "default": null
+      }
+    ],
+    "primary_keys": [
+      "id"
+    ],
+    "foreign_keys": [
+      {
+        "col": "department_id",
+        "target": "departments.id"
+      }
+    ],
+    "indexes": [
+      {
+        "name": "ix_duty_break_periods_id",
+        "columns": [
+          "id"
+        ],
+        "unique": false
+      }
+    ],
+    "constraints": [
+      {
+        "name": null,
+        "type": "PrimaryKeyConstraint"
+      },
+      {
+        "name": null,
+        "type": "ForeignKeyConstraint"
+      }
+    ]
+  },
+  "campus_duties": {
+    "columns": [
+      {
+        "name": "id",
+        "type": "INTEGER",
+        "nullable": false,
+        "default": null
+      },
+      {
+        "name": "duty_type",
+        "type": "VARCHAR(15)",
+        "nullable": false,
+        "default": null
+      },
+      {
+        "name": "title",
+        "type": "VARCHAR(150)",
+        "nullable": false,
+        "default": null
+      },
+      {
+        "name": "duty_date",
+        "type": "DATE",
+        "nullable": false,
+        "default": null
+      },
+      {
+        "name": "start_time",
+        "type": "TIME",
+        "nullable": false,
+        "default": null
+      },
+      {
+        "name": "end_time",
+        "type": "TIME",
+        "nullable": false,
+        "default": null
+      },
+      {
+        "name": "break_period_id",
+        "type": "INTEGER",
+        "nullable": true,
+        "default": null
+      },
+      {
+        "name": "area_id",
+        "type": "INTEGER",
+        "nullable": true,
+        "default": null
+      },
+      {
+        "name": "room_id",
+        "type": "INTEGER",
+        "nullable": true,
+        "default": null
+      },
+      {
+        "name": "department_id",
+        "type": "INTEGER",
+        "nullable": true,
+        "default": null
+      },
+      {
+        "name": "day_order",
+        "type": "INTEGER",
+        "nullable": true,
+        "default": null
+      },
+      {
+        "name": "required_teachers",
+        "type": "INTEGER",
+        "nullable": false,
+        "default": "ScalarElementColumnDefault(1)"
+      },
+      {
+        "name": "status",
+        "type": "VARCHAR(9)",
+        "nullable": false,
+        "default": "ScalarElementColumnDefault(<DutyStatus.PUBLISHED: 'PUBLISHED'>)"
+      },
+      {
+        "name": "is_locked",
+        "type": "BOOLEAN",
+        "nullable": false,
+        "default": "ScalarElementColumnDefault(False)"
+      },
+      {
+        "name": "locked_by_user_id",
+        "type": "INTEGER",
+        "nullable": true,
+        "default": null
+      },
+      {
+        "name": "locked_at",
+        "type": "DATETIME",
+        "nullable": true,
+        "default": null
+      },
+      {
+        "name": "lock_reason",
+        "type": "VARCHAR(255)",
+        "nullable": true,
+        "default": null
+      },
+      {
+        "name": "created_by_user_id",
+        "type": "INTEGER",
+        "nullable": true,
+        "default": null
+      },
+      {
+        "name": "created_at",
+        "type": "DATETIME",
+        "nullable": true,
+        "default": null
+      },
+      {
+        "name": "updated_at",
+        "type": "DATETIME",
+        "nullable": true,
+        "default": null
+      }
+    ],
+    "primary_keys": [
+      "id"
+    ],
+    "foreign_keys": [
+      {
+        "col": "room_id",
+        "target": "rooms.id"
+      },
+      {
+        "col": "break_period_id",
+        "target": "duty_break_periods.id"
+      },
+      {
+        "col": "area_id",
+        "target": "campus_areas.id"
+      },
+      {
+        "col": "department_id",
+        "target": "departments.id"
+      },
+      {
+        "col": "locked_by_user_id",
+        "target": "users.id"
+      },
+      {
+        "col": "created_by_user_id",
+        "target": "users.id"
+      }
+    ],
+    "indexes": [
+      {
+        "name": "ix_campus_duties_id",
+        "columns": [
+          "id"
+        ],
+        "unique": false
+      },
+      {
+        "name": "ix_campus_duties_duty_date",
+        "columns": [
+          "duty_date"
+        ],
+        "unique": false
+      },
+      {
+        "name": "ix_campus_duties_room_id",
+        "columns": [
+          "room_id"
+        ],
+        "unique": false
+      },
+      {
+        "name": "ix_campus_duties_duty_type",
+        "columns": [
+          "duty_type"
+        ],
+        "unique": false
+      },
+      {
+        "name": "ix_campus_duties_status",
+        "columns": [
+          "status"
+        ],
+        "unique": false
+      }
+    ],
+    "constraints": [
+      {
+        "name": null,
+        "type": "ForeignKeyConstraint"
+      },
+      {
+        "name": null,
+        "type": "ForeignKeyConstraint"
+      },
+      {
+        "name": null,
+        "type": "PrimaryKeyConstraint"
+      },
+      {
+        "name": null,
+        "type": "ForeignKeyConstraint"
+      },
+      {
+        "name": null,
+        "type": "ForeignKeyConstraint"
+      },
+      {
+        "name": null,
+        "type": "ForeignKeyConstraint"
+      },
+      {
+        "name": null,
+        "type": "ForeignKeyConstraint"
+      }
+    ]
+  },
+  "duty_assignments": {
+    "columns": [
+      {
+        "name": "id",
+        "type": "INTEGER",
+        "nullable": false,
+        "default": null
+      },
+      {
+        "name": "duty_id",
+        "type": "INTEGER",
+        "nullable": false,
+        "default": null
+      },
+      {
+        "name": "teacher_id",
+        "type": "INTEGER",
+        "nullable": false,
+        "default": null
+      },
+      {
+        "name": "status",
+        "type": "VARCHAR(10)",
+        "nullable": false,
+        "default": "ScalarElementColumnDefault(<AssignmentStatus.ASSIGNED: 'ASSIGNED'>)"
+      },
+      {
+        "name": "role",
+        "type": "VARCHAR(50)",
+        "nullable": false,
+        "default": "ScalarElementColumnDefault('GENERAL')"
+      },
+      {
+        "name": "assigned_by_user_id",
+        "type": "INTEGER",
+        "nullable": true,
+        "default": null
+      },
+      {
+        "name": "is_manual",
+        "type": "BOOLEAN",
+        "nullable": false,
+        "default": "ScalarElementColumnDefault(False)"
+      },
+      {
+        "name": "is_locked",
+        "type": "BOOLEAN",
+        "nullable": false,
+        "default": "ScalarElementColumnDefault(False)"
+      },
+      {
+        "name": "selection_reason",
+        "type": "JSONB",
+        "nullable": true,
+        "default": null
+      },
+      {
+        "name": "score",
+        "type": "FLOAT",
+        "nullable": true,
+        "default": null
+      },
+      {
+        "name": "overridden_by_user_id",
+        "type": "INTEGER",
+        "nullable": true,
+        "default": null
+      },
+      {
+        "name": "overridden_reason",
+        "type": "VARCHAR(255)",
+        "nullable": true,
+        "default": null
+      },
+      {
+        "name": "replaced_assignment_id",
+        "type": "INTEGER",
+        "nullable": true,
+        "default": null
+      },
+      {
+        "name": "replacement_reason",
+        "type": "VARCHAR(255)",
+        "nullable": true,
+        "default": null
+      },
+      {
+        "name": "created_at",
+        "type": "DATETIME",
+        "nullable": true,
+        "default": null
+      },
+      {
+        "name": "updated_at",
+        "type": "DATETIME",
+        "nullable": true,
+        "default": null
+      }
+    ],
+    "primary_keys": [
+      "id"
+    ],
+    "foreign_keys": [
+      {
+        "col": "duty_id",
+        "target": "campus_duties.id"
+      },
+      {
+        "col": "replaced_assignment_id",
+        "target": "duty_assignments.id"
+      },
+      {
+        "col": "teacher_id",
+        "target": "users.id"
+      },
+      {
+        "col": "overridden_by_user_id",
+        "target": "users.id"
+      },
+      {
+        "col": "assigned_by_user_id",
+        "target": "users.id"
+      }
+    ],
+    "indexes": [
+      {
+        "name": "ix_duty_assignments_duty_id",
+        "columns": [
+          "duty_id"
+        ],
+        "unique": false
+      },
+      {
+        "name": "ix_duty_assignments_status",
+        "columns": [
+          "status"
+        ],
+        "unique": false
+      },
+      {
+        "name": "ix_duty_assignments_teacher_id",
+        "columns": [
+          "teacher_id"
+        ],
+        "unique": false
+      },
+      {
+        "name": "ix_duty_assignments_id",
+        "columns": [
+          "id"
+        ],
+        "unique": false
+      }
+    ],
+    "constraints": [
+      {
+        "name": null,
+        "type": "ForeignKeyConstraint"
+      },
+      {
+        "name": null,
+        "type": "ForeignKeyConstraint"
+      },
+      {
+        "name": null,
+        "type": "PrimaryKeyConstraint"
+      },
+      {
+        "name": null,
+        "type": "ForeignKeyConstraint"
+      },
+      {
+        "name": null,
+        "type": "ForeignKeyConstraint"
+      },
+      {
+        "name": null,
+        "type": "ForeignKeyConstraint"
+      }
+    ]
+  },
+  "duty_assignment_runs": {
+    "columns": [
+      {
+        "name": "id",
+        "type": "INTEGER",
+        "nullable": false,
+        "default": null
+      },
+      {
+        "name": "run_date",
+        "type": "DATE",
+        "nullable": false,
+        "default": null
+      },
+      {
+        "name": "duty_type",
+        "type": "VARCHAR(50)",
+        "nullable": false,
+        "default": null
+      },
+      {
+        "name": "triggered_by_user_id",
+        "type": "INTEGER",
+        "nullable": true,
+        "default": null
+      },
+      {
+        "name": "total_duties",
+        "type": "INTEGER",
+        "nullable": false,
+        "default": "ScalarElementColumnDefault(0)"
+      },
+      {
+        "name": "total_assigned",
+        "type": "INTEGER",
+        "nullable": false,
+        "default": "ScalarElementColumnDefault(0)"
+      },
+      {
+        "name": "total_unfilled",
+        "type": "INTEGER",
+        "nullable": false,
+        "default": "ScalarElementColumnDefault(0)"
+      },
+      {
+        "name": "details",
+        "type": "JSONB",
+        "nullable": true,
+        "default": null
+      },
+      {
+        "name": "created_at",
+        "type": "DATETIME",
+        "nullable": true,
+        "default": null
+      }
+    ],
+    "primary_keys": [
+      "id"
+    ],
+    "foreign_keys": [
+      {
+        "col": "triggered_by_user_id",
+        "target": "users.id"
+      }
+    ],
+    "indexes": [
+      {
+        "name": "ix_duty_assignment_runs_run_date",
+        "columns": [
+          "run_date"
+        ],
+        "unique": false
+      },
+      {
+        "name": "ix_duty_assignment_runs_id",
+        "columns": [
+          "id"
+        ],
+        "unique": false
+      }
+    ],
+    "constraints": [
+      {
+        "name": null,
+        "type": "ForeignKeyConstraint"
+      },
+      {
+        "name": null,
+        "type": "PrimaryKeyConstraint"
+      }
+    ]
+  },
+  "period_configs": {
+    "columns": [
+      {
+        "name": "period_number",
+        "type": "INTEGER",
+        "nullable": false,
+        "default": null
+      },
+      {
+        "name": "name",
+        "type": "VARCHAR(50)",
+        "nullable": false,
+        "default": null
+      },
+      {
+        "name": "start_time",
+        "type": "VARCHAR(8)",
+        "nullable": false,
+        "default": null
+      },
+      {
+        "name": "end_time",
+        "type": "VARCHAR(8)",
+        "nullable": false,
+        "default": null
+      },
+      {
+        "name": "is_break",
+        "type": "BOOLEAN",
+        "nullable": false,
+        "default": "ScalarElementColumnDefault(False)"
+      },
+      {
+        "name": "is_enabled",
+        "type": "BOOLEAN",
+        "nullable": false,
+        "default": "ScalarElementColumnDefault(True)"
+      },
+      {
+        "name": "sort_order",
+        "type": "INTEGER",
+        "nullable": false,
+        "default": "ScalarElementColumnDefault(1)"
+      },
+      {
+        "name": "updated_at",
+        "type": "DATETIME",
+        "nullable": true,
+        "default": null
+      }
+    ],
+    "primary_keys": [
+      "period_number"
+    ],
+    "foreign_keys": [],
+    "indexes": [
+      {
+        "name": "ix_period_configs_period_number",
+        "columns": [
+          "period_number"
+        ],
+        "unique": false
+      }
+    ],
+    "constraints": [
+      {
+        "name": null,
+        "type": "PrimaryKeyConstraint"
+      }
+    ]
+  },
+  "business_rules": {
+    "columns": [
+      {
+        "name": "key",
+        "type": "VARCHAR(100)",
+        "nullable": false,
+        "default": null
+      },
+      {
+        "name": "category",
+        "type": "VARCHAR(50)",
+        "nullable": false,
+        "default": null
+      },
+      {
+        "name": "display_name",
+        "type": "VARCHAR(150)",
+        "nullable": false,
+        "default": null
+      },
+      {
+        "name": "description",
+        "type": "TEXT",
+        "nullable": false,
+        "default": null
+      },
+      {
+        "name": "value",
+        "type": "TEXT",
+        "nullable": false,
+        "default": null
+      },
+      {
+        "name": "data_type",
+        "type": "VARCHAR(30)",
+        "nullable": false,
+        "default": null
+      },
+      {
+        "name": "unit",
+        "type": "VARCHAR(30)",
+        "nullable": true,
+        "default": null
+      },
+      {
+        "name": "minimum",
+        "type": "FLOAT",
+        "nullable": true,
+        "default": null
+      },
+      {
+        "name": "maximum",
+        "type": "FLOAT",
+        "nullable": true,
+        "default": null
+      },
+      {
+        "name": "default_value",
+        "type": "TEXT",
+        "nullable": false,
+        "default": null
+      },
+      {
+        "name": "is_enabled",
+        "type": "BOOLEAN",
+        "nullable": false,
+        "default": "ScalarElementColumnDefault(True)"
+      },
+      {
+        "name": "affected_modules",
+        "type": "TEXT",
+        "nullable": false,
+        "default": "ScalarElementColumnDefault('[]')"
+      },
+      {
+        "name": "severity",
+        "type": "VARCHAR(20)",
+        "nullable": false,
+        "default": "ScalarElementColumnDefault('normal')"
+      },
+      {
+        "name": "security_critical",
+        "type": "BOOLEAN",
+        "nullable": false,
+        "default": "ScalarElementColumnDefault(False)"
+      },
+      {
+        "name": "requires_restart",
+        "type": "BOOLEAN",
+        "nullable": false,
+        "default": "ScalarElementColumnDefault(False)"
+      },
+      {
+        "name": "version",
+        "type": "INTEGER",
+        "nullable": false,
+        "default": "ScalarElementColumnDefault(1)"
+      },
+      {
+        "name": "updated_at",
+        "type": "DATETIME",
+        "nullable": true,
+        "default": null
+      },
+      {
+        "name": "updated_by_id",
+        "type": "INTEGER",
+        "nullable": true,
+        "default": null
+      }
+    ],
+    "primary_keys": [
+      "key"
+    ],
+    "foreign_keys": [
+      {
+        "col": "updated_by_id",
+        "target": "users.id"
+      }
+    ],
+    "indexes": [
+      {
+        "name": "ix_business_rules_key",
+        "columns": [
+          "key"
+        ],
+        "unique": false
+      },
+      {
+        "name": "ix_business_rules_category",
+        "columns": [
+          "category"
+        ],
+        "unique": false
+      }
+    ],
+    "constraints": [
+      {
+        "name": null,
+        "type": "PrimaryKeyConstraint"
+      },
+      {
+        "name": null,
+        "type": "ForeignKeyConstraint"
+      }
+    ]
+  },
+  "business_rule_history": {
+    "columns": [
+      {
+        "name": "id",
+        "type": "INTEGER",
+        "nullable": false,
+        "default": null
+      },
+      {
+        "name": "rule_key",
+        "type": "VARCHAR(100)",
+        "nullable": false,
+        "default": null
+      },
+      {
+        "name": "version",
+        "type": "INTEGER",
+        "nullable": false,
+        "default": null
+      },
+      {
+        "name": "old_value",
+        "type": "TEXT",
+        "nullable": true,
+        "default": null
+      },
+      {
+        "name": "new_value",
+        "type": "TEXT",
+        "nullable": false,
+        "default": null
+      },
+      {
+        "name": "reason",
+        "type": "TEXT",
+        "nullable": false,
+        "default": null
+      },
+      {
+        "name": "changed_by_id",
+        "type": "INTEGER",
+        "nullable": true,
+        "default": null
+      },
+      {
+        "name": "changed_at",
+        "type": "DATETIME",
+        "nullable": false,
+        "default": null
+      }
+    ],
+    "primary_keys": [
+      "id"
+    ],
+    "foreign_keys": [
+      {
+        "col": "rule_key",
+        "target": "business_rules.key"
+      },
+      {
+        "col": "changed_by_id",
+        "target": "users.id"
+      }
+    ],
+    "indexes": [
+      {
+        "name": "ix_business_rule_history_id",
+        "columns": [
+          "id"
+        ],
+        "unique": false
+      },
+      {
+        "name": "ix_business_rule_history_changed_at",
+        "columns": [
+          "changed_at"
+        ],
+        "unique": false
+      },
+      {
+        "name": "ix_business_rule_history_rule_key",
+        "columns": [
+          "rule_key"
+        ],
+        "unique": false
+      }
+    ],
+    "constraints": [
+      {
+        "name": null,
+        "type": "PrimaryKeyConstraint"
+      },
+      {
+        "name": null,
+        "type": "ForeignKeyConstraint"
+      },
+      {
+        "name": null,
+        "type": "ForeignKeyConstraint"
+      }
+    ]
+  },
+  "campus_blocks": {
+    "columns": [
+      {
+        "name": "id",
+        "type": "INTEGER",
+        "nullable": false,
+        "default": null
+      },
+      {
+        "name": "name",
+        "type": "VARCHAR(100)",
+        "nullable": false,
+        "default": null
+      },
+      {
+        "name": "code",
+        "type": "VARCHAR(50)",
+        "nullable": false,
+        "default": null
+      },
+      {
+        "name": "floors_count",
+        "type": "INTEGER",
+        "nullable": false,
+        "default": "ScalarElementColumnDefault(1)"
+      },
+      {
+        "name": "description",
+        "type": "TEXT",
+        "nullable": true,
+        "default": null
+      },
+      {
+        "name": "department_id",
+        "type": "INTEGER",
+        "nullable": true,
+        "default": null
+      },
+      {
+        "name": "is_active",
+        "type": "BOOLEAN",
+        "nullable": false,
+        "default": "ScalarElementColumnDefault(True)"
+      },
+      {
+        "name": "created_at",
+        "type": "DATETIME",
+        "nullable": true,
+        "default": null
+      },
+      {
+        "name": "updated_at",
+        "type": "DATETIME",
+        "nullable": true,
+        "default": null
+      }
+    ],
+    "primary_keys": [
+      "id"
+    ],
+    "foreign_keys": [
+      {
+        "col": "department_id",
+        "target": "departments.id"
+      }
+    ],
+    "indexes": [
+      {
+        "name": "ix_campus_blocks_code",
+        "columns": [
+          "code"
+        ],
+        "unique": true
+      },
+      {
+        "name": "ix_campus_blocks_id",
+        "columns": [
+          "id"
+        ],
+        "unique": false
+      }
+    ],
+    "constraints": [
+      {
+        "name": null,
+        "type": "PrimaryKeyConstraint"
+      },
+      {
+        "name": null,
+        "type": "ForeignKeyConstraint"
+      }
+    ]
+  },
+  "campus_floors": {
+    "columns": [
+      {
+        "name": "id",
+        "type": "INTEGER",
+        "nullable": false,
+        "default": null
+      },
+      {
+        "name": "block_id",
+        "type": "INTEGER",
+        "nullable": false,
+        "default": null
+      },
+      {
+        "name": "floor_number",
+        "type": "INTEGER",
+        "nullable": false,
+        "default": null
+      },
+      {
+        "name": "floor_name",
+        "type": "VARCHAR(100)",
+        "nullable": false,
+        "default": null
+      },
+      {
+        "name": "display_order",
+        "type": "INTEGER",
+        "nullable": false,
+        "default": "ScalarElementColumnDefault(0)"
+      },
+      {
+        "name": "is_active",
+        "type": "BOOLEAN",
+        "nullable": false,
+        "default": "ScalarElementColumnDefault(True)"
+      },
+      {
+        "name": "created_at",
+        "type": "DATETIME",
+        "nullable": true,
+        "default": null
+      }
+    ],
+    "primary_keys": [
+      "id"
+    ],
+    "foreign_keys": [
+      {
+        "col": "block_id",
+        "target": "campus_blocks.id"
+      }
+    ],
+    "indexes": [
+      {
+        "name": "ix_campus_floors_id",
+        "columns": [
+          "id"
+        ],
+        "unique": false
+      },
+      {
+        "name": "ix_campus_floors_block_id",
+        "columns": [
+          "block_id"
+        ],
+        "unique": false
+      }
+    ],
+    "constraints": [
+      {
+        "name": null,
+        "type": "ForeignKeyConstraint"
+      },
+      {
+        "name": "uq_block_floor_number",
+        "type": "UniqueConstraint"
+      },
+      {
+        "name": null,
+        "type": "PrimaryKeyConstraint"
+      }
+    ]
+  }
+}

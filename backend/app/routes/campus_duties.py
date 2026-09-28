@@ -531,3 +531,102 @@ def bulk_reset_duties(
         department_id=dept_id,
         user_id=current_user.id
     )
+
+
+# ── Client Contract Compatibility Aliases ─────────────────────────────────────
+
+@router.post("/{duty_id}/assignments/{assignment_id}/lock", response_model=CampusDutyOut, include_in_schema=False)
+def lock_duty_assignment_alias(
+    duty_id: int,
+    assignment_id: int,
+    data: Optional[DutyLockRequest] = None,
+    current_user: User = Depends(require_admin_or_principal),
+    db: Session = Depends(get_db)
+):
+    reason = data.reason if data else None
+    duty = CampusDutyService.set_lock_duty(db, duty_id, lock=True, user_id=current_user.id, reason=reason)
+    return CampusDutyService.to_duty_out(duty)
+
+
+@router.post("/{duty_id}/assignments/{assignment_id}/unlock", response_model=CampusDutyOut, include_in_schema=False)
+def unlock_duty_assignment_alias(
+    duty_id: int,
+    assignment_id: int,
+    data: Optional[DutyLockRequest] = None,
+    current_user: User = Depends(require_admin_or_principal),
+    db: Session = Depends(get_db)
+):
+    reason = data.reason if data else None
+    duty = CampusDutyService.set_lock_duty(db, duty_id, lock=False, user_id=current_user.id, reason=reason)
+    return CampusDutyService.to_duty_out(duty)
+
+
+@router.post("/{duty_id}/assignments/{assignment_id}/override", response_model=CampusDutyOut, include_in_schema=False)
+def override_duty_assignment_alias(
+    duty_id: int,
+    assignment_id: int,
+    data: DutyOverrideRequest,
+    current_user: User = Depends(require_admin_or_principal),
+    db: Session = Depends(get_db)
+):
+    assignment = CampusDutyService.override_assignment(db, assignment_id, new_teacher_id=data.new_teacher_id, user_id=current_user.id, reason=data.reason)
+    duty = CampusDutyService.get_duty(db, assignment.duty_id)
+    return CampusDutyService.to_duty_out(duty)
+
+
+@router.post("/{duty_id}/assignments/{assignment_id}/replace", response_model=CampusDutyOut, include_in_schema=False)
+def replace_duty_assignment_alias(
+    duty_id: int,
+    assignment_id: int,
+    data: DutyReplaceRequest,
+    current_user: User = Depends(require_admin_or_principal),
+    db: Session = Depends(get_db)
+):
+    replacement = CampusDutyService.replace_unavailable_teacher(db, assignment_id, user_id=current_user.id, reason=data.reason)
+    duty = CampusDutyService.get_duty(db, replacement.duty_id)
+    return CampusDutyService.to_duty_out(duty)
+
+
+@router.post("/{duty_id}/assignments", response_model=CampusDutyOut, include_in_schema=False)
+def manual_assign_teacher_alias(
+    duty_id: int,
+    data: DutyManualAssignRequest,
+    current_user: User = Depends(require_admin_or_principal),
+    db: Session = Depends(get_db)
+):
+    assignment = CampusDutyService.manual_assign(db, duty_id, teacher_id=data.teacher_id, user_id=current_user.id, role=data.role)
+    duty = CampusDutyService.get_duty(db, duty_id)
+    return CampusDutyService.to_duty_out(duty)
+
+
+@router.post("/generate-today-discipline", response_model=List[CampusDutyOut], include_in_schema=False)
+def generate_today_discipline_alias(
+    data: Optional[DutyGenerateRequest] = None,
+    target_date: Optional[date] = Query(None),
+    department_id: Optional[int] = Query(None),
+    current_user: User = Depends(require_admin_or_principal),
+    db: Session = Depends(get_db),
+    tenant_dept_id: Optional[int] = Depends(get_tenant_department_id)
+):
+    t_date = (data.target_date if data and data.target_date else target_date) or date.today()
+    dept_id = (data.department_id if data and data.department_id else department_id) or tenant_dept_id or current_user.department_id
+    duties = CampusDutyService.generate_discipline_duties(
+        db, target_date=t_date, department_id=dept_id, user_id=current_user.id
+    )
+    return [CampusDutyService.to_duty_out(d) for d in duties]
+
+
+@router.get("/metrics/summary", response_model=DutyDashboardMetricsOut, include_in_schema=False)
+def get_dashboard_metrics_summary_alias(
+    target_date: Optional[date] = Query(None),
+    date_param: Optional[date] = Query(None, alias="date"),
+    department_id: Optional[int] = Query(None),
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+    tenant_dept_id: Optional[int] = Depends(get_tenant_department_id)
+):
+    t_date = target_date or date_param or date.today()
+    dept_id = department_id or tenant_dept_id or current_user.department_id
+    if current_user.role in (Role.system_admin, Role.principal, Role.governance):
+        dept_id = None
+    return CampusDutyService.get_dashboard_metrics(db, target_date=t_date, department_id=dept_id)

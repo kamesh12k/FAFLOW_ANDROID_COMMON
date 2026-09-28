@@ -26,6 +26,8 @@ data class UserOutDto(
     @Json(name = "policy_accepted_at") val policyAcceptedAt: String? = null,
     @Json(name = "onboarding_completed") val onboardingCompleted: Boolean = false,
     @Json(name = "is_active") val isActive: Boolean = true,
+    @Json(name = "has_face_enrolled") val hasFaceEnrolled: Boolean = false,
+    @Json(name = "face_enrolled_at") val faceEnrolledAt: String? = null,
     @Json(name = "created_at") val createdAt: String? = null
 )
 
@@ -90,6 +92,8 @@ data class TeacherTodaySummaryDto(
     @Json(name = "day_type") val dayType: String,
     @Json(name = "blocks_operations") val blocksOperations: Boolean = false,
     @Json(name = "is_on_leave") val isOnLeave: Boolean = false,
+    @Json(name = "is_on_leave_today") val isOnLeaveToday: Boolean = false,
+    @Json(name = "periods_today") val periodsToday: Int = 0,
     @Json(name = "leave_periods") val leavePeriods: List<Int> = emptyList(),
     @Json(name = "substitute_duties_today") val substituteDutiesToday: List<SubstituteDutyDto> = emptyList()
 )

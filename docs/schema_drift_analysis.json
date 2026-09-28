@@ -1,0 +1,37 @@
+{
+  "model_tables_count": 60,
+  "sql_tables_count": 33,
+  "in_models_not_in_sql": [
+    "academic_intelligence_events",
+    "announcement_acknowledgements",
+    "announcement_attachments",
+    "announcement_messages",
+    "announcement_reads",
+    "announcement_targets",
+    "announcements",
+    "attendance_correction_audits",
+    "attendance_sessions",
+    "biometric_policies",
+    "campus_blocks",
+    "campus_floors",
+    "campus_geofences",
+    "class_roll_exceptions",
+    "class_roll_rules",
+    "feature_entitlements",
+    "institutions",
+    "leave_balance_transactions",
+    "leave_policies",
+    "message_mentions",
+    "message_reactions",
+    "plan_definitions",
+    "staff_attendance_records",
+    "student_attendance",
+    "student_enrollments",
+    "students",
+    "system_audit_logs",
+    "teacher_leave_balances"
+  ],
+  "in_sql_not_in_models": [
+    "data_retention_policies"
+  ]
+}

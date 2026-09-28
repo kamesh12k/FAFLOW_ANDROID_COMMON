@@ -264,6 +264,18 @@ def get_teacher_leave_ledger(
     return leave_policy_service.get_teacher_ledger(db, teacher_id, policy_id=policy_id, limit=limit)
 
 
+@router.get("/leave-balances/teacher/{teacher_id}/ledger", response_model=List[LeaveBalanceTransactionOut], include_in_schema=False)
+def get_teacher_leave_ledger_alias(
+    teacher_id: int,
+    policy_id: Optional[int] = Query(None),
+    limit: int = Query(50, ge=1, le=200),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+    tenant_dept_id: Optional[int] = Depends(get_tenant_department_id),
+):
+    return get_teacher_leave_ledger(teacher_id, policy_id, limit, db, current_user, tenant_dept_id)
+
+
 # ── Administrative Balance Adjustment ──────────────────────────────────────
 
 @router.post("/leave-balances/{teacher_id}/adjust", response_model=TeacherPolicyBalanceOut)

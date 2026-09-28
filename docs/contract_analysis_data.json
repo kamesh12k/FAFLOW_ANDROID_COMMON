@@ -1,0 +1,1701 @@
+{
+  "matched_both": [
+    {
+      "method": "POST",
+      "path": "/student-attendance/emergency"
+    },
+    {
+      "method": "GET",
+      "path": "/credits/my/transactions"
+    },
+    {
+      "method": "POST",
+      "path": "/campus-structure/blocks/{var}/duplicate"
+    },
+    {
+      "method": "GET",
+      "path": "/leaves/my"
+    },
+    {
+      "method": "GET",
+      "path": "/leaves/slot-candidates"
+    },
+    {
+      "method": "GET",
+      "path": "/teacher/substitution/my-leaves"
+    },
+    {
+      "method": "PUT",
+      "path": "/campus-operations/preferences/me"
+    },
+    {
+      "method": "POST",
+      "path": "/campus-duties/{var}/auto-assign"
+    },
+    {
+      "method": "GET",
+      "path": "/attendance/admin/live-status"
+    },
+    {
+      "method": "POST",
+      "path": "/leaves/{var}/assign"
+    },
+    {
+      "method": "POST",
+      "path": "/teacher/substitution/leave/{var}/undo-assignment"
+    },
+    {
+      "method": "GET",
+      "path": "/attendance/my"
+    },
+    {
+      "method": "GET",
+      "path": "/timetable/teacher/{var}"
+    },
+    {
+      "method": "GET",
+      "path": "/campus-operations/mode"
+    },
+    {
+      "method": "GET",
+      "path": "/campus-duties"
+    },
+    {
+      "method": "POST",
+      "path": "/student-attendance/sessions/{var}/submit"
+    },
+    {
+      "method": "POST",
+      "path": "/student-attendance/sessions"
+    },
+    {
+      "method": "GET",
+      "path": "/teachers/me"
+    },
+    {
+      "method": "PATCH",
+      "path": "/leaves/{var}/approve"
+    },
+    {
+      "method": "GET",
+      "path": "/leaves"
+    },
+    {
+      "method": "POST",
+      "path": "/campus-structure/rooms/bulk-assign"
+    },
+    {
+      "method": "POST",
+      "path": "/student-attendance/sync"
+    },
+    {
+      "method": "GET",
+      "path": "/academic-calendar/my-today-summary"
+    },
+    {
+      "method": "GET",
+      "path": "/teachers"
+    },
+    {
+      "method": "POST",
+      "path": "/auth/login"
+    },
+    {
+      "method": "GET",
+      "path": "/policy/current"
+    },
+    {
+      "method": "POST",
+      "path": "/teacher/substitution/leave/{var}/assign/{var}"
+    },
+    {
+      "method": "POST",
+      "path": "/leaves"
+    },
+    {
+      "method": "GET",
+      "path": "/leave-balances/me"
+    },
+    {
+      "method": "GET",
+      "path": "/substitutions/today"
+    },
+    {
+      "method": "GET",
+      "path": "/geofences/active"
+    },
+    {
+      "method": "POST",
+      "path": "/leaves/batch"
+    },
+    {
+      "method": "GET",
+      "path": "/teachers/{var}/credits"
+    },
+    {
+      "method": "GET",
+      "path": "/geofences"
+    },
+    {
+      "method": "PATCH",
+      "path": "/notifications/read-all"
+    },
+    {
+      "method": "POST",
+      "path": "/policy/accept"
+    },
+    {
+      "method": "GET",
+      "path": "/campus-duties/my"
+    },
+    {
+      "method": "POST",
+      "path": "/attendance/check-in"
+    },
+    {
+      "method": "GET",
+      "path": "/student-attendance/sessions/{var}"
+    },
+    {
+      "method": "DELETE",
+      "path": "/geofences/{var}"
+    },
+    {
+      "method": "GET",
+      "path": "/system/governance/public-config"
+    },
+    {
+      "method": "POST",
+      "path": "/policy/onboarding/complete"
+    },
+    {
+      "method": "POST",
+      "path": "/geofences"
+    },
+    {
+      "method": "GET",
+      "path": "/student-attendance/classes/{var}/roster"
+    },
+    {
+      "method": "POST",
+      "path": "/announcements/{var}/acknowledge"
+    },
+    {
+      "method": "GET",
+      "path": "/attendance/today"
+    },
+    {
+      "method": "GET",
+      "path": "/teacher/substitution/leave/{var}/candidates"
+    },
+    {
+      "method": "POST",
+      "path": "/campus-duties"
+    },
+    {
+      "method": "GET",
+      "path": "/student-attendance/today"
+    },
+    {
+      "method": "POST",
+      "path": "/leaves/evaluate-policy"
+    },
+    {
+      "method": "GET",
+      "path": "/academic-calendar/resolve"
+    },
+    {
+      "method": "GET",
+      "path": "/announcements/{var}"
+    },
+    {
+      "method": "POST",
+      "path": "/teachers/me/biometrics/enroll"
+    },
+    {
+      "method": "GET",
+      "path": "/notifications/unread-count"
+    },
+    {
+      "method": "GET",
+      "path": "/announcements"
+    },
+    {
+      "method": "GET",
+      "path": "/campus-structure/tree"
+    },
+    {
+      "method": "GET",
+      "path": "/campus-duties/{var}"
+    },
+    {
+      "method": "PUT",
+      "path": "/geofences/{var}"
+    },
+    {
+      "method": "GET",
+      "path": "/campus-operations/preferences/me"
+    },
+    {
+      "method": "GET",
+      "path": "/classes"
+    },
+    {
+      "method": "PATCH",
+      "path": "/leaves/{var}/approve-with-exception"
+    },
+    {
+      "method": "POST",
+      "path": "/attendance/check-out"
+    },
+    {
+      "method": "POST",
+      "path": "/admin/first-login/setup"
+    },
+    {
+      "method": "GET",
+      "path": "/notifications"
+    },
+    {
+      "method": "GET",
+      "path": "/campus-structure/metrics"
+    },
+    {
+      "method": "GET",
+      "path": "/campus-duties/{var}/candidates"
+    },
+    {
+      "method": "GET",
+      "path": "/announcements/unread-count"
+    },
+    {
+      "method": "PATCH",
+      "path": "/notifications/{var}/read"
+    },
+    {
+      "method": "POST",
+      "path": "/policy/onboarding/reset"
+    },
+    {
+      "method": "PATCH",
+      "path": "/leaves/{var}/reject"
+    },
+    {
+      "method": "GET",
+      "path": "/campus-structure/search"
+    }
+  ],
+  "web_only": [
+    {
+      "method": "POST",
+      "path": "/campus-structure/import/validate"
+    },
+    {
+      "method": "PUT",
+      "path": "/campus-structure/blocks/{var}"
+    },
+    {
+      "method": "POST",
+      "path": "/timetable/slot"
+    },
+    {
+      "method": "GET",
+      "path": "/intelligence/events/{var}"
+    },
+    {
+      "method": "POST",
+      "path": "/campus-operations/bulk-config"
+    },
+    {
+      "method": "POST",
+      "path": "/campus-structure/smart-autofill"
+    },
+    {
+      "method": "POST",
+      "path": "/academic-years/rollover/execute"
+    },
+    {
+      "method": "GET",
+      "path": "/academic-calendar/reports/day-orders"
+    },
+    {
+      "method": "GET",
+      "path": "/leave-balances/department/{var}"
+    },
+    {
+      "method": "GET",
+      "path": "/departments"
+    },
+    {
+      "method": "GET",
+      "path": "/teacher/substitution/enabled"
+    },
+    {
+      "method": "POST",
+      "path": "/academic-calendar/days/bulk-mark"
+    },
+    {
+      "method": "GET",
+      "path": "/leave-balances/{var}/ledger"
+    },
+    {
+      "method": "GET",
+      "path": "/intelligence/events"
+    },
+    {
+      "method": "POST",
+      "path": "/leaves/{var}/undo-assignment"
+    },
+    {
+      "method": "GET",
+      "path": "/student-attendance/absentees/live"
+    },
+    {
+      "method": "POST",
+      "path": "/campus-structure/import/commit"
+    },
+    {
+      "method": "POST",
+      "path": "/admin/managers"
+    },
+    {
+      "method": "GET",
+      "path": "/staff/ledger"
+    },
+    {
+      "method": "DELETE",
+      "path": "/campus-structure/blocks/{var}"
+    },
+    {
+      "method": "POST",
+      "path": "/campus-duties/bulk-delete"
+    },
+    {
+      "method": "GET",
+      "path": "/system/governance/rules/{var}/history"
+    },
+    {
+      "method": "GET",
+      "path": "/rooms/availability/dashboard"
+    },
+    {
+      "method": "GET",
+      "path": "/academic-calendar/reports/faculty-workload"
+    },
+    {
+      "method": "GET",
+      "path": "/manager/staff"
+    },
+    {
+      "method": "PUT",
+      "path": "/admin/backups/schedule"
+    },
+    {
+      "method": "PUT",
+      "path": "/campus-operations/preferences/bulk-override"
+    },
+    {
+      "method": "GET",
+      "path": "/admin/backups"
+    },
+    {
+      "method": "PUT",
+      "path": "/admin/data-retention/policy"
+    },
+    {
+      "method": "POST",
+      "path": "/departments"
+    },
+    {
+      "method": "GET",
+      "path": "/academic-calendar/today-summary"
+    },
+    {
+      "method": "POST",
+      "path": "/campus-structure/blocks/{var}/allocate-departments"
+    },
+    {
+      "method": "POST",
+      "path": "/leaves/bulk-reject"
+    },
+    {
+      "method": "POST",
+      "path": "/notifications/test-push"
+    },
+    {
+      "method": "PUT",
+      "path": "/campus-operations/cross-department-substitutions"
+    },
+    {
+      "method": "POST",
+      "path": "/campus-duties/{var}/reset"
+    },
+    {
+      "method": "DELETE",
+      "path": "/campus-duties/break-periods/{var}"
+    },
+    {
+      "method": "GET",
+      "path": "/announcements/{var}/mention-candidates"
+    },
+    {
+      "method": "POST",
+      "path": "/campus-structure/blocks/{var}/duties/configure-and-assign"
+    },
+    {
+      "method": "GET",
+      "path": "/manager/labs"
+    },
+    {
+      "method": "GET",
+      "path": "/governance/search"
+    },
+    {
+      "method": "GET",
+      "path": "/policy-settings/enforcement-mode"
+    },
+    {
+      "method": "PATCH",
+      "path": "/admin/secondary-admins/{var}/enable"
+    },
+    {
+      "method": "POST",
+      "path": "/day-order-calendar/bulk-set"
+    },
+    {
+      "method": "DELETE",
+      "path": "/classes/{var}/students/{var}"
+    },
+    {
+      "method": "GET",
+      "path": "/admin/master-export"
+    },
+    {
+      "method": "POST",
+      "path": "/classes/bulk"
+    },
+    {
+      "method": "GET",
+      "path": "/announcements/candidates"
+    },
+    {
+      "method": "GET",
+      "path": "/academic-calendar/days/{var}"
+    },
+    {
+      "method": "GET",
+      "path": "/credits/transactions"
+    },
+    {
+      "method": "DELETE",
+      "path": "/rooms/{var}"
+    },
+    {
+      "method": "POST",
+      "path": "/manager/staff"
+    },
+    {
+      "method": "POST",
+      "path": "/admin/principal"
+    },
+    {
+      "method": "DELETE",
+      "path": "/admin/backups/{var}"
+    },
+    {
+      "method": "POST",
+      "path": "/admin/backups"
+    },
+    {
+      "method": "POST",
+      "path": "/campus-structure/floors/{var}/bulk-assign-department"
+    },
+    {
+      "method": "POST",
+      "path": "/leaves/{var}/admin-cancel"
+    },
+    {
+      "method": "DELETE",
+      "path": "/academic-calendar/days/{var}"
+    },
+    {
+      "method": "POST",
+      "path": "/timetable/submissions/bulk-review"
+    },
+    {
+      "method": "POST",
+      "path": "/leaves/{var}/consume"
+    },
+    {
+      "method": "GET",
+      "path": "/manager/leaves"
+    },
+    {
+      "method": "DELETE",
+      "path": "/timetable/teacher/{var}"
+    },
+    {
+      "method": "GET",
+      "path": "/campus-duties/metrics"
+    },
+    {
+      "method": "GET",
+      "path": "/student-attendance/classes/{var}/eod-summary"
+    },
+    {
+      "method": "PUT",
+      "path": "/leave-policies/{var}"
+    },
+    {
+      "method": "GET",
+      "path": "/intelligence/live"
+    },
+    {
+      "method": "POST",
+      "path": "/leaves/{var}/override"
+    },
+    {
+      "method": "GET",
+      "path": "/campus-structure/export"
+    },
+    {
+      "method": "POST",
+      "path": "/manager/leaves/{var}/approve"
+    },
+    {
+      "method": "DELETE",
+      "path": "/teacher/substitution/clear-all-assignments"
+    },
+    {
+      "method": "POST",
+      "path": "/teacher/substitution/leave/{var}/lock"
+    },
+    {
+      "method": "GET",
+      "path": "/governance/overview"
+    },
+    {
+      "method": "POST",
+      "path": "/manager/leaves/{var}/reject"
+    },
+    {
+      "method": "POST",
+      "path": "/academic-calendar/days/day-order/assign"
+    },
+    {
+      "method": "POST",
+      "path": "/leaves/admin-create"
+    },
+    {
+      "method": "POST",
+      "path": "/timetable/submissions/{var}/review"
+    },
+    {
+      "method": "POST",
+      "path": "/classes/{var}/roster/clear-all"
+    },
+    {
+      "method": "GET",
+      "path": "/campus-duties/rules"
+    },
+    {
+      "method": "POST",
+      "path": "/rooms/bulk-assign"
+    },
+    {
+      "method": "DELETE",
+      "path": "/teachers/{var}"
+    },
+    {
+      "method": "GET",
+      "path": "/student-attendance/principal/teacher-compliance"
+    },
+    {
+      "method": "GET",
+      "path": "/campus-operations/system-analytics"
+    },
+    {
+      "method": "GET",
+      "path": "/academic-calendar/academic-years"
+    },
+    {
+      "method": "POST",
+      "path": "/credits/adjust"
+    },
+    {
+      "method": "POST",
+      "path": "/geofences/test-location"
+    },
+    {
+      "method": "POST",
+      "path": "/announcements/{var}/read"
+    },
+    {
+      "method": "DELETE",
+      "path": "/announcements/{var}"
+    },
+    {
+      "method": "POST",
+      "path": "/campus-operations/dry-run"
+    },
+    {
+      "method": "GET",
+      "path": "/student-attendance/principal/classes/{var}/matrix"
+    },
+    {
+      "method": "POST",
+      "path": "/admin/secondary-admins"
+    },
+    {
+      "method": "POST",
+      "path": "/campus-duties/assignments/{var}/replace"
+    },
+    {
+      "method": "GET",
+      "path": "/timetable/submissions/my"
+    },
+    {
+      "method": "GET",
+      "path": "/timetable/submissions/pending"
+    },
+    {
+      "method": "PATCH",
+      "path": "/student-attendance/sessions/{var}/students/{var}"
+    },
+    {
+      "method": "POST",
+      "path": "/admin/data-retention/purge"
+    },
+    {
+      "method": "POST",
+      "path": "/departments/{var}/admin"
+    },
+    {
+      "method": "PATCH",
+      "path": "/policy-settings/enforcement-mode"
+    },
+    {
+      "method": "POST",
+      "path": "/admin/data-retention/preview"
+    },
+    {
+      "method": "PATCH",
+      "path": "/rooms/{var}"
+    },
+    {
+      "method": "POST",
+      "path": "/notifications/subscribe"
+    },
+    {
+      "method": "POST",
+      "path": "/student-attendance/principal/sessions/{var}/students/{var}/override"
+    },
+    {
+      "method": "GET",
+      "path": "/leave-policies/active"
+    },
+    {
+      "method": "GET",
+      "path": "/rooms/occupancy"
+    },
+    {
+      "method": "GET",
+      "path": "/campus-operations/preferences/{var}"
+    },
+    {
+      "method": "POST",
+      "path": "/leaves/validate"
+    },
+    {
+      "method": "GET",
+      "path": "/credits/report"
+    },
+    {
+      "method": "POST",
+      "path": "/leave-balances/{var}/adjust"
+    },
+    {
+      "method": "GET",
+      "path": "/admin/backups/summary"
+    },
+    {
+      "method": "POST",
+      "path": "/campus-duties/generate-exam-duties"
+    },
+    {
+      "method": "GET",
+      "path": "/leave-balances/me/{var}"
+    },
+    {
+      "method": "GET",
+      "path": "/leaves/{var}/cancel-impact"
+    },
+    {
+      "method": "POST",
+      "path": "/admin/data-retention/run-auto-cleanup"
+    },
+    {
+      "method": "PUT",
+      "path": "/campus-duties/break-periods/{var}"
+    },
+    {
+      "method": "POST",
+      "path": "/teachers/{var}/biometrics/reset"
+    },
+    {
+      "method": "POST",
+      "path": "/teachers"
+    },
+    {
+      "method": "POST",
+      "path": "/admin/clear-credits-history"
+    },
+    {
+      "method": "GET",
+      "path": "/student-attendance/principal/students/{var}"
+    },
+    {
+      "method": "DELETE",
+      "path": "/subjects/{var}"
+    },
+    {
+      "method": "POST",
+      "path": "/campus-duties/auto-replace-absent"
+    },
+    {
+      "method": "GET",
+      "path": "/timetable/class/{var}"
+    },
+    {
+      "method": "DELETE",
+      "path": "/announcements/messages/{var}"
+    },
+    {
+      "method": "PUT",
+      "path": "/admin/managers/{var}"
+    },
+    {
+      "method": "GET",
+      "path": "/leaves/{var}/recommendations"
+    },
+    {
+      "method": "GET",
+      "path": "/principal/overview"
+    },
+    {
+      "method": "PATCH",
+      "path": "/admin/secondary-admins/{var}/disable"
+    },
+    {
+      "method": "POST",
+      "path": "/leaves/consume-due"
+    },
+    {
+      "method": "POST",
+      "path": "/admin/backups/import"
+    },
+    {
+      "method": "PUT",
+      "path": "/teacher/substitution/leave/{var}/override/{var}"
+    },
+    {
+      "method": "GET",
+      "path": "/student-attendance/principal/overview"
+    },
+    {
+      "method": "GET",
+      "path": "/admin/data-retention/stats"
+    },
+    {
+      "method": "POST",
+      "path": "/campus-duties/{var}/toggle-active"
+    },
+    {
+      "method": "GET",
+      "path": "/admin/audit-logs"
+    },
+    {
+      "method": "GET",
+      "path": "/campus-structure/blocks/{var}/floors"
+    },
+    {
+      "method": "PUT",
+      "path": "/campus-operations/mode"
+    },
+    {
+      "method": "PATCH",
+      "path": "/announcements/{var}"
+    },
+    {
+      "method": "DELETE",
+      "path": "/admin/global-users/{var}"
+    },
+    {
+      "method": "POST",
+      "path": "/admin/backups/schedule/run-now"
+    },
+    {
+      "method": "POST",
+      "path": "/manager/credits/quota"
+    },
+    {
+      "method": "GET",
+      "path": "/system/governance/rules"
+    },
+    {
+      "method": "GET",
+      "path": "/system/governance/rules/{var}"
+    },
+    {
+      "method": "GET",
+      "path": "/geofences/{var}"
+    },
+    {
+      "method": "GET",
+      "path": "/day-order-calendar/resolve"
+    },
+    {
+      "method": "GET",
+      "path": "/rooms"
+    },
+    {
+      "method": "GET",
+      "path": "/admin/managers/{var}"
+    },
+    {
+      "method": "POST",
+      "path": "/admin/factory-reset"
+    },
+    {
+      "method": "POST",
+      "path": "/announcements/messages/{var}/reactions"
+    },
+    {
+      "method": "GET",
+      "path": "/admin/backups/{var}"
+    },
+    {
+      "method": "DELETE",
+      "path": "/admin/managers/{var}"
+    },
+    {
+      "method": "GET",
+      "path": "/day-order-calendar"
+    },
+    {
+      "method": "GET",
+      "path": "/student-attendance/principal/exceptions"
+    },
+    {
+      "method": "POST",
+      "path": "/campus-duties/{var}/assign"
+    },
+    {
+      "method": "POST",
+      "path": "/campus-structure/floors"
+    },
+    {
+      "method": "PUT",
+      "path": "/teachers/{var}"
+    },
+    {
+      "method": "PUT",
+      "path": "/campus-duties/rules"
+    },
+    {
+      "method": "GET",
+      "path": "/academic-calendar/reports/holidays"
+    },
+    {
+      "method": "GET",
+      "path": "/leaves/{var}/free-teachers"
+    },
+    {
+      "method": "GET",
+      "path": "/classes/{var}/roll-rule"
+    },
+    {
+      "method": "GET",
+      "path": "/policy-settings/enforcement-mode/audit"
+    },
+    {
+      "method": "POST",
+      "path": "/campus-duties/generate-wing-duties"
+    },
+    {
+      "method": "POST",
+      "path": "/campus-duties/autonomous-toggle"
+    },
+    {
+      "method": "POST",
+      "path": "/campus-duties/generate-discipline"
+    },
+    {
+      "method": "POST",
+      "path": "/classes/{var}/students/import/preview"
+    },
+    {
+      "method": "GET",
+      "path": "/academic-calendar/semesters"
+    },
+    {
+      "method": "PUT",
+      "path": "/manager/staff/{var}"
+    },
+    {
+      "method": "GET",
+      "path": "/campus-structure/blocks"
+    },
+    {
+      "method": "POST",
+      "path": "/campus-duties/bulk-reset"
+    },
+    {
+      "method": "GET",
+      "path": "/admin/global-users"
+    },
+    {
+      "method": "PATCH",
+      "path": "/subjects/{var}"
+    },
+    {
+      "method": "DELETE",
+      "path": "/classes/{var}/roll-rule"
+    },
+    {
+      "method": "GET",
+      "path": "/system/governance/history"
+    },
+    {
+      "method": "GET",
+      "path": "/manager/credits"
+    },
+    {
+      "method": "DELETE",
+      "path": "/attendance/admin/record/{var}"
+    },
+    {
+      "method": "GET",
+      "path": "/teacher/substitution/leave/{var}/free-teachers"
+    },
+    {
+      "method": "GET",
+      "path": "/campus-duties/break-periods"
+    },
+    {
+      "method": "POST",
+      "path": "/rooms"
+    },
+    {
+      "method": "DELETE",
+      "path": "/timetable/submissions/{var}"
+    },
+    {
+      "method": "GET",
+      "path": "/policy-settings/enforcement-mode/compliance-report"
+    },
+    {
+      "method": "GET",
+      "path": "/subjects"
+    },
+    {
+      "method": "POST",
+      "path": "/admin/backups/{var}/validate"
+    },
+    {
+      "method": "GET",
+      "path": "/admin/managers"
+    },
+    {
+      "method": "GET",
+      "path": "/student-attendance/hod/overview"
+    },
+    {
+      "method": "DELETE",
+      "path": "/classes/{var}"
+    },
+    {
+      "method": "POST",
+      "path": "/classes/{var}/students/import/commit"
+    },
+    {
+      "method": "POST",
+      "path": "/auth/register"
+    },
+    {
+      "method": "GET",
+      "path": "/system/governance/periods"
+    },
+    {
+      "method": "GET",
+      "path": "/manager/dashboard"
+    },
+    {
+      "method": "POST",
+      "path": "/classes/{var}/roll-exceptions"
+    },
+    {
+      "method": "GET",
+      "path": "/teacher/substitution/config"
+    },
+    {
+      "method": "POST",
+      "path": "/classes/{var}/roll-rule"
+    },
+    {
+      "method": "PUT",
+      "path": "/campus-operations/preferences/{var}"
+    },
+    {
+      "method": "GET",
+      "path": "/manager/staff/{var}"
+    },
+    {
+      "method": "POST",
+      "path": "/academic-calendar/semesters"
+    },
+    {
+      "method": "POST",
+      "path": "/campus-structure/blocks"
+    },
+    {
+      "method": "POST",
+      "path": "/rooms/bulk"
+    },
+    {
+      "method": "DELETE",
+      "path": "/staff/leaves/{var}"
+    },
+    {
+      "method": "POST",
+      "path": "/leaves/{var}/lock"
+    },
+    {
+      "method": "DELETE",
+      "path": "/manager/staff/{var}"
+    },
+    {
+      "method": "POST",
+      "path": "/admin/backups/{var}/restore"
+    },
+    {
+      "method": "GET",
+      "path": "/classes/{var}/effective-roster"
+    },
+    {
+      "method": "POST",
+      "path": "/campus-duties/break-periods"
+    },
+    {
+      "method": "POST",
+      "path": "/subjects"
+    },
+    {
+      "method": "PATCH",
+      "path": "/classes/{var}/students/{var}"
+    },
+    {
+      "method": "POST",
+      "path": "/governance/assign-substitute"
+    },
+    {
+      "method": "POST",
+      "path": "/timetable/submissions"
+    },
+    {
+      "method": "POST",
+      "path": "/manager/credits/adjust"
+    },
+    {
+      "method": "GET",
+      "path": "/staff/leaves"
+    },
+    {
+      "method": "GET",
+      "path": "/settings/public"
+    },
+    {
+      "method": "GET",
+      "path": "/announcements/{var}/messages"
+    },
+    {
+      "method": "DELETE",
+      "path": "/departments/{var}"
+    },
+    {
+      "method": "GET",
+      "path": "/manager/credits/{var}/ledger"
+    },
+    {
+      "method": "PATCH",
+      "path": "/subjects/{var}/archive"
+    },
+    {
+      "method": "GET",
+      "path": "/campus-duties/next-6-day-orders"
+    },
+    {
+      "method": "POST",
+      "path": "/leaves/bulk-approve"
+    },
+    {
+      "method": "POST",
+      "path": "/academic-calendar/academic-years"
+    },
+    {
+      "method": "DELETE",
+      "path": "/timetable/{var}"
+    },
+    {
+      "method": "POST",
+      "path": "/leaves/{var}/assign-recommended"
+    },
+    {
+      "method": "GET",
+      "path": "/staff/me"
+    },
+    {
+      "method": "POST",
+      "path": "/announcements"
+    },
+    {
+      "method": "DELETE",
+      "path": "/academic-calendar/days/{var}/override"
+    },
+    {
+      "method": "GET",
+      "path": "/admin/setup-readiness"
+    },
+    {
+      "method": "POST",
+      "path": "/notifications/unsubscribe"
+    },
+    {
+      "method": "GET",
+      "path": "/classes/directory"
+    },
+    {
+      "method": "POST",
+      "path": "/campus-duties/assignments/{var}/override"
+    },
+    {
+      "method": "GET",
+      "path": "/student-attendance/principal/sessions"
+    },
+    {
+      "method": "PATCH",
+      "path": "/classes/{var}"
+    },
+    {
+      "method": "POST",
+      "path": "/leaves/{var}/cancel"
+    },
+    {
+      "method": "GET",
+      "path": "/leave-balances/department"
+    },
+    {
+      "method": "PUT",
+      "path": "/system/governance/rules/{var}"
+    },
+    {
+      "method": "DELETE",
+      "path": "/classes/{var}/roll-exceptions/{var}"
+    },
+    {
+      "method": "DELETE",
+      "path": "/campus-duties/{var}"
+    },
+    {
+      "method": "POST",
+      "path": "/timetable/reset"
+    },
+    {
+      "method": "POST",
+      "path": "/staff/leaves"
+    },
+    {
+      "method": "PATCH",
+      "path": "/geofences/{var}/toggle"
+    },
+    {
+      "method": "POST",
+      "path": "/campus-structure/preview-rooms"
+    },
+    {
+      "method": "POST",
+      "path": "/student-attendance/principal/sessions/{var}/lock"
+    },
+    {
+      "method": "POST",
+      "path": "/announcements/{var}/messages"
+    },
+    {
+      "method": "GET",
+      "path": "/admin/backups/schedule"
+    },
+    {
+      "method": "POST",
+      "path": "/academic-calendar/days/mark"
+    },
+    {
+      "method": "PATCH",
+      "path": "/manager/staff/{var}/status"
+    },
+    {
+      "method": "GET",
+      "path": "/admin/data-retention/policy"
+    },
+    {
+      "method": "POST",
+      "path": "/admin/clear-leaves-history"
+    },
+    {
+      "method": "GET",
+      "path": "/admin/backups/{var}/download"
+    },
+    {
+      "method": "POST",
+      "path": "/academic-calendar/days/day-order/skip"
+    },
+    {
+      "method": "DELETE",
+      "path": "/teacher/substitution/reset-preferences"
+    },
+    {
+      "method": "GET",
+      "path": "/campus-operations/cross-department-substitutions"
+    },
+    {
+      "method": "POST",
+      "path": "/teachers/bulk"
+    },
+    {
+      "method": "POST",
+      "path": "/system/governance/rollback/{var}"
+    },
+    {
+      "method": "POST",
+      "path": "/campus-structure/generate-rooms"
+    },
+    {
+      "method": "POST",
+      "path": "/announcements/messages/{var}/pin"
+    },
+    {
+      "method": "GET",
+      "path": "/classes/{var}/faculty"
+    },
+    {
+      "method": "POST",
+      "path": "/announcements/{var}/publish"
+    },
+    {
+      "method": "POST",
+      "path": "/admin/system-metrics/clear-traffic"
+    },
+    {
+      "method": "GET",
+      "path": "/campus-duties/areas"
+    },
+    {
+      "method": "GET",
+      "path": "/admin/system-metrics"
+    },
+    {
+      "method": "GET",
+      "path": "/admin/secondary-admins"
+    },
+    {
+      "method": "POST",
+      "path": "/academic-years/rollover/preview"
+    },
+    {
+      "method": "GET",
+      "path": "/staff/dashboard"
+    },
+    {
+      "method": "POST",
+      "path": "/campus-duties/reset-break-periods"
+    },
+    {
+      "method": "GET",
+      "path": "/academic-calendar/days"
+    },
+    {
+      "method": "POST",
+      "path": "/classes"
+    },
+    {
+      "method": "PATCH",
+      "path": "/intelligence/events/{var}/acknowledge"
+    },
+    {
+      "method": "PATCH",
+      "path": "/departments/{var}"
+    },
+    {
+      "method": "GET",
+      "path": "/academic-calendar/reports/working-days"
+    },
+    {
+      "method": "GET",
+      "path": "/rooms/{var}/check-availability"
+    },
+    {
+      "method": "POST",
+      "path": "/campus-duties/{var}/lock"
+    },
+    {
+      "method": "GET",
+      "path": "/announcements/{var}/analytics"
+    },
+    {
+      "method": "POST",
+      "path": "/system/governance/rules/reset/{var}"
+    },
+    {
+      "method": "POST",
+      "path": "/campus-duties/auto-assign-all"
+    },
+    {
+      "method": "PUT",
+      "path": "/system/governance/periods"
+    },
+    {
+      "method": "GET",
+      "path": "/student-attendance/principal/export"
+    },
+    {
+      "method": "POST",
+      "path": "/campus-structure/blocks/{var}/bulk-assign-department"
+    },
+    {
+      "method": "PUT",
+      "path": "/teacher/substitution/config"
+    },
+    {
+      "method": "GET",
+      "path": "/leave-policies/{var}"
+    },
+    {
+      "method": "POST",
+      "path": "/timetable"
+    },
+    {
+      "method": "POST",
+      "path": "/announcements/attachments/presign"
+    },
+    {
+      "method": "POST",
+      "path": "/governance/emergency-override"
+    },
+    {
+      "method": "POST",
+      "path": "/system/governance/rules/validate"
+    },
+    {
+      "method": "GET",
+      "path": "/notifications/vapid-public-key"
+    },
+    {
+      "method": "PATCH",
+      "path": "/subjects/{var}/unarchive"
+    },
+    {
+      "method": "POST",
+      "path": "/campus-duties/areas"
+    },
+    {
+      "method": "GET",
+      "path": "/governance/candidates/{var}"
+    },
+    {
+      "method": "POST",
+      "path": "/campus-duties/autonomous-activate"
+    }
+  ],
+  "android_only": [
+    {
+      "method": "GET",
+      "path": "/leave-balances/policies"
+    },
+    {
+      "method": "PATCH",
+      "path": "/leaves/{var}/status"
+    },
+    {
+      "method": "GET",
+      "path": "/system/institutions/{var}/policy"
+    },
+    {
+      "method": "DELETE",
+      "path": "/leaves/{var}"
+    },
+    {
+      "method": "GET",
+      "path": "/timetable"
+    },
+    {
+      "method": "DELETE",
+      "path": "/notifications"
+    },
+    {
+      "method": "POST",
+      "path": "/leave-balances/validate"
+    },
+    {
+      "method": "GET",
+      "path": "/leaves/{var}/candidates"
+    }
+  ],
+  "client_not_in_backend": [
+    {
+      "method": "POST",
+      "path": "/campus-duties/{var}/assignments/{var}/unlock",
+      "web_callers": [],
+      "android_calls": [
+        "unlockAssignment"
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/campus-duties/generate-today-discipline",
+      "web_callers": [],
+      "android_calls": [
+        "generateTodayDiscipline"
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/campus-duties/{var}/assignments/{var}/override",
+      "web_callers": [],
+      "android_calls": [
+        "overrideAssignment"
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/enforcement-mode",
+      "web_callers": [],
+      "android_calls": [
+        "getEnforcementMode"
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/campus-structure/rooms/preview",
+      "web_callers": [],
+      "android_calls": [
+        "previewRoomPattern"
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/campus-duties/{var}/assignments/{var}/replace",
+      "web_callers": [],
+      "android_calls": [
+        "replaceAssignment"
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/campus-duties/{var}/assignments/{var}/lock",
+      "web_callers": [],
+      "android_calls": [
+        "lockAssignment"
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/campus-duties/metrics/summary",
+      "web_callers": [],
+      "android_calls": [
+        "getDutyMetrics"
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/leave-balances/teacher/{var}/ledger",
+      "web_callers": [],
+      "android_calls": [
+        "getTeacherLeaveLedger"
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/campus-structure/blocks/smart-autofill",
+      "web_callers": [],
+      "android_calls": [
+        "smartAutofillBlock"
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/campus-duties/{var}/assignments",
+      "web_callers": [],
+      "android_calls": [
+        "assignTeacher"
+      ]
+    }
+  ],
+  "backend_unused_count": 27,
+  "trailing_slash_mismatches": [
+    {
+      "client": "web",
+      "method": "GET",
+      "url": "/classes/",
+      "target": "/classes"
+    },
+    {
+      "client": "web",
+      "method": "GET",
+      "url": "/day-order-calendar/",
+      "target": "/day-order-calendar"
+    },
+    {
+      "client": "web",
+      "method": "GET",
+      "url": "/departments/",
+      "target": "/departments"
+    },
+    {
+      "client": "web",
+      "method": "GET",
+      "url": "/geofences/",
+      "target": "/geofences"
+    },
+    {
+      "client": "web",
+      "method": "GET",
+      "url": "/leaves/",
+      "target": "/leaves"
+    },
+    {
+      "client": "web",
+      "method": "GET",
+      "url": "/notifications/",
+      "target": "/notifications"
+    },
+    {
+      "client": "web",
+      "method": "GET",
+      "url": "/rooms/",
+      "target": "/rooms"
+    },
+    {
+      "client": "web",
+      "method": "GET",
+      "url": "/subjects/",
+      "target": "/subjects"
+    },
+    {
+      "client": "web",
+      "method": "GET",
+      "url": "/teachers/",
+      "target": "/teachers"
+    },
+    {
+      "client": "web",
+      "method": "POST",
+      "url": "/classes/",
+      "target": "/classes"
+    },
+    {
+      "client": "web",
+      "method": "POST",
+      "url": "/departments/",
+      "target": "/departments"
+    },
+    {
+      "client": "web",
+      "method": "POST",
+      "url": "/geofences/",
+      "target": "/geofences"
+    },
+    {
+      "client": "web",
+      "method": "POST",
+      "url": "/leaves/",
+      "target": "/leaves"
+    },
+    {
+      "client": "web",
+      "method": "POST",
+      "url": "/rooms/",
+      "target": "/rooms"
+    },
+    {
+      "client": "web",
+      "method": "POST",
+      "url": "/subjects/",
+      "target": "/subjects"
+    },
+    {
+      "client": "web",
+      "method": "POST",
+      "url": "/teachers/",
+      "target": "/teachers"
+    },
+    {
+      "client": "web",
+      "method": "POST",
+      "url": "/timetable/",
+      "target": "/timetable"
+    },
+    {
+      "client": "android",
+      "method": "GET",
+      "url": "timetable/",
+      "target": "timetable"
+    },
+    {
+      "client": "android",
+      "method": "GET",
+      "url": "classes/",
+      "target": "classes"
+    },
+    {
+      "client": "android",
+      "method": "GET",
+      "url": "teachers/",
+      "target": "teachers"
+    },
+    {
+      "client": "android",
+      "method": "GET",
+      "url": "leaves/",
+      "target": "leaves"
+    },
+    {
+      "client": "android",
+      "method": "POST",
+      "url": "leaves/",
+      "target": "leaves"
+    },
+    {
+      "client": "android",
+      "method": "GET",
+      "url": "notifications/",
+      "target": "notifications"
+    },
+    {
+      "client": "android",
+      "method": "DELETE",
+      "url": "notifications/",
+      "target": "notifications"
+    },
+    {
+      "client": "android",
+      "method": "GET",
+      "url": "geofences/",
+      "target": "geofences"
+    },
+    {
+      "client": "android",
+      "method": "POST",
+      "url": "geofences/",
+      "target": "geofences"
+    }
+  ]
+}

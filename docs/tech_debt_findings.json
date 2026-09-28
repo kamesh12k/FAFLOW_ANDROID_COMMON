@@ -1,0 +1,409 @@
+{
+  "markers": [
+    {
+      "file": "backend\\app\\schemas\\admin.py",
+      "line": 9,
+      "marker": "TEMPORARY",
+      "content": "\"\"\"Clears must_change_credentials for any user still on default/temporary credentials."
+    },
+    {
+      "file": "backend\\app\\schemas\\timetable_import.py",
+      "line": 18,
+      "marker": "TEMPORARY",
+      "content": "description=\"Unique temporary ID for the preview row to track edits in frontend.\","
+    },
+    {
+      "file": "backend\\app\\services\\leave_service.py",
+      "line": 21,
+      "marker": "DEPRECATED",
+      "content": "# DEPRECATED constant \u2014 kept as fallback. The dynamic value is loaded from governance_rule_service."
+    },
+    {
+      "file": "backend\\app\\services\\student_attendance_service.py",
+      "line": 39,
+      "marker": "DEPRECATED",
+      "content": "# \u2500\u2500 DEPRECATED: kept only as last-resort fallback if DB and cache both fail \u2500\u2500"
+    },
+    {
+      "file": "backend\\app\\services\\student_attendance_service.py",
+      "line": 86,
+      "marker": "DEPRECATED",
+      "content": "\"\"\"DEPRECATED: Reads student_attendance_correction_window_hours for backwards compatibility."
+    },
+    {
+      "file": "frontend\\src\\pages\\admin\\Departments.jsx",
+      "line": 333,
+      "marker": "TEMPORARY",
+      "content": "<label className=\"block text-xs font-medium text-gray-700 mb-1\">Temporary Username</label>"
+    },
+    {
+      "file": "frontend\\src\\pages\\admin\\Departments.jsx",
+      "line": 337,
+      "marker": "TEMPORARY",
+      "content": "<label className=\"block text-xs font-medium text-gray-700 mb-1\">Temporary Password</label>"
+    },
+    {
+      "file": "frontend\\src\\pages\\admin\\Managers.jsx",
+      "line": 221,
+      "marker": "TEMPORARY",
+      "content": "Temporary Password"
+    },
+    {
+      "file": "frontend\\src\\pages\\admin\\Settings.jsx",
+      "line": 560,
+      "marker": "TEMPORARY",
+      "content": "<label className={labelCls}>Temporary username</label>"
+    },
+    {
+      "file": "frontend\\src\\pages\\admin\\Settings.jsx",
+      "line": 564,
+      "marker": "TEMPORARY",
+      "content": "<label className={labelCls}>Temporary password</label>"
+    },
+    {
+      "file": "frontend\\src\\pages\\auth\\FirstLoginSetup.jsx",
+      "line": 75,
+      "marker": "TEMPORARY",
+      "content": "You're signed in with default/temporary credentials. Please choose your own {isTeacher ? 'email address' : 'username'} and"
+    },
+    {
+      "file": "android\\app\\src\\main\\java\\com\\governence\\faflow\\ui\\screens\\FirstLoginSetupScreen.kt",
+      "line": 183,
+      "marker": "TEMPORARY",
+      "content": "text = \"Welcome to FAFLOW. For your account security, you must update your temporary credentials before continuing.\","
+    },
+    {
+      "file": "android\\app\\src\\main\\java\\com\\governence\\faflow\\ui\\screens\\SettingsScreen.kt",
+      "line": 172,
+      "marker": "TEMPORARY",
+      "content": "text = \"Temporary local cache cleared.\","
+    }
+  ],
+  "unindexed_fks": [
+    {
+      "table": "users",
+      "column": "created_by_admin_id",
+      "target": "users.id"
+    },
+    {
+      "table": "users",
+      "column": "department_id",
+      "target": "departments.id"
+    },
+    {
+      "table": "classes",
+      "column": "department_id",
+      "target": "departments.id"
+    },
+    {
+      "table": "classes",
+      "column": "default_room_id",
+      "target": "rooms.id"
+    },
+    {
+      "table": "semesters",
+      "column": "academic_year_id",
+      "target": "academic_years.id"
+    },
+    {
+      "table": "calendar_days",
+      "column": "created_by_admin_id",
+      "target": "users.id"
+    },
+    {
+      "table": "calendar_days",
+      "column": "academic_year_id",
+      "target": "academic_years.id"
+    },
+    {
+      "table": "calendar_days",
+      "column": "semester_id",
+      "target": "semesters.id"
+    },
+    {
+      "table": "timetable_slots",
+      "column": "subject_id",
+      "target": "subjects.id"
+    },
+    {
+      "table": "timetable_slots",
+      "column": "room_id",
+      "target": "rooms.id"
+    },
+    {
+      "table": "leave_requests",
+      "column": "exception_approved_by_id",
+      "target": "users.id"
+    },
+    {
+      "table": "leave_requests",
+      "column": "teacher_id",
+      "target": "users.id"
+    },
+    {
+      "table": "leave_requests",
+      "column": "policy_version_id",
+      "target": "leave_policies.id"
+    },
+    {
+      "table": "alter_assignments",
+      "column": "substitute_teacher_id",
+      "target": "users.id"
+    },
+    {
+      "table": "policy_enforcement_audit",
+      "column": "actor_user_id",
+      "target": "users.id"
+    },
+    {
+      "table": "leave_balance_transactions",
+      "column": "created_by_id",
+      "target": "users.id"
+    },
+    {
+      "table": "credit_transactions",
+      "column": "related_leave_id",
+      "target": "leave_requests.id"
+    },
+    {
+      "table": "credit_transactions",
+      "column": "teacher_id",
+      "target": "users.id"
+    },
+    {
+      "table": "notifications",
+      "column": "user_id",
+      "target": "users.id"
+    },
+    {
+      "table": "notifications",
+      "column": "related_leave_id",
+      "target": "leave_requests.id"
+    },
+    {
+      "table": "push_subscriptions",
+      "column": "user_id",
+      "target": "users.id"
+    },
+    {
+      "table": "audit_logs",
+      "column": "department_id",
+      "target": "departments.id"
+    },
+    {
+      "table": "audit_logs",
+      "column": "actor_user_id",
+      "target": "users.id"
+    },
+    {
+      "table": "timetable_submissions",
+      "column": "teacher_id",
+      "target": "users.id"
+    },
+    {
+      "table": "timetable_submissions",
+      "column": "class_id",
+      "target": "classes.id"
+    },
+    {
+      "table": "timetable_submissions",
+      "column": "reviewed_by_id",
+      "target": "users.id"
+    },
+    {
+      "table": "timetable_submissions",
+      "column": "room_id",
+      "target": "rooms.id"
+    },
+    {
+      "table": "timetable_submissions",
+      "column": "subject_id",
+      "target": "subjects.id"
+    },
+    {
+      "table": "operational_staff",
+      "column": "created_by_manager_id",
+      "target": "users.id"
+    },
+    {
+      "table": "operational_staff",
+      "column": "user_id",
+      "target": "users.id"
+    },
+    {
+      "table": "staff_leave_requests",
+      "column": "approved_by_id",
+      "target": "users.id"
+    },
+    {
+      "table": "staff_credit_transactions",
+      "column": "created_by_user_id",
+      "target": "users.id"
+    },
+    {
+      "table": "staff_credit_transactions",
+      "column": "related_leave_id",
+      "target": "staff_leave_requests.id"
+    },
+    {
+      "table": "campus_geofences",
+      "column": "created_by",
+      "target": "users.id"
+    },
+    {
+      "table": "campus_geofences",
+      "column": "updated_by",
+      "target": "users.id"
+    },
+    {
+      "table": "staff_attendance_records",
+      "column": "check_out_geofence_id",
+      "target": "campus_geofences.id"
+    },
+    {
+      "table": "staff_attendance_records",
+      "column": "check_in_geofence_id",
+      "target": "campus_geofences.id"
+    },
+    {
+      "table": "class_roll_rules",
+      "column": "created_by_id",
+      "target": "users.id"
+    },
+    {
+      "table": "class_roll_exceptions",
+      "column": "created_by_id",
+      "target": "users.id"
+    },
+    {
+      "table": "class_roll_exceptions",
+      "column": "student_id",
+      "target": "students.id"
+    },
+    {
+      "table": "attendance_sessions",
+      "column": "substitution_id",
+      "target": "alter_assignments.id"
+    },
+    {
+      "table": "attendance_sessions",
+      "column": "submitted_by_id",
+      "target": "users.id"
+    },
+    {
+      "table": "attendance_sessions",
+      "column": "calendar_day_id",
+      "target": "calendar_days.id"
+    },
+    {
+      "table": "attendance_sessions",
+      "column": "timetable_slot_id",
+      "target": "timetable_slots.id"
+    },
+    {
+      "table": "attendance_correction_audits",
+      "column": "changed_by_id",
+      "target": "users.id"
+    },
+    {
+      "table": "institutions",
+      "column": "created_by_id",
+      "target": "users.id"
+    },
+    {
+      "table": "feature_entitlements",
+      "column": "locked_by_id",
+      "target": "users.id"
+    },
+    {
+      "table": "biometric_policies",
+      "column": "updated_by_id",
+      "target": "users.id"
+    },
+    {
+      "table": "academic_intelligence_events",
+      "column": "acknowledged_by_id",
+      "target": "users.id"
+    },
+    {
+      "table": "announcements",
+      "column": "previous_version_id",
+      "target": "announcements.id"
+    },
+    {
+      "table": "announcement_attachments",
+      "column": "uploaded_by_id",
+      "target": "users.id"
+    },
+    {
+      "table": "campus_areas",
+      "column": "department_id",
+      "target": "departments.id"
+    },
+    {
+      "table": "duty_break_periods",
+      "column": "department_id",
+      "target": "departments.id"
+    },
+    {
+      "table": "campus_duties",
+      "column": "locked_by_user_id",
+      "target": "users.id"
+    },
+    {
+      "table": "campus_duties",
+      "column": "created_by_user_id",
+      "target": "users.id"
+    },
+    {
+      "table": "campus_duties",
+      "column": "break_period_id",
+      "target": "duty_break_periods.id"
+    },
+    {
+      "table": "campus_duties",
+      "column": "area_id",
+      "target": "campus_areas.id"
+    },
+    {
+      "table": "campus_duties",
+      "column": "department_id",
+      "target": "departments.id"
+    },
+    {
+      "table": "duty_assignments",
+      "column": "overridden_by_user_id",
+      "target": "users.id"
+    },
+    {
+      "table": "duty_assignments",
+      "column": "assigned_by_user_id",
+      "target": "users.id"
+    },
+    {
+      "table": "duty_assignments",
+      "column": "replaced_assignment_id",
+      "target": "duty_assignments.id"
+    },
+    {
+      "table": "duty_assignment_runs",
+      "column": "triggered_by_user_id",
+      "target": "users.id"
+    },
+    {
+      "table": "business_rules",
+      "column": "updated_by_id",
+      "target": "users.id"
+    },
+    {
+      "table": "business_rule_history",
+      "column": "changed_by_id",
+      "target": "users.id"
+    },
+    {
+      "table": "campus_blocks",
+      "column": "department_id",
+      "target": "departments.id"
+    }
+  ]
+}

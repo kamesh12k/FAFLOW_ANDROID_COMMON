@@ -1,0 +1,2485 @@
+[
+  {
+    "method": "DELETE",
+    "url": "/academic-calendar/days/${date}",
+    "callers": [
+      "api\\services.js:194"
+    ]
+  },
+  {
+    "method": "DELETE",
+    "url": "/academic-calendar/days/${date}/override",
+    "callers": [
+      "api\\services.js:193"
+    ]
+  },
+  {
+    "method": "DELETE",
+    "url": "/admin/backups/${id}",
+    "callers": [
+      "api\\services.js:61"
+    ]
+  },
+  {
+    "method": "DELETE",
+    "url": "/admin/global-users/${id}",
+    "callers": [
+      "api\\services.js:32"
+    ]
+  },
+  {
+    "method": "DELETE",
+    "url": "/admin/managers/${id}",
+    "callers": [
+      "api\\services.js:348"
+    ]
+  },
+  {
+    "method": "DELETE",
+    "url": "/announcements/${id}",
+    "callers": [
+      "api\\announcements.js:16"
+    ]
+  },
+  {
+    "method": "DELETE",
+    "url": "/announcements/messages/${messageId}",
+    "callers": [
+      "api\\announcements.js:32"
+    ]
+  },
+  {
+    "method": "DELETE",
+    "url": "/attendance/admin/record/${id}",
+    "callers": [
+      "api\\services.js:414"
+    ]
+  },
+  {
+    "method": "DELETE",
+    "url": "/campus-duties/${dutyId}",
+    "callers": [
+      "api\\services.js:524"
+    ]
+  },
+  {
+    "method": "DELETE",
+    "url": "/campus-duties/break-periods/${id}",
+    "callers": [
+      "api\\services.js:519"
+    ]
+  },
+  {
+    "method": "DELETE",
+    "url": "/campus-structure/blocks/${id}",
+    "callers": [
+      "api\\services.js:463"
+    ]
+  },
+  {
+    "method": "DELETE",
+    "url": "/classes/${classId}/roll-exceptions/${exceptionId}",
+    "callers": [
+      "api\\services.js:133"
+    ]
+  },
+  {
+    "method": "DELETE",
+    "url": "/classes/${classId}/roll-rule",
+    "callers": [
+      "api\\services.js:151"
+    ]
+  },
+  {
+    "method": "DELETE",
+    "url": "/classes/${classId}/students/${studentId}",
+    "callers": [
+      "api\\services.js:147"
+    ]
+  },
+  {
+    "method": "DELETE",
+    "url": "/classes/${id}",
+    "callers": [
+      "api\\services.js:120"
+    ]
+  },
+  {
+    "method": "DELETE",
+    "url": "/departments/${id}",
+    "callers": [
+      "api\\services.js:103"
+    ]
+  },
+  {
+    "method": "DELETE",
+    "url": "/geofences/${id}",
+    "callers": [
+      "api\\services.js:396"
+    ]
+  },
+  {
+    "method": "DELETE",
+    "url": "/manager/staff/${id}",
+    "callers": [
+      "api\\services.js:358"
+    ]
+  },
+  {
+    "method": "DELETE",
+    "url": "/rooms/${id}",
+    "callers": [
+      "api\\services.js:161"
+    ]
+  },
+  {
+    "method": "DELETE",
+    "url": "/staff/leaves/${id}",
+    "callers": [
+      "api\\services.js:367"
+    ]
+  },
+  {
+    "method": "DELETE",
+    "url": "/subjects/${id}",
+    "callers": [
+      "api\\services.js:110"
+    ]
+  },
+  {
+    "method": "DELETE",
+    "url": "/teacher/substitution/clear-all-assignments",
+    "callers": [
+      "api\\services.js:330"
+    ]
+  },
+  {
+    "method": "DELETE",
+    "url": "/teacher/substitution/reset-preferences",
+    "callers": [
+      "api\\services.js:331"
+    ]
+  },
+  {
+    "method": "DELETE",
+    "url": "/teachers/${id}",
+    "callers": [
+      "api\\services.js:80"
+    ]
+  },
+  {
+    "method": "DELETE",
+    "url": "/timetable/${id}",
+    "callers": [
+      "api\\services.js:88"
+    ]
+  },
+  {
+    "method": "DELETE",
+    "url": "/timetable/submissions/${id}",
+    "callers": [
+      "api\\services.js:95"
+    ]
+  },
+  {
+    "method": "DELETE",
+    "url": "/timetable/teacher/${teacherId}",
+    "callers": [
+      "api\\services.js:89"
+    ]
+  },
+  {
+    "method": "GET",
+    "url": "/academic-calendar/academic-years",
+    "callers": [
+      "api\\services.js:179"
+    ]
+  },
+  {
+    "method": "GET",
+    "url": "/academic-calendar/days",
+    "callers": [
+      "api\\services.js:187"
+    ]
+  },
+  {
+    "method": "GET",
+    "url": "/academic-calendar/days/${date}",
+    "callers": [
+      "api\\services.js:188"
+    ]
+  },
+  {
+    "method": "GET",
+    "url": "/academic-calendar/my-today-summary",
+    "callers": [
+      "api\\services.js:207"
+    ]
+  },
+  {
+    "method": "GET",
+    "url": "/academic-calendar/reports/day-orders",
+    "callers": [
+      "api\\services.js:202"
+    ]
+  },
+  {
+    "method": "GET",
+    "url": "/academic-calendar/reports/faculty-workload",
+    "callers": [
+      "api\\services.js:203"
+    ]
+  },
+  {
+    "method": "GET",
+    "url": "/academic-calendar/reports/holidays",
+    "callers": [
+      "api\\services.js:201"
+    ]
+  },
+  {
+    "method": "GET",
+    "url": "/academic-calendar/reports/working-days",
+    "callers": [
+      "api\\services.js:200"
+    ]
+  },
+  {
+    "method": "GET",
+    "url": "/academic-calendar/resolve",
+    "callers": [
+      "api\\services.js:197"
+    ]
+  },
+  {
+    "method": "GET",
+    "url": "/academic-calendar/semesters",
+    "callers": [
+      "api\\services.js:183"
+    ]
+  },
+  {
+    "method": "GET",
+    "url": "/academic-calendar/today-summary",
+    "callers": [
+      "api\\services.js:206"
+    ]
+  },
+  {
+    "method": "GET",
+    "url": "/admin/audit-logs",
+    "callers": [
+      "api\\services.js:25"
+    ]
+  },
+  {
+    "method": "GET",
+    "url": "/admin/backups",
+    "callers": [
+      "api\\services.js:51"
+    ]
+  },
+  {
+    "method": "GET",
+    "url": "/admin/backups/${id}",
+    "callers": [
+      "api\\services.js:56"
+    ]
+  },
+  {
+    "method": "GET",
+    "url": "/admin/backups/${id}/download",
+    "callers": [
+      "api\\services.js:57"
+    ]
+  },
+  {
+    "method": "GET",
+    "url": "/admin/backups/schedule",
+    "callers": [
+      "api\\services.js:53"
+    ]
+  },
+  {
+    "method": "GET",
+    "url": "/admin/backups/summary",
+    "callers": [
+      "api\\services.js:52"
+    ]
+  },
+  {
+    "method": "GET",
+    "url": "/admin/data-retention/policy",
+    "callers": [
+      "api\\services.js:66"
+    ]
+  },
+  {
+    "method": "GET",
+    "url": "/admin/data-retention/stats",
+    "callers": [
+      "api\\services.js:65"
+    ]
+  },
+  {
+    "method": "GET",
+    "url": "/admin/global-users",
+    "callers": [
+      "api\\services.js:31"
+    ]
+  },
+  {
+    "method": "GET",
+    "url": "/admin/managers",
+    "callers": [
+      "api\\services.js:344"
+    ]
+  },
+  {
+    "method": "GET",
+    "url": "/admin/managers/${id}",
+    "callers": [
+      "api\\services.js:346"
+    ]
+  },
+  {
+    "method": "GET",
+    "url": "/admin/master-export",
+    "callers": [
+      "api\\services.js:35"
+    ]
+  },
+  {
+    "method": "GET",
+    "url": "/admin/secondary-admins",
+    "callers": [
+      "api\\services.js:21"
+    ]
+  },
+  {
+    "method": "GET",
+    "url": "/admin/setup-readiness",
+    "callers": [
+      "api\\services.js:39"
+    ]
+  },
+  {
+    "method": "GET",
+    "url": "/admin/system-metrics",
+    "callers": [
+      "api\\services.js:33"
+    ]
+  },
+  {
+    "method": "GET",
+    "url": "/announcements",
+    "callers": [
+      "api\\announcements.js:4"
+    ]
+  },
+  {
+    "method": "GET",
+    "url": "/announcements/${announcementId}/mention-candidates",
+    "callers": [
+      "api\\announcements.js:28"
+    ]
+  },
+  {
+    "method": "GET",
+    "url": "/announcements/${announcementId}/messages",
+    "callers": [
+      "api\\announcements.js:26"
+    ]
+  },
+  {
+    "method": "GET",
+    "url": "/announcements/${id}",
+    "callers": [
+      "api\\announcements.js:12"
+    ]
+  },
+  {
+    "method": "GET",
+    "url": "/announcements/${id}/analytics",
+    "callers": [
+      "api\\announcements.js:24"
+    ]
+  },
+  {
+    "method": "GET",
+    "url": "/announcements/candidates",
+    "callers": [
+      "api\\announcements.js:8"
+    ]
+  },
+  {
+    "method": "GET",
+    "url": "/announcements/unread-count",
+    "callers": [
+      "api\\announcements.js:6"
+    ]
+  },
+  {
+    "method": "GET",
+    "url": "/attendance/admin/live-status",
+    "callers": [
+      "api\\services.js:413"
+    ]
+  },
+  {
+    "method": "GET",
+    "url": "/attendance/my",
+    "callers": [
+      "api\\services.js:412"
+    ]
+  },
+  {
+    "method": "GET",
+    "url": "/attendance/today",
+    "callers": [
+      "api\\services.js:405",
+      "api\\services.js:411"
+    ]
+  },
+  {
+    "method": "GET",
+    "url": "/campus-duties",
+    "callers": [
+      "api\\services.js:496"
+    ]
+  },
+  {
+    "method": "GET",
+    "url": "/campus-duties/${dutyId}/candidates",
+    "callers": [
+      "api\\services.js:506"
+    ]
+  },
+  {
+    "method": "GET",
+    "url": "/campus-duties/${id}",
+    "callers": [
+      "api\\services.js:497"
+    ]
+  },
+  {
+    "method": "GET",
+    "url": "/campus-duties/areas",
+    "callers": [
+      "api\\services.js:514"
+    ]
+  },
+  {
+    "method": "GET",
+    "url": "/campus-duties/break-periods",
+    "callers": [
+      "api\\services.js:516"
+    ]
+  },
+  {
+    "method": "GET",
+    "url": "/campus-duties/metrics",
+    "callers": [
+      "api\\services.js:513"
+    ]
+  },
+  {
+    "method": "GET",
+    "url": "/campus-duties/my",
+    "callers": [
+      "api\\services.js:495"
+    ]
+  },
+  {
+    "method": "GET",
+    "url": "/campus-duties/next-6-day-orders",
+    "callers": [
+      "api\\services.js:504"
+    ]
+  },
+  {
+    "method": "GET",
+    "url": "/campus-duties/rules",
+    "callers": [
+      "api\\services.js:527"
+    ]
+  },
+  {
+    "method": "GET",
+    "url": "/campus-operations/cross-department-substitutions",
+    "callers": [
+      "api\\services.js:299"
+    ]
+  },
+  {
+    "method": "GET",
+    "url": "/campus-operations/mode",
+    "callers": [
+      "api\\services.js:289"
+    ]
+  },
+  {
+    "method": "GET",
+    "url": "/campus-operations/preferences/${teacherId}",
+    "callers": [
+      "api\\services.js:293"
+    ]
+  },
+  {
+    "method": "GET",
+    "url": "/campus-operations/preferences/me",
+    "callers": [
+      "api\\services.js:291"
+    ]
+  },
+  {
+    "method": "GET",
+    "url": "/campus-operations/system-analytics",
+    "callers": [
+      "api\\services.js:296"
+    ]
+  },
+  {
+    "method": "GET",
+    "url": "/campus-structure/blocks",
+    "callers": [
+      "api\\services.js:460"
+    ]
+  },
+  {
+    "method": "GET",
+    "url": "/campus-structure/blocks/${blockId}/floors",
+    "callers": [
+      "api\\services.js:467"
+    ]
+  },
+  {
+    "method": "GET",
+    "url": "/campus-structure/export",
+    "callers": [
+      "api\\services.js:481"
+    ]
+  },
+  {
+    "method": "GET",
+    "url": "/campus-structure/metrics",
+    "callers": [
+      "api\\services.js:456"
+    ]
+  },
+  {
+    "method": "GET",
+    "url": "/campus-structure/search",
+    "callers": [
+      "api\\services.js:457"
+    ]
+  },
+  {
+    "method": "GET",
+    "url": "/campus-structure/tree",
+    "callers": [
+      "api\\services.js:455"
+    ]
+  },
+  {
+    "method": "GET",
+    "url": "/classes/",
+    "callers": [
+      "api\\services.js:116"
+    ]
+  },
+  {
+    "method": "GET",
+    "url": "/classes/${classId}/effective-roster",
+    "callers": [
+      "api\\services.js:135"
+    ]
+  },
+  {
+    "method": "GET",
+    "url": "/classes/${classId}/roll-rule",
+    "callers": [
+      "api\\services.js:127"
+    ]
+  },
+  {
+    "method": "GET",
+    "url": "/classes/${id}/faculty",
+    "callers": [
+      "api\\services.js:122"
+    ]
+  },
+  {
+    "method": "GET",
+    "url": "/classes/directory",
+    "callers": [
+      "api\\services.js:121"
+    ]
+  },
+  {
+    "method": "GET",
+    "url": "/credits/my/transactions",
+    "callers": [
+      "api\\services.js:315"
+    ]
+  },
+  {
+    "method": "GET",
+    "url": "/credits/report",
+    "callers": [
+      "api\\services.js:317"
+    ]
+  },
+  {
+    "method": "GET",
+    "url": "/credits/transactions",
+    "callers": [
+      "api\\services.js:316"
+    ]
+  },
+  {
+    "method": "GET",
+    "url": "/day-order-calendar/",
+    "callers": [
+      "api\\services.js:171"
+    ]
+  },
+  {
+    "method": "GET",
+    "url": "/day-order-calendar/resolve",
+    "callers": [
+      "api\\services.js:173"
+    ]
+  },
+  {
+    "method": "GET",
+    "url": "/departments/",
+    "callers": [
+      "api\\services.js:100"
+    ]
+  },
+  {
+    "method": "GET",
+    "url": "/geofences/",
+    "callers": [
+      "api\\services.js:390"
+    ]
+  },
+  {
+    "method": "GET",
+    "url": "/geofences/${id}",
+    "callers": [
+      "api\\services.js:392"
+    ]
+  },
+  {
+    "method": "GET",
+    "url": "/geofences/active",
+    "callers": [
+      "api\\services.js:391"
+    ]
+  },
+  {
+    "method": "GET",
+    "url": "/governance/candidates/${leaveId}",
+    "callers": [
+      "api\\services.js:384"
+    ]
+  },
+  {
+    "method": "GET",
+    "url": "/governance/overview",
+    "callers": [
+      "api\\services.js:382"
+    ]
+  },
+  {
+    "method": "GET",
+    "url": "/governance/search",
+    "callers": [
+      "api\\services.js:383"
+    ]
+  },
+  {
+    "method": "GET",
+    "url": "/intelligence/events",
+    "callers": [
+      "api\\services.js:448"
+    ]
+  },
+  {
+    "method": "GET",
+    "url": "/intelligence/events/${id}",
+    "callers": [
+      "api\\services.js:449"
+    ]
+  },
+  {
+    "method": "GET",
+    "url": "/intelligence/live",
+    "callers": [
+      "api\\services.js:447"
+    ]
+  },
+  {
+    "method": "GET",
+    "url": "/leave-balances/${teacherId}/ledger",
+    "callers": [
+      "api\\services.js:266"
+    ]
+  },
+  {
+    "method": "GET",
+    "url": "/leave-balances/department",
+    "callers": [
+      "api\\services.js:263"
+    ]
+  },
+  {
+    "method": "GET",
+    "url": "/leave-balances/department/${teacherId}",
+    "callers": [
+      "api\\services.js:265"
+    ]
+  },
+  {
+    "method": "GET",
+    "url": "/leave-balances/me",
+    "callers": [
+      "api\\services.js:252"
+    ]
+  },
+  {
+    "method": "GET",
+    "url": "/leave-balances/me/${leaveType}",
+    "callers": [
+      "api\\services.js:253"
+    ]
+  },
+  {
+    "method": "GET",
+    "url": "/leave-policies/${id}",
+    "callers": [
+      "api\\services.js:246"
+    ]
+  },
+  {
+    "method": "GET",
+    "url": "/leave-policies/active",
+    "callers": [
+      "api\\services.js:244",
+      "api\\services.js:245",
+      "api\\services.js:254"
+    ]
+  },
+  {
+    "method": "GET",
+    "url": "/leaves/",
+    "callers": [
+      "api\\services.js:214"
+    ]
+  },
+  {
+    "method": "GET",
+    "url": "/leaves/${id}/cancel-impact",
+    "callers": [
+      "api\\services.js:229"
+    ]
+  },
+  {
+    "method": "GET",
+    "url": "/leaves/${id}/free-teachers",
+    "callers": [
+      "api\\services.js:220"
+    ]
+  },
+  {
+    "method": "GET",
+    "url": "/leaves/${id}/recommendations",
+    "callers": [
+      "api\\services.js:222"
+    ]
+  },
+  {
+    "method": "GET",
+    "url": "/leaves/my",
+    "callers": [
+      "api\\services.js:213"
+    ]
+  },
+  {
+    "method": "GET",
+    "url": "/leaves/slot-candidates",
+    "callers": [
+      "api\\services.js:231"
+    ]
+  },
+  {
+    "method": "GET",
+    "url": "/manager/credits",
+    "callers": [
+      "api\\services.js:375"
+    ]
+  },
+  {
+    "method": "GET",
+    "url": "/manager/credits/${staffId}/ledger",
+    "callers": [
+      "api\\services.js:376"
+    ]
+  },
+  {
+    "method": "GET",
+    "url": "/manager/dashboard",
+    "callers": [
+      "api\\services.js:352"
+    ]
+  },
+  {
+    "method": "GET",
+    "url": "/manager/labs",
+    "callers": [
+      "api\\services.js:359"
+    ]
+  },
+  {
+    "method": "GET",
+    "url": "/manager/leaves",
+    "callers": [
+      "api\\services.js:372"
+    ]
+  },
+  {
+    "method": "GET",
+    "url": "/manager/staff",
+    "callers": [
+      "api\\services.js:353"
+    ]
+  },
+  {
+    "method": "GET",
+    "url": "/manager/staff/${id}",
+    "callers": [
+      "api\\services.js:355"
+    ]
+  },
+  {
+    "method": "GET",
+    "url": "/notifications/",
+    "callers": [
+      "api\\services.js:304"
+    ]
+  },
+  {
+    "method": "GET",
+    "url": "/notifications/unread-count",
+    "callers": [
+      "api\\services.js:305"
+    ]
+  },
+  {
+    "method": "GET",
+    "url": "/notifications/vapid-public-key",
+    "callers": [
+      "api\\services.js:308"
+    ]
+  },
+  {
+    "method": "GET",
+    "url": "/policy-settings/enforcement-mode",
+    "callers": [
+      "api\\services.js:237"
+    ]
+  },
+  {
+    "method": "GET",
+    "url": "/policy-settings/enforcement-mode/audit",
+    "callers": [
+      "api\\services.js:239"
+    ]
+  },
+  {
+    "method": "GET",
+    "url": "/policy-settings/enforcement-mode/compliance-report",
+    "callers": [
+      "api\\services.js:240"
+    ]
+  },
+  {
+    "method": "GET",
+    "url": "/policy/current",
+    "callers": [
+      "api\\services.js:13"
+    ]
+  },
+  {
+    "method": "GET",
+    "url": "/principal/overview",
+    "callers": [
+      "pages\\admin\\PrincipalDashboard.jsx:1221"
+    ]
+  },
+  {
+    "method": "GET",
+    "url": "/rooms/",
+    "callers": [
+      "api\\services.js:156"
+    ]
+  },
+  {
+    "method": "GET",
+    "url": "/rooms/${roomId}/check-availability",
+    "callers": [
+      "api\\services.js:165"
+    ]
+  },
+  {
+    "method": "GET",
+    "url": "/rooms/availability/dashboard",
+    "callers": [
+      "api\\services.js:163"
+    ]
+  },
+  {
+    "method": "GET",
+    "url": "/rooms/occupancy",
+    "callers": [
+      "api\\services.js:166"
+    ]
+  },
+  {
+    "method": "GET",
+    "url": "/settings/public",
+    "callers": [
+      "api\\services.js:4"
+    ]
+  },
+  {
+    "method": "GET",
+    "url": "/staff/dashboard",
+    "callers": [
+      "api\\services.js:364"
+    ]
+  },
+  {
+    "method": "GET",
+    "url": "/staff/leaves",
+    "callers": [
+      "api\\services.js:366"
+    ]
+  },
+  {
+    "method": "GET",
+    "url": "/staff/ledger",
+    "callers": [
+      "api\\services.js:368"
+    ]
+  },
+  {
+    "method": "GET",
+    "url": "/staff/me",
+    "callers": [
+      "api\\services.js:363"
+    ]
+  },
+  {
+    "method": "GET",
+    "url": "/student-attendance/absentees/live",
+    "callers": [
+      "api\\services.js:442"
+    ]
+  },
+  {
+    "method": "GET",
+    "url": "/student-attendance/classes/${classId}/eod-summary",
+    "callers": [
+      "api\\services.js:443"
+    ]
+  },
+  {
+    "method": "GET",
+    "url": "/student-attendance/classes/${classId}/roster",
+    "callers": [
+      "api\\services.js:418"
+    ]
+  },
+  {
+    "method": "GET",
+    "url": "/student-attendance/hod/overview",
+    "callers": [
+      "api\\services.js:424"
+    ]
+  },
+  {
+    "method": "GET",
+    "url": "/student-attendance/principal/classes/${classId}/matrix",
+    "callers": [
+      "api\\services.js:435"
+    ]
+  },
+  {
+    "method": "GET",
+    "url": "/student-attendance/principal/exceptions",
+    "callers": [
+      "api\\services.js:438"
+    ]
+  },
+  {
+    "method": "GET",
+    "url": "/student-attendance/principal/export",
+    "callers": [
+      "api\\services.js:441"
+    ]
+  },
+  {
+    "method": "GET",
+    "url": "/student-attendance/principal/overview",
+    "callers": [
+      "api\\services.js:432"
+    ]
+  },
+  {
+    "method": "GET",
+    "url": "/student-attendance/principal/sessions",
+    "callers": [
+      "api\\services.js:434"
+    ]
+  },
+  {
+    "method": "GET",
+    "url": "/student-attendance/principal/students/${studentId}",
+    "callers": [
+      "api\\services.js:436"
+    ]
+  },
+  {
+    "method": "GET",
+    "url": "/student-attendance/principal/teacher-compliance",
+    "callers": [
+      "api\\services.js:437"
+    ]
+  },
+  {
+    "method": "GET",
+    "url": "/student-attendance/sessions/${sessionId}",
+    "callers": [
+      "api\\services.js:419"
+    ]
+  },
+  {
+    "method": "GET",
+    "url": "/student-attendance/today",
+    "callers": [
+      "api\\services.js:417"
+    ]
+  },
+  {
+    "method": "GET",
+    "url": "/subjects/",
+    "callers": [
+      "api\\services.js:107"
+    ]
+  },
+  {
+    "method": "GET",
+    "url": "/substitutions/today",
+    "callers": [
+      "api\\services.js:340"
+    ]
+  },
+  {
+    "method": "GET",
+    "url": "/system/governance/history",
+    "callers": [
+      "api\\governanceApi.js:34"
+    ]
+  },
+  {
+    "method": "GET",
+    "url": "/system/governance/periods",
+    "callers": [
+      "api\\governanceApi.js:48"
+    ]
+  },
+  {
+    "method": "GET",
+    "url": "/system/governance/public-config",
+    "callers": [
+      "api\\governanceApi.js:58"
+    ]
+  },
+  {
+    "method": "GET",
+    "url": "/system/governance/rules",
+    "callers": [
+      "api\\governanceApi.js:12"
+    ]
+  },
+  {
+    "method": "GET",
+    "url": "/system/governance/rules/${encodeURIComponent(key)}",
+    "callers": [
+      "api\\governanceApi.js:16"
+    ]
+  },
+  {
+    "method": "GET",
+    "url": "/system/governance/rules/${encodeURIComponent(key)}/history",
+    "callers": [
+      "api\\governanceApi.js:38"
+    ]
+  },
+  {
+    "method": "GET",
+    "url": "/teacher/substitution/config",
+    "callers": [
+      "api\\services.js:335"
+    ]
+  },
+  {
+    "method": "GET",
+    "url": "/teacher/substitution/enabled",
+    "callers": [
+      "api\\services.js:322"
+    ]
+  },
+  {
+    "method": "GET",
+    "url": "/teacher/substitution/leave/${leaveId}/candidates",
+    "callers": [
+      "api\\services.js:324"
+    ]
+  },
+  {
+    "method": "GET",
+    "url": "/teacher/substitution/leave/${leaveId}/free-teachers",
+    "callers": [
+      "api\\services.js:325"
+    ]
+  },
+  {
+    "method": "GET",
+    "url": "/teacher/substitution/my-leaves",
+    "callers": [
+      "api\\services.js:323"
+    ]
+  },
+  {
+    "method": "GET",
+    "url": "/teachers/",
+    "callers": [
+      "api\\services.js:74",
+      "api\\services.js:401"
+    ]
+  },
+  {
+    "method": "GET",
+    "url": "/teachers/${id}/credits",
+    "callers": [
+      "api\\services.js:79"
+    ]
+  },
+  {
+    "method": "GET",
+    "url": "/teachers/me",
+    "callers": [
+      "api\\services.js:78"
+    ]
+  },
+  {
+    "method": "GET",
+    "url": "/timetable/class/${classId}",
+    "callers": [
+      "api\\services.js:85"
+    ]
+  },
+  {
+    "method": "GET",
+    "url": "/timetable/submissions/my",
+    "callers": [
+      "api\\services.js:91"
+    ]
+  },
+  {
+    "method": "GET",
+    "url": "/timetable/submissions/pending",
+    "callers": [
+      "api\\services.js:92"
+    ]
+  },
+  {
+    "method": "GET",
+    "url": "/timetable/teacher/${teacherId}",
+    "callers": [
+      "api\\services.js:84"
+    ]
+  },
+  {
+    "method": "PATCH",
+    "url": "/admin/secondary-admins/${id}/disable",
+    "callers": [
+      "api\\services.js:24"
+    ]
+  },
+  {
+    "method": "PATCH",
+    "url": "/admin/secondary-admins/${id}/enable",
+    "callers": [
+      "api\\services.js:23"
+    ]
+  },
+  {
+    "method": "PATCH",
+    "url": "/announcements/${id}",
+    "callers": [
+      "api\\announcements.js:14"
+    ]
+  },
+  {
+    "method": "PATCH",
+    "url": "/classes/${classId}/students/${studentId}",
+    "callers": [
+      "api\\services.js:145"
+    ]
+  },
+  {
+    "method": "PATCH",
+    "url": "/classes/${id}",
+    "callers": [
+      "api\\services.js:119"
+    ]
+  },
+  {
+    "method": "PATCH",
+    "url": "/departments/${id}",
+    "callers": [
+      "api\\services.js:102"
+    ]
+  },
+  {
+    "method": "PATCH",
+    "url": "/geofences/${id}/toggle",
+    "callers": [
+      "api\\services.js:395"
+    ]
+  },
+  {
+    "method": "PATCH",
+    "url": "/intelligence/events/${id}/acknowledge",
+    "callers": [
+      "api\\services.js:450"
+    ]
+  },
+  {
+    "method": "PATCH",
+    "url": "/leaves/${id}/approve",
+    "callers": [
+      "api\\services.js:215"
+    ]
+  },
+  {
+    "method": "PATCH",
+    "url": "/leaves/${id}/approve-with-exception",
+    "callers": [
+      "api\\services.js:233"
+    ]
+  },
+  {
+    "method": "PATCH",
+    "url": "/leaves/${id}/reject",
+    "callers": [
+      "api\\services.js:216"
+    ]
+  },
+  {
+    "method": "PATCH",
+    "url": "/manager/staff/${id}/status",
+    "callers": [
+      "api\\services.js:357"
+    ]
+  },
+  {
+    "method": "PATCH",
+    "url": "/notifications/${id}/read",
+    "callers": [
+      "api\\services.js:306"
+    ]
+  },
+  {
+    "method": "PATCH",
+    "url": "/notifications/read-all",
+    "callers": [
+      "api\\services.js:307"
+    ]
+  },
+  {
+    "method": "PATCH",
+    "url": "/policy-settings/enforcement-mode",
+    "callers": [
+      "api\\services.js:238"
+    ]
+  },
+  {
+    "method": "PATCH",
+    "url": "/rooms/${id}",
+    "callers": [
+      "api\\services.js:160"
+    ]
+  },
+  {
+    "method": "PATCH",
+    "url": "/student-attendance/sessions/${sessionId}/students/${studentId}",
+    "callers": [
+      "api\\services.js:423"
+    ]
+  },
+  {
+    "method": "PATCH",
+    "url": "/subjects/${id}",
+    "callers": [
+      "api\\services.js:109"
+    ]
+  },
+  {
+    "method": "PATCH",
+    "url": "/subjects/${id}/archive",
+    "callers": [
+      "api\\services.js:111"
+    ]
+  },
+  {
+    "method": "PATCH",
+    "url": "/subjects/${id}/unarchive",
+    "callers": [
+      "api\\services.js:112"
+    ]
+  },
+  {
+    "method": "POST",
+    "url": "/academic-calendar/academic-years",
+    "callers": [
+      "api\\services.js:180"
+    ]
+  },
+  {
+    "method": "POST",
+    "url": "/academic-calendar/days/bulk-mark",
+    "callers": [
+      "api\\services.js:190"
+    ]
+  },
+  {
+    "method": "POST",
+    "url": "/academic-calendar/days/day-order/assign",
+    "callers": [
+      "api\\services.js:191"
+    ]
+  },
+  {
+    "method": "POST",
+    "url": "/academic-calendar/days/day-order/skip",
+    "callers": [
+      "api\\services.js:192"
+    ]
+  },
+  {
+    "method": "POST",
+    "url": "/academic-calendar/days/mark",
+    "callers": [
+      "api\\services.js:189"
+    ]
+  },
+  {
+    "method": "POST",
+    "url": "/academic-calendar/semesters",
+    "callers": [
+      "api\\services.js:184"
+    ]
+  },
+  {
+    "method": "POST",
+    "url": "/academic-years/rollover/execute",
+    "callers": [
+      "api\\services.js:143"
+    ]
+  },
+  {
+    "method": "POST",
+    "url": "/academic-years/rollover/preview",
+    "callers": [
+      "api\\services.js:141"
+    ]
+  },
+  {
+    "method": "POST",
+    "url": "/admin/backups",
+    "callers": [
+      "api\\services.js:43"
+    ]
+  },
+  {
+    "method": "POST",
+    "url": "/admin/backups/${id}/restore",
+    "callers": [
+      "api\\services.js:60"
+    ]
+  },
+  {
+    "method": "POST",
+    "url": "/admin/backups/${id}/validate",
+    "callers": [
+      "api\\services.js:58"
+    ]
+  },
+  {
+    "method": "POST",
+    "url": "/admin/backups/import",
+    "callers": [
+      "api\\services.js:47"
+    ]
+  },
+  {
+    "method": "POST",
+    "url": "/admin/backups/schedule/run-now",
+    "callers": [
+      "api\\services.js:55"
+    ]
+  },
+  {
+    "method": "POST",
+    "url": "/admin/clear-credits-history",
+    "callers": [
+      "api\\services.js:27"
+    ]
+  },
+  {
+    "method": "POST",
+    "url": "/admin/clear-leaves-history",
+    "callers": [
+      "api\\services.js:28"
+    ]
+  },
+  {
+    "method": "POST",
+    "url": "/admin/data-retention/preview",
+    "callers": [
+      "api\\services.js:69"
+    ]
+  },
+  {
+    "method": "POST",
+    "url": "/admin/data-retention/purge",
+    "callers": [
+      "api\\services.js:70"
+    ]
+  },
+  {
+    "method": "POST",
+    "url": "/admin/data-retention/run-auto-cleanup",
+    "callers": [
+      "api\\services.js:68"
+    ]
+  },
+  {
+    "method": "POST",
+    "url": "/admin/factory-reset",
+    "callers": [
+      "api\\services.js:26"
+    ]
+  },
+  {
+    "method": "POST",
+    "url": "/admin/first-login/setup",
+    "callers": [
+      "api\\services.js:20"
+    ]
+  },
+  {
+    "method": "POST",
+    "url": "/admin/managers",
+    "callers": [
+      "api\\services.js:345"
+    ]
+  },
+  {
+    "method": "POST",
+    "url": "/admin/principal",
+    "callers": [
+      "api\\services.js:30"
+    ]
+  },
+  {
+    "method": "POST",
+    "url": "/admin/secondary-admins",
+    "callers": [
+      "api\\services.js:22"
+    ]
+  },
+  {
+    "method": "POST",
+    "url": "/admin/system-metrics/clear-traffic",
+    "callers": [
+      "api\\services.js:34"
+    ]
+  },
+  {
+    "method": "POST",
+    "url": "/announcements",
+    "callers": [
+      "api\\announcements.js:10"
+    ]
+  },
+  {
+    "method": "POST",
+    "url": "/announcements/${announcementId}/messages",
+    "callers": [
+      "api\\announcements.js:30"
+    ]
+  },
+  {
+    "method": "POST",
+    "url": "/announcements/${id}/acknowledge",
+    "callers": [
+      "api\\announcements.js:22"
+    ]
+  },
+  {
+    "method": "POST",
+    "url": "/announcements/${id}/publish",
+    "callers": [
+      "api\\announcements.js:18"
+    ]
+  },
+  {
+    "method": "POST",
+    "url": "/announcements/${id}/read",
+    "callers": [
+      "api\\announcements.js:20"
+    ]
+  },
+  {
+    "method": "POST",
+    "url": "/announcements/attachments/presign",
+    "callers": [
+      "api\\announcements.js:38"
+    ]
+  },
+  {
+    "method": "POST",
+    "url": "/announcements/messages/${messageId}/pin",
+    "callers": [
+      "api\\announcements.js:34"
+    ]
+  },
+  {
+    "method": "POST",
+    "url": "/announcements/messages/${messageId}/reactions",
+    "callers": [
+      "api\\announcements.js:36"
+    ]
+  },
+  {
+    "method": "POST",
+    "url": "/attendance/check-in",
+    "callers": [
+      "api\\services.js:409"
+    ]
+  },
+  {
+    "method": "POST",
+    "url": "/attendance/check-out",
+    "callers": [
+      "api\\services.js:410"
+    ]
+  },
+  {
+    "method": "POST",
+    "url": "/auth/login",
+    "callers": [
+      "api\\services.js:8"
+    ]
+  },
+  {
+    "method": "POST",
+    "url": "/auth/register",
+    "callers": [
+      "api\\services.js:9"
+    ]
+  },
+  {
+    "method": "POST",
+    "url": "/campus-duties",
+    "callers": [
+      "api\\services.js:498"
+    ]
+  },
+  {
+    "method": "POST",
+    "url": "/campus-duties/${dutyId}/assign",
+    "callers": [
+      "api\\services.js:509"
+    ]
+  },
+  {
+    "method": "POST",
+    "url": "/campus-duties/${dutyId}/auto-assign",
+    "callers": [
+      "api\\services.js:507"
+    ]
+  },
+  {
+    "method": "POST",
+    "url": "/campus-duties/${dutyId}/lock",
+    "callers": [
+      "api\\services.js:511"
+    ]
+  },
+  {
+    "method": "POST",
+    "url": "/campus-duties/${dutyId}/reset",
+    "callers": [
+      "api\\services.js:522"
+    ]
+  },
+  {
+    "method": "POST",
+    "url": "/campus-duties/${dutyId}/toggle-active",
+    "callers": [
+      "api\\services.js:523"
+    ]
+  },
+  {
+    "method": "POST",
+    "url": "/campus-duties/areas",
+    "callers": [
+      "api\\services.js:515"
+    ]
+  },
+  {
+    "method": "POST",
+    "url": "/campus-duties/assignments/${assignmentId}/override",
+    "callers": [
+      "api\\services.js:510"
+    ]
+  },
+  {
+    "method": "POST",
+    "url": "/campus-duties/assignments/${assignmentId}/replace",
+    "callers": [
+      "api\\services.js:512"
+    ]
+  },
+  {
+    "method": "POST",
+    "url": "/campus-duties/auto-assign-all",
+    "callers": [
+      "api\\services.js:508"
+    ]
+  },
+  {
+    "method": "POST",
+    "url": "/campus-duties/auto-replace-absent",
+    "callers": [
+      "api\\services.js:521"
+    ]
+  },
+  {
+    "method": "POST",
+    "url": "/campus-duties/autonomous-activate",
+    "callers": [
+      "api\\services.js:503"
+    ]
+  },
+  {
+    "method": "POST",
+    "url": "/campus-duties/autonomous-toggle",
+    "callers": [
+      "api\\services.js:505"
+    ]
+  },
+  {
+    "method": "POST",
+    "url": "/campus-duties/break-periods",
+    "callers": [
+      "api\\services.js:517"
+    ]
+  },
+  {
+    "method": "POST",
+    "url": "/campus-duties/bulk-delete",
+    "callers": [
+      "api\\services.js:525"
+    ]
+  },
+  {
+    "method": "POST",
+    "url": "/campus-duties/bulk-reset",
+    "callers": [
+      "api\\services.js:526"
+    ]
+  },
+  {
+    "method": "POST",
+    "url": "/campus-duties/generate-discipline",
+    "callers": [
+      "api\\services.js:499"
+    ]
+  },
+  {
+    "method": "POST",
+    "url": "/campus-duties/generate-exam-duties",
+    "callers": [
+      "api\\services.js:501"
+    ]
+  },
+  {
+    "method": "POST",
+    "url": "/campus-duties/generate-wing-duties",
+    "callers": [
+      "api\\services.js:500"
+    ]
+  },
+  {
+    "method": "POST",
+    "url": "/campus-duties/reset-break-periods",
+    "callers": [
+      "api\\services.js:520"
+    ]
+  },
+  {
+    "method": "POST",
+    "url": "/campus-operations/bulk-config",
+    "callers": [
+      "api\\services.js:298"
+    ]
+  },
+  {
+    "method": "POST",
+    "url": "/campus-operations/dry-run",
+    "callers": [
+      "api\\services.js:297"
+    ]
+  },
+  {
+    "method": "POST",
+    "url": "/campus-structure/blocks",
+    "callers": [
+      "api\\services.js:461"
+    ]
+  },
+  {
+    "method": "POST",
+    "url": "/campus-structure/blocks/${blockId}/allocate-departments",
+    "callers": [
+      "api\\services.js:477"
+    ]
+  },
+  {
+    "method": "POST",
+    "url": "/campus-structure/blocks/${blockId}/bulk-assign-department",
+    "callers": [
+      "api\\services.js:476"
+    ]
+  },
+  {
+    "method": "POST",
+    "url": "/campus-structure/blocks/${blockId}/duties/configure-and-assign",
+    "callers": [
+      "api\\services.js:478"
+    ]
+  },
+  {
+    "method": "POST",
+    "url": "/campus-structure/blocks/${id}/duplicate",
+    "callers": [
+      "api\\services.js:464"
+    ]
+  },
+  {
+    "method": "POST",
+    "url": "/campus-structure/floors",
+    "callers": [
+      "api\\services.js:468"
+    ]
+  },
+  {
+    "method": "POST",
+    "url": "/campus-structure/floors/${floorId}/bulk-assign-department",
+    "callers": [
+      "api\\services.js:475"
+    ]
+  },
+  {
+    "method": "POST",
+    "url": "/campus-structure/generate-rooms",
+    "callers": [
+      "api\\services.js:472"
+    ]
+  },
+  {
+    "method": "POST",
+    "url": "/campus-structure/import/commit",
+    "callers": [
+      "api\\services.js:490"
+    ]
+  },
+  {
+    "method": "POST",
+    "url": "/campus-structure/import/validate",
+    "callers": [
+      "api\\services.js:485"
+    ]
+  },
+  {
+    "method": "POST",
+    "url": "/campus-structure/preview-rooms",
+    "callers": [
+      "api\\services.js:471"
+    ]
+  },
+  {
+    "method": "POST",
+    "url": "/campus-structure/rooms/bulk-assign",
+    "callers": [
+      "api\\services.js:474"
+    ]
+  },
+  {
+    "method": "POST",
+    "url": "/campus-structure/smart-autofill",
+    "callers": [
+      "api\\services.js:473"
+    ]
+  },
+  {
+    "method": "POST",
+    "url": "/classes/",
+    "callers": [
+      "api\\services.js:117"
+    ]
+  },
+  {
+    "method": "POST",
+    "url": "/classes/${classId}/roll-exceptions",
+    "callers": [
+      "api\\services.js:131"
+    ]
+  },
+  {
+    "method": "POST",
+    "url": "/classes/${classId}/roll-rule",
+    "callers": [
+      "api\\services.js:129"
+    ]
+  },
+  {
+    "method": "POST",
+    "url": "/classes/${classId}/roster/clear-all",
+    "callers": [
+      "api\\services.js:149"
+    ]
+  },
+  {
+    "method": "POST",
+    "url": "/classes/${classId}/students/import/commit",
+    "callers": [
+      "api\\services.js:139"
+    ]
+  },
+  {
+    "method": "POST",
+    "url": "/classes/${classId}/students/import/preview",
+    "callers": [
+      "api\\services.js:137"
+    ]
+  },
+  {
+    "method": "POST",
+    "url": "/classes/bulk",
+    "callers": [
+      "api\\services.js:118"
+    ]
+  },
+  {
+    "method": "POST",
+    "url": "/credits/adjust",
+    "callers": [
+      "api\\services.js:318"
+    ]
+  },
+  {
+    "method": "POST",
+    "url": "/day-order-calendar/bulk-set",
+    "callers": [
+      "api\\services.js:172"
+    ]
+  },
+  {
+    "method": "POST",
+    "url": "/departments/",
+    "callers": [
+      "api\\services.js:101"
+    ]
+  },
+  {
+    "method": "POST",
+    "url": "/departments/${deptId}/admin",
+    "callers": [
+      "api\\services.js:29"
+    ]
+  },
+  {
+    "method": "POST",
+    "url": "/geofences/",
+    "callers": [
+      "api\\services.js:393"
+    ]
+  },
+  {
+    "method": "POST",
+    "url": "/geofences/test-location",
+    "callers": [
+      "api\\services.js:397"
+    ]
+  },
+  {
+    "method": "POST",
+    "url": "/governance/assign-substitute",
+    "callers": [
+      "api\\services.js:386"
+    ]
+  },
+  {
+    "method": "POST",
+    "url": "/governance/emergency-override",
+    "callers": [
+      "api\\services.js:385"
+    ]
+  },
+  {
+    "method": "POST",
+    "url": "/leave-balances/${teacherIdOrPayload}/adjust",
+    "callers": [
+      "api\\services.js:278"
+    ]
+  },
+  {
+    "method": "POST",
+    "url": "/leave-balances/${teacher_id}/adjust",
+    "callers": [
+      "api\\services.js:270"
+    ]
+  },
+  {
+    "method": "POST",
+    "url": "/leaves/",
+    "callers": [
+      "api\\services.js:211"
+    ]
+  },
+  {
+    "method": "POST",
+    "url": "/leaves/${id}/admin-cancel",
+    "callers": [
+      "api\\services.js:228"
+    ]
+  },
+  {
+    "method": "POST",
+    "url": "/leaves/${id}/assign",
+    "callers": [
+      "api\\services.js:219"
+    ]
+  },
+  {
+    "method": "POST",
+    "url": "/leaves/${id}/assign-recommended",
+    "callers": [
+      "api\\services.js:223"
+    ]
+  },
+  {
+    "method": "POST",
+    "url": "/leaves/${id}/cancel",
+    "callers": [
+      "api\\services.js:227"
+    ]
+  },
+  {
+    "method": "POST",
+    "url": "/leaves/${id}/lock",
+    "callers": [
+      "api\\services.js:226"
+    ]
+  },
+  {
+    "method": "POST",
+    "url": "/leaves/${id}/override",
+    "callers": [
+      "api\\services.js:224"
+    ]
+  },
+  {
+    "method": "POST",
+    "url": "/leaves/${id}/undo-assignment",
+    "callers": [
+      "api\\services.js:225"
+    ]
+  },
+  {
+    "method": "POST",
+    "url": "/leaves/${leaveId}/consume",
+    "callers": [
+      "api\\services.js:284"
+    ]
+  },
+  {
+    "method": "POST",
+    "url": "/leaves/admin-create",
+    "callers": [
+      "api\\services.js:230"
+    ]
+  },
+  {
+    "method": "POST",
+    "url": "/leaves/batch",
+    "callers": [
+      "api\\services.js:212"
+    ]
+  },
+  {
+    "method": "POST",
+    "url": "/leaves/bulk-approve",
+    "callers": [
+      "api\\services.js:217"
+    ]
+  },
+  {
+    "method": "POST",
+    "url": "/leaves/bulk-reject",
+    "callers": [
+      "api\\services.js:218"
+    ]
+  },
+  {
+    "method": "POST",
+    "url": "/leaves/consume-due",
+    "callers": [
+      "api\\services.js:285"
+    ]
+  },
+  {
+    "method": "POST",
+    "url": "/leaves/evaluate-policy",
+    "callers": [
+      "api\\services.js:232"
+    ]
+  },
+  {
+    "method": "POST",
+    "url": "/leaves/validate",
+    "callers": [
+      "api\\services.js:248"
+    ]
+  },
+  {
+    "method": "POST",
+    "url": "/manager/credits/adjust",
+    "callers": [
+      "api\\services.js:377"
+    ]
+  },
+  {
+    "method": "POST",
+    "url": "/manager/credits/quota",
+    "callers": [
+      "api\\services.js:378"
+    ]
+  },
+  {
+    "method": "POST",
+    "url": "/manager/leaves/${id}/approve",
+    "callers": [
+      "api\\services.js:373"
+    ]
+  },
+  {
+    "method": "POST",
+    "url": "/manager/leaves/${id}/reject",
+    "callers": [
+      "api\\services.js:374"
+    ]
+  },
+  {
+    "method": "POST",
+    "url": "/manager/staff",
+    "callers": [
+      "api\\services.js:354"
+    ]
+  },
+  {
+    "method": "POST",
+    "url": "/notifications/subscribe",
+    "callers": [
+      "api\\services.js:309"
+    ]
+  },
+  {
+    "method": "POST",
+    "url": "/notifications/test-push",
+    "callers": [
+      "api\\services.js:311"
+    ]
+  },
+  {
+    "method": "POST",
+    "url": "/notifications/unsubscribe",
+    "callers": [
+      "api\\services.js:310"
+    ]
+  },
+  {
+    "method": "POST",
+    "url": "/policy/accept",
+    "callers": [
+      "api\\services.js:14"
+    ]
+  },
+  {
+    "method": "POST",
+    "url": "/policy/onboarding/complete",
+    "callers": [
+      "api\\services.js:15"
+    ]
+  },
+  {
+    "method": "POST",
+    "url": "/policy/onboarding/reset",
+    "callers": [
+      "api\\services.js:16"
+    ]
+  },
+  {
+    "method": "POST",
+    "url": "/rooms/",
+    "callers": [
+      "api\\services.js:157"
+    ]
+  },
+  {
+    "method": "POST",
+    "url": "/rooms/bulk",
+    "callers": [
+      "api\\services.js:158"
+    ]
+  },
+  {
+    "method": "POST",
+    "url": "/rooms/bulk-assign",
+    "callers": [
+      "api\\services.js:159"
+    ]
+  },
+  {
+    "method": "POST",
+    "url": "/staff/leaves",
+    "callers": [
+      "api\\services.js:365"
+    ]
+  },
+  {
+    "method": "POST",
+    "url": "/student-attendance/emergency",
+    "callers": [
+      "api\\services.js:422"
+    ]
+  },
+  {
+    "method": "POST",
+    "url": "/student-attendance/principal/sessions/${sessionId}/lock",
+    "callers": [
+      "api\\services.js:439"
+    ]
+  },
+  {
+    "method": "POST",
+    "url": "/student-attendance/principal/sessions/${sessionId}/students/${studentId}/override",
+    "callers": [
+      "api\\services.js:440"
+    ]
+  },
+  {
+    "method": "POST",
+    "url": "/student-attendance/sessions",
+    "callers": [
+      "api\\services.js:420"
+    ]
+  },
+  {
+    "method": "POST",
+    "url": "/student-attendance/sessions/${sessionId}/submit",
+    "callers": [
+      "api\\services.js:421"
+    ]
+  },
+  {
+    "method": "POST",
+    "url": "/student-attendance/sync",
+    "callers": [
+      "api\\services.js:425"
+    ]
+  },
+  {
+    "method": "POST",
+    "url": "/subjects/",
+    "callers": [
+      "api\\services.js:108"
+    ]
+  },
+  {
+    "method": "POST",
+    "url": "/system/governance/rollback/${historyId}",
+    "callers": [
+      "api\\governanceApi.js:42"
+    ]
+  },
+  {
+    "method": "POST",
+    "url": "/system/governance/rules/reset/${encodeURIComponent(key)}",
+    "callers": [
+      "api\\governanceApi.js:24"
+    ]
+  },
+  {
+    "method": "POST",
+    "url": "/system/governance/rules/validate",
+    "callers": [
+      "api\\governanceApi.js:28"
+    ]
+  },
+  {
+    "method": "POST",
+    "url": "/teacher/substitution/leave/${leaveId}/assign/${substituteId}",
+    "callers": [
+      "api\\services.js:326"
+    ]
+  },
+  {
+    "method": "POST",
+    "url": "/teacher/substitution/leave/${leaveId}/lock",
+    "callers": [
+      "api\\services.js:329"
+    ]
+  },
+  {
+    "method": "POST",
+    "url": "/teacher/substitution/leave/${leaveId}/undo-assignment",
+    "callers": [
+      "api\\services.js:328"
+    ]
+  },
+  {
+    "method": "POST",
+    "url": "/teachers/",
+    "callers": [
+      "api\\services.js:75"
+    ]
+  },
+  {
+    "method": "POST",
+    "url": "/teachers/${id}/biometrics/reset",
+    "callers": [
+      "api\\services.js:403"
+    ]
+  },
+  {
+    "method": "POST",
+    "url": "/teachers/bulk",
+    "callers": [
+      "api\\services.js:76"
+    ]
+  },
+  {
+    "method": "POST",
+    "url": "/teachers/me/biometrics/enroll",
+    "callers": [
+      "api\\services.js:404"
+    ]
+  },
+  {
+    "method": "POST",
+    "url": "/timetable/",
+    "callers": [
+      "api\\services.js:87"
+    ]
+  },
+  {
+    "method": "POST",
+    "url": "/timetable/reset",
+    "callers": [
+      "api\\services.js:96"
+    ]
+  },
+  {
+    "method": "POST",
+    "url": "/timetable/slot",
+    "callers": [
+      "api\\services.js:86"
+    ]
+  },
+  {
+    "method": "POST",
+    "url": "/timetable/submissions",
+    "callers": [
+      "api\\services.js:90"
+    ]
+  },
+  {
+    "method": "POST",
+    "url": "/timetable/submissions/${id}/review",
+    "callers": [
+      "api\\services.js:93"
+    ]
+  },
+  {
+    "method": "POST",
+    "url": "/timetable/submissions/bulk-review",
+    "callers": [
+      "api\\services.js:94"
+    ]
+  },
+  {
+    "method": "PUT",
+    "url": "/admin/backups/schedule",
+    "callers": [
+      "api\\services.js:54"
+    ]
+  },
+  {
+    "method": "PUT",
+    "url": "/admin/data-retention/policy",
+    "callers": [
+      "api\\services.js:67"
+    ]
+  },
+  {
+    "method": "PUT",
+    "url": "/admin/managers/${id}",
+    "callers": [
+      "api\\services.js:347"
+    ]
+  },
+  {
+    "method": "PUT",
+    "url": "/campus-duties/break-periods/${id}",
+    "callers": [
+      "api\\services.js:518"
+    ]
+  },
+  {
+    "method": "PUT",
+    "url": "/campus-duties/rules",
+    "callers": [
+      "api\\services.js:528"
+    ]
+  },
+  {
+    "method": "PUT",
+    "url": "/campus-operations/cross-department-substitutions",
+    "callers": [
+      "api\\services.js:300"
+    ]
+  },
+  {
+    "method": "PUT",
+    "url": "/campus-operations/mode",
+    "callers": [
+      "api\\services.js:290"
+    ]
+  },
+  {
+    "method": "PUT",
+    "url": "/campus-operations/preferences/${teacherId}",
+    "callers": [
+      "api\\services.js:294"
+    ]
+  },
+  {
+    "method": "PUT",
+    "url": "/campus-operations/preferences/bulk-override",
+    "callers": [
+      "api\\services.js:295"
+    ]
+  },
+  {
+    "method": "PUT",
+    "url": "/campus-operations/preferences/me",
+    "callers": [
+      "api\\services.js:292"
+    ]
+  },
+  {
+    "method": "PUT",
+    "url": "/campus-structure/blocks/${id}",
+    "callers": [
+      "api\\services.js:462"
+    ]
+  },
+  {
+    "method": "PUT",
+    "url": "/geofences/${id}",
+    "callers": [
+      "api\\services.js:394"
+    ]
+  },
+  {
+    "method": "PUT",
+    "url": "/leave-policies/${id}",
+    "callers": [
+      "api\\services.js:247"
+    ]
+  },
+  {
+    "method": "PUT",
+    "url": "/manager/staff/${id}",
+    "callers": [
+      "api\\services.js:356"
+    ]
+  },
+  {
+    "method": "PUT",
+    "url": "/system/governance/periods",
+    "callers": [
+      "api\\governanceApi.js:52"
+    ]
+  },
+  {
+    "method": "PUT",
+    "url": "/system/governance/rules/${encodeURIComponent(key)}",
+    "callers": [
+      "api\\governanceApi.js:20"
+    ]
+  },
+  {
+    "method": "PUT",
+    "url": "/teacher/substitution/config",
+    "callers": [
+      "api\\services.js:336"
+    ]
+  },
+  {
+    "method": "PUT",
+    "url": "/teacher/substitution/leave/${leaveId}/override/${substituteId}",
+    "callers": [
+      "api\\services.js:327"
+    ]
+  },
+  {
+    "method": "PUT",
+    "url": "/teachers/${id}",
+    "callers": [
+      "api\\services.js:77",
+      "api\\services.js:402"
+    ]
+  }
+]

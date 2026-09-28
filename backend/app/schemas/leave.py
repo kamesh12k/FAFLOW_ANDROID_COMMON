@@ -28,6 +28,11 @@ class PolicyEvaluationResult(BaseModel):
     projected_balance: float | None = None
     monthly_policy: dict | None = None
 
+    @computed_field
+    @property
+    def enforcement_mode(self) -> str:
+        return self.mode
+
 
 class LeavePolicyEvalRequest(BaseModel):
     date: date

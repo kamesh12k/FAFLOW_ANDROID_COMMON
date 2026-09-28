@@ -626,3 +626,15 @@ def public_settings(db = Depends(get_db)):
         "day_order_max": settings.DAY_ORDER_MAX,
         "departments": [{"id": d.id, "name": d.name, "code": d.code} for d in depts]
     }
+
+
+# ── Client Contract Compatibility Aliases ─────────────────────────────────────
+
+@app.get("/enforcement-mode", include_in_schema=False)
+@app.get("/api/enforcement-mode", include_in_schema=False)
+@app.get("/api/v1/enforcement-mode", include_in_schema=False)
+def enforcement_mode_root_alias(
+    db = Depends(get_db),
+    current_user = Depends(policy_enforcement.require_credentials_set)
+):
+    return policy_enforcement.get_enforcement_mode(db, current_user)

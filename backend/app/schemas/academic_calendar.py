@@ -1,4 +1,4 @@
-from pydantic import BaseModel, field_validator, model_validator
+from pydantic import BaseModel, field_validator, model_validator, computed_field
 import datetime as dt
 from datetime import date, datetime
 from typing import Optional
@@ -237,3 +237,8 @@ class TeacherTodaySummary(BaseModel):
     is_on_leave_today: bool
     periods_today: int
     upcoming_non_working_days: list[UpcomingNonWorkingDay]
+
+    @computed_field
+    @property
+    def is_on_leave(self) -> bool:
+        return self.is_on_leave_today

@@ -269,3 +269,23 @@ async def commit_import(
 ):
     content = (await file.read()).decode("utf-8-sig", errors="replace")
     return CampusStructureService.commit_csv_import(db, content, user_id=current_user.id)
+
+
+# ── Client Contract Compatibility Aliases ─────────────────────────────────────
+
+@router.post("/rooms/preview", response_model=RoomPatternPreviewResponse, include_in_schema=False)
+def preview_rooms_alias(
+    data: RoomPatternPreviewRequest,
+    current_user: User = Depends(require_admin),
+    db: Session = Depends(get_db)
+):
+    return CampusStructureService.preview_room_generation(db, data)
+
+
+@router.post("/blocks/smart-autofill", response_model=SmartBlockAutoFillResponse, status_code=status.HTTP_201_CREATED, include_in_schema=False)
+def smart_autofill_block_alias(
+    data: SmartBlockAutoFillRequest,
+    current_user: User = Depends(require_admin),
+    db: Session = Depends(get_db)
+):
+    return CampusStructureService.smart_autofill_block(db, data, user_id=current_user.id)

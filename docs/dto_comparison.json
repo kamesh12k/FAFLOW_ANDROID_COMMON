@@ -1,0 +1,411 @@
+[
+  {
+    "kotlin_class": "UserOutDto",
+    "openapi_schema": "UserOut",
+    "missing_in_kotlin": [
+      "has_face_enrolled",
+      "face_enrolled_at"
+    ],
+    "extra_in_kotlin": []
+  },
+  {
+    "kotlin_class": "TokenDto",
+    "openapi_schema": "Token",
+    "missing_in_kotlin": [],
+    "extra_in_kotlin": []
+  },
+  {
+    "kotlin_class": "PolicySectionDto",
+    "openapi_schema": "PolicySection",
+    "missing_in_kotlin": [],
+    "extra_in_kotlin": []
+  },
+  {
+    "kotlin_class": "PolicyAcceptRequestDto",
+    "openapi_schema": "PolicyAcceptRequest",
+    "missing_in_kotlin": [],
+    "extra_in_kotlin": []
+  },
+  {
+    "kotlin_class": "PolicyAcceptResponseDto",
+    "openapi_schema": "PolicyAcceptResponse",
+    "missing_in_kotlin": [],
+    "extra_in_kotlin": []
+  },
+  {
+    "kotlin_class": "OnboardingStatusResponseDto",
+    "openapi_schema": "OnboardingStatusResponse",
+    "missing_in_kotlin": [],
+    "extra_in_kotlin": []
+  },
+  {
+    "kotlin_class": "TeacherTodaySummaryDto",
+    "openapi_schema": "TeacherTodaySummary",
+    "missing_in_kotlin": [
+      "is_on_leave_today",
+      "periods_today",
+      "upcoming_non_working_days"
+    ],
+    "extra_in_kotlin": [
+      "substitute_duties_today",
+      "leave_periods",
+      "is_on_leave"
+    ]
+  },
+  {
+    "kotlin_class": "TimetableSlotOutDto",
+    "openapi_schema": "TimetableSlotOut",
+    "missing_in_kotlin": [],
+    "extra_in_kotlin": []
+  },
+  {
+    "kotlin_class": "LeaveCreateDto",
+    "openapi_schema": "LeaveCreate",
+    "missing_in_kotlin": [
+      "ood_details"
+    ],
+    "extra_in_kotlin": []
+  },
+  {
+    "kotlin_class": "LeaveBatchCreateDto",
+    "openapi_schema": "LeaveBatchCreate",
+    "missing_in_kotlin": [
+      "proposed_substitute_id",
+      "ood_details"
+    ],
+    "extra_in_kotlin": []
+  },
+  {
+    "kotlin_class": "LeaveOutDto",
+    "openapi_schema": "LeaveOut",
+    "missing_in_kotlin": [
+      "ood_details",
+      "policy_warning_acknowledged_at",
+      "policy_evaluation_snapshot",
+      "policy_version_id",
+      "exception_approved_by_id",
+      "exception_approved_at",
+      "teacher",
+      "leave_policy_code",
+      "leave_policy_name",
+      "is_expired"
+    ],
+    "extra_in_kotlin": [
+      "teacher_name",
+      "leave_type",
+      "leave_policy"
+    ]
+  },
+  {
+    "kotlin_class": "LeavePolicyOutDto",
+    "openapi_schema": "LeavePolicyOut",
+    "missing_in_kotlin": [
+      "semester_limit",
+      "annual_limit",
+      "approval_required",
+      "is_on_duty",
+      "advisory_allowed"
+    ],
+    "extra_in_kotlin": [
+      "requires_prior_notice_days",
+      "max_consecutive_days",
+      "effectiveEntitlementDays"
+    ]
+  },
+  {
+    "kotlin_class": "LeaveValidationRequestDto",
+    "openapi_schema": "LeaveValidationRequest",
+    "missing_in_kotlin": [
+      "policy_code",
+      "whole_day",
+      "period_numbers"
+    ],
+    "extra_in_kotlin": []
+  },
+  {
+    "kotlin_class": "LeaveValidationOutDto",
+    "openapi_schema": "LeaveValidationOut",
+    "missing_in_kotlin": [
+      "leave_policy",
+      "balance",
+      "request",
+      "projected_balance",
+      "monthly_policy",
+      "semester_policy",
+      "policy",
+      "validation"
+    ],
+    "extra_in_kotlin": []
+  },
+  {
+    "kotlin_class": "PolicyViolationItemDto",
+    "openapi_schema": "PolicyViolationItem",
+    "missing_in_kotlin": [
+      "rule_code",
+      "severity",
+      "limit",
+      "used",
+      "requested"
+    ],
+    "extra_in_kotlin": [
+      "policy_name",
+      "policy_code",
+      "policy_id",
+      "violation_type",
+      "advisory_allowed"
+    ]
+  },
+  {
+    "kotlin_class": "PolicyEvaluationResultDto",
+    "openapi_schema": "PolicyEvaluationResult",
+    "missing_in_kotlin": [
+      "mode",
+      "requires_hod_review",
+      "leave_policy",
+      "balance",
+      "request",
+      "projected_balance",
+      "monthly_policy"
+    ],
+    "extra_in_kotlin": [
+      "enforcement_mode",
+      "policy_name",
+      "policy_code",
+      "policy_id"
+    ]
+  },
+  {
+    "kotlin_class": "LeavePolicyEvalRequestDto",
+    "openapi_schema": "LeavePolicyEvalRequest",
+    "missing_in_kotlin": [
+      "policy_id",
+      "policy_code",
+      "period_number"
+    ],
+    "extra_in_kotlin": [
+      "leave_policy_id"
+    ]
+  },
+  {
+    "kotlin_class": "ApproveWithExceptionRequestDto",
+    "openapi_schema": "ApproveWithExceptionRequest",
+    "missing_in_kotlin": [],
+    "extra_in_kotlin": []
+  },
+  {
+    "kotlin_class": "AlterAssignmentOutDto",
+    "openapi_schema": "AlterAssignmentOut",
+    "missing_in_kotlin": [
+      "assigned_at",
+      "substitute"
+    ],
+    "extra_in_kotlin": [
+      "substitute_name"
+    ]
+  },
+  {
+    "kotlin_class": "CreditBalanceOutDto",
+    "openapi_schema": "CreditBalanceOut",
+    "missing_in_kotlin": [],
+    "extra_in_kotlin": []
+  },
+  {
+    "kotlin_class": "CreditTransactionOutDto",
+    "openapi_schema": "CreditTransactionOut",
+    "missing_in_kotlin": [],
+    "extra_in_kotlin": [
+      "teacher_name"
+    ]
+  },
+  {
+    "kotlin_class": "CandidateMetricsDto",
+    "openapi_schema": "CandidateMetrics",
+    "missing_in_kotlin": [],
+    "extra_in_kotlin": []
+  },
+  {
+    "kotlin_class": "CandidateSignalsDto",
+    "openapi_schema": "CandidateSignals",
+    "missing_in_kotlin": [],
+    "extra_in_kotlin": []
+  },
+  {
+    "kotlin_class": "RecommendationOutDto",
+    "openapi_schema": "RecommendationOut",
+    "missing_in_kotlin": [
+      "substitutions_today",
+      "workload_count",
+      "fairness",
+      "leave_recovery",
+      "leave_recovery_reason",
+      "name",
+      "department_name"
+    ],
+    "extra_in_kotlin": [
+      "teacher_id",
+      "reason",
+      "department"
+    ]
+  },
+  {
+    "kotlin_class": "SubstitutionPreferenceOutDto",
+    "openapi_schema": "SubstitutionPreferenceOut",
+    "missing_in_kotlin": [],
+    "extra_in_kotlin": [
+      "willing_for_cross_department",
+      "max_substitutions_per_day",
+      "max_substitutions_per_week"
+    ]
+  },
+  {
+    "kotlin_class": "SubstitutionPreferenceUpdateDto",
+    "openapi_schema": "SubstitutionPreferenceUpdate",
+    "missing_in_kotlin": [],
+    "extra_in_kotlin": [
+      "max_substitutions_per_day",
+      "max_substitutions_per_week",
+      "willing_for_cross_department"
+    ]
+  },
+  {
+    "kotlin_class": "AttendanceCheckInRequestDto",
+    "openapi_schema": "AttendanceCheckInRequest",
+    "missing_in_kotlin": [
+      "captured_at"
+    ],
+    "extra_in_kotlin": []
+  },
+  {
+    "kotlin_class": "AttendanceCheckOutRequestDto",
+    "openapi_schema": "AttendanceCheckOutRequest",
+    "missing_in_kotlin": [
+      "captured_at"
+    ],
+    "extra_in_kotlin": []
+  },
+  {
+    "kotlin_class": "AttendanceRecordOutDto",
+    "openapi_schema": "AttendanceRecordOut",
+    "missing_in_kotlin": [],
+    "extra_in_kotlin": [
+      "workingDuration",
+      "staffId",
+      "late_minutes"
+    ]
+  },
+  {
+    "kotlin_class": "AttendanceTodaySummaryOutDto",
+    "openapi_schema": "AttendanceTodaySummaryOut",
+    "missing_in_kotlin": [],
+    "extra_in_kotlin": []
+  },
+  {
+    "kotlin_class": "GeofenceOutDto",
+    "openapi_schema": "GeofenceOut",
+    "missing_in_kotlin": [
+      "geometry",
+      "created_by",
+      "creator_name",
+      "updated_by",
+      "updater_name"
+    ],
+    "extra_in_kotlin": []
+  },
+  {
+    "kotlin_class": "GeofenceCreateDto",
+    "openapi_schema": "GeofenceCreate",
+    "missing_in_kotlin": [],
+    "extra_in_kotlin": []
+  },
+  {
+    "kotlin_class": "GeofenceUpdateDto",
+    "openapi_schema": "GeofenceUpdate",
+    "missing_in_kotlin": [
+      "type"
+    ],
+    "extra_in_kotlin": []
+  },
+  {
+    "kotlin_class": "ClassOutDto",
+    "openapi_schema": "ClassOut",
+    "missing_in_kotlin": [
+      "default_room_id",
+      "default_room_number",
+      "default_room_type",
+      "created_at"
+    ],
+    "extra_in_kotlin": []
+  },
+  {
+    "kotlin_class": "LeaveStatusUpdateDto",
+    "openapi_schema": "LeaveStatusUpdate",
+    "missing_in_kotlin": [],
+    "extra_in_kotlin": []
+  },
+  {
+    "kotlin_class": "EmergencyAttendanceRequestDto",
+    "openapi_schema": "EmergencyAttendanceRequest",
+    "missing_in_kotlin": [
+      "attendance_date",
+      "exceptions",
+      "idempotency_key",
+      "device_id",
+      "notes"
+    ],
+    "extra_in_kotlin": []
+  },
+  {
+    "kotlin_class": "OfflineSyncOperationDto",
+    "openapi_schema": "OfflineSyncOperation",
+    "missing_in_kotlin": [],
+    "extra_in_kotlin": []
+  },
+  {
+    "kotlin_class": "FirstLoginSetupRequestDto",
+    "openapi_schema": "FirstLoginSetupRequest",
+    "missing_in_kotlin": [],
+    "extra_in_kotlin": []
+  },
+  {
+    "kotlin_class": "DutyCandidatesResponseDto",
+    "openapi_schema": "DutyCandidatesResponse",
+    "missing_in_kotlin": [
+      "duty_title",
+      "duty_type",
+      "required_teachers",
+      "assigned_count",
+      "fallback_applied",
+      "fallback_message",
+      "suggested_candidate_id"
+    ],
+    "extra_in_kotlin": [
+      "required_count"
+    ]
+  },
+  {
+    "kotlin_class": "DutyOverrideRequestDto",
+    "openapi_schema": "DutyOverrideRequest",
+    "missing_in_kotlin": [],
+    "extra_in_kotlin": []
+  },
+  {
+    "kotlin_class": "DutyReplaceRequestDto",
+    "openapi_schema": "DutyReplaceRequest",
+    "missing_in_kotlin": [],
+    "extra_in_kotlin": []
+  },
+  {
+    "kotlin_class": "DutyLockRequestDto",
+    "openapi_schema": "DutyLockRequest",
+    "missing_in_kotlin": [
+      "lock"
+    ],
+    "extra_in_kotlin": []
+  },
+  {
+    "kotlin_class": "PeriodEntryDto",
+    "openapi_schema": "PeriodEntry",
+    "missing_in_kotlin": [],
+    "extra_in_kotlin": []
+  }
+]

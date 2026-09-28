@@ -1,0 +1,722 @@
+[
+  {
+    "file": "com\\governence\\faflow\\core\\network\\FaflowApiService.kt",
+    "method": "POST",
+    "url": "auth/login",
+    "function": "login",
+    "params": "@Body request: UserLoginRequestDto",
+    "return_type": "Response<TokenDto>"
+  },
+  {
+    "file": "com\\governence\\faflow\\core\\network\\FaflowApiService.kt",
+    "method": "POST",
+    "url": "admin/first-login/setup",
+    "function": "completeFirstLoginSetup",
+    "params": "@Body request: FirstLoginSetupRequestDto",
+    "return_type": "Response<TokenDto>"
+  },
+  {
+    "file": "com\\governence\\faflow\\core\\network\\FaflowApiService.kt",
+    "method": "GET",
+    "url": "teachers/me",
+    "function": "getMe",
+    "params": "",
+    "return_type": "Response<UserOutDto>"
+  },
+  {
+    "file": "com\\governence\\faflow\\core\\network\\FaflowApiService.kt",
+    "method": "GET",
+    "url": "policy/current",
+    "function": "getCurrentPolicy",
+    "params": "",
+    "return_type": "Response<CurrentPolicyDto>"
+  },
+  {
+    "file": "com\\governence\\faflow\\core\\network\\FaflowApiService.kt",
+    "method": "POST",
+    "url": "policy/accept",
+    "function": "acceptPolicy",
+    "params": "@Body request: PolicyAcceptRequestDto",
+    "return_type": "Response<PolicyAcceptResponseDto>"
+  },
+  {
+    "file": "com\\governence\\faflow\\core\\network\\FaflowApiService.kt",
+    "method": "POST",
+    "url": "policy/onboarding/complete",
+    "function": "completeOnboarding",
+    "params": "",
+    "return_type": "Response<OnboardingStatusResponseDto>"
+  },
+  {
+    "file": "com\\governence\\faflow\\core\\network\\FaflowApiService.kt",
+    "method": "POST",
+    "url": "policy/onboarding/reset",
+    "function": "resetOnboarding",
+    "params": "",
+    "return_type": "Response<OnboardingStatusResponseDto>"
+  },
+  {
+    "file": "com\\governence\\faflow\\core\\network\\FaflowApiService.kt",
+    "method": "GET",
+    "url": "academic-calendar/my-today-summary",
+    "function": "getMyTodaySummary",
+    "params": "@Query(\"date\") date: String? = null",
+    "return_type": "Response<TeacherTodaySummaryDto>"
+  },
+  {
+    "file": "com\\governence\\faflow\\core\\network\\FaflowApiService.kt",
+    "method": "GET",
+    "url": "academic-calendar/resolve",
+    "function": "resolveDayOrder",
+    "params": "@Query(\"date\") date: String",
+    "return_type": "Response<DayOrderResolveDto>"
+  },
+  {
+    "file": "com\\governence\\faflow\\core\\network\\FaflowApiService.kt",
+    "method": "GET",
+    "url": "timetable/teacher/{teacher_id}",
+    "function": "getTimetableByTeacher",
+    "params": "@Path(\"teacher_id\") teacherId: Int",
+    "return_type": "Response<List<TimetableSlotOutDto>>"
+  },
+  {
+    "file": "com\\governence\\faflow\\core\\network\\FaflowApiService.kt",
+    "method": "GET",
+    "url": "timetable/",
+    "function": "getTimetable",
+    "params": "@Query(\"class_id\") classId: Int? = null, @Query(\"department_id\") departmentId: Int? = null, @Query(\"teacher_id\") teacherId: Int? = null, @Query(\"day_order\") dayOrder: Int? = null",
+    "return_type": "Response<List<TimetableSlotOutDto>>"
+  },
+  {
+    "file": "com\\governence\\faflow\\core\\network\\FaflowApiService.kt",
+    "method": "GET",
+    "url": "classes/",
+    "function": "getClasses",
+    "params": "@Query(\"department_id\") departmentId: Int? = null",
+    "return_type": "Response<List<ClassOutDto>>"
+  },
+  {
+    "file": "com\\governence\\faflow\\core\\network\\FaflowApiService.kt",
+    "method": "GET",
+    "url": "teachers/",
+    "function": "getTeachers",
+    "params": "@Query(\"department_id\") departmentId: Int? = null",
+    "return_type": "Response<List<TeacherOutDto>>"
+  },
+  {
+    "file": "com\\governence\\faflow\\core\\network\\FaflowApiService.kt",
+    "method": "GET",
+    "url": "leaves/my",
+    "function": "getMyLeaves",
+    "params": "@Query(\"include_expired\") includeExpired: Boolean = false",
+    "return_type": "Response<List<LeaveOutDto>>"
+  },
+  {
+    "file": "com\\governence\\faflow\\core\\network\\FaflowApiService.kt",
+    "method": "GET",
+    "url": "leaves/",
+    "function": "getAllLeaves",
+    "params": "",
+    "return_type": "Response<List<LeaveOutDto>>"
+  },
+  {
+    "file": "com\\governence\\faflow\\core\\network\\FaflowApiService.kt",
+    "method": "POST",
+    "url": "leaves/",
+    "function": "applyLeave",
+    "params": "@Body request: LeaveCreateDto",
+    "return_type": "Response<LeaveOutDto>"
+  },
+  {
+    "file": "com\\governence\\faflow\\core\\network\\FaflowApiService.kt",
+    "method": "POST",
+    "url": "leaves/batch",
+    "function": "applyLeaveBatch",
+    "params": "@Body request: LeaveBatchCreateDto",
+    "return_type": "Response<List<LeaveOutDto>>"
+  },
+  {
+    "file": "com\\governence\\faflow\\core\\network\\FaflowApiService.kt",
+    "method": "DELETE",
+    "url": "leaves/{leave_id}",
+    "function": "cancelLeave",
+    "params": "@Path(\"leave_id\") leaveId: Int",
+    "return_type": "Response<Unit>"
+  },
+  {
+    "file": "com\\governence\\faflow\\core\\network\\FaflowApiService.kt",
+    "method": "PATCH",
+    "url": "leaves/{leave_id}/approve",
+    "function": "approveLeave",
+    "params": "@Path(\"leave_id\") leaveId: Int",
+    "return_type": "Response<LeaveApproveResponseDto>"
+  },
+  {
+    "file": "com\\governence\\faflow\\core\\network\\FaflowApiService.kt",
+    "method": "PATCH",
+    "url": "leaves/{leave_id}/reject",
+    "function": "rejectLeave",
+    "params": "@Path(\"leave_id\") leaveId: Int",
+    "return_type": "Response<LeaveOutDto>"
+  },
+  {
+    "file": "com\\governence\\faflow\\core\\network\\FaflowApiService.kt",
+    "method": "PATCH",
+    "url": "leaves/{leave_id}/status",
+    "function": "updateLeaveStatus",
+    "params": "@Path(\"leave_id\") leaveId: Int, @Body request: LeaveStatusUpdateDto",
+    "return_type": "Response<Map<String, Any>>"
+  },
+  {
+    "file": "com\\governence\\faflow\\core\\network\\FaflowApiService.kt",
+    "method": "POST",
+    "url": "leaves/{leave_id}/assign",
+    "function": "assignSubstitute",
+    "params": "@Path(\"leave_id\") leaveId: Int, @Body request: LeaveAlterAssignmentCreateDto",
+    "return_type": "Response<AlterAssignmentOutDto>"
+  },
+  {
+    "file": "com\\governence\\faflow\\core\\network\\FaflowApiService.kt",
+    "method": "POST",
+    "url": "leaves/evaluate-policy",
+    "function": "evaluatePolicy",
+    "params": "@Body request: LeavePolicyEvalRequestDto",
+    "return_type": "Response<PolicyEvaluationResultDto>"
+  },
+  {
+    "file": "com\\governence\\faflow\\core\\network\\FaflowApiService.kt",
+    "method": "PATCH",
+    "url": "leaves/{leave_id}/approve-with-exception",
+    "function": "approveLeaveWithException",
+    "params": "@Path(\"leave_id\") leaveId: Int, @Body request: ApproveWithExceptionRequestDto",
+    "return_type": "Response<LeaveApproveResponseDto>"
+  },
+  {
+    "file": "com\\governence\\faflow\\core\\network\\FaflowApiService.kt",
+    "method": "GET",
+    "url": "enforcement-mode",
+    "function": "getEnforcementMode",
+    "params": "",
+    "return_type": "Response<PolicyEnforcementModeResponseDto>"
+  },
+  {
+    "file": "com\\governence\\faflow\\core\\network\\FaflowApiService.kt",
+    "method": "GET",
+    "url": "leave-balances/policies",
+    "function": "getActiveLeavePolicies",
+    "params": "",
+    "return_type": "Response<List<LeavePolicyOutDto>>"
+  },
+  {
+    "file": "com\\governence\\faflow\\core\\network\\FaflowApiService.kt",
+    "method": "GET",
+    "url": "leave-balances/me",
+    "function": "getMyLeaveBalances",
+    "params": "",
+    "return_type": "Response<TeacherLeaveBalanceSummaryDto>"
+  },
+  {
+    "file": "com\\governence\\faflow\\core\\network\\FaflowApiService.kt",
+    "method": "POST",
+    "url": "leave-balances/validate",
+    "function": "validateLeaveApplication",
+    "params": "@Body request: LeaveValidationRequestDto",
+    "return_type": "Response<LeaveValidationOutDto>"
+  },
+  {
+    "file": "com\\governence\\faflow\\core\\network\\FaflowApiService.kt",
+    "method": "GET",
+    "url": "leave-balances/teacher/{teacher_id}/ledger",
+    "function": "getTeacherLeaveLedger",
+    "params": "@Path(\"teacher_id\") teacherId: Int",
+    "return_type": "Response<List<LeaveBalanceTransactionDto>>"
+  },
+  {
+    "file": "com\\governence\\faflow\\core\\network\\FaflowApiService.kt",
+    "method": "GET",
+    "url": "substitutions/today",
+    "function": "getTodayCoverage",
+    "params": "@Query(\"date\") date: String? = null",
+    "return_type": "Response<TodaySubstitutionCoverageDto>"
+  },
+  {
+    "file": "com\\governence\\faflow\\core\\network\\FaflowApiService.kt",
+    "method": "GET",
+    "url": "system/institutions/{institution_id}/policy",
+    "function": "getEffectivePolicy",
+    "params": "@Path(\"institution_id\") institutionId: Int",
+    "return_type": "Response<InstitutionPolicyDto>"
+  },
+  {
+    "file": "com\\governence\\faflow\\core\\network\\FaflowApiService.kt",
+    "method": "GET",
+    "url": "teachers/{teacher_id}/credits",
+    "function": "getTeacherCredits",
+    "params": "@Path(\"teacher_id\") teacherId: Int",
+    "return_type": "Response<CreditBalanceOutDto>"
+  },
+  {
+    "file": "com\\governence\\faflow\\core\\network\\FaflowApiService.kt",
+    "method": "GET",
+    "url": "credits/my/transactions",
+    "function": "getMyCreditTransactions",
+    "params": "",
+    "return_type": "Response<List<CreditTransactionOutDto>>"
+  },
+  {
+    "file": "com\\governence\\faflow\\core\\network\\FaflowApiService.kt",
+    "method": "GET",
+    "url": "teacher/substitution/my-leaves",
+    "function": "getTeacherSubstitutionDuties",
+    "params": "@Query(\"include_expired\") includeExpired: Boolean = false",
+    "return_type": "Response<List<LeaveOutDto>>"
+  },
+  {
+    "file": "com\\governence\\faflow\\core\\network\\FaflowApiService.kt",
+    "method": "GET",
+    "url": "teacher/substitution/leave/{leave_id}/candidates",
+    "function": "getSubstitutionCandidates",
+    "params": "@Path(\"leave_id\") leaveId: Int, @Query(\"include_cross_department\") includeCrossDept: Boolean = false",
+    "return_type": "Response<List<RecommendationOutDto>>"
+  },
+  {
+    "file": "com\\governence\\faflow\\core\\network\\FaflowApiService.kt",
+    "method": "GET",
+    "url": "leaves/{leave_id}/candidates",
+    "function": "getFallbackSubstitutionCandidates",
+    "params": "@Path(\"leave_id\") leaveId: Int, @Query(\"include_cross_department\") includeCrossDept: Boolean = false",
+    "return_type": "Response<List<RecommendationOutDto>>"
+  },
+  {
+    "file": "com\\governence\\faflow\\core\\network\\FaflowApiService.kt",
+    "method": "POST",
+    "url": "teacher/substitution/leave/{leave_id}/assign/{substitute_id}",
+    "function": "assignSubstitute",
+    "params": "@Path(\"leave_id\") leaveId: Int, @Path(\"substitute_id\") substituteId: Int",
+    "return_type": "Response<okhttp3.ResponseBody>"
+  },
+  {
+    "file": "com\\governence\\faflow\\core\\network\\FaflowApiService.kt",
+    "method": "POST",
+    "url": "teacher/substitution/leave/{leave_id}/undo-assignment",
+    "function": "undoSubstitutionAssignment",
+    "params": "@Path(\"leave_id\") leaveId: Int",
+    "return_type": "Response<okhttp3.ResponseBody>"
+  },
+  {
+    "file": "com\\governence\\faflow\\core\\network\\FaflowApiService.kt",
+    "method": "GET",
+    "url": "leaves/slot-candidates",
+    "function": "getSlotCandidates",
+    "params": "@Query(\"date\") date: String, @Query(\"period_number\") periodNumber: Int, @Query(\"include_cross_department\") includeCrossDepartment: Boolean = false, @Query(\"only_handles_class\") onlyHandlesClass: Boolean = false",
+    "return_type": "Response<List<RecommendationOutDto>>"
+  },
+  {
+    "file": "com\\governence\\faflow\\core\\network\\FaflowApiService.kt",
+    "method": "GET",
+    "url": "campus-operations/mode",
+    "function": "getCampusOperationsMode",
+    "params": "",
+    "return_type": "Response<CampusOperationsModeDto>"
+  },
+  {
+    "file": "com\\governence\\faflow\\core\\network\\FaflowApiService.kt",
+    "method": "GET",
+    "url": "campus-operations/preferences/me",
+    "function": "getMyPreferences",
+    "params": "",
+    "return_type": "Response<SubstitutionPreferenceOutDto>"
+  },
+  {
+    "file": "com\\governence\\faflow\\core\\network\\FaflowApiService.kt",
+    "method": "PUT",
+    "url": "campus-operations/preferences/me",
+    "function": "updateMyPreferences",
+    "params": "@Body request: SubstitutionPreferenceUpdateDto",
+    "return_type": "Response<SubstitutionPreferenceOutDto>"
+  },
+  {
+    "file": "com\\governence\\faflow\\core\\network\\FaflowApiService.kt",
+    "method": "GET",
+    "url": "notifications/",
+    "function": "listNotifications",
+    "params": "@Query(\"unread_only\") unreadOnly: Boolean = false",
+    "return_type": "Response<List<NotificationOutDto>>"
+  },
+  {
+    "file": "com\\governence\\faflow\\core\\network\\FaflowApiService.kt",
+    "method": "GET",
+    "url": "notifications/unread-count",
+    "function": "getUnreadCount",
+    "params": "",
+    "return_type": "Response<UnreadCountDto>"
+  },
+  {
+    "file": "com\\governence\\faflow\\core\\network\\FaflowApiService.kt",
+    "method": "PATCH",
+    "url": "notifications/{notification_id}/read",
+    "function": "markNotificationRead",
+    "params": "@Path(\"notification_id\") notificationId: Int",
+    "return_type": "Response<StatusOkDto>"
+  },
+  {
+    "file": "com\\governence\\faflow\\core\\network\\FaflowApiService.kt",
+    "method": "PATCH",
+    "url": "notifications/read-all",
+    "function": "markAllNotificationsRead",
+    "params": "",
+    "return_type": "Response<StatusOkDto>"
+  },
+  {
+    "file": "com\\governence\\faflow\\core\\network\\FaflowApiService.kt",
+    "method": "DELETE",
+    "url": "notifications/",
+    "function": "clearAllNotifications",
+    "params": "",
+    "return_type": "Response<StatusOkDto>"
+  },
+  {
+    "file": "com\\governence\\faflow\\core\\network\\FaflowApiService.kt",
+    "method": "POST",
+    "url": "attendance/check-in",
+    "function": "checkIn",
+    "params": "@Body request: AttendanceCheckInRequestDto",
+    "return_type": "Response<AttendanceRecordOutDto>"
+  },
+  {
+    "file": "com\\governence\\faflow\\core\\network\\FaflowApiService.kt",
+    "method": "POST",
+    "url": "attendance/check-out",
+    "function": "checkOut",
+    "params": "@Body request: AttendanceCheckOutRequestDto",
+    "return_type": "Response<AttendanceRecordOutDto>"
+  },
+  {
+    "file": "com\\governence\\faflow\\core\\network\\FaflowApiService.kt",
+    "method": "GET",
+    "url": "attendance/today",
+    "function": "getTodayAttendance",
+    "params": "",
+    "return_type": "Response<AttendanceTodaySummaryOutDto>"
+  },
+  {
+    "file": "com\\governence\\faflow\\core\\network\\FaflowApiService.kt",
+    "method": "GET",
+    "url": "attendance/my",
+    "function": "getMyAttendanceHistory",
+    "params": "@Query(\"limit\") limit: Int = 30, @Query(\"offset\") offset: Int = 0",
+    "return_type": "Response<List<AttendanceRecordOutDto>>"
+  },
+  {
+    "file": "com\\governence\\faflow\\core\\network\\FaflowApiService.kt",
+    "method": "GET",
+    "url": "attendance/admin/live-status",
+    "function": "getSupervisorLiveStatus",
+    "params": "@Query(\"date\") date: String? = null, @Query(\"department_id\") departmentId: Int? = null, @Query(\"status\") status: String? = null",
+    "return_type": "Response<SupervisorLiveStatusOutDto>"
+  },
+  {
+    "file": "com\\governence\\faflow\\core\\network\\FaflowApiService.kt",
+    "method": "GET",
+    "url": "geofences/active",
+    "function": "getActiveGeofences",
+    "params": "",
+    "return_type": "Response<List<GeofenceOutDto>>"
+  },
+  {
+    "file": "com\\governence\\faflow\\core\\network\\FaflowApiService.kt",
+    "method": "GET",
+    "url": "geofences/",
+    "function": "listAllGeofences",
+    "params": "@Query(\"is_active\") isActive: Boolean? = null",
+    "return_type": "Response<List<GeofenceOutDto>>"
+  },
+  {
+    "file": "com\\governence\\faflow\\core\\network\\FaflowApiService.kt",
+    "method": "POST",
+    "url": "geofences/",
+    "function": "createGeofence",
+    "params": "@Body request: GeofenceCreateDto",
+    "return_type": "Response<GeofenceOutDto>"
+  },
+  {
+    "file": "com\\governence\\faflow\\core\\network\\FaflowApiService.kt",
+    "method": "PUT",
+    "url": "geofences/{geofence_id}",
+    "function": "updateGeofence",
+    "params": "@Path(\"geofence_id\") geofenceId: Int, @Body request: GeofenceUpdateDto",
+    "return_type": "Response<GeofenceOutDto>"
+  },
+  {
+    "file": "com\\governence\\faflow\\core\\network\\FaflowApiService.kt",
+    "method": "DELETE",
+    "url": "geofences/{geofence_id}",
+    "function": "deleteGeofence",
+    "params": "@Path(\"geofence_id\") geofenceId: Int",
+    "return_type": "Response<StatusOkDto>"
+  },
+  {
+    "file": "com\\governence\\faflow\\core\\network\\FaflowApiService.kt",
+    "method": "POST",
+    "url": "teachers/me/biometrics/enroll",
+    "function": "enrollBiometrics",
+    "params": "",
+    "return_type": "Response<UserOutDto>"
+  },
+  {
+    "file": "com\\governence\\faflow\\core\\network\\FaflowApiService.kt",
+    "method": "GET",
+    "url": "student-attendance/today",
+    "function": "getStudentAttendanceToday",
+    "params": "@Query(\"target_date\") targetDate: String? = null",
+    "return_type": "Response<TeacherTodayScheduleDto>"
+  },
+  {
+    "file": "com\\governence\\faflow\\core\\network\\FaflowApiService.kt",
+    "method": "GET",
+    "url": "student-attendance/classes/{class_id}/roster",
+    "function": "getStudentClassRoster",
+    "params": "@Path(\"class_id\") classId: Int",
+    "return_type": "Response<ClassRosterDto>"
+  },
+  {
+    "file": "com\\governence\\faflow\\core\\network\\FaflowApiService.kt",
+    "method": "GET",
+    "url": "student-attendance/sessions/{session_id}",
+    "function": "getStudentAttendanceSession",
+    "params": "@Path(\"session_id\") sessionId: Int",
+    "return_type": "Response<AttendanceSessionDto>"
+  },
+  {
+    "file": "com\\governence\\faflow\\core\\network\\FaflowApiService.kt",
+    "method": "POST",
+    "url": "student-attendance/sessions",
+    "function": "createStudentAttendanceSession",
+    "params": "@Body request: AttendanceSessionCreateDto",
+    "return_type": "Response<AttendanceSessionDto>"
+  },
+  {
+    "file": "com\\governence\\faflow\\core\\network\\FaflowApiService.kt",
+    "method": "POST",
+    "url": "student-attendance/sessions/{session_id}/submit",
+    "function": "submitStudentAttendance",
+    "params": "@Path(\"session_id\") sessionId: Int, @Body request: AttendanceSubmitRequestDto",
+    "return_type": "Response<AttendanceSessionDto>"
+  },
+  {
+    "file": "com\\governence\\faflow\\core\\network\\FaflowApiService.kt",
+    "method": "POST",
+    "url": "student-attendance/emergency",
+    "function": "emergencyStudentAttendance",
+    "params": "@Body request: EmergencyAttendanceRequestDto",
+    "return_type": "Response<AttendanceSessionDto>"
+  },
+  {
+    "file": "com\\governence\\faflow\\core\\network\\FaflowApiService.kt",
+    "method": "POST",
+    "url": "student-attendance/sync",
+    "function": "syncOfflineAttendanceBatch",
+    "params": "@Body request: OfflineBatchSyncRequestDto",
+    "return_type": "Response<OfflineBatchSyncResponseDto>"
+  },
+  {
+    "file": "com\\governence\\faflow\\core\\network\\FaflowApiService.kt",
+    "method": "GET",
+    "url": "announcements",
+    "function": "getAnnouncements",
+    "params": "@Query(\"tab\") tab: String = \"all\", @Query(\"search\") search: String? = null, @Query(\"page\") page: Int = 1, @Query(\"limit\") limit: Int = 20",
+    "return_type": "Response<List<AnnouncementListItemDto>>"
+  },
+  {
+    "file": "com\\governence\\faflow\\core\\network\\FaflowApiService.kt",
+    "method": "GET",
+    "url": "announcements/unread-count",
+    "function": "getUnreadAnnouncementsCount",
+    "params": "",
+    "return_type": "Response<UnreadCountDto>"
+  },
+  {
+    "file": "com\\governence\\faflow\\core\\network\\FaflowApiService.kt",
+    "method": "GET",
+    "url": "announcements/{id}",
+    "function": "getAnnouncementDetail",
+    "params": "@Path(\"id\") id: Int",
+    "return_type": "Response<AnnouncementDetailDto>"
+  },
+  {
+    "file": "com\\governence\\faflow\\core\\network\\FaflowApiService.kt",
+    "method": "POST",
+    "url": "announcements/{id}/acknowledge",
+    "function": "acknowledgeAnnouncement",
+    "params": "@Path(\"id\") id: Int",
+    "return_type": "Response<AnnouncementDetailDto>"
+  },
+  {
+    "file": "com\\governence\\faflow\\core\\network\\FaflowApiService.kt",
+    "method": "GET",
+    "url": "campus-duties/my",
+    "function": "getMyDuties",
+    "params": "@Query(\"date\") date: String? = null",
+    "return_type": "Response<List<CampusDutyDto>>"
+  },
+  {
+    "file": "com\\governence\\faflow\\core\\network\\FaflowApiService.kt",
+    "method": "GET",
+    "url": "campus-duties",
+    "function": "getCampusDuties",
+    "params": "@Query(\"date\") date: String? = null, @Query(\"duty_type\") dutyType: String? = null, @Query(\"department_id\") departmentId: Int? = null",
+    "return_type": "Response<List<CampusDutyDto>>"
+  },
+  {
+    "file": "com\\governence\\faflow\\core\\network\\FaflowApiService.kt",
+    "method": "GET",
+    "url": "campus-duties/{duty_id}",
+    "function": "getDutyDetail",
+    "params": "@Path(\"duty_id\") dutyId: Int",
+    "return_type": "Response<CampusDutyDto>"
+  },
+  {
+    "file": "com\\governence\\faflow\\core\\network\\FaflowApiService.kt",
+    "method": "POST",
+    "url": "campus-duties",
+    "function": "createDuty",
+    "params": "@Body request: DutyCreateRequestDto",
+    "return_type": "Response<CampusDutyDto>"
+  },
+  {
+    "file": "com\\governence\\faflow\\core\\network\\FaflowApiService.kt",
+    "method": "POST",
+    "url": "campus-duties/{duty_id}/auto-assign",
+    "function": "autoAssignDuty",
+    "params": "@Path(\"duty_id\") dutyId: Int",
+    "return_type": "Response<CampusDutyDto>"
+  },
+  {
+    "file": "com\\governence\\faflow\\core\\network\\FaflowApiService.kt",
+    "method": "POST",
+    "url": "campus-duties/generate-today-discipline",
+    "function": "generateTodayDiscipline",
+    "params": "@Query(\"target_date\") targetDate: String? = null, @Query(\"department_id\") departmentId: Int? = null",
+    "return_type": "Response<List<CampusDutyDto>>"
+  },
+  {
+    "file": "com\\governence\\faflow\\core\\network\\FaflowApiService.kt",
+    "method": "GET",
+    "url": "campus-duties/{duty_id}/candidates",
+    "function": "getDutyCandidates",
+    "params": "@Path(\"duty_id\") dutyId: Int",
+    "return_type": "Response<DutyCandidatesResponseDto>"
+  },
+  {
+    "file": "com\\governence\\faflow\\core\\network\\FaflowApiService.kt",
+    "method": "POST",
+    "url": "campus-duties/{duty_id}/assignments",
+    "function": "assignTeacher",
+    "params": "@Path(\"duty_id\") dutyId: Int, @Body request: DutyAssignRequestDto",
+    "return_type": "Response<DutyAssignmentDto>"
+  },
+  {
+    "file": "com\\governence\\faflow\\core\\network\\FaflowApiService.kt",
+    "method": "POST",
+    "url": "campus-duties/{duty_id}/assignments/{assignment_id}/lock",
+    "function": "lockAssignment",
+    "params": "@Path(\"duty_id\") dutyId: Int, @Path(\"assignment_id\") assignmentId: Int, @Body request: DutyLockRequestDto",
+    "return_type": "Response<DutyAssignmentDto>"
+  },
+  {
+    "file": "com\\governence\\faflow\\core\\network\\FaflowApiService.kt",
+    "method": "POST",
+    "url": "campus-duties/{duty_id}/assignments/{assignment_id}/unlock",
+    "function": "unlockAssignment",
+    "params": "@Path(\"duty_id\") dutyId: Int, @Path(\"assignment_id\") assignmentId: Int",
+    "return_type": "Response<DutyAssignmentDto>"
+  },
+  {
+    "file": "com\\governence\\faflow\\core\\network\\FaflowApiService.kt",
+    "method": "POST",
+    "url": "campus-duties/{duty_id}/assignments/{assignment_id}/override",
+    "function": "overrideAssignment",
+    "params": "@Path(\"duty_id\") dutyId: Int, @Path(\"assignment_id\") assignmentId: Int, @Body request: DutyOverrideRequestDto",
+    "return_type": "Response<DutyAssignmentDto>"
+  },
+  {
+    "file": "com\\governence\\faflow\\core\\network\\FaflowApiService.kt",
+    "method": "POST",
+    "url": "campus-duties/{duty_id}/assignments/{assignment_id}/replace",
+    "function": "replaceAssignment",
+    "params": "@Path(\"duty_id\") dutyId: Int, @Path(\"assignment_id\") assignmentId: Int, @Body request: DutyReplaceRequestDto",
+    "return_type": "Response<DutyAssignmentDto>"
+  },
+  {
+    "file": "com\\governence\\faflow\\core\\network\\FaflowApiService.kt",
+    "method": "GET",
+    "url": "campus-duties/metrics/summary",
+    "function": "getDutyMetrics",
+    "params": "@Query(\"date\") date: String? = null, @Query(\"department_id\") departmentId: Int? = null",
+    "return_type": "Response<DutyDashboardMetricsDto>"
+  },
+  {
+    "file": "com\\governence\\faflow\\core\\network\\FaflowApiService.kt",
+    "method": "GET",
+    "url": "campus-structure/tree",
+    "function": "getCampusStructureTree",
+    "params": "",
+    "return_type": "Response<CampusStructureTreeResponse>"
+  },
+  {
+    "file": "com\\governence\\faflow\\core\\network\\FaflowApiService.kt",
+    "method": "GET",
+    "url": "campus-structure/metrics",
+    "function": "getCampusStructureMetrics",
+    "params": "",
+    "return_type": "Response<CampusStructureMetricsDto>"
+  },
+  {
+    "file": "com\\governence\\faflow\\core\\network\\FaflowApiService.kt",
+    "method": "POST",
+    "url": "campus-structure/blocks/smart-autofill",
+    "function": "smartAutofillBlock",
+    "params": "@Body request: SmartBlockAutoFillRequestDto",
+    "return_type": "Response<SmartBlockAutoFillResponseDto>"
+  },
+  {
+    "file": "com\\governence\\faflow\\core\\network\\FaflowApiService.kt",
+    "method": "POST",
+    "url": "campus-structure/rooms/preview",
+    "function": "previewRoomPattern",
+    "params": "@Body request: RoomPatternPreviewRequestDto",
+    "return_type": "Response<PatternPreviewResponseDto>"
+  },
+  {
+    "file": "com\\governence\\faflow\\core\\network\\FaflowApiService.kt",
+    "method": "POST",
+    "url": "campus-structure/rooms/bulk-assign",
+    "function": "bulkAssignRooms",
+    "params": "@Body request: BulkRoomAssignRequestDto",
+    "return_type": "Response<BulkAssignResponseDto>"
+  },
+  {
+    "file": "com\\governence\\faflow\\core\\network\\FaflowApiService.kt",
+    "method": "POST",
+    "url": "campus-structure/blocks/{block_id}/duplicate",
+    "function": "duplicateBlock",
+    "params": "@Path(\"block_id\") blockId: Int, @Body request: DuplicateBlockRequestDto",
+    "return_type": "Response<DuplicateBlockResponseDto>"
+  },
+  {
+    "file": "com\\governence\\faflow\\core\\network\\FaflowApiService.kt",
+    "method": "GET",
+    "url": "campus-structure/search",
+    "function": "searchCampus",
+    "params": "@Query(\"q\") query: String",
+    "return_type": "Response<CampusSearchResponseDto>"
+  },
+  {
+    "file": "com\\governence\\faflow\\core\\network\\FaflowApiService.kt",
+    "method": "GET",
+    "url": "system/governance/public-config",
+    "function": "getPublicGovernanceConfig",
+    "params": "",
+    "return_type": "Response<PublicGovernanceConfigDto>"
+  }
+]

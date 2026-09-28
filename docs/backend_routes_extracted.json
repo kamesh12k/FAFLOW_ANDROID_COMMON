@@ -1,0 +1,71 @@
+[
+  {
+    "path": "/api/v1/health",
+    "methods": [
+      "GET"
+    ],
+    "endpoint": "health",
+    "response_model": null,
+    "deps": [],
+    "summary": "",
+    "tags": [
+      "Health"
+    ]
+  },
+  {
+    "path": "/api/health",
+    "methods": [
+      "GET"
+    ],
+    "endpoint": "health",
+    "response_model": null,
+    "deps": [],
+    "summary": "",
+    "tags": [
+      "Health"
+    ]
+  },
+  {
+    "path": "/health",
+    "methods": [
+      "GET"
+    ],
+    "endpoint": "health",
+    "response_model": null,
+    "deps": [],
+    "summary": "",
+    "tags": [
+      "Health"
+    ]
+  },
+  {
+    "path": "/api/settings/public",
+    "methods": [
+      "GET"
+    ],
+    "endpoint": "public_settings",
+    "response_model": null,
+    "deps": [
+      "<function get_db at 0x0000027F689D45E0>"
+    ],
+    "summary": "",
+    "tags": [
+      "Settings"
+    ]
+  },
+  {
+    "path": "/settings/public",
+    "methods": [
+      "GET"
+    ],
+    "endpoint": "public_settings",
+    "response_model": null,
+    "deps": [
+      "<function get_db at 0x0000027F689D45E0>"
+    ],
+    "summary": "",
+    "tags": [
+      "Settings"
+    ]
+  }
+]
