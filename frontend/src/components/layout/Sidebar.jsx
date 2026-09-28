@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useCallback } from 'react'
+import { useState, useEffect, useMemo, useCallback, memo } from 'react'
 import { NavLink, useNavigate, useLocation } from 'react-router-dom'
 import FacultyFlowLogo from '../brand/FacultyFlowLogo'
 import { useAuth } from '../../context/AuthContext'
@@ -26,7 +26,7 @@ import {
  * Individual navigation link with active pill indicator, responsive hover states,
  * and high-contrast tooltip in collapsed mode.
  */
-function NavItem({ to, icon, label, end, collapsed, unreadCount, isDark, sectionName }) {
+const NavItem = memo(function NavItem({ to, icon, label, end, collapsed, unreadCount, isDark, sectionName }) {
   const isAnnouncement = to === '/announcements'
 
   return (
@@ -112,7 +112,7 @@ function NavItem({ to, icon, label, end, collapsed, unreadCount, isDark, section
       )}
     </NavLink>
   )
-}
+})
 
 export default function Sidebar({ onOpenHelp }) {
   const { user, isAdmin, isSystemAdmin, isPrincipal, isGovernance, isManager, isStaff, logout } = useAuth()

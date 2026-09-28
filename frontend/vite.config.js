@@ -28,8 +28,10 @@ export default defineConfig({
   },
   build: {
     target: 'es2020',
-    emptyOutDir: false,
+    emptyOutDir: true,
     chunkSizeWarningLimit: 600,
+    cssCodeSplit: true,
+    minify: 'esbuild',
     rollupOptions: {
       output: {
         manualChunks: {
@@ -37,6 +39,7 @@ export default defineConfig({
           'vendor-router': ['react-router-dom'],
           'vendor-http': ['axios'],
           'vendor-pdf': ['jspdf', 'jspdf-autotable'],
+          'vendor-leaflet': ['leaflet'],
         },
       },
     },

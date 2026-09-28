@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom'
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useState, memo } from 'react'
 import { useAuth } from '../../context/AuthContext'
 import { useTheme } from '../../context/ThemeContext'
 import { academicCalendarApi, teachersApi, adminApi, departmentsApi, campusOperationsApi } from '../../api/services'
@@ -25,14 +25,14 @@ function initialsOf(name) {
   return (name || '').trim().split(/\s+/).filter(Boolean).slice(0, 2).map(n => n[0].toUpperCase()).join('') || '?'
 }
 
-function Avatar({ name }) {
+const Avatar = memo(function Avatar({ name }) {
   const c = AVATAR_PALETTE[hashStr(name || '') % AVATAR_PALETTE.length]
   return (
     <div className={`h-8 w-8 shrink-0 rounded-full flex items-center justify-center text-[10px] font-bold ${c.bg} ${c.text}`}>
       {initialsOf(name)}
     </div>
   )
-}
+})
 
 function getGreeting() {
   const h = new Date().getHours()
