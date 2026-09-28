@@ -1,49 +1,114 @@
-import { useState, useEffect } from 'react'
-import { NavLink, useNavigate } from 'react-router-dom'
+import { useState, useEffect, useMemo, useCallback } from 'react'
+import { NavLink, useNavigate, useLocation } from 'react-router-dom'
 import FacultyFlowLogo from '../brand/FacultyFlowLogo'
 import { useAuth } from '../../context/AuthContext'
 import { useTheme } from '../../context/ThemeContext'
-import { useDepartment } from '../../context/DepartmentContext'
 import { BRAND_CONFIG } from '../../config/branding'
 import { announcementApi } from '../../api/announcements'
-import { SettingsIcon, LogoutIcon, ChevronDownIcon } from '../icons'
-import { ADMIN_NAV, TEACHER_NAV, SYSTEM_ADMIN_NAV, PRINCIPAL_NAV, MANAGER_NAV, STAFF_NAV, GOVERNANCE_NAV } from './navConfig'
+import {
+  SettingsIcon,
+  LogoutIcon,
+  HelpCircleIcon,
+  SearchIcon,
+  ChevronDownIcon,
+} from '../icons'
+import {
+  ADMIN_NAV,
+  TEACHER_NAV,
+  SYSTEM_ADMIN_NAV,
+  PRINCIPAL_NAV,
+  MANAGER_NAV,
+  STAFF_NAV,
+  GOVERNANCE_NAV,
+} from './navConfig'
 
-function NavItem({ to, icon, label, end, collapsed, unreadCount }) {
+/**
+ * Individual navigation link with active pill indicator, responsive hover states,
+ * and high-contrast tooltip in collapsed mode.
+ */
+function NavItem({ to, icon, label, end, collapsed, unreadCount, isDark, sectionName }) {
   const isAnnouncement = to === '/announcements'
+
   return (
     <NavLink
       to={to}
       end={end}
       className={({ isActive }) =>
-        `flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-semibold transition-all group relative ${
+        `relative flex items-center justify-between rounded-lg text-xs font-medium transition-all duration-150 group outline-none focus-visible:ring-2 focus-visible:ring-primary-500/60 ${
+          collapsed
+            ? 'w-10 h-9 mx-auto justify-center'
+            : 'px-2.5 py-1.5'
+        } ${
           isActive
-            ? 'bg-primary-600 text-white shadow-sm'
-            : 'text-slate-400 hover:text-white hover:bg-slate-800/50'
+            ? isDark
+              ? 'bg-primary-500/15 text-primary-200 font-semibold border border-primary-500/30 shadow-2xs'
+              : 'bg-primary-50 text-primary-900 font-semibold border border-primary-200/80 shadow-2xs'
+            : isDark
+            ? 'text-slate-400 hover:text-slate-100 hover:bg-slate-800/60 border border-transparent'
+            : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100 border border-transparent'
         }`
       }
     >
-      <div className="flex items-center gap-3 min-w-0">
-        <span className="w-5 h-5 shrink-0 transition-transform group-hover:scale-105">{icon}</span>
-        {!collapsed && <span className="truncate">{label}</span>}
-      </div>
+      {({ isActive }) => (
+        <>
+          {/* Active Accent Indicator Pill */}
+          {isActive && (
+            <span
+              className={`absolute rounded-full bg-primary-500 transition-all ${
+                collapsed
+                  ? 'left-0.5 top-2 bottom-2 w-1'
+                  : 'left-0.5 top-1.5 bottom-1.5 w-1'
+              }`}
+              aria-hidden="true"
+            />
+          )}
 
-      {isAnnouncement && unreadCount > 0 && (
-        <span className={`${collapsed ? 'absolute top-1 right-1' : ''} px-2 py-0.5 rounded-full text-[10px] font-black bg-rose-600 text-white shrink-0`}>
-          {unreadCount > 99 ? '99+' : unreadCount}
-        </span>
-      )}
+          {/* Icon & Label */}
+          <div className={`flex items-center gap-2.5 min-w-0 ${collapsed ? 'justify-center' : ''}`}>
+            <span
+              className={`w-4.5 h-4.5 shrink-0 flex items-center justify-center transition-colors ${
+                isActive
+                  ? 'text-primary-500 dark:text-primary-400'
+                  : isDark
+                  ? 'text-slate-400 group-hover:text-slate-200'
+                  : 'text-slate-500 group-hover:text-slate-800'
+              }`}
+            >
+              {icon}
+            </span>
+            {!collapsed && <span className="truncate">{label}</span>}
+          </div>
 
-      {/* Collapsed Tooltip */}
-      {collapsed && (
-        <div className="absolute left-16 top-1/2 -translate-y-1/2 ml-2 px-3 py-1.5 bg-slate-900 text-white text-[11px] font-bold rounded-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 shadow-lg border border-slate-800 z-50 whitespace-nowrap flex items-center gap-2">
-          <span>{label}</span>
+          {/* Announcements Unread Count Badge */}
           {isAnnouncement && unreadCount > 0 && (
-            <span className="px-1.5 py-0.2 rounded-full text-[9px] font-black bg-rose-600 text-white">
-              {unreadCount}
+            <span
+              className={`${
+                collapsed ? 'absolute -top-1 -right-1' : ''
+              } px-1.5 py-0.2 rounded-full text-[10px] font-bold bg-rose-500 text-white shrink-0 shadow-2xs`}
+            >
+              {unreadCount > 99 ? '99+' : unreadCount}
             </span>
           )}
-        </div>
+
+          {/* Collapsed Mode Floating Tooltip */}
+          {collapsed && (
+            <div className="absolute left-[68px] top-1/2 -translate-y-1/2 px-3 py-1.5 bg-slate-900/95 backdrop-blur-md text-white text-xs rounded-lg shadow-2xl border border-slate-700/80 z-50 whitespace-nowrap pointer-events-none opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-150 flex flex-col gap-0.5">
+              {sectionName && (
+                <span className="text-[9px] font-bold uppercase tracking-wider text-slate-400">
+                  {sectionName}
+                </span>
+              )}
+              <div className="flex items-center gap-2 font-medium">
+                <span>{label}</span>
+                {isAnnouncement && unreadCount > 0 && (
+                  <span className="px-1.5 py-0.2 rounded-full text-[9px] font-bold bg-rose-500 text-white">
+                    {unreadCount}
+                  </span>
+                )}
+              </div>
+            </div>
+          )}
+        </>
       )}
     </NavLink>
   )
@@ -52,15 +117,27 @@ function NavItem({ to, icon, label, end, collapsed, unreadCount }) {
 export default function Sidebar({ onOpenHelp }) {
   const { user, isAdmin, isSystemAdmin, isPrincipal, isGovernance, isManager, isStaff, logout } = useAuth()
   const { app_name, themePreset } = useTheme() || {}
-  const { departments, activeDepartmentId, setActiveDepartmentId, activeDepartmentName } = useDepartment()
   const navigate = useNavigate()
+  const location = useLocation()
 
+  // Sidebar collapse toggle state
   const [collapsed, setCollapsed] = useState(() => {
     return localStorage.getItem('faflow_sidebar_collapsed') === 'true'
   })
-  const [showWorkspaceMenu, setShowWorkspaceMenu] = useState(false)
+
+  // Collapsed sections management (stores names of collapsed section headers)
+  const [collapsedSections, setCollapsedSections] = useState(() => {
+    try {
+      const stored = localStorage.getItem('faflow_collapsed_sections')
+      return stored ? JSON.parse(stored) : []
+    } catch {
+      return []
+    }
+  })
+
   const [unreadCount, setUnreadCount] = useState(0)
 
+  // Fetch unread announcements
   useEffect(() => {
     if (!user) return
     const fetchUnread = () => {
@@ -73,224 +150,380 @@ export default function Sidebar({ onOpenHelp }) {
     return () => clearInterval(interval)
   }, [user])
 
-  const toggleCollapse = () => {
-    const nextVal = !collapsed
-    setCollapsed(nextVal)
-    localStorage.setItem('faflow_sidebar_collapsed', String(nextVal))
+  // Keyboard shortcut Ctrl+B / Cmd+B to toggle sidebar collapse
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'b') {
+        e.preventDefault()
+        setCollapsed((prev) => {
+          const next = !prev
+          localStorage.setItem('faflow_sidebar_collapsed', String(next))
+          return next
+        })
+      }
+    }
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [])
+
+  const toggleCollapse = useCallback(() => {
+    setCollapsed((prev) => {
+      const nextVal = !prev
+      localStorage.setItem('faflow_sidebar_collapsed', String(nextVal))
+      return nextVal
+    })
+  }, [])
+
+  // Section toggle handler
+  const toggleSection = useCallback((sectionTitle) => {
+    setCollapsedSections((prev) => {
+      const exists = prev.includes(sectionTitle)
+      const next = exists ? prev.filter((s) => s !== sectionTitle) : [...prev, sectionTitle]
+      try {
+        localStorage.setItem('faflow_collapsed_sections', JSON.stringify(next))
+      } catch {}
+      return next
+    })
+  }, [])
+
+  // Resolve navigation hierarchy for the active user role
+  const nav = useMemo(() => {
+    if (isGovernance) return GOVERNANCE_NAV
+    if (isSystemAdmin) return SYSTEM_ADMIN_NAV
+    if (isPrincipal) return PRINCIPAL_NAV
+    if (isManager) return MANAGER_NAV
+    if (isStaff) return STAFF_NAV
+    if (isAdmin) return ADMIN_NAV
+    return TEACHER_NAV
+  }, [isGovernance, isSystemAdmin, isPrincipal, isManager, isStaff, isAdmin])
+
+  // Auto-expand any section that contains the current active route
+  useEffect(() => {
+    const currentPath = location.pathname
+    for (const group of nav) {
+      if (group.section && collapsedSections.includes(group.section)) {
+        const hasActiveItem = group.items.some((item) => {
+          if (item.end) return item.to === currentPath
+          return currentPath.startsWith(item.to)
+        })
+        if (hasActiveItem) {
+          setCollapsedSections((prev) => {
+            const next = prev.filter((s) => s !== group.section)
+            try {
+              localStorage.setItem('faflow_collapsed_sections', JSON.stringify(next))
+            } catch {}
+            return next
+          })
+        }
+      }
+    }
+  }, [location.pathname, nav, collapsedSections])
+
+  const handleLogout = () => {
+    logout()
+    navigate('/login')
   }
 
-  let nav = TEACHER_NAV
-  if (isGovernance) {
-    nav = GOVERNANCE_NAV
-  } else if (isSystemAdmin) {
-    nav = SYSTEM_ADMIN_NAV
-  } else if (isPrincipal) {
-    nav = PRINCIPAL_NAV
-  } else if (isManager) {
-    nav = MANAGER_NAV
-  } else if (isStaff) {
-    nav = STAFF_NAV
-  } else if (isAdmin) {
-    nav = ADMIN_NAV
+  const handleOpenSearch = () => {
+    window.dispatchEvent(new CustomEvent('faflow:open-search'))
   }
 
-  const handleLogout = () => { logout(); navigate('/login') }
-
-  const isDark = themePreset?.sidebarStyle === 'dark'
+  const isDark = themePreset?.sidebarStyle !== 'light'
 
   const sidebarCls = isDark
-    ? 'bg-slate-950 border-slate-800 text-white'
-    : 'bg-white border-slate-100 text-slate-800'
+    ? 'bg-slate-950 border-slate-800/80 text-white'
+    : 'bg-white border-slate-200/80 text-slate-800'
+
+  const userInitial = user?.name ? user.name.charAt(0).toUpperCase() : 'U'
 
   return (
-    <aside className={`hidden lg:flex shrink-0 border-r sticky top-0 h-screen max-h-screen overflow-hidden flex-col transition-all duration-300 ${collapsed ? 'w-[76px]' : 'w-64'} ${sidebarCls}`}>
-      {/* Sidebar Header */}
-      <div className={`shrink-0 px-4 py-4 border-b flex items-center justify-between gap-3 ${isDark ? 'border-slate-800' : 'border-slate-100'}`}>
-        {!collapsed && (
-          <div className="flex items-center gap-2.5 min-w-0">
-            <FacultyFlowLogo variant="mark" size={30} />
-            <p className="font-extrabold text-base tracking-tight truncate">{app_name || BRAND_CONFIG.appName}</p>
-          </div>
-        )}
-        {collapsed && (
-          <span className="mx-auto cursor-pointer" onClick={toggleCollapse} title="Expand sidebar">
-            <FacultyFlowLogo variant="mark" size={28} />
-          </span>
-        )}
-        {!collapsed && (
+    <aside
+      className={`hidden lg:flex shrink-0 border-r sticky top-0 h-screen max-h-screen overflow-hidden flex-col transition-all duration-200 ${
+        collapsed ? 'w-[72px]' : 'w-64'
+      } ${sidebarCls}`}
+      aria-label="Main Sidebar Navigation"
+    >
+      {/* ─── Header: 56px (h-14) strictly aligned with TopBar ─── */}
+      <div
+        className={`h-14 shrink-0 px-3.5 border-b flex items-center justify-between gap-2.5 ${
+          isDark ? 'border-slate-800/80 bg-slate-950' : 'border-slate-100 bg-white'
+        }`}
+      >
+        {!collapsed ? (
+          <>
+            <div className="flex items-center gap-2.5 min-w-0">
+              <FacultyFlowLogo variant="mark" size={26} />
+              <p className="font-bold text-sm tracking-tight truncate">
+                {app_name || BRAND_CONFIG.appName}
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={toggleCollapse}
+              aria-label="Collapse sidebar (Ctrl+B)"
+              title="Collapse sidebar (Ctrl+B)"
+              className={`p-1.5 rounded-lg transition-colors outline-none focus-visible:ring-2 focus-visible:ring-primary-500/50 ${
+                isDark
+                  ? 'hover:bg-slate-800 text-slate-400 hover:text-white'
+                  : 'hover:bg-slate-100 text-slate-500 hover:text-slate-900'
+              }`}
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+              </svg>
+            </button>
+          </>
+        ) : (
           <button
+            type="button"
+            className="mx-auto cursor-pointer p-1.5 rounded-lg hover:bg-slate-800 transition-colors outline-none focus-visible:ring-2 focus-visible:ring-primary-500/50"
             onClick={toggleCollapse}
-            aria-label="Collapse sidebar"
-            className={`p-1.5 rounded-lg transition-colors ${isDark ? 'hover:bg-slate-800 text-slate-400 hover:text-white' : 'hover:bg-slate-100 text-slate-500 hover:text-slate-900'}`}
+            title="Expand sidebar (Ctrl+B)"
+            aria-label="Expand sidebar (Ctrl+B)"
           >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 19l-7-7 7-7" />
-            </svg>
+            <FacultyFlowLogo variant="mark" size={24} />
           </button>
         )}
       </div>
 
-      {/* Workspace / Department Switcher (System Admin only) */}
-      {!collapsed && isSystemAdmin && departments.length > 0 && (
-        <div className="shrink-0 px-4 py-3 relative border-b border-slate-100">
+      {/* ─── Quick Jump / Command Palette Search Affordance ─── */}
+      <div className={`shrink-0 ${collapsed ? 'px-2 py-2 flex justify-center' : 'px-3 pt-2.5 pb-1'}`}>
+        {!collapsed ? (
           <button
-            onClick={() => setShowWorkspaceMenu(!showWorkspaceMenu)}
-            className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-bold transition-all border ${
+            type="button"
+            onClick={handleOpenSearch}
+            className={`w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all border outline-none focus-visible:ring-2 focus-visible:ring-primary-500/50 ${
               isDark
-                ? 'bg-slate-900/50 border-slate-800 text-slate-200 hover:bg-slate-900'
-                : 'bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100'
+                ? 'bg-slate-900/60 border-slate-800/90 text-slate-400 hover:text-slate-200 hover:border-slate-700 hover:bg-slate-900'
+                : 'bg-slate-50 border-slate-200/90 text-slate-500 hover:text-slate-800 hover:border-slate-300 hover:bg-slate-100/70'
             }`}
           >
-            <div className="flex items-center gap-2 truncate">
-              <FacultyFlowLogo variant="mark" size={18} />
-              <span className="truncate">{activeDepartmentName || 'All Departments'}</span>
+            <div className="flex items-center gap-2">
+              <SearchIcon className="w-3.5 h-3.5 text-slate-400" />
+              <span>Quick search...</span>
             </div>
-            <ChevronDownIcon className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+            <kbd
+              className={`px-1.5 py-0.5 text-[10px] font-mono rounded ${
+                isDark
+                  ? 'bg-slate-800 text-slate-400 border border-slate-700/60'
+                  : 'bg-white text-slate-500 border border-slate-200 shadow-2xs'
+              }`}
+            >
+              Ctrl K
+            </kbd>
           </button>
-
-          {showWorkspaceMenu && (
-            <div className={`absolute left-4 right-4 z-50 mt-1 max-h-56 overflow-y-auto rounded-xl border shadow-xl p-1.5 space-y-0.5 ${
-              isDark ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'
-            }`}>
-              <button
-                onClick={() => { setActiveDepartmentId(null); setShowWorkspaceMenu(false) }}
-                className={`w-full text-left px-3 py-2 rounded-lg text-xs font-semibold transition-all ${
-                  activeDepartmentId === null
-                    ? 'bg-primary-600 text-white'
-                    : isDark ? 'text-slate-400 hover:bg-slate-800 hover:text-white' : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
-                }`}
-              >
-                All Departments
-              </button>
-              {departments.map(dept => (
-                <button
-                  key={dept.id}
-                  onClick={() => { setActiveDepartmentId(dept.id); setShowWorkspaceMenu(false) }}
-                  className={`w-full text-left px-3 py-2 rounded-lg text-xs font-semibold transition-all truncate ${
-                    activeDepartmentId === dept.id
-                      ? 'bg-primary-600 text-white'
-                      : isDark ? 'text-slate-400 hover:bg-slate-800 hover:text-white' : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
-                  }`}
-                >
-                  {dept.name}
-                </button>
-              ))}
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* Navigation */}
-      <nav className="flex-1 min-h-0 px-3 py-4 space-y-5 overflow-y-auto overflow-x-hidden sidebar-scrollbar overscroll-contain">
-        {nav.map((group, i) => (
-          <div key={i} className="space-y-1">
-            {!collapsed && group.section && (
-              <p className={`px-3.5 pb-1 text-[10px] font-bold uppercase tracking-widest ${
-                isDark ? 'text-slate-500' : 'text-slate-400'
-              }`}>{group.section}</p>
-            )}
-            <div className="space-y-0.5">
-              {group.items.map((item) => (
-                <NavItem key={item.to} {...item} collapsed={collapsed} unreadCount={unreadCount} />
-              ))}
-            </div>
-          </div>
-        ))}
-      </nav>
-
-      {/* Footer */}
-      <div className={`shrink-0 px-3 pb-5 border-t pt-3 space-y-1 mt-auto z-10 ${isDark ? 'border-slate-800 bg-slate-950' : 'border-slate-100 bg-white'}`}>
-
-        {/* Expand button when collapsed */}
-        {collapsed && (
+        ) : (
           <button
-            onClick={toggleCollapse}
-            aria-label="Expand sidebar"
-            className={`w-full flex items-center justify-center p-2 rounded-xl transition-all mb-1 ${
-              isDark ? 'hover:bg-slate-800 text-slate-400' : 'hover:bg-slate-100 text-slate-500'
+            type="button"
+            onClick={handleOpenSearch}
+            className={`w-10 h-9 flex items-center justify-center rounded-lg transition-all group relative outline-none focus-visible:ring-2 focus-visible:ring-primary-500/50 ${
+              isDark
+                ? 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/60'
+                : 'text-slate-500 hover:text-slate-900 hover:bg-slate-100'
             }`}
+            aria-label="Quick search (Ctrl+K)"
           >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5l7 7-7 7" />
-            </svg>
+            <SearchIcon className="w-4.5 h-4.5" />
+            <div className="absolute left-[68px] top-1/2 -translate-y-1/2 px-2.5 py-1 bg-slate-900/95 backdrop-blur-md text-white text-xs font-medium rounded-md shadow-xl border border-slate-800 z-50 whitespace-nowrap pointer-events-none opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all">
+              Quick search (Ctrl+K)
+            </div>
           </button>
         )}
+      </div>
 
-        {/* Settings link */}
+      {/* ─── Navigation Groups ─── */}
+      <nav
+        className="flex-1 min-h-0 px-2.5 py-2 space-y-2 overflow-y-auto overflow-x-hidden sidebar-scrollbar overscroll-contain"
+        aria-label="Main Navigation"
+      >
+        {nav.map((group, idx) => {
+          const isSectionCollapsed = group.section && collapsedSections.includes(group.section)
+
+          return (
+            <div key={group.section || `sec-${idx}`} className="space-y-0.5">
+              {/* Section Header (Expanded Mode) */}
+              {!collapsed && group.section && (
+                <div className="pt-2 pb-0.5">
+                  <button
+                    type="button"
+                    onClick={() => toggleSection(group.section)}
+                    className={`w-full flex items-center justify-between px-2 py-1 text-[11px] font-bold uppercase tracking-wider rounded-md transition-colors select-none group/sec outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40 ${
+                      isDark
+                        ? 'text-slate-400 hover:text-slate-200 hover:bg-slate-900/60'
+                        : 'text-slate-500 hover:text-slate-800 hover:bg-slate-100/60'
+                    }`}
+                    aria-expanded={!isSectionCollapsed}
+                  >
+                    <span className="flex items-center gap-1.5 truncate">
+                      <ChevronDownIcon
+                        className={`w-3 h-3 text-slate-500 transition-transform duration-200 shrink-0 ${
+                          isSectionCollapsed ? '-rotate-90' : 'rotate-0'
+                        }`}
+                      />
+                      <span className="truncate">{group.section}</span>
+                    </span>
+                    <span
+                      className={`text-[10px] font-mono px-1.5 py-0.2 rounded font-normal transition-colors ${
+                        isDark
+                          ? 'text-slate-500 group-hover/sec:text-slate-400'
+                          : 'text-slate-400 group-hover/sec:text-slate-600'
+                      }`}
+                    >
+                      {group.items.length}
+                    </span>
+                  </button>
+                </div>
+              )}
+
+              {/* Section Divider (Collapsed Mode) */}
+              {collapsed && idx > 0 && (
+                <div className="w-6 h-px bg-slate-800/80 mx-auto my-1.5" aria-hidden="true" />
+              )}
+
+              {/* Items Container */}
+              {(!isSectionCollapsed || collapsed) && (
+                <div className="space-y-0.5">
+                  {group.items.map((item) => (
+                    <NavItem
+                      key={item.to}
+                      {...item}
+                      collapsed={collapsed}
+                      unreadCount={unreadCount}
+                      isDark={isDark}
+                      sectionName={group.section}
+                    />
+                  ))}
+                </div>
+              )}
+            </div>
+          )
+        })}
+      </nav>
+
+      {/* ─── Footer: Secondary Actions & User Profile Card ─── */}
+      <div
+        className={`shrink-0 px-2.5 py-2.5 border-t space-y-1 mt-auto z-10 ${
+          isDark ? 'border-slate-800/80 bg-slate-950' : 'border-slate-100 bg-white'
+        }`}
+      >
+        {/* Settings link for Admin */}
         {isAdmin && !isPrincipal && (
           <NavLink
             to="/admin/settings"
             className={({ isActive }) =>
-              `flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-semibold transition-all group relative ${
+              `relative flex items-center gap-2.5 rounded-lg text-xs font-medium transition-all group outline-none focus-visible:ring-2 focus-visible:ring-primary-500/50 ${
+                collapsed
+                  ? 'w-10 h-9 mx-auto justify-center'
+                  : 'px-2.5 py-1.5'
+              } ${
                 isActive
-                  ? 'bg-primary-600 text-white'
-                  : `${isDark ? 'text-slate-400 hover:text-white hover:bg-slate-800/50' : 'text-slate-500 hover:text-slate-800 hover:bg-slate-100'}`
+                  ? isDark
+                    ? 'bg-primary-500/15 text-primary-200 font-semibold border border-primary-500/30'
+                    : 'bg-primary-50 text-primary-900 font-semibold border border-primary-200/80'
+                  : isDark
+                  ? 'text-slate-400 hover:text-slate-100 hover:bg-slate-800/60 border border-transparent'
+                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100 border border-transparent'
               }`
             }
           >
-            <SettingsIcon className="w-5 h-5 shrink-0" />
+            <SettingsIcon className="w-4.5 h-4.5 shrink-0" />
             {!collapsed && <span>Settings</span>}
             {collapsed && (
-              <div className="absolute left-16 top-1/2 -translate-y-1/2 ml-2 px-3 py-1.5 bg-slate-900 text-white text-[11px] font-bold rounded-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 shadow-lg border border-slate-800 z-50 whitespace-nowrap">
+              <div className="absolute left-[68px] top-1/2 -translate-y-1/2 px-2.5 py-1 bg-slate-900 text-white text-xs font-medium rounded-md shadow-xl border border-slate-800 z-50 whitespace-nowrap pointer-events-none">
                 Settings
               </div>
             )}
           </NavLink>
         )}
 
-        {/* Teacher/staff preferences */}
+        {/* Teacher/staff substitution preferences */}
         {!isAdmin && !isManager && !isStaff && !isGovernance && (
           <NavLink
             to="/teacher/preferences"
             className={({ isActive }) =>
-              `flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-semibold transition-all group relative ${
+              `relative flex items-center gap-2.5 rounded-lg text-xs font-medium transition-all group outline-none focus-visible:ring-2 focus-visible:ring-primary-500/50 ${
+                collapsed
+                  ? 'w-10 h-9 mx-auto justify-center'
+                  : 'px-2.5 py-1.5'
+              } ${
                 isActive
-                  ? 'bg-primary-600 text-white'
-                  : `${isDark ? 'text-slate-400 hover:text-white hover:bg-slate-800/50' : 'text-slate-500 hover:text-slate-800 hover:bg-slate-100'}`
+                  ? isDark
+                    ? 'bg-primary-500/15 text-primary-200 font-semibold border border-primary-500/30'
+                    : 'bg-primary-50 text-primary-900 font-semibold border border-primary-200/80'
+                  : isDark
+                  ? 'text-slate-400 hover:text-slate-100 hover:bg-slate-800/60 border border-transparent'
+                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100 border border-transparent'
               }`
             }
           >
-            <SettingsIcon className="w-5 h-5 shrink-0" />
+            <SettingsIcon className="w-4.5 h-4.5 shrink-0" />
             {!collapsed && <span>Preferences</span>}
             {collapsed && (
-              <div className="absolute left-16 top-1/2 -translate-y-1/2 ml-2 px-3 py-1.5 bg-slate-900 text-white text-[11px] font-bold rounded-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 shadow-lg border border-slate-800 z-50 whitespace-nowrap">
+              <div className="absolute left-[68px] top-1/2 -translate-y-1/2 px-2.5 py-1 bg-slate-900 text-white text-xs font-medium rounded-md shadow-xl border border-slate-800 z-50 whitespace-nowrap pointer-events-none">
                 Preferences
               </div>
             )}
           </NavLink>
         )}
 
-        {/* Help & Guide link */}
+        {/* Help & Guides Modal Trigger */}
         <button
           type="button"
           onClick={onOpenHelp}
-          className={`w-full flex items-center gap-3 px-3.5 py-2 rounded-xl text-xs font-semibold transition-all group relative text-left ${
-            isDark ? 'text-slate-400 hover:text-white hover:bg-slate-800/50' : 'text-slate-500 hover:text-slate-800 hover:bg-slate-100'
+          className={`flex items-center gap-2.5 rounded-lg text-xs font-medium transition-all group relative text-left outline-none focus-visible:ring-2 focus-visible:ring-primary-500/50 ${
+            collapsed
+              ? 'w-10 h-9 mx-auto justify-center'
+              : 'w-full px-2.5 py-1.5'
+          } ${
+            isDark
+              ? 'text-slate-400 hover:text-slate-100 hover:bg-slate-800/60'
+              : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
           }`}
+          aria-label="Help and Documentation"
         >
-          <span className="text-base shrink-0">💡</span>
+          <HelpCircleIcon className="w-4.5 h-4.5 shrink-0" />
           {!collapsed && <span>Help & Guides</span>}
           {collapsed && (
-            <div className="absolute left-16 top-1/2 -translate-y-1/2 ml-2 px-3 py-1.5 bg-slate-900 text-white text-[11px] font-bold rounded-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 shadow-lg border border-slate-800 z-50 whitespace-nowrap">
+            <div className="absolute left-[68px] top-1/2 -translate-y-1/2 px-2.5 py-1 bg-slate-900 text-white text-xs font-medium rounded-md shadow-xl border border-slate-800 z-50 whitespace-nowrap pointer-events-none">
               Help & Guides
             </div>
           )}
         </button>
 
-        {/* User identity card */}
+        {/* User Identity Card */}
         {!collapsed ? (
-          <div className={`px-3 py-2.5 rounded-xl mt-1 flex items-center justify-between border ${
-            isDark ? 'bg-slate-900/40 border-slate-800' : 'bg-slate-50 border-slate-100'
-          }`}>
-            <div className="min-w-0">
-              <p className="text-xs font-bold truncate">{user?.name}</p>
-              <p className={`text-[10px] uppercase font-bold tracking-wider mt-0.5 ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
-                {user?.role?.replace(/_/g, ' ')}
-              </p>
+          <div
+            className={`p-2 rounded-xl mt-1.5 flex items-center justify-between border ${
+              isDark
+                ? 'bg-slate-900/60 border-slate-800/80 hover:bg-slate-900'
+                : 'bg-slate-50 border-slate-200/70 hover:bg-slate-100/60'
+            } transition-colors`}
+          >
+            <div className="flex items-center gap-2.5 min-w-0">
+              <div className="relative shrink-0">
+                <div className="w-7 h-7 rounded-lg bg-primary-600/15 border border-primary-500/30 text-primary-400 flex items-center justify-center text-xs font-bold">
+                  {userInitial}
+                </div>
+                <span
+                  className="absolute -bottom-0.5 -right-0.5 w-2 h-2 rounded-full bg-emerald-500 ring-2 ring-slate-950"
+                  title="Online"
+                />
+              </div>
+              <div className="min-w-0">
+                <p className="text-xs font-semibold truncate leading-tight">{user?.name}</p>
+                <p
+                  className={`text-[10px] uppercase font-bold tracking-wider mt-0.5 leading-none ${
+                    isDark ? 'text-slate-400' : 'text-slate-500'
+                  }`}
+                >
+                  {user?.role?.replace(/_/g, ' ')}
+                </p>
+              </div>
             </div>
             <button
+              type="button"
               onClick={handleLogout}
-              className="p-1.5 rounded-lg transition-colors hover:bg-rose-500/10 text-slate-400 hover:text-rose-500"
+              className="p-1.5 rounded-lg transition-colors hover:bg-rose-500/10 text-slate-400 hover:text-rose-400 shrink-0 outline-none focus-visible:ring-2 focus-visible:ring-rose-500/50"
               title="Sign out"
               aria-label="Sign out"
             >
@@ -299,12 +532,14 @@ export default function Sidebar({ onOpenHelp }) {
           </div>
         ) : (
           <button
+            type="button"
             onClick={handleLogout}
             aria-label="Sign out"
-            className="w-full flex items-center justify-center p-2 rounded-xl text-slate-400 hover:text-rose-500 hover:bg-rose-500/10 transition-all group relative"
+            title="Sign out"
+            className="w-10 h-9 mx-auto flex items-center justify-center rounded-lg text-slate-400 hover:text-rose-400 hover:bg-rose-500/10 transition-all group relative mt-1 outline-none focus-visible:ring-2 focus-visible:ring-rose-500/50"
           >
-            <LogoutIcon className="w-5 h-5 shrink-0" />
-            <div className="absolute left-16 top-1/2 -translate-y-1/2 ml-2 px-3 py-1.5 bg-slate-900 text-white text-[11px] font-bold rounded-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 shadow-lg border border-slate-800 z-50 whitespace-nowrap">
+            <LogoutIcon className="w-4.5 h-4.5 shrink-0" />
+            <div className="absolute left-[68px] top-1/2 -translate-y-1/2 px-2.5 py-1 bg-slate-900 text-white text-xs font-medium rounded-md shadow-xl border border-slate-800 z-50 whitespace-nowrap pointer-events-none">
               Sign out
             </div>
           </button>

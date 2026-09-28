@@ -91,52 +91,61 @@ export default function NotificationBell() {
 
   return (
     <div className="relative" ref={ref}>
-      <button onClick={handleToggle} className="relative p-2 rounded-lg text-gray-500 hover:bg-gray-100 hover:text-gray-700">
-        <BellIcon className="w-5 h-5" />
+      <button
+        type="button"
+        onClick={handleToggle}
+        className="h-9 w-9 flex items-center justify-center rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50/70 dark:bg-slate-800/70 hover:bg-slate-100/70 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white transition-colors relative shadow-2xs"
+        aria-label={unread > 0 ? `Notifications (${unread} unread)` : 'Notifications'}
+        title={unread > 0 ? `${unread} unread notifications` : 'Notifications'}
+      >
+        <BellIcon className="w-4.5 h-4.5" />
         {unread > 0 && (
-          <span className="absolute top-1 right-1 w-2 h-2 rounded-full bg-red-500" />
+          <span className="absolute top-2 right-2 w-2 h-2 rounded-full bg-rose-500 ring-2 ring-white dark:ring-slate-900" />
         )}
       </button>
 
       {open && (
-        <div className="absolute right-0 mt-2 w-88 max-w-[92vw] bg-white rounded-2xl border border-gray-100 shadow-2xl z-50 overflow-hidden">
-          <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100 bg-gray-50/50">
+        <div className="absolute right-0 mt-2 w-88 max-w-[92vw] bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-xl z-50 overflow-hidden">
+          <div className="flex items-center justify-between px-4 py-3 border-b border-slate-100 dark:border-slate-800 bg-slate-50/80 dark:bg-slate-850">
             <div>
-              <p className="text-sm font-semibold text-gray-800">Notifications</p>
-              {unread > 0 && <p className="text-[11px] text-gray-500">{unread} unread</p>}
+              <p className="text-xs font-bold text-slate-800 dark:text-slate-100 uppercase tracking-wider">Notifications</p>
+              {unread > 0 && <p className="text-[11px] text-slate-500 dark:text-slate-400">{unread} unread</p>}
             </div>
             <div className="flex items-center gap-2">
               {unread > 0 && (
-                <button onClick={handleMarkAll} className="text-xs text-primary-600 hover:underline font-medium">
+                <button onClick={handleMarkAll} className="text-xs text-primary-600 dark:text-primary-400 hover:underline font-medium">
                   Mark all read
                 </button>
               )}
               {items.length > 0 && (
-                <button onClick={handleClearAll} className="text-xs text-rose-600 hover:underline font-semibold">
+                <button onClick={handleClearAll} className="text-xs text-rose-600 dark:text-rose-400 hover:underline font-semibold">
                   Clear All
                 </button>
               )}
             </div>
           </div>
 
-          <div className="max-h-80 overflow-y-auto divide-y divide-gray-50">
+          <div className="max-h-80 overflow-y-auto divide-y divide-slate-100 dark:divide-slate-800">
             {items.length === 0 ? (
-              <p className="px-4 py-8 text-sm text-gray-400 text-center">You're all caught up.</p>
+              <div className="px-4 py-8 text-center">
+                <BellIcon className="w-8 h-8 text-slate-300 dark:text-slate-600 mx-auto mb-2" />
+                <p className="text-xs text-slate-500 dark:text-slate-400">You're all caught up.</p>
+              </div>
             ) : items.map(item => {
               const Icon = EVENT_ICON[item.event_type] || BellIcon
               return (
                 <button
                   key={item.id}
                   onClick={() => handleItemClick(item)}
-                  className={`w-full text-left px-4 py-3 flex gap-3 hover:bg-gray-50 transition-colors ${!item.is_read ? 'bg-primary-50/30' : ''}`}
+                  className={`w-full text-left px-4 py-3 flex gap-3 hover:bg-slate-50 dark:hover:bg-slate-800/60 transition-colors ${!item.is_read ? 'bg-primary-50/30 dark:bg-primary-950/20' : ''}`}
                 >
-                  <span className={`mt-0.5 w-7 h-7 shrink-0 rounded-full flex items-center justify-center ${!item.is_read ? 'bg-primary-100 text-primary-600' : 'bg-gray-100 text-gray-400'}`}>
+                  <span className={`mt-0.5 w-7 h-7 shrink-0 rounded-full flex items-center justify-center ${!item.is_read ? 'bg-primary-100 dark:bg-primary-900/40 text-primary-600 dark:text-primary-400' : 'bg-slate-100 dark:bg-slate-800 text-slate-400'}`}>
                     <Icon className="w-4 h-4" />
                   </span>
                   <span className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-gray-800">{item.title}</p>
-                    <p className="text-xs text-gray-500 mt-0.5">{item.body}</p>
-                    <p className="text-[11px] text-gray-400 mt-1">{timeAgo(item.created_at)}</p>
+                    <p className="text-xs font-semibold text-slate-800 dark:text-slate-200">{item.title}</p>
+                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5 line-clamp-2">{item.body}</p>
+                    <p className="text-[11px] text-slate-400 dark:text-slate-500 mt-1">{timeAgo(item.created_at)}</p>
                   </span>
                   {!item.is_read && <span className="w-2 h-2 rounded-full bg-primary-500 mt-1.5 shrink-0" />}
                 </button>

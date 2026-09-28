@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { policyApi } from '../../api/services'
 import { Spinner } from '../ui'
+import { CheckCircleIcon } from '../icons'
 
 const ROLE_STEPS = {
   teacher: [
@@ -12,12 +13,12 @@ const ROLE_STEPS = {
     {
       title: "Quick Search & Command Palette",
       description: "Press Ctrl+K (or tap Search in the top bar) to instantly look up any room, class timetable, or colleague.",
-      targetSelector: 'button[aria-label="Search"]',
+      targetSelector: 'button[aria-label*="Search"]',
     },
     {
       title: "Real-Time Institutional Alerts",
       description: "Get immediate notifications when timetable changes occur, leaves are approved, or substitution duties are assigned.",
-      targetSelector: '[data-tour="notification-bell"], button[aria-label="Notifications"]',
+      targetSelector: '[data-tour="notification-bell"]',
     },
     {
       title: "Today's Timetable & Schedule",
@@ -331,7 +332,8 @@ export default function GuidedTour({ isOpen, user, onComplete }) {
               </div>
               {sandboxToggled && (
                 <div className="p-2 rounded-lg bg-emerald-100/70 dark:bg-emerald-900/30 border border-emerald-200 dark:border-emerald-800 text-emerald-900 dark:text-emerald-200 text-[11px] font-bold flex items-center gap-1.5 animate-in fade-in">
-                  <span>🎉 Great job! You know how fast attendance toggle works.</span>
+                  <CheckCircleIcon className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
+                  <span>Interactive simulation complete. Ready to proceed.</span>
                 </div>
               )}
             </div>

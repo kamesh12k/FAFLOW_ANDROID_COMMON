@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { policyApi } from '../../api/services'
 import { Spinner, ErrorAlert } from '../ui'
+import { HelpCircleIcon, CloseIcon } from '../icons'
 
 export default function HelpGuideModal({ isOpen, onClose, onReplayTour, user }) {
   const [activeTab, setActiveTab] = useState('guides')
@@ -31,8 +32,8 @@ export default function HelpGuideModal({ isOpen, onClose, onReplayTour, user }) 
         {/* Header */}
         <div className="px-6 py-4 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-primary-50 dark:bg-primary-950 text-primary-600 dark:text-primary-400 flex items-center justify-center font-bold">
-              💡
+            <div className="w-9 h-9 rounded-xl bg-primary-50 dark:bg-primary-950 text-primary-600 dark:text-primary-400 flex items-center justify-center">
+              <HelpCircleIcon className="w-5 h-5" />
             </div>
             <div>
               <h2 className="text-base font-extrabold text-slate-900 dark:text-white">
@@ -47,8 +48,9 @@ export default function HelpGuideModal({ isOpen, onClose, onReplayTour, user }) 
             type="button"
             onClick={onClose}
             className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+            aria-label="Close modal"
           >
-            ✕
+            <CloseIcon className="w-5 h-5" />
           </button>
         </div>
 

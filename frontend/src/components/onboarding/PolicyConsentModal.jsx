@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { policyApi } from '../../api/services'
 import { Spinner, ErrorAlert } from '../ui'
+import { ShieldCheckIcon, InfoIcon } from '../icons'
 
 export default function PolicyConsentModal({ isOpen, user, onConsentAccepted }) {
   const [policyData, setPolicyData] = useState(null)
@@ -55,7 +56,7 @@ export default function PolicyConsentModal({ isOpen, user, onConsentAccepted }) 
         <div className="px-6 py-5 border-b border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-primary-50 dark:bg-primary-950/50 text-primary-600 dark:text-primary-400 flex items-center justify-center font-black">
-              🛡️
+              <ShieldCheckIcon className="w-5 h-5" />
             </div>
             <div>
               <h2 className="text-base font-extrabold text-slate-900 dark:text-white flex items-center gap-2">
@@ -118,7 +119,8 @@ export default function PolicyConsentModal({ isOpen, user, onConsentAccepted }) 
               {/* Summary of User Rights & Responsibilities */}
               <div className="p-3.5 rounded-xl bg-blue-50/60 dark:bg-blue-950/30 border border-blue-100 dark:border-blue-900/50 text-xs text-blue-900 dark:text-blue-200 space-y-1">
                 <div className="font-bold flex items-center gap-1.5">
-                  <span>ℹ️ Key Institutional Commitment</span>
+                  <InfoIcon className="w-4 h-4 text-blue-600 dark:text-blue-400 shrink-0" />
+                  <span>Key Institutional Commitment</span>
                 </div>
                 <p className="text-[11px] leading-normal text-blue-800/90 dark:text-blue-300">
                   Your attendance, substitution, and leave data are processed strictly for institutional administration. Location queries occur only during active attendance marking within verified campus geofences.

@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useMemo } from 'react'
-import { PinIcon, MessageSquareIcon, CloseIcon } from '../../components/icons'
+import { PinIcon, MessageSquareIcon, CloseIcon, InfoIcon } from '../../components/icons'
 import { announcementApi } from '../../api/announcements'
 import { useToast } from '../../components/ui/Toast'
 
@@ -29,7 +29,7 @@ function renderMessageContent(text) {
       return (
         <span
           key={idx}
-          className="inline-flex items-center px-1.5 py-0.5 rounded-md bg-indigo-50 text-indigo-700 font-bold text-xs border border-indigo-200/60 mr-0.5"
+          className="inline-flex items-center px-1.5 py-0.2 rounded bg-slate-100 text-primary-700 font-semibold text-xs border border-slate-200 mr-0.5"
         >
           {part}
         </span>
@@ -189,7 +189,7 @@ function MessageItem({
     }
   }
 
-  const initials = (message.author_name || 'User')
+  const initials = (message.author_name || 'U')
     .split(' ')
     .map((n) => n[0])
     .slice(0, 2)
@@ -202,48 +202,48 @@ function MessageItem({
   return (
     <div
       id={`msg-${message.id}`}
-      className={`group relative transition-all duration-300 rounded-2xl ${
+      className={`group relative transition-all rounded-xl ${
         isHighlighted
-          ? 'ring-2 ring-indigo-500 shadow-md bg-indigo-50/40 p-1 sm:p-1.5'
+          ? 'ring-2 ring-primary-500 bg-primary-50/30 p-1.5'
           : ''
       }`}
     >
       <div
-        className={`p-3.5 sm:p-4 rounded-xl border transition-all ${
+        className={`p-3.5 sm:p-4 rounded-xl border transition-colors ${
           message.is_pinned
-            ? 'bg-amber-50/80 border-amber-200/90 shadow-2xs'
-            : 'bg-white border-slate-200/90 hover:border-slate-300 shadow-2xs'
+            ? 'bg-amber-50/50 border-amber-200'
+            : 'bg-white border-slate-200 hover:border-slate-300'
         }`}
       >
         {/* Pinned Clarification Tag */}
         {message.is_pinned && (
-          <div className="flex items-center gap-1.5 text-xs font-black text-amber-850 mb-2.5">
-            <span className="w-3.5 h-3.5 text-amber-700"><PinIcon /></span>
-            <span>📌 Pinned Clarification</span>
+          <div className="flex items-center gap-1.5 text-xs font-semibold text-amber-800 mb-2">
+            <PinIcon className="w-3.5 h-3.5 text-amber-700" />
+            <span>Pinned Clarification</span>
           </div>
         )}
 
         {/* Message Header */}
         <div className="flex items-start justify-between gap-2.5">
           <div className="flex items-center gap-2.5 min-w-0">
-            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-indigo-600 to-primary-700 text-white font-black text-xs flex items-center justify-center shrink-0 shadow-xs">
+            <div className="w-7 h-7 rounded-full bg-slate-200 text-slate-700 font-semibold text-xs flex items-center justify-center shrink-0">
               {initials}
             </div>
             <div className="min-w-0">
-              <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
-                <span className="font-bold text-xs sm:text-sm text-slate-900 truncate">
+              <div className="flex items-center gap-1.5 flex-wrap">
+                <span className="font-semibold text-xs sm:text-sm text-slate-900 truncate">
                   {message.author_name}
                 </span>
-                <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-md bg-slate-100 text-slate-650 shrink-0">
+                <span className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-slate-100 text-slate-600 shrink-0">
                   {message.author_role}
                 </span>
                 {message.author_department && (
-                  <span className="text-[11px] text-slate-500 hidden sm:inline truncate">
+                  <span className="text-[11px] text-slate-400 hidden sm:inline truncate">
                     • {message.author_department}
                   </span>
                 )}
               </div>
-              <p className="text-[10px] sm:text-[11px] text-slate-500 font-medium">
+              <p className="text-[11px] text-slate-400 font-normal">
                 {formatRelativeTime(message.created_at)}
                 {message.is_edited && ' (edited)'}
               </p>
@@ -257,20 +257,20 @@ function MessageItem({
               <button
                 type="button"
                 onClick={() => setShowEmojiPicker(!showEmojiPicker)}
-                className="p-1.5 text-slate-500 hover:text-slate-700 hover:bg-slate-100 rounded-lg transition-colors text-xs flex items-center justify-center min-w-[28px] min-h-[28px]"
+                className="px-1.5 py-1 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded text-xs flex items-center gap-1"
                 title="Add reaction"
                 aria-label="Add reaction"
               >
-                😊
+                <span>+ React</span>
               </button>
               {showEmojiPicker && (
-                <div className="absolute right-0 top-full mt-1 bg-white border border-slate-200 rounded-xl shadow-xl p-1.5 flex items-center gap-1 z-30 animate-in fade-in zoom-in-95 duration-100">
+                <div className="absolute right-0 top-full mt-1 bg-white border border-slate-200 rounded-xl shadow-lg p-1.5 flex items-center gap-1 z-30 animate-in fade-in zoom-in-95 duration-100">
                   {EMOJI_LIST.map((emoji) => (
                     <button
                       key={emoji}
                       type="button"
                       onClick={() => handleToggleReaction(emoji)}
-                      className="p-2 hover:bg-slate-100 rounded-lg text-base transition-transform hover:scale-125 min-w-[32px] min-h-[32px] flex items-center justify-center"
+                      className="p-1.5 hover:bg-slate-100 rounded text-base transition-transform hover:scale-110"
                     >
                       {emoji}
                     </button>
@@ -291,10 +291,10 @@ function MessageItem({
                     setReplyText(`@${message.author_name} `)
                   }
                 }}
-                className="px-2 py-1 text-[11px] sm:text-xs font-bold text-slate-600 hover:text-primary-700 hover:bg-primary-50 rounded-lg transition-colors flex items-center gap-1"
+                className="px-2 py-1 text-xs font-medium text-slate-500 hover:text-primary-700 hover:bg-slate-50 rounded transition-colors flex items-center gap-1"
                 aria-label={`Reply to ${message.author_name}`}
               >
-                <span className="w-3.5 h-3.5"><MessageSquareIcon /></span>
+                <MessageSquareIcon className="w-3.5 h-3.5" />
                 <span>Reply</span>
               </button>
             )}
@@ -304,27 +304,27 @@ function MessageItem({
               <button
                 type="button"
                 onClick={handleTogglePin}
-                className={`p-1.5 rounded-lg transition-colors min-w-[28px] min-h-[28px] flex items-center justify-center ${
+                className={`p-1.5 rounded transition-colors ${
                   message.is_pinned
-                    ? 'text-amber-600 hover:bg-amber-100'
+                    ? 'text-amber-700 hover:bg-amber-100'
                     : 'text-slate-400 hover:text-slate-700 hover:bg-slate-100'
                 }`}
                 title={message.is_pinned ? 'Unpin clarification' : 'Pin clarification'}
                 aria-label={message.is_pinned ? 'Unpin clarification' : 'Pin clarification'}
               >
-                <span className="w-3.5 h-3.5"><PinIcon /></span>
+                <PinIcon className="w-3.5 h-3.5" />
               </button>
             )}
 
             {/* Delete button (Author or Moderator) */}
             {(isAuthor || canModerate) && !message.is_deleted && (
               confirmingDelete ? (
-                <div className="flex items-center gap-1.5 bg-rose-50 border border-rose-200 px-2 py-0.5 rounded-lg text-xs animate-in fade-in duration-100">
-                  <span className="text-[10px] font-bold text-rose-700">Delete?</span>
+                <div className="flex items-center gap-1 bg-rose-50 border border-rose-200 px-2 py-0.5 rounded text-xs">
+                  <span className="text-[10px] text-rose-700">Delete?</span>
                   <button
                     type="button"
                     onClick={handleDelete}
-                    className="font-black text-rose-700 hover:underline text-[10px]"
+                    className="font-semibold text-rose-700 hover:underline text-[10px]"
                   >
                     Yes
                   </button>
@@ -341,11 +341,11 @@ function MessageItem({
                 <button
                   type="button"
                   onClick={() => setConfirmingDelete(true)}
-                  className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors min-w-[28px] min-h-[28px] flex items-center justify-center"
+                  className="p-1 text-slate-400 hover:text-rose-600 rounded transition-colors"
                   title="Delete message"
                   aria-label="Delete message"
                 >
-                  <span className="w-3.5 h-3.5"><CloseIcon /></span>
+                  <CloseIcon className="w-3.5 h-3.5" />
                 </button>
               )
             )}
@@ -353,7 +353,7 @@ function MessageItem({
         </div>
 
         {/* Message Body with Highlighted Mentions */}
-        <div className="mt-2.5 text-xs sm:text-sm text-slate-800 whitespace-pre-wrap leading-relaxed">
+        <div className="mt-2 text-xs sm:text-sm text-slate-800 whitespace-pre-wrap leading-relaxed">
           {renderMessageContent(message.content)}
         </div>
 
@@ -365,15 +365,15 @@ function MessageItem({
                 key={rx.reaction}
                 type="button"
                 onClick={() => handleToggleReaction(rx.reaction)}
-                className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold transition-all ${
+                className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-xs transition-colors border ${
                   rx.has_reacted
-                    ? 'bg-primary-50 text-primary-700 border border-primary-200/80 shadow-2xs ring-1 ring-primary-300'
-                    : 'bg-slate-100 text-slate-650 hover:bg-slate-200/60 border border-slate-200/70'
+                    ? 'bg-primary-50 text-primary-800 border-primary-200 font-semibold'
+                    : 'bg-slate-50 text-slate-600 hover:bg-slate-100 border-slate-200'
                 }`}
                 title={rx.user_names?.join(', ') || ''}
               >
                 <span>{rx.reaction}</span>
-                <span className="text-[11px]">{rx.count}</span>
+                <span className="text-[11px] font-medium">{rx.count}</span>
               </button>
             ))}
           </div>
@@ -382,11 +382,11 @@ function MessageItem({
 
       {/* Inline Nested Reply Box with Touch-Friendly Mentions */}
       {activeReplyId === message.id && (
-        <div className="mt-2.5 ml-2.5 sm:ml-5 pl-2 sm:pl-3 border-l-2 border-primary-400">
-          <div className="bg-slate-50 border border-slate-200 rounded-xl p-3 relative">
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-xs font-bold text-slate-700 truncate">
-                Replying to <span className="text-primary-700">{message.author_name}</span>
+        <div className="mt-2.5 ml-3 sm:ml-6 pl-3 border-l-2 border-slate-200">
+          <div className="bg-slate-50 border border-slate-200 rounded-xl p-3 relative space-y-2">
+            <div className="flex items-center justify-between">
+              <span className="text-xs text-slate-600">
+                Replying to <strong className="text-slate-900">{message.author_name}</strong>
               </span>
               <button
                 type="button"
@@ -394,10 +394,10 @@ function MessageItem({
                   setActiveReplyId(null)
                   setShowReplyMention(false)
                 }}
-                className="text-slate-400 hover:text-slate-700 p-1"
+                className="text-slate-400 hover:text-slate-600 p-0.5"
                 aria-label="Cancel reply"
               >
-                <span className="w-3.5 h-3.5"><CloseIcon /></span>
+                <CloseIcon className="w-3.5 h-3.5" />
               </button>
             </div>
             <textarea
@@ -405,22 +405,17 @@ function MessageItem({
               value={replyText}
               onChange={handleReplyChange}
               onKeyDown={handleReplyKeyDown}
-              placeholder="Type your reply... (use @name to mention)"
-              className="w-full text-xs bg-white border border-slate-300 rounded-lg p-2.5 focus:outline-hidden focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+              placeholder="Type your reply... (@name to mention)"
+              className="w-full text-xs bg-white border border-slate-200 rounded-lg p-2.5 focus:outline-hidden focus:ring-2 focus:ring-primary-500 text-slate-900"
             />
 
-            {/* Mobile Touch @Mention Selector */}
+            {/* Mention Selector */}
             {showReplyMention && (
-              <div className="absolute left-0 right-0 bottom-full mb-2 bg-white border border-slate-200 rounded-2xl shadow-2xl z-50 overflow-hidden flex flex-col max-h-56 animate-in fade-in slide-in-from-bottom-2 duration-150">
-                <div className="px-3 py-1.5 bg-slate-50 border-b border-slate-200 flex items-center justify-between">
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
-                    Mention Faculty ({filteredReplyCandidates.length})
-                  </span>
+              <div className="absolute left-0 right-0 bottom-full mb-2 bg-white border border-slate-200 rounded-xl shadow-xl z-50 overflow-hidden flex flex-col max-h-52">
+                <div className="px-3 py-1.5 bg-slate-50 border-b border-slate-200 text-[10px] font-semibold text-slate-500 uppercase tracking-wider">
+                  Mention Faculty ({filteredReplyCandidates.length})
                 </div>
-                <div
-                  className="overflow-y-auto divide-y divide-slate-100 flex-1 min-h-0"
-                  style={{ WebkitOverflowScrolling: 'touch' }}
-                >
+                <div className="overflow-y-auto divide-y divide-slate-100 flex-1 min-h-0">
                   {filteredReplyCandidates.length > 0 ? (
                     filteredReplyCandidates.map((f, idx) => (
                       <button
@@ -430,44 +425,32 @@ function MessageItem({
                           e.preventDefault()
                           handleSelectReplyMention(f)
                         }}
-                        className={`w-full text-left px-3 py-2 flex items-center justify-between gap-2 transition-colors active:bg-primary-100 ${
-                          idx === replyActiveIndex
-                            ? 'bg-primary-50 ring-1 ring-inset ring-primary-300'
-                            : 'hover:bg-slate-50'
+                        className={`w-full text-left px-3 py-1.5 flex items-center justify-between gap-2 text-xs transition-colors ${
+                          idx === replyActiveIndex ? 'bg-primary-50 text-primary-900' : 'hover:bg-slate-50 text-slate-700'
                         }`}
                       >
-                        <div className="flex items-center gap-2 min-w-0">
-                          <span className="w-6 h-6 rounded-full bg-primary-100 text-primary-700 text-[10px] font-black flex items-center justify-center shrink-0 border border-primary-200">
-                            {f.name.charAt(0).toUpperCase()}
-                          </span>
-                          <span className="text-xs font-bold text-slate-800 truncate">
-                            {f.name}
-                          </span>
-                        </div>
+                        <span className="font-medium truncate">{f.name}</span>
                         {f.department_name && (
-                          <span className="text-[9px] text-slate-500 bg-slate-100 px-1.5 py-0.5 rounded truncate shrink-0">
-                            {f.department_name}
-                          </span>
+                          <span className="text-[10px] text-slate-400 truncate">{f.department_name}</span>
                         )}
                       </button>
                     ))
                   ) : (
-                    <div className="p-3 text-center text-xs text-slate-500 font-medium">
-                      No faculty found matching "@{replyMentionQuery}"
+                    <div className="p-3 text-center text-xs text-slate-400">
+                      No faculty found matching &ldquo;@{replyMentionQuery}&rdquo;
                     </div>
                   )}
                 </div>
               </div>
             )}
 
-            <div className="flex items-center justify-between mt-2">
+            <div className="flex items-center justify-between pt-1">
               <button
                 type="button"
                 onClick={handleTriggerReplyMention}
-                className="px-2 py-1 text-[11px] font-bold text-slate-600 hover:text-primary-700 bg-white border border-slate-200 hover:bg-slate-100 rounded-md transition-colors flex items-center gap-1"
+                className="px-2 py-1 text-[11px] font-medium text-slate-600 hover:text-slate-900 bg-white border border-slate-200 rounded-md transition-colors"
               >
-                <span>@</span>
-                <span>Mention</span>
+                @ Mention
               </button>
               <div className="flex items-center gap-2">
                 <button
@@ -476,7 +459,7 @@ function MessageItem({
                     setActiveReplyId(null)
                     setShowReplyMention(false)
                   }}
-                  className="px-2.5 py-1 text-xs font-semibold text-slate-600 hover:bg-slate-200/60 rounded-lg"
+                  className="px-2.5 py-1 text-xs font-medium text-slate-500 hover:text-slate-800"
                 >
                   Cancel
                 </button>
@@ -484,9 +467,9 @@ function MessageItem({
                   type="button"
                   disabled={isSubmitting || !replyText.trim()}
                   onClick={() => onSubmitReply(message.id)}
-                  className="px-3 py-1 bg-primary-600 hover:bg-primary-700 text-white font-bold text-xs rounded-lg disabled:opacity-50 transition-colors"
+                  className="px-3 py-1 bg-primary-600 hover:bg-primary-700 text-white font-semibold text-xs rounded-md disabled:opacity-50 transition-colors"
                 >
-                  {isSubmitting ? 'Sending...' : 'Post Reply'}
+                  {isSubmitting ? 'Posting...' : 'Post Reply'}
                 </button>
               </div>
             </div>
@@ -494,9 +477,9 @@ function MessageItem({
         </div>
       )}
 
-      {/* Nested Replies Stream with Responsive Compact Indentation */}
+      {/* Nested Replies Stream */}
       {message.replies && message.replies.length > 0 && (
-        <div className="mt-2.5 ml-2.5 sm:ml-5 pl-2 sm:pl-3 border-l-2 border-indigo-200/70 space-y-2.5">
+        <div className="mt-2.5 ml-3 sm:ml-6 pl-3 border-l-2 border-slate-200 space-y-2.5">
           {message.replies.map((reply) => (
             <MessageItem
               key={reply.id}
@@ -564,7 +547,6 @@ export default function ConversationThread({
     }
   }
 
-  // Deep-link hash jump on mount or messages update
   useEffect(() => {
     if (typeof window !== 'undefined' && window.location.hash) {
       const match = window.location.hash.match(/^#msg-(\d+)$/)
@@ -575,7 +557,6 @@ export default function ConversationThread({
     }
   }, [messages])
 
-  // Fetch initial candidates up to 100 on mount
   useEffect(() => {
     let isMounted = true
     announcementApi
@@ -593,7 +574,6 @@ export default function ConversationThread({
     }
   }, [announcementId])
 
-  // Debounced search when mentionQuery changes
   useEffect(() => {
     if (!showMentionSuggestions) return
 
@@ -604,7 +584,6 @@ export default function ConversationThread({
       return
     }
 
-    // Instant local filtering from initial list for zero latency
     const localFiltered = initialCandidates.filter(
       (f) =>
         f.name.toLowerCase().includes(trimmed) ||
@@ -614,7 +593,6 @@ export default function ConversationThread({
     setMentionCandidates(localFiltered)
     setMentionActiveIndex(0)
 
-    // Debounced authoritative server query
     setMentionLoading(true)
     const timer = setTimeout(async () => {
       try {
@@ -627,7 +605,7 @@ export default function ConversationThread({
           setMentionActiveIndex(0)
         }
       } catch (err) {
-        // Retain local results on network error
+        // Retain local results
       } finally {
         setMentionLoading(false)
       }
@@ -735,28 +713,30 @@ export default function ConversationThread({
   }
 
   return (
-    <div className="mt-8 pt-6 border-t border-slate-200">
+    <div className="mt-8 space-y-4">
       {/* Section Header */}
-      <div className="flex items-center justify-between mb-4">
+      <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <span className="w-5 h-5 text-indigo-600"><MessageSquareIcon /></span>
-          <h3 className="font-extrabold text-base text-slate-900">💬 Institutional Conversation</h3>
-          <span className="text-xs font-black bg-slate-100 text-slate-700 px-2.5 py-0.5 rounded-full border border-slate-200/80">
+          <MessageSquareIcon className="w-4 h-4 text-slate-500" />
+          <h3 className="font-bold text-sm sm:text-base text-slate-900">
+            Discussion & Clarifications
+          </h3>
+          <span className="text-xs font-semibold bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full border border-slate-200">
             {messages.length}
           </span>
         </div>
         {isLocked && (
-          <span className="text-xs font-bold text-amber-800 bg-amber-50 border border-amber-200 px-2.5 py-1 rounded-xl flex items-center gap-1">
-            🔒 Locked
+          <span className="text-xs font-medium text-slate-500 bg-slate-100 border border-slate-200 px-2.5 py-0.5 rounded-md">
+            Discussion Closed
           </span>
         )}
       </div>
 
       {/* Mentioned-You Notification Banner */}
       {myMentionMessages.length > 0 && (
-        <div className="mb-4 bg-indigo-50/90 border border-indigo-200/90 rounded-2xl p-3 flex items-center justify-between gap-3 text-xs animate-in fade-in duration-200">
-          <div className="flex items-center gap-2 text-indigo-950 font-bold min-w-0">
-            <span className="text-base shrink-0">🔔</span>
+        <div className="bg-slate-50 border border-slate-200 rounded-xl p-3 flex items-center justify-between gap-3 text-xs">
+          <div className="flex items-center gap-2 text-slate-800 font-medium min-w-0">
+            <InfoIcon className="w-4 h-4 text-primary-600 shrink-0" />
             <span className="truncate">
               {myMentionMessages.length === 1
                 ? 'You were mentioned in this conversation'
@@ -769,47 +749,38 @@ export default function ConversationThread({
                 key={msg.id}
                 type="button"
                 onClick={() => jumpToMessage(msg.id)}
-                className="px-2.5 py-1 bg-white hover:bg-indigo-100 text-indigo-700 border border-indigo-200 rounded-lg font-black text-[11px] shadow-2xs transition-colors"
+                className="px-2 py-0.5 bg-white hover:bg-slate-100 text-slate-700 border border-slate-200 rounded text-xs font-medium transition-colors"
                 title={`Jump to comment by ${msg.author_name}`}
               >
-                {myMentionMessages.length === 1 ? 'Jump to comment' : `#${idx + 1}`}
+                {myMentionMessages.length === 1 ? 'Jump' : `#${idx + 1}`}
               </button>
             ))}
           </div>
         </div>
       )}
 
-      {/* Root Composer Box with Mobile @Mention Popover */}
+      {/* Root Composer Box */}
       {allowReplies && !isLocked ? (
         <form
           onSubmit={handlePostRootMessage}
-          className="mb-6 bg-slate-50 border border-slate-200/90 rounded-2xl p-3 sm:p-3.5 focus-within:border-primary-400 focus-within:ring-2 focus-within:ring-primary-100 transition-all relative shadow-2xs"
+          className="bg-slate-50 border border-slate-200 rounded-xl p-3 sm:p-3.5 space-y-2.5 relative"
         >
           <textarea
             rows={3}
             value={rootText}
             onChange={handleRootTextChange}
             onKeyDown={handleKeyDown}
-            placeholder="Write a clarification or institutional comment... (type @ to mention)"
-            className="w-full text-xs sm:text-sm bg-white border border-slate-200 rounded-xl p-3 focus:outline-hidden focus:border-primary-500 focus:ring-1 focus:ring-primary-500 placeholder:text-slate-400"
+            placeholder="Write a clarification or question regarding this circular... (@ to mention)"
+            className="w-full text-xs sm:text-sm bg-white border border-slate-200 rounded-lg p-3 focus:outline-hidden focus:ring-2 focus:ring-primary-500 text-slate-900 placeholder:text-slate-400"
           />
 
-          {/* Touch-Friendly @Mention Dropdown */}
+          {/* Mention Suggestions Popover */}
           {showMentionSuggestions && (
-            <div className="absolute left-0 right-0 sm:left-3 sm:right-3 bottom-full mb-2 bg-white border border-slate-200 rounded-2xl shadow-2xl z-50 overflow-hidden flex flex-col max-h-64 animate-in fade-in slide-in-from-bottom-2 duration-150">
-              <div className="px-3.5 py-2 bg-slate-50 border-b border-slate-200 flex items-center justify-between">
-                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
-                  Mention Faculty Member {mentionCandidates.length > 0 && `(${mentionCandidates.length})`}
-                </span>
-                {mentionLoading && (
-                  <span className="text-[10px] text-primary-600 font-bold animate-pulse">Searching...</span>
-                )}
+            <div className="absolute left-3 right-3 bottom-full mb-2 bg-white border border-slate-200 rounded-xl shadow-xl z-50 overflow-hidden flex flex-col max-h-56">
+              <div className="px-3 py-1.5 bg-slate-50 border-b border-slate-200 text-[10px] font-semibold uppercase tracking-wider text-slate-500">
+                Mention Faculty {mentionCandidates.length > 0 && `(${mentionCandidates.length})`}
               </div>
-
-              <div
-                className="overflow-y-auto divide-y divide-slate-100 flex-1 min-h-0"
-                style={{ WebkitOverflowScrolling: 'touch' }}
-              >
+              <div className="overflow-y-auto divide-y divide-slate-100 flex-1 min-h-0">
                 {mentionCandidates.length > 0 ? (
                   mentionCandidates.map((f, idx) => (
                     <button
@@ -819,87 +790,59 @@ export default function ConversationThread({
                         e.preventDefault()
                         handleSelectMention(f)
                       }}
-                      className={`w-full text-left px-3.5 py-2.5 flex items-center justify-between gap-3 transition-colors active:bg-primary-100 ${
-                        idx === mentionActiveIndex
-                          ? 'bg-primary-50 ring-1 ring-inset ring-primary-300'
-                          : 'hover:bg-slate-50'
+                      className={`w-full text-left px-3 py-2 flex items-center justify-between gap-2 text-xs transition-colors ${
+                        idx === mentionActiveIndex ? 'bg-primary-50 text-primary-900' : 'hover:bg-slate-50 text-slate-800'
                       }`}
                     >
-                      <div className="flex items-center gap-2.5 min-w-0">
-                        <span className="w-7 h-7 rounded-full bg-primary-100 text-primary-700 text-xs font-black flex items-center justify-center shrink-0 border border-primary-200">
-                          {f.name.charAt(0).toUpperCase()}
-                        </span>
-                        <div className="min-w-0">
-                          <span className="text-xs font-extrabold text-slate-900 block truncate">
-                            {f.name}
-                          </span>
-                          {f.email && (
-                            <span className="text-[10px] text-slate-400 block truncate">
-                              {f.email}
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-1.5 shrink-0">
-                        {f.department_name && (
-                          <span className="text-[10px] font-semibold text-slate-600 bg-slate-100 px-2 py-0.5 rounded-md">
-                            {f.department_name}
-                          </span>
-                        )}
-                        {f.role === 'admin' && (
-                          <span className="text-[9px] font-extrabold text-amber-800 bg-amber-100 px-1.5 py-0.5 rounded">
-                            HOD
-                          </span>
-                        )}
-                      </div>
+                      <span className="font-medium truncate">{f.name}</span>
+                      {f.department_name && (
+                        <span className="text-[10px] text-slate-400 truncate">{f.department_name}</span>
+                      )}
                     </button>
                   ))
                 ) : (
-                  <div className="p-4 text-center text-xs text-slate-500 font-medium">
-                    {mentionLoading
-                      ? 'Searching faculty directory...'
-                      : `No faculty found matching "@${mentionQuery}"`}
+                  <div className="p-3 text-center text-xs text-slate-400">
+                    No faculty found matching &ldquo;@{mentionQuery}&rdquo;
                   </div>
                 )}
               </div>
             </div>
           )}
 
-          <div className="flex items-center justify-between mt-2.5 pt-2 border-t border-slate-200/80">
+          <div className="flex items-center justify-between pt-1">
             <button
               type="button"
               onClick={handleTriggerMention}
-              className="px-2.5 py-1 text-xs font-bold text-slate-650 hover:text-primary-700 bg-white border border-slate-200 hover:bg-slate-100 rounded-lg transition-colors flex items-center gap-1 shadow-2xs"
+              className="px-2 py-1 text-xs font-medium text-slate-600 hover:text-slate-900 bg-white border border-slate-200 rounded-md transition-colors"
             >
-              <span className="text-primary-600 font-black">@</span>
-              <span>Mention Faculty</span>
+              @ Mention
             </button>
             <button
               type="submit"
               disabled={isSubmitting || !rootText.trim()}
-              className="px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white font-black text-xs rounded-xl shadow-xs hover:shadow-sm disabled:opacity-50 transition-all active:scale-95"
+              className="px-4 py-1.5 bg-primary-600 hover:bg-primary-700 text-white font-semibold text-xs rounded-lg disabled:opacity-50 transition-colors shadow-xs"
             >
               {isSubmitting ? 'Posting...' : 'Post Comment'}
             </button>
           </div>
         </form>
       ) : (
-        <div className="p-3.5 bg-slate-50 border border-slate-200 rounded-2xl text-xs text-slate-600 text-center mb-6">
+        <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-500 text-center">
           {isLocked
-            ? '🔒 Discussion is closed for this announcement.'
-            : 'Replies have been disabled by the publisher.'}
+            ? 'Discussion is closed for this circular.'
+            : 'Replies have been disabled for this announcement.'}
         </div>
       )}
 
       {/* Message Tree */}
       {messages.length === 0 ? (
-        <div className="py-10 text-center bg-slate-50/60 rounded-2xl border border-dashed border-slate-200 p-4">
-          <div className="text-2xl mb-1">💬</div>
-          <h4 className="text-xs sm:text-sm font-bold text-slate-800">No discussion yet</h4>
-          <p className="text-xs text-slate-500 mt-1">Be the first to ask a clarification or leave a comment.</p>
+        <div className="py-8 text-center bg-slate-50 rounded-xl border border-dashed border-slate-200 p-4">
+          <MessageSquareIcon className="w-5 h-5 text-slate-300 mx-auto mb-1" />
+          <h4 className="text-xs font-semibold text-slate-700">No discussions yet</h4>
+          <p className="text-[11px] text-slate-400 mt-0.5">Post a message if you need clarification on this directive.</p>
         </div>
       ) : (
-        <div className="space-y-3.5">
+        <div className="space-y-3">
           {messages.map((msg) => (
             <MessageItem
               key={msg.id}

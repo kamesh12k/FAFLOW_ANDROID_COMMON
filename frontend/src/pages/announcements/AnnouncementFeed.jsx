@@ -1,7 +1,8 @@
 import { useState, useEffect, useRef, useMemo } from 'react'
 import {
   SearchIcon, FilterIcon, PlusIcon, PinIcon, MessageSquareIcon,
-  DownloadIcon, CheckCircleIcon, AlertTriangleIcon, CloseIcon, TrashIcon
+  DownloadIcon, CheckCircleIcon, AlertTriangleIcon, CloseIcon, TrashIcon,
+  PaperclipIcon, EyeIcon, UsersIcon, CheckIcon
 } from '../../components/icons'
 import { Spinner } from '../../components/ui'
 import { useAuth } from '../../context/AuthContext'
@@ -100,7 +101,6 @@ export default function AnnouncementFeed() {
       await announcementApi.deleteAnnouncement(deleteTarget.id)
       showToast(`Announcement "${deleteTarget.title}" was permanently deleted.`, 'success')
       showBanner(`Announcement "${deleteTarget.title}" was successfully deleted.`)
-      // Immediate optimistic update so it disappears immediately from feed
       setAnnouncements(prev => prev.filter(a => a.id !== deleteTarget.id))
       setDeleteTarget(null)
       fetchFeed()
@@ -114,26 +114,26 @@ export default function AnnouncementFeed() {
   const tabs = [
     { id: 'all', label: 'All Notices' },
     { id: 'unread', label: 'Unread' },
-    { id: 'important', label: 'Important & Urgent' },
+    { id: 'important', label: 'High Priority' },
     { id: 'mentioned', label: '@Mentioned' },
-    { id: 'ack_pending', label: '⚠️ Action Required' },
+    { id: 'ack_pending', label: 'Action Required' },
   ]
 
   const typeOptions = [
-    { id: 'ALL', label: 'All Types' },
-    { id: 'CIRCULAR', label: 'Circular' },
-    { id: 'NOTICE', label: 'Notice' },
-    { id: 'ACADEMIC', label: 'Academic' },
-    { id: 'ADMINISTRATIVE', label: 'Admin' },
-    { id: 'URGENT', label: 'Urgent' },
-    { id: 'EVENT', label: 'Event' },
+    { id: 'ALL', label: 'All Categories' },
+    { id: 'CIRCULAR', label: 'Official Circular' },
+    { id: 'NOTICE', label: 'General Notice' },
+    { id: 'ACADEMIC', label: 'Academic Directive' },
+    { id: 'ADMINISTRATIVE', label: 'Administrative Order' },
+    { id: 'URGENT', label: 'Urgent Alert' },
+    { id: 'EVENT', label: 'Campus Event' },
   ]
 
-  const priorityStyles = {
+  const priorityBadgeStyles = {
     NORMAL: 'bg-slate-100 text-slate-700 border-slate-200',
-    IMPORTANT: 'bg-amber-100 text-amber-900 border-amber-300',
-    HIGH: 'bg-orange-100 text-orange-900 border-orange-300',
-    URGENT: 'bg-rose-100 text-rose-900 border-rose-300 font-extrabold',
+    IMPORTANT: 'bg-blue-50 text-blue-700 border-blue-200 font-medium',
+    HIGH: 'bg-amber-50 text-amber-800 border-amber-200 font-semibold',
+    URGENT: 'bg-rose-50 text-rose-700 border-rose-200 font-bold',
   }
 
   // Client-side quick filter for file attachments and pinned
@@ -164,18 +164,20 @@ export default function AnnouncementFeed() {
   }
 
   return (
-    <div className="max-w-5xl mx-auto px-4 py-6 space-y-6">
-      {/* Top Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-gradient-to-r from-primary-900 via-indigo-900 to-slate-900 p-6 rounded-2xl text-white shadow-lg">
+    <div className="max-w-5xl mx-auto px-4 sm:px-6 py-6 sm:py-8 space-y-6 text-slate-850">
+      {/* ── Page Header: Mature, Institutional, Executive ── */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-5 border-b border-slate-200">
         <div>
           <div className="flex items-center gap-2 mb-1">
-            <span className="text-2xl">📢</span>
-            <h1 className="text-xl sm:text-2xl font-black tracking-tight">
-              Announcements & Circulars
-            </h1>
+            <span className="text-[11px] font-bold tracking-wider text-slate-500 uppercase">
+              Institutional Communications
+            </span>
           </div>
-          <p className="text-xs sm:text-sm text-primary-100/70 font-medium">
-            Official institutional notices, circular directives, and academic team communication.
+          <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900">
+            Announcements & Circulars
+          </h1>
+          <p className="text-xs sm:text-sm text-slate-500 mt-0.5">
+            Official directives, administrative notices, and faculty circulars.
           </p>
         </div>
 
@@ -183,53 +185,60 @@ export default function AnnouncementFeed() {
           <button
             type="button"
             onClick={() => setShowComposer(true)}
-            className="px-5 py-2.5 bg-primary-600 hover:bg-primary-500 text-white font-extrabold text-xs sm:text-sm rounded-xl shadow-md hover:shadow-lg transition-all flex items-center gap-2 shrink-0 self-start sm:self-auto"
+            className="inline-flex items-center gap-2 px-4 py-2.5 bg-primary-600 hover:bg-primary-700 active:bg-primary-800 text-white font-semibold text-xs sm:text-sm rounded-xl shadow-xs transition-colors self-start sm:self-auto shrink-0 focus:outline-hidden focus:ring-2 focus:ring-primary-500 focus:ring-offset-2"
           >
-            <span className="w-4 h-4"><PlusIcon /></span>
+            <PlusIcon className="w-4 h-4" />
             <span>New Announcement</span>
           </button>
         )}
       </div>
-      {/* Top Confirmation Banner */}
+
+      {/* ── Top Feedback Banner (Auto-dismissing) ── */}
       {confirmationBanner && (
-        <div className="p-4 rounded-2xl bg-emerald-50 border border-emerald-200 flex items-center justify-between gap-3 text-xs sm:text-sm text-emerald-900 font-bold animate-in fade-in duration-150">
+        <div className="px-4 py-3 rounded-xl bg-emerald-50 border border-emerald-200 flex items-center justify-between gap-3 text-xs sm:text-sm text-emerald-900 font-medium animate-in fade-in duration-150">
           <div className="flex items-center gap-2.5">
-            <span className="w-5 h-5 text-emerald-600 shrink-0"><CheckCircleIcon /></span>
+            <CheckCircleIcon className="w-4 h-4 text-emerald-600 shrink-0" />
             <span>{confirmationBanner.text}</span>
           </div>
           <button
             type="button"
             onClick={() => setConfirmationBanner(null)}
             className="p-1 text-emerald-700 hover:bg-emerald-100 rounded-lg transition-colors shrink-0"
-            title="Dismiss"
+            title="Dismiss notification"
           >
             <CloseIcon className="w-4 h-4" />
           </button>
         </div>
       )}
 
-      {/* Filter Tabs & Search Controls */}
-      <div className="space-y-4">
-        {/* Main Feed Category Tabs */}
-        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none">
-          {tabs.map((t) => (
-            <button
-              key={t.id}
-              type="button"
-              onClick={() => setTab(t.id)}
-              className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap ${
-                tab === t.id
-                  ? 'bg-primary-600 text-white shadow-sm ring-2 ring-primary-300/30'
-                  : 'bg-white text-slate-700 border border-slate-200 hover:bg-slate-50'
-              }`}
-            >
-              {t.label}
-            </button>
-          ))}
+      {/* ── Filter Tabs & Search Controls ── */}
+      <div className="space-y-3">
+        {/* Navigation Tabs (Underline / Segmented style) */}
+        <div className="flex items-center gap-1 overflow-x-auto border-b border-slate-200 pb-px scrollbar-none">
+          {tabs.map((t) => {
+            const isActive = tab === t.id
+            return (
+              <button
+                key={t.id}
+                type="button"
+                onClick={() => setTab(t.id)}
+                className={`px-3.5 py-2 text-xs sm:text-sm font-semibold transition-all whitespace-nowrap border-b-2 -mb-px flex items-center gap-1.5 ${
+                  isActive
+                    ? 'border-primary-600 text-primary-700 font-bold'
+                    : 'border-transparent text-slate-600 hover:text-slate-900 hover:border-slate-300'
+                }`}
+              >
+                <span>{t.label}</span>
+                {t.id === 'ack_pending' && (
+                  <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
+                )}
+              </button>
+            )
+          })}
         </div>
 
-        {/* Search & Filter Dropdowns Bar */}
-        <div className="bg-white p-3.5 sm:p-4 rounded-2xl border border-slate-200 shadow-sm space-y-3">
+        {/* Search & Filter Controls Bar */}
+        <div className="bg-white p-3.5 sm:p-4 rounded-xl border border-slate-200 shadow-2xs space-y-3">
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5">
             {/* Search Input Box */}
             <div className="relative flex-1">
@@ -237,17 +246,17 @@ export default function AnnouncementFeed() {
                 type="text"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                placeholder="Search circulars by title, topic, sender, or keywords..."
-                className="w-full text-xs sm:text-sm pl-9 pr-8 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-hidden focus:ring-2 focus:ring-primary-500 focus:bg-white transition-all"
+                placeholder="Search circulars by title, topic, or author..."
+                className="w-full text-xs sm:text-sm pl-9 pr-8 py-2 bg-slate-50 border border-slate-200 rounded-lg focus:outline-hidden focus:ring-2 focus:ring-primary-500 focus:border-primary-500 focus:bg-white transition-all text-slate-800 placeholder:text-slate-400"
               />
-              <span className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">
+              <span className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none">
                 <SearchIcon />
               </span>
               {search && (
                 <button
                   type="button"
                   onClick={() => setSearch('')}
-                  className="absolute right-2.5 top-1/2 -translate-y-1/2 p-1 text-slate-400 hover:text-slate-700 rounded-lg hover:bg-slate-200/60 transition-colors"
+                  className="absolute right-2.5 top-1/2 -translate-y-1/2 p-1 text-slate-400 hover:text-slate-600 rounded-md transition-colors"
                   title="Clear search"
                 >
                   <CloseIcon className="w-3.5 h-3.5" />
@@ -260,8 +269,8 @@ export default function AnnouncementFeed() {
               <select
                 value={typeFilter}
                 onChange={(e) => setTypeFilter(e.target.value)}
-                className="text-xs font-semibold bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-slate-700 hover:bg-slate-100 transition-colors focus:outline-hidden focus:ring-2 focus:ring-primary-500"
-                title="Filter by announcement category"
+                className="text-xs font-medium bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-slate-700 hover:bg-slate-100 transition-colors focus:outline-hidden focus:ring-2 focus:ring-primary-500"
+                title="Filter by category"
               >
                 {typeOptions.map((opt) => (
                   <option key={opt.id} value={opt.id}>
@@ -273,347 +282,295 @@ export default function AnnouncementFeed() {
               <select
                 value={priorityFilter}
                 onChange={(e) => setPriorityFilter(e.target.value)}
-                className="text-xs font-semibold bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-slate-700 hover:bg-slate-100 transition-colors focus:outline-hidden focus:ring-2 focus:ring-primary-500"
-                title="Filter by priority level"
+                className="text-xs font-medium bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-slate-700 hover:bg-slate-100 transition-colors focus:outline-hidden focus:ring-2 focus:ring-primary-500"
+                title="Filter by priority"
               >
                 <option value="ALL">All Priorities</option>
                 <option value="URGENT">Urgent Priority</option>
                 <option value="HIGH">High Priority</option>
                 <option value="IMPORTANT">Important</option>
-                <option value="NORMAL">Normal Priority</option>
+                <option value="NORMAL">Normal</option>
               </select>
             </div>
           </div>
 
           {/* Quick Filter Toggles & Status Summary Bar */}
-          <div className="flex items-center justify-between gap-2 pt-1 border-t border-slate-100 flex-wrap text-xs">
+          <div className="flex items-center justify-between gap-2 pt-2 border-t border-slate-100 flex-wrap text-xs">
             <div className="flex items-center gap-1.5 flex-wrap">
-              <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mr-1">Quick:</span>
+              <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider mr-1">
+                Filter:
+              </span>
               <button
                 type="button"
                 onClick={() => setHasAttachmentsOnly(!hasAttachmentsOnly)}
-                className={`px-2.5 py-1 rounded-lg text-xs font-semibold transition-all border ${
+                className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-medium transition-colors border ${
                   hasAttachmentsOnly
-                    ? 'bg-primary-50 text-primary-800 border-primary-300 font-bold shadow-2xs'
+                    ? 'bg-slate-800 text-white border-slate-800 shadow-2xs'
                     : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100'
                 }`}
               >
-                📎 Has Files {hasAttachmentsOnly && '✓'}
+                <PaperclipIcon className="w-3 h-3" />
+                <span>With Files</span>
+                {hasAttachmentsOnly && <CheckIcon className="w-3 h-3 ml-0.5" />}
               </button>
 
               <button
                 type="button"
                 onClick={() => setPinnedOnly(!pinnedOnly)}
-                className={`px-2.5 py-1 rounded-lg text-xs font-semibold transition-all border ${
+                className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-medium transition-colors border ${
                   pinnedOnly
-                    ? 'bg-amber-50 text-amber-900 border-amber-300 font-bold shadow-2xs'
+                    ? 'bg-slate-800 text-white border-slate-800 shadow-2xs'
                     : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100'
                 }`}
               >
-                📌 Pinned {pinnedOnly && '✓'}
+                <PinIcon className="w-3 h-3" />
+                <span>Pinned Only</span>
+                {pinnedOnly && <CheckIcon className="w-3 h-3 ml-0.5" />}
               </button>
 
               {hasActiveFilters && (
                 <button
                   type="button"
                   onClick={resetAllFilters}
-                  className="px-2.5 py-1 rounded-lg text-xs font-bold text-rose-600 hover:text-rose-700 hover:bg-rose-50 transition-colors"
+                  className="px-2.5 py-1 text-xs font-semibold text-rose-600 hover:text-rose-700 hover:bg-rose-50 rounded-lg transition-colors ml-1"
                 >
-                  Reset Filters ↺
+                  Clear Filters
                 </button>
               )}
             </div>
 
-            <div className="text-[11px] font-semibold text-slate-500">
+            <div className="text-[11px] font-medium text-slate-500">
               {loading ? (
                 <span>Loading notices...</span>
               ) : (
                 <span>
-                  Showing <strong>{displayedAnnouncements.length}</strong> {displayedAnnouncements.length === 1 ? 'notice' : 'notices'}
-                  {search && <span> for &ldquo;<strong>{search}</strong>&rdquo;</span>}
+                  Showing <strong className="text-slate-800">{displayedAnnouncements.length}</strong> {displayedAnnouncements.length === 1 ? 'notice' : 'notices'}
+                  {search && <span> matching &ldquo;<strong>{search}</strong>&rdquo;</span>}
                 </span>
               )}
             </div>
           </div>
-
-          {/* Active Filter Chips */}
-          {hasActiveFilters && (
-            <div className="flex items-center gap-1.5 flex-wrap pt-1">
-              <span className="text-[10px] font-bold text-slate-400 uppercase">Active:</span>
-              {tab !== 'all' && (
-                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-bold bg-primary-50 text-primary-800 border border-primary-200">
-                  <span>Tab: {tabs.find(t => t.id === tab)?.label || tab}</span>
-                  <button type="button" onClick={() => setTab('all')} className="hover:text-primary-950 font-black ml-0.5">×</button>
-                </span>
-              )}
-              {search && (
-                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-bold bg-slate-100 text-slate-800 border border-slate-300">
-                  <span>Search: &ldquo;{search}&rdquo;</span>
-                  <button type="button" onClick={() => setSearch('')} className="hover:text-slate-950 font-black ml-0.5">×</button>
-                </span>
-              )}
-              {typeFilter !== 'ALL' && (
-                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-bold bg-slate-100 text-slate-800 border border-slate-300">
-                  <span>Category: {typeFilter}</span>
-                  <button type="button" onClick={() => setTypeFilter('ALL')} className="hover:text-slate-950 font-black ml-0.5">×</button>
-                </span>
-              )}
-              {priorityFilter !== 'ALL' && (
-                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-bold bg-slate-100 text-slate-800 border border-slate-300">
-                  <span>Priority: {priorityFilter}</span>
-                  <button type="button" onClick={() => setPriorityFilter('ALL')} className="hover:text-slate-950 font-black ml-0.5">×</button>
-                </span>
-              )}
-              {hasAttachmentsOnly && (
-                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-bold bg-slate-100 text-slate-800 border border-slate-300">
-                  <span>📎 Files Only</span>
-                  <button type="button" onClick={() => setHasAttachmentsOnly(false)} className="hover:text-slate-950 font-black ml-0.5">×</button>
-                </span>
-              )}
-              {pinnedOnly && (
-                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-bold bg-slate-100 text-slate-800 border border-slate-300">
-                  <span>📌 Pinned Only</span>
-                  <button type="button" onClick={() => setPinnedOnly(false)} className="hover:text-slate-950 font-black ml-0.5">×</button>
-                </span>
-              )}
-            </div>
-          )}
         </div>
       </div>
 
-      {/* Feed Stream */}
+      {/* ── Feed Stream ── */}
       {loading ? (
-        <div className="space-y-4">
+        <div className="space-y-3">
           {[1, 2, 3].map((n) => (
-            <div key={n} className="bg-white rounded-2xl border border-slate-200/70 p-4 sm:p-6 animate-pulse space-y-3">
+            <div key={n} className="bg-white rounded-xl border border-slate-200 p-5 animate-pulse space-y-3">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <div className="w-16 h-5 bg-slate-200 rounded-full" />
-                  <div className="w-14 h-5 bg-slate-150 rounded-full" />
+                  <div className="w-20 h-5 bg-slate-200 rounded-md" />
+                  <div className="w-14 h-5 bg-slate-150 rounded-md" />
                 </div>
                 <div className="w-24 h-4 bg-slate-200 rounded-md" />
               </div>
-              <div className="w-3/4 h-5 bg-slate-250 rounded-lg" />
+              <div className="w-3/4 h-5 bg-slate-250 rounded-md" />
               <div className="space-y-1.5">
                 <div className="w-full h-3.5 bg-slate-150 rounded" />
                 <div className="w-5/6 h-3.5 bg-slate-150 rounded" />
-              </div>
-              <div className="pt-2 flex items-center justify-between">
-                <div className="w-20 h-4 bg-slate-200 rounded" />
-                <div className="w-24 h-6 bg-slate-200 rounded-lg" />
               </div>
             </div>
           ))}
         </div>
       ) : error ? (
-        <div className="py-12 text-center bg-white rounded-2xl border border-rose-200 p-6 sm:p-8 space-y-3">
-          <span className="text-3xl">⚠️</span>
-          <h3 className="font-extrabold text-base text-slate-900">Couldn't load announcements</h3>
-          <p className="text-xs text-slate-600 max-w-sm mx-auto">
-            {error}. Check your internet connection and try again.
+        <div className="py-12 text-center bg-white rounded-xl border border-rose-200 p-6 space-y-3">
+          <AlertTriangleIcon className="w-8 h-8 text-rose-500 mx-auto" />
+          <h3 className="font-bold text-sm text-slate-900">Unable to load announcements</h3>
+          <p className="text-xs text-slate-500 max-w-sm mx-auto">
+            {error}. Please check your connection and try again.
           </p>
           <button
             type="button"
             onClick={fetchFeed}
-            className="px-5 py-2.5 bg-primary-600 hover:bg-primary-700 text-white font-bold text-xs rounded-xl shadow-xs transition-all active:scale-95"
+            className="px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white font-semibold text-xs rounded-lg transition-colors"
           >
             Retry
           </button>
         </div>
       ) : displayedAnnouncements.length === 0 ? (
-        <div className="py-16 text-center bg-white rounded-2xl border border-dashed border-slate-200 p-8 space-y-3">
-          <span className="text-4xl">🔍</span>
-          <h3 className="font-extrabold text-base text-slate-900">
-            {hasActiveFilters ? 'No Matching Announcements Found' : 'No Announcements Yet'}
+        <div className="py-16 text-center bg-white rounded-xl border border-dashed border-slate-200 p-8 space-y-3">
+          <div className="w-10 h-10 rounded-full bg-slate-100 text-slate-400 flex items-center justify-center mx-auto">
+            <SearchIcon className="w-5 h-5" />
+          </div>
+          <h3 className="font-bold text-sm text-slate-900">
+            {hasActiveFilters ? 'No Matching Notices' : 'No Announcements Posted'}
           </h3>
-          <p className="text-xs text-slate-600 max-w-sm mx-auto leading-relaxed">
+          <p className="text-xs text-slate-500 max-w-md mx-auto leading-relaxed">
             {hasActiveFilters
-              ? 'No announcements match your search keywords or active filter criteria. Try clearing search or resetting your filters.'
-              : "You're all caught up! There are no active announcements addressed to you."}
+              ? 'No announcements match your search query or selected filter criteria. Try adjusting keywords or clearing active filters.'
+              : 'You are completely caught up. When institutional circulars or departmental directives are issued, they will appear here.'}
           </p>
           {hasActiveFilters && (
             <button
               type="button"
               onClick={resetAllFilters}
-              className="px-4 py-2 bg-primary-50 hover:bg-primary-100 text-primary-700 font-bold text-xs rounded-xl transition-colors inline-flex items-center gap-1.5 shadow-2xs"
+              className="px-3.5 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs rounded-lg transition-colors"
             >
-              <span>Reset All Filters</span>
-              <span>↺</span>
+              Reset Filters
             </button>
           )}
         </div>
       ) : (
-        <div className="space-y-4">
-          {displayedAnnouncements.map((item) => (
-            <div
-              key={item.id}
-              className={`bg-white rounded-2xl border p-5 sm:p-6 transition-all duration-200 hover:shadow-md ${
-                !item.is_read
-                  ? 'border-primary-300 ring-2 ring-primary-50'
-                  : 'border-slate-200/80'
-              }`}
-            >
-              {/* Card Top Metadata */}
-              <div className="flex items-center justify-between gap-3 mb-2 flex-wrap">
-                <div className="flex items-center gap-2 flex-wrap">
-                  {item.is_pinned && (
-                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-extrabold bg-amber-100 text-amber-900 border border-amber-300 shadow-2xs">
-                      <span className="w-3 h-3"><PinIcon /></span>
-                      <span>PINNED</span>
-                    </span>
-                  )}
-                  <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-bold border ${priorityStyles[item.priority] || 'bg-slate-100 text-slate-700'}`}>
-                    {item.priority}
-                  </span>
-                  <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-semibold bg-slate-100 text-slate-600">
-                    {item.type}
-                  </span>
-                  {item.version > 1 && (
-                    <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-bold bg-indigo-50 text-indigo-700 border border-indigo-200">
-                      v{item.version} Updated
-                    </span>
-                  )}
-                </div>
-
-                <div className="flex items-center gap-2 text-xs text-slate-600">
-                  <span className="font-semibold text-slate-900">{item.author_name}</span>
-                  <span>•</span>
-                  <span>{item.published_at ? new Date(item.published_at).toLocaleDateString([], { month: 'short', day: 'numeric' }) : 'Draft'}</span>
-                </div>
-              </div>
-
-              {/* Title & Body Snippet */}
-              <div
-                onClick={() => setSelectedAnnouncementId(item.id)}
-                className="cursor-pointer group"
+        <div className="space-y-3.5">
+          {displayedAnnouncements.map((item) => {
+            const isUnread = !item.is_read
+            return (
+              <article
+                key={item.id}
+                className={`bg-white rounded-xl border transition-all duration-150 hover:border-slate-300 hover:shadow-xs p-5 sm:p-6 ${
+                  isUnread
+                    ? 'border-l-4 border-l-primary-600 border-t-slate-200 border-r-slate-200 border-b-slate-200'
+                    : 'border-slate-200'
+                }`}
               >
-                <h2 className="text-base sm:text-lg font-black text-slate-900 group-hover:text-primary-600 transition-colors leading-snug">
-                  {item.title}
-                </h2>
-                <p className="mt-2 text-xs sm:text-sm text-slate-600 line-clamp-3 leading-relaxed">
-                  {item.body_snippet}
-                </p>
-              </div>
+                {/* Card Top Metadata */}
+                <div className="flex items-center justify-between gap-3 mb-2 flex-wrap">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    {item.is_pinned && (
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-bold bg-amber-50 text-amber-900 border border-amber-200">
+                        <PinIcon className="w-3 h-3 text-amber-700" />
+                        <span>Pinned</span>
+                      </span>
+                    )}
 
-              {/* Attachments Chips */}
-              {item.attachments && item.attachments.length > 0 && (
-                <div className="mt-3 flex items-center gap-2 flex-wrap">
-                  {item.attachments.map((att) => {
-                    const isImg = att.file_type?.includes('image') || /\.(jpg|jpeg|png|webp)$/i.test(att.file_name)
-                    return (
-                      <a
-                        key={att.id}
-                        href={att.download_url}
-                        download={att.file_name}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="inline-flex items-center gap-2 px-2.5 py-1 rounded-xl text-xs font-semibold bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-700 transition-colors shadow-2xs"
-                      >
-                        {isImg ? (
-                          <img src={att.download_url} alt="" className="w-4 h-4 rounded object-cover border border-slate-200" />
-                        ) : (
-                          <span>{att.file_type?.includes('pdf') || att.file_name.endsWith('.pdf') ? '📄' : '📎'}</span>
-                        )}
-                        <span className="truncate max-w-[160px]">{att.file_name}</span>
-                      </a>
-                    )
-                  })}
+                    <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-semibold bg-slate-100 text-slate-700 border border-slate-200">
+                      {item.type}
+                    </span>
+
+                    {item.priority !== 'NORMAL' && (
+                      <span className={`inline-flex items-center px-2 py-0.5 rounded-md text-[11px] border ${priorityBadgeStyles[item.priority] || priorityBadgeStyles.NORMAL}`}>
+                        {item.priority}
+                      </span>
+                    )}
+
+                    {item.version > 1 && (
+                      <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-semibold bg-indigo-50 text-indigo-700 border border-indigo-200">
+                        Rev. {item.version}
+                      </span>
+                    )}
+
+                    {isUnread && (
+                      <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold bg-primary-50 text-primary-700 border border-primary-200">
+                        Unread
+                      </span>
+                    )}
+                  </div>
+
+                  <div className="flex items-center gap-2 text-xs text-slate-500">
+                    <span className="font-semibold text-slate-800">{item.author_name}</span>
+                    <span>•</span>
+                    <span>
+                      {item.published_at
+                        ? new Date(item.published_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+                        : 'Draft'}
+                    </span>
+                  </div>
                 </div>
-              )}
 
-              {/* Card Footer Bar */}
-              <div className="mt-4 pt-3.5 border-t border-slate-150 flex items-center justify-between gap-3 flex-wrap">
-                <div className="flex items-center gap-2.5 flex-wrap">
-                  {/* Read Receipt Tag */}
-                  {item.is_read ? (
-                    <span className="text-[11px] font-bold text-slate-600 flex items-center gap-1">
-                      <span>✓</span> Read
-                    </span>
-                  ) : (
-                    <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-primary-100 text-primary-800">
-                      NEW UNREAD
-                    </span>
-                  )}
+                {/* Title & Body Snippet */}
+                <div
+                  onClick={() => setSelectedAnnouncementId(item.id)}
+                  className="cursor-pointer group mt-1"
+                >
+                  <h2 className="text-base sm:text-lg font-bold text-slate-900 group-hover:text-primary-700 transition-colors leading-snug">
+                    {item.title}
+                  </h2>
+                  <p className="mt-1.5 text-xs sm:text-sm text-slate-600 line-clamp-2 leading-relaxed">
+                    {item.body_snippet}
+                  </p>
+                </div>
 
-                  {/* Acknowledgement Tag */}
-                  {item.requires_acknowledgement && (
-                    item.is_acknowledged ? (
-                      <span className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-700">
-                        <span className="w-3.5 h-3.5"><CheckCircleIcon /></span>
-                        <span>Acknowledged</span>
-                      </span>
-                    ) : (
-                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-black bg-amber-100 text-amber-900 border border-amber-300">
-                        <span>⚠️</span>
-                        <span>Ack Required</span>
-                      </span>
-                    )
-                  )}
-
-                  {/* Comments Count */}
-                  <button
-                    type="button"
-                    onClick={() => setSelectedAnnouncementId(item.id)}
-                    className="inline-flex items-center gap-1 text-xs font-semibold text-slate-600 hover:text-primary-600 transition-colors"
-                  >
-                    <span className="w-3.5 h-3.5"><MessageSquareIcon /></span>
-                    <span>{item.reply_count} {item.reply_count === 1 ? 'reply' : 'replies'}</span>
-                  </button>
-
-                  {/* Reactions Summary */}
-                  {item.reactions_summary && item.reactions_summary.length > 0 && (
-                    <div className="flex items-center gap-1">
-                      {item.reactions_summary.map((rx) => (
-                        <span
-                          key={rx.reaction}
-                          className="inline-flex items-center gap-0.5 text-xs bg-slate-100 px-1.5 py-0.5 rounded-md text-slate-700"
+                {/* Attachments Pills */}
+                {item.attachments && item.attachments.length > 0 && (
+                  <div className="mt-3 flex items-center gap-2 flex-wrap">
+                    {item.attachments.map((att) => {
+                      const isImg = att.file_type?.includes('image') || /\.(jpg|jpeg|png|webp)$/i.test(att.file_name)
+                      return (
+                        <a
+                          key={att.id}
+                          href={att.download_url}
+                          download={att.file_name}
+                          target="_blank"
+                          rel="noreferrer"
+                          onClick={(e) => e.stopPropagation()}
+                          className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-700 transition-colors"
                         >
-                          <span>{rx.reaction}</span>
-                          <span className="text-[10px] font-bold">{rx.count}</span>
+                          <PaperclipIcon className="w-3 h-3 text-slate-400" />
+                          <span className="truncate max-w-[180px]">{att.file_name}</span>
+                        </a>
+                      )
+                    })}
+                  </div>
+                )}
+
+                {/* Card Footer Bar */}
+                <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between gap-3 flex-wrap text-xs">
+                  <div className="flex items-center gap-3 flex-wrap text-slate-500">
+                    {/* Acknowledgement Status */}
+                    {item.requires_acknowledgement && (
+                      item.is_acknowledged ? (
+                        <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-700">
+                          <CheckCircleIcon className="w-3.5 h-3.5 text-emerald-600" />
+                          <span>Acknowledged</span>
                         </span>
-                      ))}
-                    </div>
-                  )}
-                </div>
+                      ) : (
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold bg-amber-50 text-amber-800 border border-amber-200">
+                          <span>Action Required</span>
+                        </span>
+                      )
+                    )}
 
-                <div className="flex items-center gap-2">
-                  {canPublish && (
+                    {/* Replies count */}
                     <button
                       type="button"
-                      onClick={() => setAnalyticsAnnouncementId(item.id)}
-                      className="px-2.5 py-1 text-xs font-bold text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-colors"
+                      onClick={() => setSelectedAnnouncementId(item.id)}
+                      className="inline-flex items-center gap-1 font-medium hover:text-slate-900 transition-colors"
                     >
-                      Analytics
+                      <MessageSquareIcon className="w-3.5 h-3.5" />
+                      <span>{item.reply_count} {item.reply_count === 1 ? 'reply' : 'replies'}</span>
                     </button>
-                  )}
+                  </div>
 
-                  {item.can_delete && (
+                  <div className="flex items-center gap-2">
+                    {canPublish && (
+                      <button
+                        type="button"
+                        onClick={() => setAnalyticsAnnouncementId(item.id)}
+                        className="px-2.5 py-1 text-xs font-semibold text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-colors"
+                      >
+                        Analytics
+                      </button>
+                    )}
+
+                    {item.can_delete && (
+                      <button
+                        type="button"
+                        onClick={() => setDeleteTarget(item)}
+                        className="px-2.5 py-1 text-xs font-semibold text-rose-600 hover:text-rose-800 hover:bg-rose-50 rounded-lg transition-colors"
+                        title="Delete announcement"
+                      >
+                        Delete
+                      </button>
+                    )}
+
                     <button
                       type="button"
-                      onClick={() => setDeleteTarget(item)}
-                      className="px-3 py-1.5 text-xs font-bold text-rose-700 bg-rose-50 hover:bg-rose-100 active:scale-95 rounded-xl border border-rose-200 transition-all flex items-center gap-1.5 shadow-2xs hover:shadow-xs"
-                      title="Permanently delete announcement"
+                      onClick={() => setSelectedAnnouncementId(item.id)}
+                      className="inline-flex items-center gap-1 px-3 py-1.5 bg-slate-50 hover:bg-slate-100 text-primary-700 font-semibold text-xs rounded-lg border border-slate-200 transition-colors"
                     >
-                      <TrashIcon className="w-3.5 h-3.5 text-rose-600" />
-                      <span>Delete</span>
+                      <span>Read Directive</span>
+                      <span className="text-slate-400">→</span>
                     </button>
-                  )}
-
-                  <button
-                    type="button"
-                    onClick={() => setSelectedAnnouncementId(item.id)}
-                    className="px-3 py-1 bg-primary-50 hover:bg-primary-100 text-primary-700 font-bold text-xs rounded-lg transition-colors"
-                  >
-                    View Circular →
-                  </button>
+                  </div>
                 </div>
-              </div>
-            </div>
-          ))}
+              </article>
+            )
+          })}
         </div>
       )}
 
-      {/* Composer Modal */}
+      {/* ── Composer Modal ── */}
       {showComposer && (
         <AnnouncementComposerModal
           user={user}
@@ -621,92 +578,76 @@ export default function AnnouncementFeed() {
           onCreated={(newId) => {
             fetchFeed()
             setShowComposer(false)
-            showBanner('✓ Announcement broadcasted and published successfully!')
+            showBanner('Notice published and broadcasted successfully.')
           }}
         />
       )}
 
-      {/* Full Detail Modal / Full-screen on Mobile */}
+      {/* ── Announcement Detail Modal ── */}
       {selectedAnnouncementId && (
         <div
-          className="fixed inset-0 z-40 flex items-end sm:items-center justify-center sm:p-4 bg-black/60 sm:backdrop-blur-xs animate-in fade-in duration-150"
+          className="fixed inset-0 z-40 flex items-end sm:items-center justify-center sm:p-4 bg-slate-900/60 backdrop-blur-xs animate-in fade-in duration-150"
           onClick={(e) => {
-            // Close only if clicking the backdrop directly
             if (e.target === e.currentTarget) setSelectedAnnouncementId(null)
           }}
         >
-          {/*
-            Card sizing strategy:
-            - Mobile: h-[100dvh] — fills full dynamic viewport height (accounts for browser chrome)
-            - Desktop (sm+): explicit h-[calc(100dvh-2rem)] — gives a CONCRETE height
-              so that flex-1 children can calculate their sizes deterministically.
-              max-h alone (h-auto + max-h) is insufficient because a child with
-              flex-1 in an auto-height parent has no reference size and expands to
-              full content height — preventing the body scroll container from working.
-          */}
           <div className="w-full max-w-4xl bg-white sm:rounded-2xl shadow-2xl flex flex-col h-[100dvh] sm:h-[calc(100dvh-2rem)] overflow-hidden">
             <AnnouncementDetail
               announcementId={selectedAnnouncementId}
               onClose={() => setSelectedAnnouncementId(null)}
               onRefreshList={(msg) => {
                 fetchFeed()
-                if (msg) {
-                  showBanner(msg)
-                }
+                if (msg) showBanner(msg)
               }}
             />
           </div>
         </div>
       )}
 
-
-      {/* Feed Delete Confirmation Modal */}
+      {/* ── Delete Confirmation Dialog ── */}
       {deleteTarget && (
-        <div className="fixed inset-0 z-60 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-150">
-          <div className="bg-white rounded-3xl max-w-md w-full p-6 sm:p-7 shadow-2xl border border-slate-200 space-y-4 animate-in zoom-in-95 duration-150">
-            <div className="flex items-center gap-3.5">
-              <div className="w-12 h-12 rounded-2xl bg-rose-100 text-rose-600 flex items-center justify-center shrink-0 shadow-xs">
-                <AlertTriangleIcon className="w-6 h-6" />
+        <div className="fixed inset-0 z-60 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-in fade-in duration-150">
+          <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-200 space-y-4 animate-in zoom-in-95 duration-150">
+            <div className="flex items-start gap-3">
+              <div className="w-10 h-10 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center shrink-0 border border-rose-100">
+                <TrashIcon className="w-5 h-5" />
               </div>
               <div>
-                <h3 className="text-base sm:text-lg font-black text-slate-900 leading-snug">Delete Announcement Circular?</h3>
-                <p className="text-xs text-slate-500 font-medium">Confirm permanent deletion</p>
+                <h3 className="text-base font-bold text-slate-900">Delete Announcement</h3>
+                <p className="text-xs text-slate-500 mt-0.5">
+                  Confirm permanent removal of this circular.
+                </p>
               </div>
             </div>
 
-            <div className="p-3.5 bg-slate-50 rounded-2xl border border-slate-200 text-xs space-y-1">
-              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Target Circular</span>
-              <p className="font-extrabold text-slate-900 text-sm line-clamp-2">{deleteTarget.title}</p>
-              <div className="flex items-center gap-2 text-slate-500 pt-0.5">
-                <span>Category: <strong className="text-slate-700 font-semibold">{deleteTarget.type}</strong></span>
+            <div className="p-3 bg-slate-50 rounded-xl border border-slate-200 text-xs space-y-1">
+              <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider block">Target Notice</span>
+              <p className="font-bold text-slate-900 text-sm line-clamp-2">{deleteTarget.title}</p>
+              <div className="flex items-center gap-2 text-slate-500 pt-0.5 text-[11px]">
+                <span>Category: <strong className="text-slate-700">{deleteTarget.type}</strong></span>
                 <span>•</span>
-                <span>Priority: <strong className="text-slate-700 font-semibold">{deleteTarget.priority}</strong></span>
+                <span>Priority: <strong className="text-slate-700">{deleteTarget.priority}</strong></span>
               </div>
             </div>
 
-            <div className="p-3.5 bg-rose-50 rounded-2xl border border-rose-200/80 text-xs text-rose-800 space-y-1">
-              <p className="font-bold flex items-center gap-1.5 text-rose-900">
-                <span>⚠️</span> Permanent & Irreversible Action
-              </p>
-              <p className="leading-relaxed text-[11px]">
-                Deleting this circular will permanently remove it from all faculty feeds. All attached files, read receipts, and replies will be completely purged from the system.
-              </p>
-            </div>
+            <p className="text-xs text-slate-500 leading-relaxed">
+              This action cannot be undone. Attached files, read receipts, and threaded discussions will be permanently deleted.
+            </p>
 
             <div className="flex items-center justify-end gap-2.5 pt-2">
               <button
                 type="button"
                 onClick={() => setDeleteTarget(null)}
                 disabled={deleting}
-                className="px-4 py-2.5 text-xs font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-xl transition-colors"
+                className="px-4 py-2 text-xs font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-lg transition-colors"
               >
-                Cancel, Keep Circular
+                Cancel
               </button>
               <button
                 type="button"
                 onClick={handleConfirmDeleteFeed}
                 disabled={deleting}
-                className="px-5 py-2.5 text-xs font-extrabold text-white bg-rose-600 hover:bg-rose-700 active:scale-95 rounded-xl transition-all shadow-md flex items-center gap-2 disabled:opacity-60"
+                className="px-4 py-2 text-xs font-semibold text-white bg-rose-600 hover:bg-rose-700 rounded-lg transition-colors flex items-center gap-2 disabled:opacity-60 shadow-xs"
               >
                 {deleting ? (
                   <>
@@ -714,7 +655,7 @@ export default function AnnouncementFeed() {
                     <span>Deleting...</span>
                   </>
                 ) : (
-                  <span>Yes, Delete Announcement</span>
+                  <span>Delete Circular</span>
                 )}
               </button>
             </div>
@@ -722,7 +663,7 @@ export default function AnnouncementFeed() {
         </div>
       )}
 
-      {/* Analytics Modal */}
+      {/* ── Analytics Modal ── */}
       {analyticsAnnouncementId && (
         <AnnouncementAnalyticsModal
           announcementId={analyticsAnnouncementId}
