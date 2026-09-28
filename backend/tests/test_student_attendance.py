@@ -744,26 +744,26 @@ def test_offline_sync_with_negative_session_id(setup_attendance_context, test_te
     are successfully synced by process_sync_batch without raising 'session not found'.
     """
     ctx = setup_attendance_context
-    cls_b = ctx["class_b"]
-    slot2 = ctx["slot_p3"]
+    cls_a = ctx["class_a"]
+    slot = ctx["slot_p3"]
     today = ctx["today"]
-    p4_start, _ = StudentAttendanceService.get_scheduled_times(today, 4, db_session)
-    valid_ts = (p4_start + timedelta(minutes=5)).isoformat()
+    p3_start, _ = StudentAttendanceService.get_scheduled_times(today, 3, db_session)
+    valid_ts = (p3_start + timedelta(minutes=5)).isoformat()
 
     batch_req = OfflineSyncBatchRequest(
         device_id="ANDROID_TEST_DEVICE_02",
         operations=[
             OfflineSyncOperation(
                 operation_id="op-neg-406",
-                idempotency_key=f"student-attendance-neg-test-{slot2.id}-uuid",
+                idempotency_key=f"student-attendance-neg-test-{slot.id}-uuid",
                 operation_type="SUBMIT_ATTENDANCE",
-                client_timestamp=p4_start + timedelta(minutes=5),
+                client_timestamp=p3_start + timedelta(minutes=5),
                 payload={
-                    "session_id": -slot2.id,  # e.g. -406
-                    "class_id": cls_b.id,
-                    "period_number": 4,
+                    "session_id": -slot.id,  # e.g. -406
+                    "class_id": cls_a.id,
+                    "period_number": 3,
                     "attendance_date": str(today),
-                    "absent_roll_suffixes": ["101"],
+                    "absent_roll_suffixes": ["001"],
                     "client_timestamp": valid_ts
                 }
             )
