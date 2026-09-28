@@ -563,6 +563,27 @@ class StudentAttendanceService:
                     scheduled_teacher_id = current_user.id
                     if not subject_id:
                         subject_id = slot.subject_id
+                else:
+                    is_admin_override = current_user.role in {Role.system_admin, Role.admin, Role.principal, Role.governance}
+                    if not is_admin_override:
+                        raise HTTPException(
+                            status_code=status.HTTP_403_FORBIDDEN,
+                            detail="You are not scheduled for this class. Use Emergency Attendance instead."
+                        )
+                    # For administrative roles overriding, if slot exists for class/day/period, grab scheduled teacher
+                    class_slot = (
+                        db.query(TimetableSlot)
+                        .filter(
+                            TimetableSlot.class_id == data.class_id,
+                            TimetableSlot.day_order == day_order,
+                            TimetableSlot.period_number == data.period_number
+                        )
+                        .first()
+                    )
+                    if class_slot:
+                        scheduled_teacher_id = class_slot.teacher_id
+                        if not subject_id:
+                            subject_id = class_slot.subject_id
 
         # 6. Validate Roll Suffixes
         normalized_absent_suffixes = StudentAttendanceService.normalize_roll_suffixes(data.absent_roll_suffixes)
