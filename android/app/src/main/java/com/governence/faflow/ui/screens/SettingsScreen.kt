@@ -65,6 +65,7 @@ import com.governence.faflow.ui.components.AppTopBar
 import com.governence.faflow.ui.components.FaflowSurface
 import com.governence.faflow.ui.theme.FaflowBg
 import com.governence.faflow.ui.theme.FaflowBorder
+import com.governence.faflow.ui.theme.FaflowBorderControl
 import com.governence.faflow.ui.theme.FaflowDivider
 import com.governence.faflow.ui.theme.FaflowNavy
 import com.governence.faflow.ui.theme.FaflowNavyLight
@@ -275,7 +276,7 @@ fun SettingsScreen(
                             focusedContainerColor = Color.White,
                             unfocusedContainerColor = Color.White,
                             focusedBorderColor = FaflowNavy,
-                            unfocusedBorderColor = FaflowBorder
+                            unfocusedBorderColor = FaflowBorderControl
                         ),
                         modifier = Modifier.fillMaxWidth()
                     )

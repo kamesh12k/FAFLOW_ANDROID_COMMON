@@ -162,3 +162,62 @@ fun PreviewFeedbackStates() {
         }
     }
 }
+
+@Preview(name = "Input Fields (WCAG AA Control Border)", showBackground = true, widthDp = 380)
+@Composable
+fun PreviewTextFields() {
+    FAFLOWTheme {
+        Column(
+            modifier = Modifier
+                .background(FaflowBg)
+                .padding(FaflowSpacing.lg),
+            verticalArrangement = Arrangement.spacedBy(FaflowSpacing.md)
+        ) {
+            Text("Institutional Input Controls", color = FaflowText1, fontSize = 16.sp)
+
+            FaflowTextField(
+                value = "rekha.devi@college.edu",
+                onValueChange = {},
+                label = "Institutional Email",
+                leadingIcon = Icons.Default.CheckCircle
+            )
+
+            FaflowTextField(
+                value = "",
+                onValueChange = {},
+                label = "Search Query",
+                placeholder = "Search faculty or department..."
+            )
+
+            FaflowTextField(
+                value = "invalid-entry",
+                onValueChange = {},
+                label = "Employee Code",
+                isError = true,
+                errorMessage = "Invalid institutional employee identifier format."
+            )
+        }
+    }
+}
+
+@Preview(name = "Hero & Header Lockup", showBackground = true, widthDp = 380)
+@Composable
+fun PreviewHeroSection() {
+    FAFLOWTheme {
+        Column(
+            modifier = Modifier
+                .background(FaflowBg)
+                .padding(FaflowSpacing.lg),
+            verticalArrangement = Arrangement.spacedBy(FaflowSpacing.md)
+        ) {
+            FaflowHeroCard(
+                eyebrow = "Monday, 28 September",
+                title = "Day Order 3 Active",
+                subtitle = "5 scheduled classes and 1 substitution duty assigned for today.",
+                icon = Icons.Default.CheckCircle,
+                onClick = {}
+            )
+        }
+    }
+}
+

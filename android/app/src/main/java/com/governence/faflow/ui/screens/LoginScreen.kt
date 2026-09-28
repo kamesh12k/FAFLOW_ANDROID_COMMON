@@ -301,9 +301,9 @@ fun LoginScreen(
                         ),
                         colors = OutlinedTextFieldDefaults.colors(
                             focusedContainerColor = Color.White,
-                            unfocusedContainerColor = Color(0xFFFCFCFD),
+                            unfocusedContainerColor = Color.White,
                             focusedBorderColor = com.governence.faflow.ui.theme.FaflowNavy,
-                            unfocusedBorderColor = com.governence.faflow.ui.theme.FaflowBorder,
+                            unfocusedBorderColor = com.governence.faflow.ui.theme.FaflowBorderControl,
                             focusedTextColor = com.governence.faflow.ui.theme.FaflowText1,
                             unfocusedTextColor = com.governence.faflow.ui.theme.FaflowText1
                         ),
@@ -372,9 +372,9 @@ fun LoginScreen(
                         ),
                         colors = OutlinedTextFieldDefaults.colors(
                             focusedContainerColor = Color.White,
-                            unfocusedContainerColor = Color(0xFFFCFCFD),
+                            unfocusedContainerColor = Color.White,
                             focusedBorderColor = com.governence.faflow.ui.theme.FaflowNavy,
-                            unfocusedBorderColor = com.governence.faflow.ui.theme.FaflowBorder,
+                            unfocusedBorderColor = com.governence.faflow.ui.theme.FaflowBorderControl,
                             focusedTextColor = com.governence.faflow.ui.theme.FaflowText1,
                             unfocusedTextColor = com.governence.faflow.ui.theme.FaflowText1
                         ),

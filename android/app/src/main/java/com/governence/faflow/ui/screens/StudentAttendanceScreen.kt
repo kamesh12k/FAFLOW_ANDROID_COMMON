@@ -78,6 +78,7 @@ import com.governence.faflow.core.network.ClassOutDto
 import com.governence.faflow.core.network.StudentItemDto
 import com.governence.faflow.core.network.TeacherPeriodSlotDto
 import com.governence.faflow.ui.components.FaflowSurface
+import com.governence.faflow.ui.theme.FaflowBorderControl
 import com.governence.faflow.ui.theme.FaflowShapes
 import com.governence.faflow.ui.theme.FaflowSpacing
 import com.governence.faflow.ui.theme.PrimaryBlue
@@ -717,9 +718,9 @@ fun StudentAttendanceScreen(
                                 ),
                                 colors = OutlinedTextFieldDefaults.colors(
                                     focusedBorderColor = PrimaryBlue,
-                                    unfocusedBorderColor = Color(0xFFCBD5E1),
+                                    unfocusedBorderColor = FaflowBorderControl,
                                     focusedContainerColor = Color.White,
-                                    unfocusedContainerColor = Color(0xFFF8FAFC),
+                                    unfocusedContainerColor = Color.White,
                                     disabledContainerColor = Color(0xFFF1F5F9),
                                     disabledBorderColor = Color(0xFFE2E8F0)
                                 ),
@@ -830,7 +831,7 @@ fun StudentAttendanceScreen(
                             modifier = Modifier.fillMaxWidth(),
                             colors = OutlinedTextFieldDefaults.colors(
                                 focusedBorderColor = PrimaryBlue,
-                                unfocusedBorderColor = Color(0xFFCBD5E1),
+                                unfocusedBorderColor = FaflowBorderControl,
                                 focusedContainerColor = Color.White,
                                 unfocusedContainerColor = Color.White
                             )

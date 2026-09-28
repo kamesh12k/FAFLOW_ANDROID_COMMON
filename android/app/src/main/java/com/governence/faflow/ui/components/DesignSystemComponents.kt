@@ -50,9 +50,17 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
+import androidx.compose.ui.text.input.VisualTransformation
+import com.governence.faflow.ui.theme.FaflowBorderControl
 import com.governence.faflow.ui.theme.FaflowShapes
 import com.governence.faflow.ui.theme.FaflowSpacing
 import com.governence.faflow.ui.theme.PrimaryBlue
+import com.governence.faflow.ui.theme.PrimaryNavy
+import com.governence.faflow.ui.theme.StatusError
 
 /**
  * Reusable Design System Primitives for FAFLOW Modern Productivity UI.
@@ -829,3 +837,91 @@ fun FaflowListRow(
         }
     }
 }
+
+/**
+ * Accessible Institutional Input Field: 10dp radius, #828C99 control border (WCAG AA >= 3:1),
+ * Navy focus ring, clean placeholder, and optional leading/trailing icons.
+ */
+@Composable
+fun FaflowTextField(
+    value: String,
+    onValueChange: (String) -> Unit,
+    modifier: Modifier = Modifier,
+    label: String? = null,
+    placeholder: String? = null,
+    leadingIcon: ImageVector? = null,
+    trailingIcon: @Composable (() -> Unit)? = null,
+    isError: Boolean = false,
+    errorMessage: String? = null,
+    singleLine: Boolean = true,
+    visualTransformation: VisualTransformation = VisualTransformation.None,
+    keyboardOptions: KeyboardOptions = KeyboardOptions.Default,
+    keyboardActions: KeyboardActions = KeyboardActions.Default,
+    enabled: Boolean = true,
+    readOnly: Boolean = false
+) {
+    Column(modifier = modifier) {
+        if (label != null) {
+            Text(
+                text = label,
+                fontSize = 12.sp,
+                fontWeight = FontWeight.SemiBold,
+                color = com.governence.faflow.ui.theme.FaflowText2
+            )
+            Spacer(modifier = Modifier.height(6.dp))
+        }
+        OutlinedTextField(
+            value = value,
+            onValueChange = onValueChange,
+            modifier = Modifier.fillMaxWidth(),
+            enabled = enabled,
+            readOnly = readOnly,
+            singleLine = singleLine,
+            isError = isError,
+            visualTransformation = visualTransformation,
+            keyboardOptions = keyboardOptions,
+            keyboardActions = keyboardActions,
+            shape = FaflowShapes.input,
+            placeholder = if (placeholder != null) {
+                {
+                    Text(
+                        text = placeholder,
+                        fontSize = 14.sp,
+                        color = com.governence.faflow.ui.theme.FaflowTextMuted
+                    )
+                }
+            } else null,
+            leadingIcon = if (leadingIcon != null) {
+                {
+                    Icon(
+                        imageVector = leadingIcon,
+                        contentDescription = null,
+                        tint = com.governence.faflow.ui.theme.FaflowText2,
+                        modifier = Modifier.size(18.dp)
+                    )
+                }
+            } else null,
+            trailingIcon = trailingIcon,
+            colors = OutlinedTextFieldDefaults.colors(
+                focusedContainerColor = com.governence.faflow.ui.theme.FaflowSurface,
+                unfocusedContainerColor = com.governence.faflow.ui.theme.FaflowSurface,
+                focusedBorderColor = PrimaryNavy,
+                unfocusedBorderColor = FaflowBorderControl,
+                focusedTextColor = com.governence.faflow.ui.theme.FaflowText1,
+                unfocusedTextColor = com.governence.faflow.ui.theme.FaflowText1,
+                errorBorderColor = StatusError,
+                errorTextColor = com.governence.faflow.ui.theme.FaflowText1
+            )
+        )
+        if (isError && errorMessage != null) {
+            Spacer(modifier = Modifier.height(4.dp))
+            Text(
+                text = errorMessage,
+                fontSize = 11.sp,
+                fontWeight = FontWeight.Medium,
+                color = StatusError
+            )
+        }
+    }
+}
+
