@@ -158,6 +158,7 @@ export const roomsApi = {
   create: (data) => api.post('/rooms/', data),
   bulkCreate: (data) => api.post('/rooms/bulk', data),
   bulkAssign: (data) => api.post('/rooms/bulk-assign', data),
+  bulkDelete: (roomIds) => api.post('/rooms/bulk-delete', { room_ids: roomIds }),
   update: (id, data) => api.patch(`/rooms/${id}`, data),
   remove: (id) => api.delete(`/rooms/${id}`),
   availabilityDashboard: (dayOrder, periodNumber) =>

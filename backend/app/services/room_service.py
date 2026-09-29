@@ -11,12 +11,21 @@ from app.schemas.room import (
 
 
 def list_rooms(db: Session, room_type: str | None = None) -> list[Room]:
-    q = db.query(Room).options(joinedload(Room.department), joinedload(Room.primary_class))
+    from sqlalchemy.orm import joinedload as _jl
+    from app.models.campus_structure import CampusBlock, CampusFloor
+    q = db.query(Room).options(
+        _jl(Room.department),
+        _jl(Room.primary_class),
+        _jl(Room.block),
+        _jl(Room.floor),
+    ).filter(Room.is_active == True)
     if room_type:
         q = q.filter(Room.room_type == room_type)
     rooms = q.order_by(Room.room_number).all()
     for r in rooms:
         setattr(r, "primary_class_name", r.primary_class.name if r.primary_class else None)
+        setattr(r, "block_name", r.block.name if r.block else None)
+        setattr(r, "floor_name", r.floor.floor_name if r.floor else None)
     return rooms
 
 
@@ -129,10 +138,52 @@ def delete_room(room_id: int, db: Session) -> None:
     if not room:
         raise HTTPException(status_code=404, detail="Room not found")
     from app.models.timetable_submission import TimetableSubmission
+    from app.models.class_ import Class
+    from app.models.campus_duty import CampusDuty, DutyAssignment
+
     db.query(TimetableSlot).filter(TimetableSlot.room_id == room_id).update({"room_id": None}, synchronize_session=False)
     db.query(TimetableSubmission).filter(TimetableSubmission.room_id == room_id).update({"room_id": None}, synchronize_session=False)
+    db.query(Class).filter(Class.default_room_id == room_id).update({"default_room_id": None}, synchronize_session=False)
+
+    duties = db.query(CampusDuty).filter(CampusDuty.room_id == room_id).all()
+    if duties:
+        duty_ids = [d.id for d in duties]
+        db.query(DutyAssignment).filter(DutyAssignment.duty_id.in_(duty_ids)).delete(synchronize_session=False)
+        db.query(CampusDuty).filter(CampusDuty.id.in_(duty_ids)).delete(synchronize_session=False)
+
     db.delete(room)
     db.commit()
+
+
+def bulk_delete_rooms(room_ids: list[int], db: Session) -> int:
+    if not room_ids:
+        return 0
+    from app.models.timetable import TimetableSlot
+    from app.models.timetable_submission import TimetableSubmission
+    from app.models.class_ import Class
+    from app.models.campus_duty import CampusDuty, DutyAssignment
+
+    # Nullify references in timetable
+    db.query(TimetableSlot).filter(TimetableSlot.room_id.in_(room_ids)).update({"room_id": None}, synchronize_session=False)
+    db.query(TimetableSubmission).filter(TimetableSubmission.room_id.in_(room_ids)).update({"room_id": None}, synchronize_session=False)
+
+    # Nullify default_room_id on classes
+    db.query(Class).filter(Class.default_room_id.in_(room_ids)).update({"default_room_id": None}, synchronize_session=False)
+
+    # Clean up duties specifically tied to these rooms
+    duties = db.query(CampusDuty).filter(CampusDuty.room_id.in_(room_ids)).all()
+    if duties:
+        duty_ids = [d.id for d in duties]
+        db.query(DutyAssignment).filter(DutyAssignment.duty_id.in_(duty_ids)).delete(synchronize_session=False)
+        db.query(CampusDuty).filter(CampusDuty.id.in_(duty_ids)).delete(synchronize_session=False)
+
+    rooms = db.query(Room).filter(Room.id.in_(room_ids)).all()
+    deleted_count = len(rooms)
+    for r in rooms:
+        db.delete(r)
+    db.commit()
+    return deleted_count
+
 
 
 def check_room_availability(room_id: int, day_order: int, period_number: int, db: Session) -> bool:

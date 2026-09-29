@@ -7,7 +7,8 @@ from app.models.user import User
 from app.schemas.room import (
     RoomCreate, RoomUpdate, RoomOut, RoomAvailabilityOut,
     BulkRoomCreate, BulkRoomCreateOut,
-    BulkRoomAssignIn, BulkRoomAssignOut
+    BulkRoomAssignIn, BulkRoomAssignOut,
+    BulkRoomDeleteIn, BulkRoomDeleteOut
 )
 from app.services import room_service
 
@@ -68,6 +69,20 @@ def delete_room(
     db: Session = Depends(get_db),
 ):
     room_service.delete_room(room_id, db)
+
+
+@router.post("/bulk-delete", response_model=BulkRoomDeleteOut)
+def bulk_delete_rooms(
+    data: BulkRoomDeleteIn,
+    _admin: User = Depends(require_admin),
+    db: Session = Depends(get_db),
+):
+    count = room_service.bulk_delete_rooms(data.room_ids, db)
+    return BulkRoomDeleteOut(
+        deleted_count=count,
+        message=f"Successfully deleted {count} room(s)."
+    )
+
 
 
 @router.get("/availability/dashboard", response_model=list[RoomAvailabilityOut])

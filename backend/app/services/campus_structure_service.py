@@ -148,11 +148,84 @@ class CampusStructureService:
     @staticmethod
     def delete_block(db: Session, block_id: int, user_id: Optional[int] = None):
         block = CampusStructureService.get_block(db, block_id)
-        # Detach rooms rather than deleting room history
-        db.query(Room).filter(Room.block_id == block_id).update({"block_id": None, "floor_id": None}, synchronize_session=False)
+        block_code = block.code
+        block_name = block.name
+
+        # 1. Collect all rooms belonging to this block
+        rooms = db.query(Room).filter(Room.block_id == block_id).all()
+        room_ids = [r.id for r in rooms]
+
+        deleted_classes_count = 0
+        if room_ids:
+            from app.models.timetable import TimetableSlot
+            from app.models.timetable_submission import TimetableSubmission
+            from app.models.campus_duty import CampusDuty, DutyAssignment, CampusArea
+
+            # 2. Find and delete all classes created for / mapped to rooms in this block
+            primary_class_ids = [r.primary_class_id for r in rooms if r.primary_class_id is not None]
+            classes_to_delete = db.query(Class).filter(
+                or_(
+                    Class.default_room_id.in_(room_ids),
+                    Class.id.in_(primary_class_ids)
+                )
+            ).all()
+            class_ids = [c.id for c in classes_to_delete]
+
+            if class_ids:
+                deleted_classes_count = len(class_ids)
+                # Clear timetable references for these classes
+                db.query(TimetableSlot).filter(TimetableSlot.class_id.in_(class_ids)).delete(synchronize_session=False)
+                db.query(TimetableSubmission).filter(TimetableSubmission.class_id.in_(class_ids)).delete(synchronize_session=False)
+                # Nullify room associations
+                db.query(Room).filter(Room.primary_class_id.in_(class_ids)).update({"primary_class_id": None}, synchronize_session=False)
+                # Delete the classes
+                for c in classes_to_delete:
+                    db.delete(c)
+
+            # 3. Clean up timetable slots and submissions referencing these rooms
+            db.query(TimetableSlot).filter(TimetableSlot.room_id.in_(room_ids)).update({"room_id": None}, synchronize_session=False)
+            db.query(TimetableSubmission).filter(TimetableSubmission.room_id.in_(room_ids)).update({"room_id": None}, synchronize_session=False)
+
+            # 4. Clean up duties specifically tied to these rooms
+            duties = db.query(CampusDuty).filter(CampusDuty.room_id.in_(room_ids)).all()
+            if duties:
+                duty_ids = [d.id for d in duties]
+                db.query(DutyAssignment).filter(DutyAssignment.duty_id.in_(duty_ids)).delete(synchronize_session=False)
+                db.query(CampusDuty).filter(CampusDuty.id.in_(duty_ids)).delete(synchronize_session=False)
+
+            # 5. Delete all rooms in this block
+            for r in rooms:
+                db.delete(r)
+
+        # 6. Delete associated CampusArea records for this block and its floors
+        from app.models.campus_duty import CampusArea, CampusDuty, DutyAssignment
+        areas = db.query(CampusArea).filter(
+            or_(
+                CampusArea.block_id == block_id,
+                CampusArea.building_or_block == block_name,
+                CampusArea.code.ilike(f"WING_{block_code}_%"),
+                CampusArea.code.ilike(f"DISC_{block_code}_%"),
+                CampusArea.code == f"BLK_{block_code}".upper()
+            )
+        ).all()
+        if areas:
+            area_ids = [a.id for a in areas]
+            area_duties = db.query(CampusDuty).filter(CampusDuty.area_id.in_(area_ids)).all()
+            if area_duties:
+                area_duty_ids = [ad.id for ad in area_duties]
+                db.query(DutyAssignment).filter(DutyAssignment.duty_id.in_(area_duty_ids)).delete(synchronize_session=False)
+                db.query(CampusDuty).filter(CampusDuty.id.in_(area_duty_ids)).delete(synchronize_session=False)
+            for a in areas:
+                db.delete(a)
+
+        # 7. Delete the block itself (cascades to floors)
         db.delete(block)
         db.commit()
-        CampusStructureService._log_audit(db, user_id, "CAMPUS_BLOCK_DELETED", {"block_id": block_id})
+        CampusStructureService._log_audit(db, user_id, "CAMPUS_BLOCK_DELETED", {
+            "block_id": block_id,
+            "deleted_rooms_count": len(room_ids),
+            "deleted_classes_count": deleted_classes_count
+        })
 
     # ── Floor CRUD ────────────────────────────────────────────────────────────
 

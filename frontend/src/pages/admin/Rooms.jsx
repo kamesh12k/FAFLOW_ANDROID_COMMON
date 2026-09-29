@@ -26,6 +26,11 @@ export default function AdminRooms() {
   const [bulkAssignSaving, setBulkAssignSaving] = useState(false)
   const [bulkAssignError, setBulkAssignError] = useState('')
 
+  // Bulk Delete State
+  const [bulkDeleting, setBulkDeleting] = useState(false)
+  const [bulkDeleteError, setBulkDeleteError] = useState('')
+  const [bulkDeleteConfirmOpen, setBulkDeleteConfirmOpen] = useState(false)
+
   // Occupancy State
   const [occupancyData, setOccupancyData] = useState(null)
   const [occupancyLoading, setOccupancyLoading] = useState(false)
@@ -299,6 +304,22 @@ export default function AdminRooms() {
     setSelectedRoomIds(prev =>
       prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]
     )
+  }
+
+  const handleBulkDeleteConfirm = async () => {
+    setBulkDeleting(true)
+    setBulkDeleteError('')
+    try {
+      const res = await roomsApi.bulkDelete(selectedRoomIds)
+      setBulkDeleteConfirmOpen(false)
+      setSelectedRoomIds([])
+      loadDirectory()
+      loadOccupancy(selectedDayOrder, selectedPeriod, filterDept, filterType)
+    } catch (err) {
+      setBulkDeleteError(err.response?.data?.detail || 'Failed to delete selected rooms.')
+    } finally {
+      setBulkDeleting(false)
+    }
   }
 
   const deptName = (id) => departments.find(d => d.id === id)?.name || '—'
@@ -652,6 +673,12 @@ export default function AdminRooms() {
                   📝 Exam Hall Config
                 </button>
                 <button
+                  onClick={() => { setBulkDeleteError(''); setBulkDeleteConfirmOpen(true) }}
+                  className="px-3 py-1.5 bg-red-700 hover:bg-red-600 rounded-xl text-xs font-bold transition flex items-center gap-1.5"
+                >
+                  🗑️ Delete Selected
+                </button>
+                <button
                   onClick={() => setSelectedRoomIds([])}
                   className="px-2.5 py-1.5 text-xs text-indigo-300 hover:text-white font-semibold transition ml-2"
                 >
@@ -695,7 +722,14 @@ export default function AdminRooms() {
                               className="w-4 h-4 text-indigo-600 rounded"
                             />
                           </td>
-                          <td className="px-4 py-3 font-mono font-bold text-gray-900">{r.room_number}</td>
+                          <td className="px-4 py-3">
+                            <span className="font-mono font-bold text-gray-900">{r.room_number}</span>
+                            {r.block_name && (
+                              <span className="ml-2 text-[10px] font-semibold bg-slate-100 text-slate-600 border border-slate-200 px-1.5 py-0.5 rounded uppercase">
+                                🏢 {r.block_name}{r.floor_name ? ` · ${r.floor_name}` : ''}
+                              </span>
+                            )}
+                          </td>
                           <td className="px-4 py-3">
                             <span className={`text-xs font-semibold px-2.5 py-0.5 rounded-full ${
                               r.room_type === 'lab' || r.room_type === 'laboratory'
@@ -1158,6 +1192,26 @@ export default function AdminRooms() {
             <button type="button" onClick={() => setDeleteConfirmOpen(false)} className="btn-secondary flex-1">Cancel</button>
             <button type="button" onClick={handleDeleteConfirm} disabled={deleting} className="btn-danger flex-1">
               {deleting ? 'Deleting…' : 'Delete Room'}
+            </button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Bulk Delete Confirmation Modal */}
+      <Modal open={bulkDeleteConfirmOpen} onClose={() => setBulkDeleteConfirmOpen(false)} title="Delete Selected Rooms">
+        <div className="space-y-4">
+          <ErrorAlert message={bulkDeleteError} />
+          <p className="text-sm text-gray-600">
+            Are you sure you want to permanently delete{' '}
+            <span className="font-semibold text-gray-800">{selectedRoomIds.length} room{selectedRoomIds.length !== 1 ? 's' : ''}</span>?
+          </p>
+          <p className="text-xs text-red-500 font-medium">
+            Rooms referenced in active timetable slots cannot be deleted and will be skipped.
+          </p>
+          <div className="flex gap-2 pt-2">
+            <button type="button" onClick={() => setBulkDeleteConfirmOpen(false)} className="btn-secondary flex-1">Cancel</button>
+            <button type="button" onClick={handleBulkDeleteConfirm} disabled={bulkDeleting} className="btn-danger flex-1">
+              {bulkDeleting ? 'Deleting…' : `Delete ${selectedRoomIds.length} Room${selectedRoomIds.length !== 1 ? 's' : ''}`}
             </button>
           </div>
         </div>

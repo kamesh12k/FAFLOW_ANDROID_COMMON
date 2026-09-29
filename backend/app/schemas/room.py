@@ -40,6 +40,10 @@ class RoomOut(BaseModel):
     department_id: int | None
     primary_class_id: int | None = None
     primary_class_name: str | None = None
+    block_id: int | None = None
+    floor_id: int | None = None
+    block_name: str | None = None
+    floor_name: str | None = None
     is_exam_eligible: bool = False
     exam_capacity: int | None = None
     required_invigilators: int = 1
@@ -93,4 +97,14 @@ class BulkRoomCreateOut(BaseModel):
     created_count: int
     skipped_count: int
     message: str
+
+
+class BulkRoomDeleteIn(BaseModel):
+    room_ids: list[int]
+
+
+class BulkRoomDeleteOut(BaseModel):
+    deleted_count: int
+    message: str
+
 

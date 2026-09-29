@@ -125,7 +125,7 @@ class CampusDutyService:
 
     @staticmethod
     def ensure_default_campus_areas(db: Session, department_id: Optional[int] = None):
-        """Seeds standard campus areas if none exist."""
+        """Seeds standard campus areas if none exist and no campus blocks exist."""
         existing = db.query(CampusArea).count()
         if existing > 0:
             return
@@ -171,15 +171,108 @@ class CampusDutyService:
         db.add_all(defaults)
         db.commit()
 
+    @staticmethod
+    def sync_campus_areas_with_structure(db: Session) -> List[CampusArea]:
+        """Synchronizes CampusArea records directly with configured CampusBlock and CampusFloor records.
+        - Generates dynamic CampusArea records for every active block and floor (e.g. B BLOCK, Ground Floor, etc.)
+        - Purges stale dummy seed records (Main Block, Science Block, EX-101) when those blocks do not exist.
+        - Purges orphaned CampusArea records whose block was deleted.
+        """
+        from app.models.campus_structure import CampusBlock, CampusFloor
+
+        active_blocks = db.query(CampusBlock).filter(CampusBlock.is_active == True).all()
+
+        if active_blocks:
+            active_block_ids = {b.id for b in active_blocks}
+            active_block_names = {b.name.strip().lower() for b in active_blocks}
+            active_block_codes = {b.code.strip().upper() for b in active_blocks if b.code}
+
+            # 1. Clean up obsolete dummy seed areas if those blocks do not actually exist
+            dummy_codes = {"MB-GF", "MB-1F", "SB-QD", "EX-101"}
+            stale_areas = db.query(CampusArea).filter(
+                or_(
+                    CampusArea.code.in_(dummy_codes),
+                    and_(
+                        CampusArea.block_id != None,
+                        ~CampusArea.block_id.in_(active_block_ids)
+                    )
+                )
+            ).all()
+
+            for sa in stale_areas:
+                b_name = (sa.building_or_block or "").strip().lower()
+                if b_name not in active_block_names or sa.code in dummy_codes:
+                    db.query(CampusDuty).filter(CampusDuty.area_id == sa.id).update({"area_id": None}, synchronize_session=False)
+                    db.delete(sa)
+
+            # 2. For each active block, ensure general block area & floor areas exist
+            for blk in active_blocks:
+                blk_code = f"BLK_{blk.code}".upper()
+                existing_blk_area = db.query(CampusArea).filter(
+                    or_(CampusArea.code == blk_code, and_(CampusArea.block_id == blk.id, CampusArea.floor_id == None))
+                ).first()
+                if not existing_blk_area:
+                    db.add(CampusArea(
+                        name=f"{blk.name} (General / Campus)",
+                        code=blk_code,
+                        duty_type=DutyType.DISCIPLINE_DUTY.value,
+                        block_id=blk.id,
+                        building_or_block=blk.name,
+                        department_id=blk.department_id,
+                        required_teachers=2,
+                        is_active=True
+                    ))
+                else:
+                    existing_blk_area.block_id = blk.id
+                    existing_blk_area.building_or_block = blk.name
+                    if not existing_blk_area.code:
+                        existing_blk_area.code = blk_code
+
+                # Floor areas (Wing areas)
+                floors = db.query(CampusFloor).filter(CampusFloor.block_id == blk.id, CampusFloor.is_active == True).all()
+                for fl in floors:
+                    wing_code = f"WING_{blk.code}_{fl.floor_number}".upper()
+                    existing_floor_area = db.query(CampusArea).filter(
+                        or_(CampusArea.code == wing_code, and_(CampusArea.block_id == blk.id, CampusArea.floor_id == fl.id))
+                    ).first()
+                    if not existing_floor_area:
+                        db.add(CampusArea(
+                            name=f"{blk.name} - {fl.floor_name}",
+                            code=wing_code,
+                            duty_type=DutyType.WING_DUTY.value,
+                            block_id=blk.id,
+                            floor_id=fl.id,
+                            building_or_block=blk.name,
+                            floor=fl.floor_name,
+                            department_id=blk.department_id,
+                            required_teachers=1,
+                            is_active=True
+                        ))
+                    else:
+                        existing_floor_area.block_id = blk.id
+                        existing_floor_area.floor_id = fl.id
+                        existing_floor_area.building_or_block = blk.name
+                        existing_floor_area.floor = fl.floor_name
+                        existing_floor_area.name = f"{blk.name} - {fl.floor_name}"
+                        existing_floor_area.code = wing_code
+
+            db.commit()
+        else:
+            # Fallback if no blocks configured at all
+            CampusDutyService.ensure_default_campus_areas(db)
+
+        return db.query(CampusArea).filter(CampusArea.is_active == True).order_by(CampusArea.name).all()
+
     # ── Campus Area CRUD ─────────────────────────────────────────────────────
 
     @staticmethod
     def list_areas(db: Session, is_active_only: bool = True) -> List[CampusArea]:
-        CampusDutyService.ensure_default_campus_areas(db)
+        CampusDutyService.sync_campus_areas_with_structure(db)
         q = db.query(CampusArea)
         if is_active_only:
             q = q.filter(CampusArea.is_active == True)
         return q.order_by(CampusArea.name).all()
+
 
     @staticmethod
     def create_area(db: Session, data: CampusAreaCreate, user_id: Optional[int] = None) -> CampusArea:
@@ -607,21 +700,28 @@ class CampusDutyService:
                     existing.day_order = day_order
                     created_duties.append(existing)
 
-        if created_duties:
+        # Always commit — even if no new duties were created, we may have
+        # updated existing ones (status, required_teachers, break_period_id etc.)
+        try:
             db.commit()
-            for d in created_duties:
-                db.refresh(d)
-                if auto_assign and not d.is_locked:
-                    CampusDutyService.auto_assign_duty(db, d.id, user_id=user_id)
+        except Exception as e:
+            db.rollback()
+            logger.error("generate_discipline_duties commit failed: %s", e)
+            raise
 
-            CampusDutyService._log_audit(db, user_id, "DISCIPLINE_DUTIES_GENERATED", {
-                "date": str(target_date),
-                "count": len(created_duties),
-                "block_id": block_id,
-                "required_teachers": required_teachers,
-                "auto_assign": auto_assign,
-                "day_order": day_order
-            })
+        for d in created_duties:
+            db.refresh(d)
+            if auto_assign and not d.is_locked:
+                CampusDutyService.auto_assign_duty(db, d.id, user_id=user_id)
+
+        CampusDutyService._log_audit(db, user_id, "DISCIPLINE_DUTIES_GENERATED", {
+            "date": str(target_date),
+            "count": len(created_duties),
+            "block_id": block_id,
+            "required_teachers": required_teachers,
+            "auto_assign": auto_assign,
+            "day_order": day_order
+        })
 
         q = db.query(CampusDuty).filter(
             CampusDuty.duty_date == target_date,
