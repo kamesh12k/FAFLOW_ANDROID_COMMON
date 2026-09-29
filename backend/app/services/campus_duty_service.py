@@ -655,49 +655,85 @@ class CampusDutyService:
         floors = q.order_by(CampusBlock.name, CampusFloor.display_order).all()
 
         created_duties = []
-        for fl in floors:
-            title = f"Wing Duty - {fl.block.name} ({fl.floor_name})"
-            existing = db.query(CampusDuty).filter(
-                CampusDuty.duty_date == target_date,
-                CampusDuty.duty_type == DutyType.WING_DUTY,
-                CampusDuty.title == title,
-                CampusDuty.status.in_([DutyStatus.PUBLISHED, DutyStatus.DRAFT])
-            ).first()
+        if floors:
+            for fl in floors:
+                title = f"Wing Duty - {fl.block.name} ({fl.floor_name})"
+                existing = db.query(CampusDuty).filter(
+                    CampusDuty.duty_date == target_date,
+                    CampusDuty.duty_type == DutyType.WING_DUTY,
+                    CampusDuty.title == title,
+                    CampusDuty.status.in_([DutyStatus.PUBLISHED, DutyStatus.DRAFT])
+                ).first()
 
-            if not existing:
-                area_code = f"WING_{fl.block.code}_{fl.floor_number}".upper()
-                area = db.query(CampusArea).filter(CampusArea.code == area_code).first()
-                if not area:
-                    area = CampusArea(
-                        name=f"{fl.block.name} - {fl.floor_name}",
-                        code=area_code,
-                        duty_type=DutyType.WING_DUTY.value,
-                        block_id=fl.block_id,
-                        floor_id=fl.id,
-                        building_or_block=fl.block.name,
-                        floor=fl.floor_name,
-                        required_teachers=required_teachers_per_wing,
+                if not existing:
+                    area_code = f"WING_{fl.block.code}_{fl.floor_number}".upper()
+                    area = db.query(CampusArea).filter(CampusArea.code == area_code).first()
+                    if not area:
+                        area = CampusArea(
+                            name=f"{fl.block.name} - {fl.floor_name}",
+                            code=area_code,
+                            duty_type=DutyType.WING_DUTY.value,
+                            block_id=fl.block_id,
+                            floor_id=fl.id,
+                            building_or_block=fl.block.name,
+                            floor=fl.floor_name,
+                            required_teachers=required_teachers_per_wing,
+                            department_id=department_id or fl.block.department_id,
+                            is_active=True
+                        )
+                        db.add(area)
+                        db.flush()
+
+                    duty = CampusDuty(
+                        duty_type=DutyType.WING_DUTY,
+                        title=title,
+                        duty_date=target_date,
+                        start_time=start_time,
+                        end_time=end_time,
+                        area_id=area.id,
                         department_id=department_id or fl.block.department_id,
-                        is_active=True
+                        day_order=day_order,
+                        required_teachers=required_teachers_per_wing,
+                        status=DutyStatus.PUBLISHED,
+                        created_by_user_id=user_id
                     )
-                    db.add(area)
-                    db.flush()
-
-                duty = CampusDuty(
-                    duty_type=DutyType.WING_DUTY,
-                    title=title,
-                    duty_date=target_date,
-                    start_time=start_time,
-                    end_time=end_time,
-                    area_id=area.id,
-                    department_id=department_id or fl.block.department_id,
-                    day_order=day_order,
-                    required_teachers=required_teachers_per_wing,
-                    status=DutyStatus.PUBLISHED,
-                    created_by_user_id=user_id
-                )
-                db.add(duty)
-                created_duties.append(duty)
+                    db.add(duty)
+                    created_duties.append(duty)
+        else:
+            # Fallback when no CampusFloor / CampusBlock records are configured yet:
+            # Generate wing duties for active WING_DUTY campus areas or auto-seed defaults
+            CampusDutyService.ensure_default_campus_areas(db)
+            wing_areas_q = db.query(CampusArea).filter(
+                CampusArea.duty_type == DutyType.WING_DUTY.value,
+                CampusArea.is_active == True
+            )
+            if department_id:
+                wing_areas_q = wing_areas_q.filter(or_(CampusArea.department_id == department_id, CampusArea.department_id == None))
+            wing_areas = wing_areas_q.all()
+            for area in wing_areas:
+                title = f"Wing Duty - {area.name}"
+                existing = db.query(CampusDuty).filter(
+                    CampusDuty.duty_date == target_date,
+                    CampusDuty.duty_type == DutyType.WING_DUTY,
+                    CampusDuty.title == title,
+                    CampusDuty.status.in_([DutyStatus.PUBLISHED, DutyStatus.DRAFT])
+                ).first()
+                if not existing:
+                    duty = CampusDuty(
+                        duty_type=DutyType.WING_DUTY,
+                        title=title,
+                        duty_date=target_date,
+                        start_time=start_time,
+                        end_time=end_time,
+                        area_id=area.id,
+                        department_id=department_id or area.department_id,
+                        day_order=day_order,
+                        required_teachers=required_teachers_per_wing or area.required_teachers,
+                        status=DutyStatus.PUBLISHED,
+                        created_by_user_id=user_id
+                    )
+                    db.add(duty)
+                    created_duties.append(duty)
 
         if created_duties:
             db.commit()
@@ -740,33 +776,80 @@ class CampusDutyService:
         rooms = q.order_by(Room.room_number).all()
 
         created_duties = []
-        for rm in rooms:
-            existing = db.query(CampusDuty).filter(
-                CampusDuty.room_id == rm.id,
-                CampusDuty.duty_date == target_date,
-                CampusDuty.duty_type == DutyType.EXAM_DUTY,
-                CampusDuty.status.in_([DutyStatus.PUBLISHED, DutyStatus.DRAFT]),
-                CampusDuty.start_time < end_time,
-                CampusDuty.end_time > start_time
-            ).first()
+        if not rooms:
+            # Fallback when no rooms have is_exam_eligible=True:
+            # 1. Fallback to active classrooms or rooms with capacity >= 30
+            fallback_rooms_q = db.query(Room).filter(Room.is_active == True)
+            if block_ids:
+                fallback_rooms_q = fallback_rooms_q.filter(Room.block_id.in_(block_ids))
+            if floor_ids:
+                fallback_rooms_q = fallback_rooms_q.filter(Room.floor_id.in_(floor_ids))
+            if department_id:
+                fallback_rooms_q = fallback_rooms_q.filter(or_(Room.department_id == department_id, Room.department_id == None))
+            rooms = fallback_rooms_q.order_by(Room.capacity.desc(), Room.room_number).limit(5).all()
 
-            if not existing:
-                duty_title = f"{title} - Room {rm.room_number}"
-                duty = CampusDuty(
-                    duty_type=DutyType.EXAM_DUTY,
-                    title=duty_title,
-                    duty_date=target_date,
-                    start_time=start_time,
-                    end_time=end_time,
-                    room_id=rm.id,
-                    department_id=rm.department_id or department_id,
-                    day_order=day_order,
-                    required_teachers=rm.required_invigilators or 1,
-                    status=DutyStatus.PUBLISHED,
-                    created_by_user_id=user_id
-                )
-                db.add(duty)
-                created_duties.append(duty)
+        if rooms:
+            for rm in rooms:
+                existing = db.query(CampusDuty).filter(
+                    CampusDuty.room_id == rm.id,
+                    CampusDuty.duty_date == target_date,
+                    CampusDuty.duty_type == DutyType.EXAM_DUTY,
+                    CampusDuty.status.in_([DutyStatus.PUBLISHED, DutyStatus.DRAFT]),
+                    CampusDuty.start_time < end_time,
+                    CampusDuty.end_time > start_time
+                ).first()
+
+                if not existing:
+                    duty_title = f"{title} - Room {rm.room_number}"
+                    duty = CampusDuty(
+                        duty_type=DutyType.EXAM_DUTY,
+                        title=duty_title,
+                        duty_date=target_date,
+                        start_time=start_time,
+                        end_time=end_time,
+                        room_id=rm.id,
+                        department_id=rm.department_id or department_id,
+                        day_order=day_order,
+                        required_teachers=rm.required_invigilators or 1,
+                        status=DutyStatus.PUBLISHED,
+                        created_by_user_id=user_id
+                    )
+                    db.add(duty)
+                    created_duties.append(duty)
+        else:
+            # Fallback 2: Fallback to active EXAM_DUTY campus areas
+            CampusDutyService.ensure_default_campus_areas(db)
+            exam_areas = db.query(CampusArea).filter(
+                CampusArea.duty_type == DutyType.EXAM_DUTY.value,
+                CampusArea.is_active == True
+            ).all()
+            for area in exam_areas:
+                duty_title = f"{title} - {area.name}"
+                existing = db.query(CampusDuty).filter(
+                    CampusDuty.area_id == area.id,
+                    CampusDuty.duty_date == target_date,
+                    CampusDuty.duty_type == DutyType.EXAM_DUTY,
+                    CampusDuty.status.in_([DutyStatus.PUBLISHED, DutyStatus.DRAFT]),
+                    CampusDuty.start_time < end_time,
+                    CampusDuty.end_time > start_time
+                ).first()
+                if not existing:
+                    duty = CampusDuty(
+                        duty_type=DutyType.EXAM_DUTY,
+                        title=duty_title,
+                        duty_date=target_date,
+                        start_time=start_time,
+                        end_time=end_time,
+                        area_id=area.id,
+                        department_id=department_id or area.department_id,
+                        day_order=day_order,
+                        required_teachers=area.required_teachers or 2,
+                        status=DutyStatus.PUBLISHED,
+                        created_by_user_id=user_id
+                    )
+                    db.add(duty)
+                    created_duties.append(duty)
+
 
         if created_duties:
             db.commit()

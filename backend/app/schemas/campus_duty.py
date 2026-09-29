@@ -1,6 +1,7 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 from typing import Optional, List, Dict, Any
 from datetime import date, time, datetime
+
 
 
 class CampusAreaBase(BaseModel):
@@ -193,10 +194,24 @@ class ExamDutyGenerateRequest(BaseModel):
     target_date: date
     start_time: time = time(10, 0)
     end_time: time = time(13, 0)
+    session: Optional[str] = None
     title: str = "Semester Examination"
     block_ids: Optional[List[int]] = None
     floor_ids: Optional[List[int]] = None
     department_id: Optional[int] = None
+
+    @model_validator(mode="after")
+    def apply_session_times(self):
+        if self.session:
+            s = self.session.strip().upper()
+            if s == "FN":
+                self.start_time = time(10, 0)
+                self.end_time = time(13, 0)
+            elif s == "AN":
+                self.start_time = time(14, 0)
+                self.end_time = time(17, 0)
+        return self
+
 
 
 class DutyAutoAssignRequest(BaseModel):

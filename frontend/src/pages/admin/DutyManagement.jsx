@@ -318,7 +318,8 @@ export default function DutyManagement({ readOnly = false }) {
     setActionLoading(true)
     try {
       const res = await campusDutiesApi.generateWingDuties({ target_date: selectedDate })
-      alert(`Wing duties generated from campus floors! Created: ${res?.data?.created_count ?? 0}`)
+      const count = Array.isArray(res?.data) ? res.data.length : (res?.data?.created_count ?? 0)
+      alert(`Wing duties generated from campus floors! Created: ${count}`)
       await fetchData()
     } catch (err) {
       alert(err?.response?.data?.detail || 'Failed to generate wing duties')
@@ -338,7 +339,8 @@ export default function DutyManagement({ readOnly = false }) {
         target_date: selectedDate,
         session: session.trim().toUpperCase(),
       })
-      alert(`Exam duties generated from exam-eligible classrooms! Created: ${res?.data?.created_count ?? 0}`)
+      const count = Array.isArray(res?.data) ? res.data.length : (res?.data?.created_count ?? 0)
+      alert(`Exam duties generated from exam-eligible classrooms! Created: ${count}`)
       await fetchData()
     } catch (err) {
       alert(err?.response?.data?.detail || 'Failed to generate exam duties')

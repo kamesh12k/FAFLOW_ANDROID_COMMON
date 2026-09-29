@@ -783,5 +783,134 @@ def test_discipline_duty_belongs_to_block_auto_assign_staff(client, db_session, 
     assert ece_2.id in assigned_teacher_ids
 
 
+def test_bug11_duty_generation_integration_all_types(client, db_session, auth_headers_admin):
+    """
+    Integration test per duty type (Bug 11):
+    - Seeds a minimal valid campus (classes with rooms, teachers, day order).
+    - Asserts each generation endpoint (Discipline, Wing, Exam) returns a non-empty, valid roster.
+    - Asserts session mapping ('FN' -> 10:00-13:00, 'AN' -> 14:00-17:00) works on Exam duties.
+    - Asserts Wing duties generate successfully even if blocks/floors are not configured yet (fallback to areas).
+    """
+    from app.models.campus_structure import CampusBlock, CampusFloor
+    from app.models.room import Room
+    from app.models.day_order_calendar import DayOrderCalendar
+
+    test_date = date.today() + timedelta(days=20)
+    db_session.add(DayOrderCalendar(date=test_date, day_order=1))
+
+    # 1. Seed Department, Class, Room with bidirectional link, and Teachers
+    dept = Department(name="Aeronautical Engineering", code="AERO")
+    db_session.add(dept)
+    db_session.flush()
+
+    rm = Room(room_number="AERO-101", capacity=40, department_id=dept.id, is_active=True, is_exam_eligible=False)
+    db_session.add(rm)
+    db_session.flush()
+
+    cls = Class(name="AERO-1A", section="A", semester=1, department_id=dept.id, default_room_id=rm.id)
+    db_session.add(cls)
+    db_session.flush()
+    rm.primary_class_id = cls.id
+
+    t1 = User(username="aero_t1", name="Aero Teacher 1", email="aero1@uni.edu", password_hash="hash", role=Role.teacher, department_id=dept.id, is_active=True)
+    t2 = User(username="aero_t2", name="Aero Teacher 2", email="aero2@uni.edu", password_hash="hash", role=Role.teacher, department_id=dept.id, is_active=True)
+    db_session.add_all([t1, t2])
+    db_session.flush()
+
+    # Staff attendance
+    db_session.add(StaffAttendanceRecord(user_id=t1.id, attendance_date=test_date, check_in_time=datetime.now(timezone.utc)))
+    db_session.add(StaffAttendanceRecord(user_id=t2.id, attendance_date=test_date, check_in_time=datetime.now(timezone.utc)))
+
+    # Break period for discipline duty
+    bp = DutyBreakPeriod(
+        name="Aero Lunch Break",
+        start_time=time(13, 0),
+        end_time=time(14, 0),
+        duty_type=DutyType.DISCIPLINE_DUTY.value,
+        required_teachers=2,
+        applicable_day_orders="1,2,3,4,5,6",
+        department_id=dept.id,
+        is_active=True
+    )
+    db_session.add(bp)
+    db_session.commit()
+
+    # 2. DISCIPLINE DUTY GENERATION
+    resp_disc = client.post(
+        "/campus-duties/generate-discipline",
+        json={"target_date": str(test_date), "department_id": dept.id, "auto_assign": True},
+        headers=auth_headers_admin
+    )
+    assert resp_disc.status_code == 200, resp_disc.text
+    disc_data = resp_disc.json()
+    assert isinstance(disc_data, list)
+    assert len(disc_data) >= 1
+    assert any("Lunch" in d["title"] for d in disc_data)
+
+    # 3. WING DUTY GENERATION (Fallback to CampusArea when no blocks/floors exist)
+    resp_wing_fallback = client.post(
+        "/campus-duties/generate-wing-duties",
+        json={"target_date": str(test_date)},
+        headers=auth_headers_admin
+    )
+    assert resp_wing_fallback.status_code == 200, resp_wing_fallback.text
+    wing_fb_data = resp_wing_fallback.json()
+    assert isinstance(wing_fb_data, list)
+    assert len(wing_fb_data) >= 1
+    assert all(d["duty_type"] == "WING_DUTY" for d in wing_fb_data)
+
+    # 4. WING DUTY GENERATION (With CampusBlock & Floor configured)
+    test_date_2 = test_date + timedelta(days=1)
+    db_session.add(DayOrderCalendar(date=test_date_2, day_order=2))
+    block = CampusBlock(name="Aero Block", code="BLK-AERO", floors_count=1, department_id=dept.id, is_active=True)
+    db_session.add(block)
+    db_session.flush()
+    floor = CampusFloor(block_id=block.id, floor_number=1, floor_name="First Floor", display_order=1)
+    db_session.add(floor)
+    db_session.commit()
+
+    resp_wing = client.post(
+        "/campus-duties/generate-wing-duties",
+        json={"target_date": str(test_date_2), "department_id": dept.id},
+        headers=auth_headers_admin
+    )
+    assert resp_wing.status_code == 200, resp_wing.text
+    wing_data = resp_wing.json()
+    assert isinstance(wing_data, list)
+    assert len(wing_data) >= 1
+    assert any("First Floor" in d["title"] or "BLK-AERO" in d["title"] for d in wing_data)
+
+    # 5. EXAM DUTY GENERATION (Session FN -> 10:00 to 13:00, with fallback to active room)
+    resp_exam_fn = client.post(
+        "/campus-duties/generate-exam-duties",
+        json={"target_date": str(test_date), "session": "FN", "department_id": dept.id},
+        headers=auth_headers_admin
+    )
+    assert resp_exam_fn.status_code == 200, resp_exam_fn.text
+    exam_fn_data = resp_exam_fn.json()
+    assert isinstance(exam_fn_data, list)
+    assert len(exam_fn_data) >= 1
+    assert exam_fn_data[0]["start_time"] == "10:00:00"
+    assert exam_fn_data[0]["end_time"] == "13:00:00"
+
+    # 6. EXAM DUTY GENERATION (Session AN -> 14:00 to 17:00, with exam_eligible=True room)
+    rm.is_exam_eligible = True
+    db_session.commit()
+
+    resp_exam_an = client.post(
+        "/campus-duties/generate-exam-duties",
+        json={"target_date": str(test_date_2), "session": "AN", "department_id": dept.id},
+        headers=auth_headers_admin
+    )
+    assert resp_exam_an.status_code == 200, resp_exam_an.text
+    exam_an_data = resp_exam_an.json()
+    assert isinstance(exam_an_data, list)
+    assert len(exam_an_data) >= 1
+    assert exam_an_data[0]["start_time"] == "14:00:00"
+    assert exam_an_data[0]["end_time"] == "17:00:00"
+    assert exam_an_data[0]["room_id"] == rm.id
+
+
+
 
 
