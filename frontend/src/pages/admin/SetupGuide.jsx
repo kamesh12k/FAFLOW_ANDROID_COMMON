@@ -364,7 +364,7 @@ export default function SetupGuide() {
                                 : 'bg-primary-600 hover:bg-primary-700 text-white'
                             }`}
                           >
-                            <span>{step.actionText}</span>
+                            <span>{step.action_text || step.actionText}</span>
                             <span>→</span>
                           </Link>
                         </div>
