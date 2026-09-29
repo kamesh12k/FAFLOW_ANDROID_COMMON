@@ -3,7 +3,7 @@
     "spec_source": "openapi_generated.yaml",
     "spec_paths": 333,
     "android_raw_calls": 90,
-    "frontend_raw_calls": 501,
+    "frontend_raw_calls": 502,
     "total_mismatches": 0,
     "high_severity": 0,
     "medium_severity": 0,
@@ -1886,6 +1886,10 @@
     {
       "original": "/teachers/${id}",
       "normalised": "/teachers/{*}"
+    },
+    {
+      "original": "/timetable/",
+      "normalised": "/timetable"
     },
     {
       "original": "/timetable/teacher/${teacherId}",

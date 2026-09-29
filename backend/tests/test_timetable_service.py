@@ -191,3 +191,28 @@ class TestResetTimetable:
         with pytest.raises(HTTPException) as exc:
             reset_timetable(req, db_session, actor_user=admin, tenant_department_id=dept.id)
         assert exc.value.status_code == 403
+
+
+class TestGetByTeacher:
+    def test_get_by_teacher_success(self, db_session):
+        dept, subj, cls, room, teacher = _setup(db_session)
+        create_timetable_slot(db_session, teacher.id, subj.id, cls.id, room_id=room.id, day_order=1, period_number=1)
+        slots = get_by_teacher(teacher.id, db_session)
+        assert len(slots) == 1
+        assert slots[0].teacher_id == teacher.id
+
+    def test_get_by_teacher_cross_department_allowed(self, db_session):
+        dept, subj, cls, room, teacher = _setup(db_session)
+        other_dept = create_department(db_session, name="ECE", code="ECE")
+        create_timetable_slot(db_session, teacher.id, subj.id, cls.id, room_id=room.id, day_order=1, period_number=1)
+        # Even with other_dept passed as tenant_department_id, viewing teacher timetable succeeds
+        slots = get_by_teacher(teacher.id, db_session, tenant_department_id=other_dept.id)
+        assert len(slots) == 1
+        assert slots[0].teacher_id == teacher.id
+
+    def test_get_by_teacher_not_found(self, db_session):
+        with pytest.raises(HTTPException) as exc:
+            get_by_teacher(999999, db_session)
+        assert exc.value.status_code == 404
+        assert exc.value.detail == "Teacher not found"
+

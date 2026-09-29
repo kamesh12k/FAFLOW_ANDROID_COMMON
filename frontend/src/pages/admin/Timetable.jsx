@@ -3,6 +3,7 @@ import { useAuth } from '../../context/AuthContext'
 import { teachersApi, timetableApi, subjectsApi, classesApi, roomsApi, departmentsApi } from '../../api/services'
 import { Spinner, Modal } from '../../components/ui'
 import DependencyAlert from '../../components/common/DependencyAlert'
+import { formatErrorMessage } from '../../utils/errorUtils'
 
 
 // ── Constants ─────────────────────────────────────────────────────────────────
@@ -116,7 +117,8 @@ const IconReset = () => <svg width="13" height="13" fill="none" stroke="currentC
 
 // ── Main component ────────────────────────────────────────────────────────────
 export default function AdminTimetable() {
-  const { user, isSystemAdmin } = useAuth()
+  const { user, isSystemAdmin, isSuperAdmin } = useAuth()
+  const canManageAllDepartments = isSystemAdmin || isSuperAdmin
 
   // ── Master data ──────────────────────────────────────────────────────────
   const [teachers, setTeachers] = useState([])
@@ -224,23 +226,23 @@ export default function AdminTimetable() {
         setTeachers(t.data); setSubjects(s.data); setClasses(c.data); setRooms(r.data); setDepartments(d.data)
         setMasterReady(true)
       })
-      .catch(() => toast('Failed to load master data', 'error'))
+      .catch(err => toast(formatErrorMessage(err, 'Failed to load master data'), 'error'))
   }, [])
 
   // Auto-sync HOD/Department Admin department defaults
   useEffect(() => {
-    if (user?.department_id) {
+    if (user?.department_id && !canManageAllDepartments) {
       setClassDepartmentFilter(prev => prev === '' ? String(user.department_id) : prev)
       setSubjectDepartmentFilter(prev => prev === '' ? String(user.department_id) : prev)
-      setTeacherDepartmentFilter(prev => (!isSystemAdmin && prev === '') ? String(user.department_id) : prev)
+      setTeacherDepartmentFilter(prev => prev === '' ? String(user.department_id) : prev)
     }
-  }, [user, isSystemAdmin])
+  }, [user, canManageAllDepartments])
 
   // Auto-select first available teacher if none selected
   useEffect(() => {
     if (masterReady && teachers.length > 0 && !selectedTeacherId) {
       const allowed = teachers.filter(t => {
-        if (!isSystemAdmin && user?.department_id) {
+        if (!canManageAllDepartments && user?.department_id) {
           return String(t.department_id) === String(user.department_id)
         }
         return true
@@ -249,18 +251,19 @@ export default function AdminTimetable() {
         setSelectedTeacherId(String(allowed[0].id))
       }
     }
-  }, [masterReady, teachers, selectedTeacherId, isSystemAdmin, user])
+  }, [masterReady, teachers, selectedTeacherId, canManageAllDepartments, user])
 
   // ── Load slots ────────────────────────────────────────────────────────────
   const loadSlots = useCallback((subjs, clss, rms) => {
-    if (!selectedTeacherId || !masterReady) return
+    const teacherIdNum = Number(selectedTeacherId)
+    if (!selectedTeacherId || !Number.isInteger(teacherIdNum) || teacherIdNum <= 0 || !masterReady) return
     setLoading(true)
-    timetableApi.getByTeacher(selectedTeacherId)
+    timetableApi.getByTeacher(teacherIdNum)
       .then(r => {
-        dispatch({ type: 'INIT', payload: r.data.map(s => enrich(s, subjs, clss, rms)) })
+        dispatch({ type: 'INIT', payload: (r.data || []).map(s => enrich(s, subjs, clss, rms)) })
         setSelectedCell(null); setActiveClass(null); setActiveSubject(null)
       })
-      .catch(() => toast('Failed to load timetable', 'error'))
+      .catch((err) => toast(formatErrorMessage(err, 'Failed to load timetable'), 'error'))
       .finally(() => setLoading(false))
   }, [selectedTeacherId, masterReady, enrich, toast])
 
@@ -439,13 +442,13 @@ export default function AdminTimetable() {
       setSelectedCell(null)
       toast('Slot removed', 'warn')
     } catch (err) {
-      toast(err.response?.data?.detail || 'Failed to remove slot', 'error')
+      toast(formatErrorMessage(err, 'Failed to remove slot'), 'error')
     } finally { setSaving(false) }
   }, [slots, toast])
 
   // ── Reset Timetable handlers ──────────────────────────────────────────────
   const handleOpenResetModal = () => {
-    setResetScope(selectedTeacherId ? 'teachers' : (isSystemAdmin ? 'department' : 'department'))
+    setResetScope(selectedTeacherId ? 'teachers' : (canManageAllDepartments ? 'department' : 'department'))
     setResetDepartmentId(user?.department_id ? String(user.department_id) : (departments[0]?.id ? String(departments[0].id) : ''))
     setResetSelectedTeacherIds(selectedTeacherId ? [Number(selectedTeacherId)] : [])
     setResetClearSubmissions(false)
@@ -493,14 +496,14 @@ export default function AdminTimetable() {
         }
       }
     } catch (err) {
-      toast(err.response?.data?.detail || 'Failed to reset timetable', 'error')
+      toast(formatErrorMessage(err, 'Failed to reset timetable'), 'error')
     } finally {
       setResetLoading(false)
     }
   }
 
   const filteredResetTeachers = teachers.filter(t => {
-    if (!isSystemAdmin && user?.department_id && t.department_id !== user.department_id) return false
+    if (!canManageAllDepartments && user?.department_id && t.department_id !== user.department_id) return false
     if (!resetTeacherSearch) return true
     const q = resetTeacherSearch.toLowerCase()
     return (t.name || '').toLowerCase().includes(q) || (t.department || '').toLowerCase().includes(q)
@@ -515,7 +518,7 @@ export default function AdminTimetable() {
       dispatch({ type: 'INIT', payload: [] })
       setSelectedCell(null)
       toast('Timetable cleared', 'warn')
-    } catch { toast('Failed to clear timetable', 'error') }
+    } catch (err) { toast(formatErrorMessage(err, 'Failed to clear timetable'), 'error') }
     finally { setSaving(false) }
   }, [selectedTeacherId, toast])
 
@@ -546,7 +549,7 @@ export default function AdminTimetable() {
       if (updates.room_id !== undefined) setEditRoom(updates.room_id ? String(updates.room_id) : '')
       toast('Slot updated successfully')
     } catch (err) {
-      toast(err.response?.data?.detail || 'Failed to update slot', 'error')
+      toast(formatErrorMessage(err, 'Failed to update slot'), 'error')
       loadSlots(subjects, classes, rooms)
     } finally { setSaving(false) }
   }, [slots, subjects, classes, rooms, enrich, toast, combineClassMode, loadSlots])
@@ -639,8 +642,8 @@ export default function AdminTimetable() {
 
   // ── Derived ───────────────────────────────────────────────────────────────
   const filteredTeachers = teachers.filter(t => {
-    // If user is a Department Admin (not system_admin and has department_id), restrict strictly to their department
-    if (!isSystemAdmin && user?.department_id) {
+    // If user is a Department Admin (not system/super admin and has department_id), restrict strictly to their department
+    if (!canManageAllDepartments && user?.department_id) {
       if (String(t.department_id) !== String(user.department_id)) return false
     } else if (teacherDepartmentFilter && String(t.department_id) !== String(teacherDepartmentFilter)) {
       return false
@@ -732,12 +735,12 @@ export default function AdminTimetable() {
             </div>
             <select
               className="tt-select"
-              value={!isSystemAdmin && user?.department_id ? String(user.department_id) : teacherDepartmentFilter}
+              value={!canManageAllDepartments && user?.department_id ? String(user.department_id) : teacherDepartmentFilter}
               onChange={e => setTeacherDepartmentFilter(e.target.value)}
-              disabled={!isSystemAdmin && Boolean(user?.department_id)}
-              title={!isSystemAdmin && user?.department_id ? "Department restricted to your assigned department" : "Filter by department"}
+              disabled={!canManageAllDepartments && Boolean(user?.department_id)}
+              title={!canManageAllDepartments && user?.department_id ? "Department restricted to your assigned department" : "Filter by department"}
             >
-              {isSystemAdmin ? (
+              {canManageAllDepartments ? (
                 <>
                   <option value="">All departments</option>
                   {departments.map(department => <option key={department.id} value={department.id}>{department.name}</option>)}
@@ -1592,8 +1595,8 @@ export default function AdminTimetable() {
           </p>
 
           {/* Scope Selector Tabs */}
-          <div style={{ display: 'grid', gridTemplateColumns: isSystemAdmin ? 'repeat(3, 1fr)' : 'repeat(2, 1fr)', gap: '6px', padding: '4px', background: '#F3F4F6', borderRadius: '10px' }}>
-            {isSystemAdmin && (
+          <div style={{ display: 'grid', gridTemplateColumns: canManageAllDepartments ? 'repeat(3, 1fr)' : 'repeat(2, 1fr)', gap: '6px', padding: '4px', background: '#F3F4F6', borderRadius: '10px' }}>
+            {canManageAllDepartments && (
               <button
                 type="button"
                 onClick={() => setResetScope('all')}
@@ -1682,7 +1685,7 @@ export default function AdminTimetable() {
               <select
                 value={resetDepartmentId}
                 onChange={e => setResetDepartmentId(e.target.value)}
-                disabled={!isSystemAdmin && Boolean(user?.department_id)}
+                disabled={!canManageAllDepartments && Boolean(user?.department_id)}
                 style={{ width: '100%', boxSizing: 'border-box', fontSize: '12px', padding: '8px 10px', borderRadius: '8px', border: '1px solid #D1D5DB', background: '#fff' }}
               >
                 <option value="">Choose department…</option>

@@ -81,6 +81,7 @@ export const teachersApi = {
 }
 
 export const timetableApi = {
+  list: (params) => api.get('/timetable/', { params }),
   getByTeacher: (teacherId) => api.get(`/timetable/teacher/${teacherId}`),
   getByClass: (classId) => api.get(`/timetable/class/${classId}`),
   createSlot: (data) => api.post('/timetable/slot', data),

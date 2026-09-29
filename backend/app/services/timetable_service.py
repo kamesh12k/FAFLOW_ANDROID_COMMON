@@ -219,10 +219,9 @@ def bulk_upload(slots_data: list[TimetableSlotCreate], db: Session, tenant_depar
 
 
 def get_by_teacher(teacher_id: int, db: Session, tenant_department_id: int | None = None) -> list[TimetableSlot]:
-    if tenant_department_id is not None:
-        teacher = db.query(User).filter(User.id == teacher_id).first()
-        if not teacher or teacher.department_id != tenant_department_id:
-            raise HTTPException(status_code=403, detail="Access denied")
+    teacher = db.query(User).filter(User.id == teacher_id).first()
+    if not teacher:
+        raise HTTPException(status_code=404, detail="Teacher not found")
     return (
         db.query(TimetableSlot)
         .options(

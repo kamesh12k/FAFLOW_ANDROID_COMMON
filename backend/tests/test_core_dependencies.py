@@ -79,3 +79,19 @@ def test_role_requirements():
     with pytest.raises(HTTPException, match="Teacher access required"):
         dependencies.require_teacher(current_user=principal)
     assert dependencies.require_teacher(current_user=teacher) is teacher
+
+
+def test_get_tenant_department_id_super_admin():
+    super_admin = make_user(role=Role.admin, admin_level=AdminLevel.super_admin)
+    super_admin.department_id = 1
+    assert dependencies.get_tenant_department_id(current_user=super_admin) is None
+    assert dependencies.get_tenant_department_id(current_user=super_admin, x_department_id="2") == 2
+
+
+def test_get_tenant_department_id_secondary_admin():
+    dept_admin = make_user(role=Role.admin, admin_level=AdminLevel.secondary_admin)
+    dept_admin.department_id = 3
+    assert dependencies.get_tenant_department_id(current_user=dept_admin) == 3
+    # Header should not bypass secondary admin lock
+    assert dependencies.get_tenant_department_id(current_user=dept_admin, x_department_id="2") == 3
+

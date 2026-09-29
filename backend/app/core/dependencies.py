@@ -146,12 +146,17 @@ def get_tenant_department_id(
     x_department_id: str | None = Header(None, alias="X-Department-ID")
 ) -> int | None:
     """Returns the department_id that queries must be filtered by.
-    None for system_admin / principal / governance / institution-wide manager, allowing them to scope via header or view all."""
-    if current_user.role in (Role.system_admin, Role.principal, Role.governance) or (current_user.role == Role.manager and current_user.department_id is None):
-        if x_department_id:
+    None for system_admin / super_admin / principal / governance / institution-wide manager, allowing them to scope via header or view all."""
+    is_cross_dept_admin = (
+        current_user.role in (Role.system_admin, Role.principal, Role.governance)
+        or (current_user.role == Role.admin and getattr(current_user, "admin_level", None) == AdminLevel.super_admin)
+        or (current_user.role == Role.manager and current_user.department_id is None)
+    )
+    if is_cross_dept_admin:
+        if isinstance(x_department_id, (str, int)):
             try:
                 return int(x_department_id)
-            except ValueError:
+            except (ValueError, TypeError):
                 pass
         return None
     return current_user.department_id
