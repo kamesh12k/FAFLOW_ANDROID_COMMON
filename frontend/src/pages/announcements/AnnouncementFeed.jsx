@@ -61,7 +61,10 @@ export default function AnnouncementFeed() {
         limit: 50,
       }
       const res = await announcementApi.listAnnouncements(params)
-      setAnnouncements(res.data)
+      const feedItems = Array.isArray(res.data)
+        ? res.data
+        : (Array.isArray(res.data?.announcements) ? res.data.announcements : [])
+      setAnnouncements(feedItems)
     } catch (err) {
       const msg = formatErrorMessage(err, 'Failed to load announcements feed')
       setError(msg)
@@ -139,7 +142,10 @@ export default function AnnouncementFeed() {
 
   // Client-side quick filter for file attachments and pinned
   const displayedAnnouncements = useMemo(() => {
-    return announcements.filter(item => {
+    const list = Array.isArray(announcements)
+      ? announcements
+      : (Array.isArray(announcements?.announcements) ? announcements.announcements : [])
+    return list.filter(item => {
       if (hasAttachmentsOnly && (!item.attachments || item.attachments.length === 0)) return false
       if (pinnedOnly && !item.is_pinned) return false
       return true
@@ -578,6 +584,7 @@ export default function AnnouncementFeed() {
           onClose={() => setShowComposer(false)}
           onCreated={(newId) => {
             fetchFeed()
+            if (newId) setSelectedAnnouncementId(newId)
             setShowComposer(false)
             showBanner('Notice published and broadcasted successfully.')
           }}

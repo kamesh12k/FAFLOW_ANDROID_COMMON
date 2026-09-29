@@ -6,6 +6,7 @@ import {
 import { Spinner } from '../../components/ui'
 import { announcementApi } from '../../api/announcements'
 import { useToast } from '../../components/ui/Toast'
+import { formatErrorMessage } from '../../utils/errorUtils'
 
 const ANNOUNCEMENT_TYPES = [
   { id: 'CIRCULAR', label: 'Official Circular' },
@@ -27,8 +28,12 @@ export default function AnnouncementComposerModal({ user, onClose, onCreated }) 
   const { showToast } = useToast()
   const fileInputRef = useRef(null)
 
-  const isHod = user?.role === 'admin'
-  const isPrincipal = user?.role === 'principal' || user?.role === 'system_admin'
+  const isHod = user?.role === 'admin' && Boolean(user?.department_id)
+  const isInstitutionAdmin =
+    user?.role === 'principal' ||
+    user?.role === 'system_admin' ||
+    (user?.role === 'admin' && !user?.department_id)
+  const isPrincipal = isInstitutionAdmin
 
   // Form State
   const [title, setTitle] = useState('')
@@ -38,7 +43,7 @@ export default function AnnouncementComposerModal({ user, onClose, onCreated }) 
 
   // Audience Target State
   const [targetType, setTargetType] = useState(isHod ? 'DEPARTMENT' : 'COLLEGE')
-  const [selectedDeptIds, setSelectedDeptIds] = useState(isHod && user.department_id ? [user.department_id] : [])
+  const [selectedDeptIds, setSelectedDeptIds] = useState(isHod && user?.department_id ? [user.department_id] : [])
   const [selectedUserIds, setSelectedUserIds] = useState([])
 
   // Directory Data for Audience Selector
@@ -73,11 +78,11 @@ export default function AnnouncementComposerModal({ user, onClose, onCreated }) 
           setSelectedDeptIds([user.department_id])
         }
       } catch (err) {
-        showToast('Could not fetch audience candidates directory', 'error')
+        showToast(formatErrorMessage(err) || 'Could not fetch audience candidates directory', 'error')
       }
     }
     fetchCandidates()
-  }, [user])
+  }, [user, isHod])
 
   // Helper to resolve MIME type accurately (handles Windows/Android empty file.type)
   const resolveMimeType = (file) => {
@@ -267,9 +272,8 @@ export default function AnnouncementComposerModal({ user, onClose, onCreated }) 
       )
       setShowConfirmModal(false)
       setPublishSuccessResult(createdData)
-      if (onCreated) onCreated(createdData.id)
     } catch (err) {
-      showToast(err.response?.data?.detail || 'Failed to publish announcement', 'error')
+      showToast(formatErrorMessage(err) || 'Failed to publish announcement', 'error')
     } finally {
       setSubmitting(false)
     }
@@ -297,7 +301,10 @@ export default function AnnouncementComposerModal({ user, onClose, onCreated }) 
             </p>
           </div>
           <button
-            onClick={onClose}
+            onClick={() => {
+              if (publishSuccessResult && onCreated) onCreated(publishSuccessResult.id)
+              onClose()
+            }}
             className="p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-200/60 rounded-lg transition-colors"
             title="Close"
           >
@@ -372,7 +379,7 @@ export default function AnnouncementComposerModal({ user, onClose, onCreated }) 
               <button
                 type="button"
                 onClick={() => {
-                  onCreated(publishSuccessResult.id)
+                  if (onCreated) onCreated(publishSuccessResult.id)
                   onClose()
                 }}
                 className="w-full sm:w-auto px-5 py-2.5 bg-primary-600 hover:bg-primary-700 text-white font-semibold text-xs rounded-xl shadow-xs transition-colors"
@@ -382,7 +389,7 @@ export default function AnnouncementComposerModal({ user, onClose, onCreated }) 
               <button
                 type="button"
                 onClick={() => {
-                  onCreated()
+                  if (onCreated) onCreated()
                   onClose()
                 }}
                 className="w-full sm:w-auto px-5 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs rounded-xl transition-colors"

@@ -110,8 +110,10 @@ def validate_target_permissions(
 
     t_type = target_type.upper().strip()
 
-    # Principal & System Admin have college-wide privileges
-    if current_user.role in (Role.principal, Role.system_admin):
+    # Principal, System Admin, and College-wide Admin have college-wide privileges
+    if current_user.role in (Role.principal, Role.system_admin) or (
+        current_user.role == Role.admin and current_user.department_id is None
+    ):
         if t_type == "COLLEGE":
             return "COLLEGE", [], []
         elif t_type in ("DEPARTMENT", "MULTIPLE_DEPARTMENTS"):
@@ -125,10 +127,8 @@ def validate_target_permissions(
         return "COLLEGE", [], []
 
     # HOD (admin with department_id)
-    if current_user.role == Role.admin:
+    if current_user.role == Role.admin and current_user.department_id is not None:
         hod_dept_id = current_user.department_id
-        if not hod_dept_id:
-            raise HTTPException(status_code=403, detail="HOD account is not assigned to a department.")
 
         if t_type == "COLLEGE":
             raise HTTPException(
@@ -540,7 +540,9 @@ def get_announcement_detail(db: Session, current_user: User, announcement_id: in
         raise HTTPException(status_code=404, detail="Announcement not found.")
 
     # Validate visibility for non-admin users
-    if current_user.role not in (Role.system_admin, Role.principal, Role.governance):
+    if current_user.role not in (Role.system_admin, Role.principal, Role.governance) and not (
+        current_user.role == Role.admin and current_user.department_id is None
+    ):
         if announcement.created_by_id != current_user.id:
             if announcement.status != AnnouncementStatus.PUBLISHED.value:
                 raise HTTPException(status_code=403, detail="This announcement is not published.")
@@ -874,7 +876,9 @@ def get_conversation_messages(db: Session, current_user: User, announcement_id: 
             )
         )
 
-    is_admin = current_user.role in (Role.principal, Role.system_admin)
+    is_admin = current_user.role in (Role.principal, Role.system_admin) or (
+        current_user.role == Role.admin and current_user.department_id is None
+    )
     is_dept_hod = (
         current_user.role == Role.admin and
         current_user.department_id is not None and
@@ -1076,7 +1080,9 @@ def delete_message(db: Session, current_user: User, message_id: int) -> bool:
         raise HTTPException(status_code=404, detail="Message not found.")
 
     is_author = msg.author_id == current_user.id
-    is_admin = current_user.role in (Role.principal, Role.system_admin)
+    is_admin = current_user.role in (Role.principal, Role.system_admin) or (
+        current_user.role == Role.admin and current_user.department_id is None
+    )
     is_dept_hod = (
         current_user.role == Role.admin and
         current_user.department_id is not None and
@@ -1107,7 +1113,9 @@ def toggle_pin_message(db: Session, current_user: User, message_id: int) -> bool
     if not msg:
         raise HTTPException(status_code=404, detail="Message not found.")
 
-    is_admin = current_user.role in (Role.principal, Role.system_admin)
+    is_admin = current_user.role in (Role.principal, Role.system_admin) or (
+        current_user.role == Role.admin and current_user.department_id is None
+    )
     is_dept_hod = (
         current_user.role == Role.admin and
         current_user.department_id is not None and
@@ -1254,7 +1262,9 @@ def get_candidate_directory(db: Session, current_user: User) -> CandidateDirecto
     if not can_manage_announcements(current_user):
         raise HTTPException(status_code=403, detail="Permission denied.")
 
-    if current_user.role in (Role.principal, Role.system_admin):
+    if current_user.role in (Role.principal, Role.system_admin) or (
+        current_user.role == Role.admin and current_user.department_id is None
+    ):
         departments = db.query(Department).order_by(Department.name.asc()).all()
         faculty = db.query(User).filter(
             User.role.in_([Role.teacher, Role.admin]),
@@ -1308,7 +1318,9 @@ def get_mention_candidates(
         raise HTTPException(status_code=404, detail="Announcement not found.")
 
     # Validate that current_user has access to view/participate in this announcement
-    if current_user.role not in (Role.system_admin, Role.principal, Role.governance):
+    if current_user.role not in (Role.system_admin, Role.principal, Role.governance) and not (
+        current_user.role == Role.admin and current_user.department_id is None
+    ):
         if announcement.created_by_id != current_user.id:
             recipients = resolve_recipient_user_ids(db, announcement)
             if current_user.id not in recipients:
@@ -1320,7 +1332,9 @@ def get_mention_candidates(
         User.role.in_([Role.teacher, Role.admin, Role.principal, Role.system_admin]),
     )
 
-    is_elevated = current_user.role in (Role.principal, Role.system_admin)
+    is_elevated = current_user.role in (Role.principal, Role.system_admin) or (
+        current_user.role == Role.admin and current_user.department_id is None
+    )
     is_college_wide = announcement.target_summary == "COLLEGE"
 
     if not is_elevated and not is_college_wide:

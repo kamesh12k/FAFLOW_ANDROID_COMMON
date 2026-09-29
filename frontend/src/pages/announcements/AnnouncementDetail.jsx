@@ -9,28 +9,91 @@ import {
 import { Spinner } from '../../components/ui'
 import { useAuth } from '../../context/AuthContext'
 import { useToast } from '../../components/ui/Toast'
+import { formatErrorMessage } from '../../utils/errorUtils'
 import { announcementApi } from '../../api/announcements'
 import ConversationThread from './ConversationThread'
 import AnnouncementAnalyticsModal from './AnnouncementAnalyticsModal'
 
-/** Translates technical target data into human-readable audience descriptions */
-function formatAudience(data) {
-  if (!data) return 'All Faculty'
-  if (data.target_summary === 'COLLEGE') {
-    return 'All College Faculty'
+const ROLE_LABELS = {
+  TEACHER: 'Teachers',
+  STUDENT: 'Students',
+  ADMIN: 'Administrators',
+  SUPER_ADMIN: 'Super Admins',
+  HOD: 'Department Heads (HODs)',
+  STAFF: 'Staff',
+  PRINCIPAL: 'Principals',
+  GOVERNANCE: 'Governance Officers',
+  ALL: 'All Members',
+}
+
+const DEPT_KNOWN_NAMES = {
+  1: 'Computer Science',
+  2: 'Mathematics',
+  3: 'Physics',
+  4: 'Chemistry',
+}
+
+function formatSingleAudienceToken(token, data = {}) {
+  if (!token) return ''
+  if (typeof token !== 'string') return String(token)
+  const trimmed = token.trim().replace(/^["']|["']$/g, '')
+  if (!trimmed) return ''
+
+  if (trimmed.toUpperCase().startsWith('ROLE:')) {
+    const roleKey = trimmed.slice(5).toUpperCase().trim()
+    return ROLE_LABELS[roleKey] || (roleKey.charAt(0).toUpperCase() + roleKey.slice(1).toLowerCase() + 's')
   }
+
+  if (trimmed.toUpperCase().startsWith('DEPT:')) {
+    const deptId = trimmed.slice(5).trim()
+    let deptName = null
+    if (data.targets && Array.isArray(data.targets)) {
+      const match = data.targets.find((t) => String(t.department_id) === String(deptId) && t.department_name)
+      if (match) deptName = match.department_name
+    }
+    if (!deptName && data.department_name && (String(data.department_id) === String(deptId) || data.targets?.length === 1)) {
+      deptName = data.department_name
+    }
+    if (!deptName && DEPT_KNOWN_NAMES[deptId]) {
+      deptName = DEPT_KNOWN_NAMES[deptId]
+    }
+    return deptName ? `Department: ${deptName}` : `Department: ${deptId}`
+  }
+
+  if (trimmed.toUpperCase().startsWith('USER:')) {
+    const userId = trimmed.slice(5).trim()
+    let userName = null
+    if (data.targets && Array.isArray(data.targets)) {
+      const match = data.targets.find((t) => String(t.user_id) === String(userId) && t.user_name)
+      if (match) userName = match.user_name
+    }
+    return userName ? `Faculty: ${userName}` : `User #${userId}`
+  }
+
+  if (ROLE_LABELS[trimmed.toUpperCase()]) {
+    return ROLE_LABELS[trimmed.toUpperCase()]
+  }
+
+  return trimmed
+}
+
+/** Translates technical target data into human-readable audience descriptions */
+export function formatAudience(data) {
+  if (!data) return 'All Faculty'
+
+  // If data has explicit targets array with human names populated
   if (data.targets && data.targets.length > 0) {
     const depts = data.targets
       .filter((t) => t.target_type === 'DEPARTMENT')
-      .map((t) => t.department_name)
+      .map((t) => t.department_name || (t.department_id ? (DEPT_KNOWN_NAMES[t.department_id] ? `Department: ${DEPT_KNOWN_NAMES[t.department_id]}` : `Department #${t.department_id}`) : null))
       .filter(Boolean)
     const users = data.targets
       .filter((t) => t.target_type === 'USER')
-      .map((t) => t.user_name)
+      .map((t) => t.user_name || (t.user_id ? `Faculty #${t.user_id}` : null))
       .filter(Boolean)
 
     if (depts.length > 0 && users.length === 0) {
-      return depts.length === 1 ? `${depts[0]} Department` : `${depts.join(', ')} Departments`
+      return depts.length === 1 ? (depts[0].startsWith('Department:') ? depts[0] : `${depts[0]} Department`) : `${depts.join(', ')} Departments`
     }
     if (users.length > 0 && depts.length === 0) {
       return users.length <= 2 ? `Faculty: ${users.join(', ')}` : `Selected Faculty (${users.length} members)`
@@ -39,9 +102,60 @@ function formatAudience(data) {
       return `${depts.join(', ')} & ${users.length} Selected Faculty`
     }
   }
-  if (data.target_summary === 'DEPARTMENT') return 'Department Faculty'
-  if (data.target_summary === 'USER') return 'Specific Faculty'
-  return data.target_summary || 'Institutional Recipients'
+
+  const raw = data.target_summary || data.target_audience || data.target_type
+
+  // Check if raw is a JSON string like '["ROLE:TEACHER", "DEPT:1"]'
+  if (typeof raw === 'string' && (raw.startsWith('[') || raw.startsWith('{'))) {
+    try {
+      const parsed = JSON.parse(raw)
+      if (Array.isArray(parsed)) {
+        const formattedTokens = parsed.map((t) => formatSingleAudienceToken(t, data)).filter(Boolean)
+        if (formattedTokens.length > 0) {
+          return formattedTokens.join(', ')
+        }
+      } else if (typeof parsed === 'object' && parsed !== null) {
+        const parts = []
+        if (parsed.role) parts.push(ROLE_LABELS[parsed.role.toUpperCase()] || parsed.role)
+        if (parsed.dept || parsed.dept_id) {
+          const dId = parsed.dept || parsed.dept_id
+          parts.push(`Department: ${DEPT_KNOWN_NAMES[dId] || dId}`)
+        }
+        if (parts.length > 0) return parts.join(', ')
+      }
+    } catch {
+      // not valid JSON, proceed to token/string matching
+    }
+  }
+
+  if (Array.isArray(raw)) {
+    const formattedTokens = raw.map((t) => formatSingleAudienceToken(t, data)).filter(Boolean)
+    if (formattedTokens.length > 0) {
+      return formattedTokens.join(', ')
+    }
+  }
+
+  if (typeof raw === 'string') {
+    // If it's a comma-separated list of tokens like "ROLE:TEACHER, DEPT:1"
+    if (raw.includes(',') || raw.includes(':')) {
+      const tokens = raw.split(',').map((s) => s.trim()).filter(Boolean)
+      const formattedTokens = tokens.map((t) => formatSingleAudienceToken(t, data)).filter(Boolean)
+      if (formattedTokens.length > 0) {
+        return formattedTokens.join(', ')
+      }
+    }
+
+    if (raw === 'COLLEGE') return 'All College Faculty'
+    if (raw === 'DEPARTMENT') {
+      return data.department_name ? `${data.department_name} Department` : 'Department Faculty'
+    }
+    if (raw === 'USER') return 'Specific Faculty'
+
+    const singleFormatted = formatSingleAudienceToken(raw, data)
+    if (singleFormatted) return singleFormatted
+  }
+
+  return 'Institutional Recipients'
 }
 
 export default function AnnouncementDetail({ announcementId: propId, onClose, onRefreshList }) {
@@ -71,7 +185,7 @@ export default function AnnouncementDetail({ announcementId: propId, onClose, on
       const res = await announcementApi.getAnnouncementDetail(announcementId)
       setData(res.data)
     } catch (err) {
-      showToast(err.response?.data?.detail || 'Failed to load announcement details', 'error')
+      showToast(formatErrorMessage(err) || 'Failed to load announcement details', 'error')
     }
   }
 
@@ -124,14 +238,21 @@ export default function AnnouncementDetail({ announcementId: propId, onClose, on
   }, [previewAttachment, showDeleteModal, showAnalytics, showMoreMenu, onClose])
 
   const handleAcknowledge = async () => {
+    if (!announcementId || acknowledging) return
     setAcknowledging(true)
     try {
       await announcementApi.acknowledgeAnnouncement(announcementId)
+      setData((prev) => (prev ? {
+        ...prev,
+        is_acknowledged: true,
+        acknowledged_at: new Date().toISOString(),
+        can_acknowledge: false,
+      } : prev))
       showToast('Formal acknowledgement recorded successfully', 'success')
-      fetchDetail()
+      await fetchDetail()
       if (onRefreshList) onRefreshList()
     } catch (err) {
-      showToast(err.response?.data?.detail || 'Acknowledgement failed', 'error')
+      showToast(formatErrorMessage(err) || 'Acknowledgement failed', 'error')
     } finally {
       setAcknowledging(false)
     }
