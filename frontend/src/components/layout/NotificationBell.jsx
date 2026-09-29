@@ -140,6 +140,8 @@ export default function NotificationBell() {
     }
   }
 
+  const [clearing, setClearing] = useState(false)
+
   const handleMarkAll = async () => {
     try {
       await notificationsApi.markAllRead()
@@ -149,11 +151,29 @@ export default function NotificationBell() {
   }
 
   const handleClearAll = async () => {
+    if (clearing) return
+    setClearing(true)
     try {
-      await notificationsApi.markAllRead()
+      await notificationsApi.clearAll()
       setItems([])
       setUnread(0)
-    } catch (_) {}
+      refreshCount()
+    } catch (err) {
+      console.error('Failed to clear notifications:', err)
+    } finally {
+      setClearing(false)
+    }
+  }
+
+  const handleDeleteItem = async (e, id) => {
+    e.stopPropagation()
+    try {
+      await notificationsApi.delete(id)
+      setItems(prev => prev.filter(i => i.id !== id))
+      refreshCount()
+    } catch (err) {
+      console.error('Failed to delete notification:', err)
+    }
   }
 
   const handleItemClick = async (item) => {
@@ -239,10 +259,11 @@ export default function NotificationBell() {
                   <button
                     type="button"
                     onClick={handleClearAll}
-                    className="inline-flex items-center gap-1 text-xs font-semibold text-slate-500 hover:text-rose-600 transition-colors"
+                    disabled={clearing}
+                    className="inline-flex items-center gap-1 text-xs font-semibold text-slate-500 hover:text-rose-600 disabled:opacity-50 transition-colors"
                   >
                     <TrashIcon className="w-3.5 h-3.5" />
-                    <span>Clear all</span>
+                    <span>{clearing ? 'Clearing...' : 'Clear all'}</span>
                   </button>
                 )}
               </div>
@@ -297,11 +318,18 @@ export default function NotificationBell() {
                 const IconComponent = category.icon
 
                 return (
-                  <button
+                  <div
                     key={item.id}
-                    type="button"
+                    role="button"
+                    tabIndex={0}
                     onClick={() => handleItemClick(item)}
-                    className={`w-full text-left p-4 sm:p-4.5 flex items-start gap-3.5 hover:bg-slate-50 transition-colors relative group ${
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault()
+                        handleItemClick(item)
+                      }
+                    }}
+                    className={`w-full text-left p-4 sm:p-4.5 flex items-start gap-3.5 hover:bg-slate-50 transition-colors relative group cursor-pointer ${
                       !item.is_read
                         ? 'bg-primary-50/20 border-l-[3.5px] border-l-primary-600'
                         : 'border-l-[3.5px] border-l-transparent'
@@ -346,14 +374,25 @@ export default function NotificationBell() {
                       )}
                     </div>
 
-                    {/* Unread Accent Indicator */}
-                    {!item.is_read && (
-                      <span
-                        className="w-2.5 h-2.5 rounded-full bg-primary-600 shrink-0 mt-2 ring-4 ring-primary-100"
-                        title="Unread"
-                      />
-                    )}
-                  </button>
+                    {/* Item Actions & Unread Accent Indicator */}
+                    <div className="flex items-center gap-1.5 shrink-0 self-center">
+                      <button
+                        type="button"
+                        onClick={(e) => handleDeleteItem(e, item.id)}
+                        className="opacity-0 group-hover:opacity-100 p-1 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-md transition-all"
+                        title="Dismiss notification"
+                        aria-label="Dismiss notification"
+                      >
+                        <TrashIcon className="w-3.5 h-3.5" />
+                      </button>
+                      {!item.is_read && (
+                        <span
+                          className="w-2.5 h-2.5 rounded-full bg-primary-600 ring-4 ring-primary-100"
+                          title="Unread"
+                        />
+                      )}
+                    </div>
+                  </div>
                 )
               })
             )}

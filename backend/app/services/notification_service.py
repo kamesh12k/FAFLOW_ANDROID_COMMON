@@ -145,6 +145,23 @@ def mark_all_read(db: Session, user_id: int) -> None:
     db.commit()
 
 
+def clear_all(db: Session, user_id: int) -> int:
+    """Permanently clears all notifications for the given user."""
+    count = db.query(Notification).filter(Notification.user_id == user_id).delete(synchronize_session=False)
+    db.commit()
+    return count
+
+
+def delete_notification(db: Session, user_id: int, notification_id: int) -> bool:
+    """Permanently deletes a specific notification for the given user, enforcing ownership."""
+    count = db.query(Notification).filter(
+        Notification.id == notification_id,
+        Notification.user_id == user_id,
+    ).delete(synchronize_session=False)
+    db.commit()
+    return count > 0
+
+
 def generate_holiday_reminders(db: Session, user_id: int, today: date) -> None:
     """Disabled: Holiday and non-working day reminders are no longer generated."""
     return
