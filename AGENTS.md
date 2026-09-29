@@ -1,7 +1,7 @@
 # FAFLOW Monorepo — Agent Context (AGENTS.md)
 
-> **Milestone 16** · Branch: `optimize/full-audit`  
-> Last updated: Phase 7b – Honest Contract Gate & Real E2E Testing Infrastructure
+> **Milestone 17** · Branch: `redesign/light-professional`  
+> Last updated: Phase 7 – Institutional Light Theme Redesign, Contract Parity & Production Delivery Gate
 
 ---
 
@@ -49,6 +49,7 @@ venv\Scripts\python.exe -m pytest tests/ -v --tb=short
 cd ..\frontend
 npm run typecheck
 npm run test:unit
+npx playwright test     # 8/8 Playwright browser E2E tests across 5 user workflows
 npm run build
 
 # Android
@@ -69,16 +70,16 @@ backend\venv\Scripts\python.exe -X utf8 scripts\ci_contract_check.py `
 
 ## CI/CD Pipeline
 
-`.github/workflows/ci.yml` runs on every push to `main`, `develop`, and `optimize/full-audit`:
+`.github/workflows/ci.yml` runs on every push to `main`, `develop`, `optimize/full-audit`, and `redesign/light-professional`:
 
 | Job | Trigger | Checks |
 |---|---|---|
-| `backend` | always | pytest (all 63 suites), pip-audit |
-| `frontend` | always | tsc --noEmit, vite build |
+| `backend` | always | pytest (all 63 suites, 651 tests), pip-audit |
+| `frontend` | always | tsc --noEmit, vitest unit tests, Playwright browser E2E, vite build |
 | `android` | always | testDebugUnitTest, assembleDebug |
-| `contract-parity` | after all three | ci_contract_check.py (0 HIGH = PASS) |
+| `contract-parity` | after all three | OpenAPI drift check + ci_contract_check.py (0 HIGH, 0 MEDIUM = PASS) |
 | `security-gate` | after backend | 8 security test files |
-| `gate` | after all | Final merge gate |
+| `gate` | after all | Final merge gate (strict dependency on contract-parity, backend, frontend, android) |
 
 ---
 
@@ -106,7 +107,21 @@ backend\venv\Scripts\python.exe -X utf8 scripts\ci_contract_check.py `
 
 ---
 
-## Audit Report Index
+## Light Professional Redesign Deliverables (Milestone 17)
+
+| Phase | Report | Scope & Deliverable |
+|---|---|---|
+| 1 – UI/UX Audit | `docs/redesign/01_UI_UX_AUDIT.md` | Dark mode issues, contrast violations & inventory |
+| 2 – Design System | `docs/redesign/02_DESIGN_SYSTEM.md` | Tokens (JSON, JS, Kotlin), semantic scales, WCAG AA compliance |
+| 3 – Web Redesign | `docs/redesign/03_WEB_REDESIGN.md` | Institutional light theme, components, CSS variables |
+| 4 – Android Redesign | `docs/redesign/04_ANDROID_REDESIGN.md` | Compose tokens, light surface palette, 48dp touch targets |
+| 5 – Verification | `docs/redesign/05_VERIFICATION_REPORT.md` | CI gates, build verification, zero regression proof |
+| 6 – E2E & A11y | `docs/redesign/06_MAKE_EVERYTHING_WORK.md` | Playwright suites (5 flows), contrast tests, runtime bug fixes |
+| 7 – Final Release | `docs/redesign/07_FINAL_RELEASE_REPORT.md` | Delivery gate, CI/CD hardening, deployment diagnostic |
+
+---
+
+## Audit Report Index (Milestone 16)
 
 | Phase | Report |
 |---|---|
