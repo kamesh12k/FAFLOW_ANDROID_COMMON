@@ -1058,8 +1058,13 @@ function RoomCard({ room, departments = [], classes = [], onEdit, onRefresh, rea
           </select>
         ) : (
           <div className="text-xs font-bold text-indigo-700 truncate py-1">
-            {room.primary_class_name ? `🎓 ${room.primary_class_name}` : <span className="text-slate-400 italic font-normal">No Class</span>}
+            {room.primary_class_name ? `🎓 ${room.primary_class_name}` : (
+              <span className="text-slate-500 font-medium text-[11px] bg-slate-100 px-2 py-0.5 rounded-full inline-flex items-center gap-1" title="Floating / Shared space — Valid permanent state for labs, seminar halls, and shared facilities">
+                <span>🌐</span> Floating / Shared
+              </span>
+            )}
           </div>
+
         )}
       </div>
 
@@ -1317,7 +1322,11 @@ function RoomRow({ room, departments = [], classes = [], onEdit, onRefresh, read
           </select>
         ) : (
           <span className="text-xs font-bold text-indigo-700 truncate" title={room.primary_class_name}>
-            {room.primary_class_name ? `🎓 ${room.primary_class_name}` : <span className="text-slate-400 italic font-normal">No Class</span>}
+            {room.primary_class_name ? `🎓 ${room.primary_class_name}` : (
+              <span className="text-slate-500 font-medium text-[11px] bg-slate-100 px-2 py-0.5 rounded-full inline-flex items-center gap-1" title="Floating / Shared space — Valid permanent state for labs, seminar halls, and shared facilities">
+                <span>🌐</span> Floating / Shared
+              </span>
+            )}
           </span>
         )}
       </div>

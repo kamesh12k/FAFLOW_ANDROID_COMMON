@@ -419,3 +419,59 @@ def test_smart_autofill_with_mixed_overrides_and_aliases(db_session):
     assert rooms_by_num["003"] == RoomType.laboratory
     assert rooms_by_num["001"] == RoomType.classroom
 
+
+def test_floating_shared_rooms_handling(db_session):
+    """
+    Verifies that floating/shared rooms (with department, but no home class)
+    are treated as a valid permanent state and handled gracefully by room services
+    and duty generation.
+    """
+    db = db_session
+    dept = Department(name="Computer Applications", code="MCA")
+    db.add(dept)
+    db.flush()
+
+    block = CampusBlock(name="MCA Block", code="MCA-B", department_id=dept.id, floors_count=1)
+    db.add(block)
+    db.flush()
+
+    floor = CampusFloor(block_id=block.id, floor_number=1, floor_name="First Floor", display_order=1)
+    db.add(floor)
+    db.flush()
+
+    # Floating Lab: department assigned, but primary_class_id is None
+    lab_room = Room(
+        room_number="MCA-LAB-1",
+        room_name="Advanced Computing Lab",
+        room_type=RoomType.lab,
+        capacity=50,
+        department_id=dept.id,
+        block_id=block.id,
+        floor_id=floor.id,
+        primary_class_id=None,
+        is_exam_eligible=True,
+        required_invigilators=2,
+        is_active=True
+    )
+    db.add(lab_room)
+    db.commit()
+
+    # 1. list_rooms safely enriches floating room with primary_class_name=None
+    rooms = room_service.list_rooms(db)
+    lab = next(r for r in rooms if r.room_number == "MCA-LAB-1")
+    assert lab.primary_class_id is None
+    assert lab.primary_class_name is None
+    assert lab.department_id == dept.id
+
+    # 2. Exam duty generation succeeds for floating exam-eligible room
+    exam_duties = CampusDutyService.generate_exam_duties(
+        db=db,
+        target_date=date.today(),
+        title="MCA Practical Exam"
+    )
+    assert len(exam_duties) >= 1
+    lab_duty = next(d for d in exam_duties if d.room_id == lab_room.id)
+    assert lab_duty.required_teachers == 2
+    assert "MCA-LAB-1" in lab_duty.title
+
+
