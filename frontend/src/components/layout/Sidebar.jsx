@@ -34,10 +34,10 @@ const NavItem = memo(function NavItem({ to, icon, label, end, collapsed, unreadC
       to={to}
       end={end}
       className={({ isActive }) =>
-        `relative flex items-center justify-between rounded-lg text-xs font-semibold transition-all duration-150 group outline-none focus-visible:ring-2 focus-visible:ring-primary-600 focus-visible:ring-offset-1 ${
+        `relative text-xs font-semibold transition-all duration-150 group outline-none focus-visible:ring-2 focus-visible:ring-primary-600 focus-visible:ring-offset-1 ${
           collapsed
-            ? 'w-10 h-9 mx-auto justify-center'
-            : 'px-3 py-2'
+            ? 'w-10 h-10 mx-auto flex items-center justify-center rounded-xl'
+            : 'w-full flex items-center justify-between px-3 py-2 rounded-lg'
         } ${
           isActive
             ? isDark
@@ -51,22 +51,18 @@ const NavItem = memo(function NavItem({ to, icon, label, end, collapsed, unreadC
     >
       {({ isActive }) => (
         <>
-          {/* Active Accent Indicator Bar */}
-          {isActive && (
+          {/* Active Accent Indicator Bar (Expanded mode only) */}
+          {isActive && !collapsed && (
             <span
-              className={`absolute rounded-r-full bg-primary-600 transition-all ${
-                collapsed
-                  ? 'left-0 top-1.5 bottom-1.5 w-1'
-                  : 'left-0 top-1 bottom-1 w-1'
-              }`}
+              className="absolute rounded-r-full bg-primary-600 left-0 top-1 bottom-1 w-1 transition-all"
               aria-hidden="true"
             />
           )}
 
           {/* Icon & Label */}
-          <div className={`flex items-center gap-2.5 min-w-0 ${collapsed ? 'justify-center' : ''}`}>
+          {collapsed ? (
             <span
-              className={`w-4.5 h-4.5 shrink-0 flex items-center justify-center transition-colors [&>svg]:w-4.5 [&>svg]:h-4.5 [&>svg]:shrink-0 ${
+              className={`w-5 h-5 shrink-0 flex items-center justify-center transition-colors [&>svg]:w-4.5 [&>svg]:h-4.5 [&>svg]:shrink-0 ${
                 isActive
                   ? isDark ? 'text-primary-300' : 'text-primary-600'
                   : isDark
@@ -76,8 +72,22 @@ const NavItem = memo(function NavItem({ to, icon, label, end, collapsed, unreadC
             >
               {icon}
             </span>
-            {!collapsed && <span className="truncate">{label}</span>}
-          </div>
+          ) : (
+            <div className="flex items-center gap-2.5 min-w-0">
+              <span
+                className={`w-4.5 h-4.5 shrink-0 flex items-center justify-center transition-colors [&>svg]:w-4.5 [&>svg]:h-4.5 [&>svg]:shrink-0 ${
+                  isActive
+                    ? isDark ? 'text-primary-300' : 'text-primary-600'
+                    : isDark
+                    ? 'text-slate-400 group-hover:text-slate-200'
+                    : 'text-slate-500 group-hover:text-slate-800'
+                }`}
+              >
+                {icon}
+              </span>
+              <span className="truncate">{label}</span>
+            </div>
+          )}
 
           {/* Announcements Unread Count Badge */}
           {isAnnouncement && unreadCount > 0 && (
@@ -92,7 +102,7 @@ const NavItem = memo(function NavItem({ to, icon, label, end, collapsed, unreadC
 
           {/* Collapsed Mode Floating Tooltip */}
           {collapsed && (
-            <div className="absolute left-[68px] top-1/2 -translate-y-1/2 px-3 py-1.5 bg-slate-900/95 backdrop-blur-md text-white text-xs rounded-lg shadow-2xl border border-slate-700/80 z-50 whitespace-nowrap pointer-events-none opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-150 flex flex-col gap-0.5">
+            <div className="absolute left-[70px] top-1/2 -translate-y-1/2 px-3 py-1.5 bg-slate-900/95 backdrop-blur-md text-white text-xs rounded-lg shadow-2xl border border-slate-700/80 z-50 whitespace-nowrap pointer-events-none opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-150 flex flex-col gap-0.5">
               {sectionName && (
                 <span className="text-[9px] font-bold uppercase tracking-wider text-slate-400">
                   {sectionName}
@@ -245,7 +255,9 @@ export default function Sidebar({ onOpenHelp }) {
     >
       {/* ─── Header: 56px (h-14) strictly aligned with TopBar ─── */}
       <div
-        className={`h-14 shrink-0 px-3.5 border-b flex items-center justify-between gap-2.5 ${
+        className={`h-14 shrink-0 border-b flex items-center ${
+          collapsed ? 'justify-center px-2' : 'justify-between px-3.5 gap-2.5'
+        } ${
           isDark ? 'border-slate-800 bg-slate-950' : 'border-[#E6E8EC] bg-white'
         }`}
       >
@@ -276,7 +288,7 @@ export default function Sidebar({ onOpenHelp }) {
         ) : (
           <button
             type="button"
-            className="mx-auto cursor-pointer p-1.5 rounded-lg hover:bg-slate-800 transition-colors outline-none focus-visible:ring-2 focus-visible:ring-primary-500/50"
+            className="w-10 h-10 mx-auto flex items-center justify-center rounded-xl cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors outline-none focus-visible:ring-2 focus-visible:ring-primary-500/50"
             onClick={toggleCollapse}
             title="Expand sidebar (Ctrl+B)"
             aria-label="Expand sidebar (Ctrl+B)"
@@ -287,7 +299,7 @@ export default function Sidebar({ onOpenHelp }) {
       </div>
 
       {/* ─── Quick Jump / Command Palette Search Affordance ─── */}
-      <div className={`shrink-0 ${collapsed ? 'px-2 py-2 flex justify-center' : 'px-3 pt-2.5 pb-1'}`}>
+      <div className={`shrink-0 ${collapsed ? 'py-2 flex justify-center' : 'px-3 pt-2.5 pb-1'}`}>
         {!collapsed ? (
           <button
             type="button"
@@ -316,7 +328,7 @@ export default function Sidebar({ onOpenHelp }) {
           <button
             type="button"
             onClick={handleOpenSearch}
-            className={`w-10 h-9 flex items-center justify-center rounded-lg transition-all group relative outline-none focus-visible:ring-2 focus-visible:ring-primary-500/50 ${
+            className={`w-10 h-10 mx-auto flex items-center justify-center rounded-xl transition-all group relative outline-none focus-visible:ring-2 focus-visible:ring-primary-500/50 ${
               isDark
                 ? 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/60'
                 : 'text-slate-500 hover:text-slate-900 hover:bg-slate-100'
@@ -324,7 +336,7 @@ export default function Sidebar({ onOpenHelp }) {
             aria-label="Quick search (Ctrl+K)"
           >
             <SearchIcon className="w-4.5 h-4.5" />
-            <div className="absolute left-[68px] top-1/2 -translate-y-1/2 px-2.5 py-1 bg-slate-900/95 backdrop-blur-md text-white text-xs font-medium rounded-md shadow-xl border border-slate-800 z-50 whitespace-nowrap pointer-events-none opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all">
+            <div className="absolute left-[70px] top-1/2 -translate-y-1/2 px-2.5 py-1 bg-slate-900/95 backdrop-blur-md text-white text-xs font-medium rounded-md shadow-xl border border-slate-800 z-50 whitespace-nowrap pointer-events-none opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all">
               Quick search (Ctrl+K)
             </div>
           </button>
@@ -333,14 +345,14 @@ export default function Sidebar({ onOpenHelp }) {
 
       {/* ─── Navigation Groups ─── */}
       <nav
-        className="flex-1 min-h-0 px-2.5 py-2 space-y-2 overflow-y-auto overflow-x-hidden sidebar-scrollbar overscroll-contain"
+        className={`flex-1 min-h-0 ${collapsed ? 'px-2 py-2' : 'px-2.5 py-2'} space-y-1.5 overflow-y-auto overflow-x-hidden sidebar-scrollbar overscroll-contain`}
         aria-label="Main Navigation"
       >
         {nav.map((group, idx) => {
           const isSectionCollapsed = group.section && collapsedSections.includes(group.section)
 
           return (
-            <div key={group.section || `sec-${idx}`} className="space-y-0.5">
+            <div key={group.section || `sec-${idx}`} className={collapsed ? 'space-y-1 flex flex-col items-center' : 'space-y-0.5'}>
               {/* Section Header (Expanded Mode) */}
               {!collapsed && group.section && (
                 <div className="pt-2 pb-0.5">
@@ -377,12 +389,12 @@ export default function Sidebar({ onOpenHelp }) {
 
               {/* Section Divider (Collapsed Mode) */}
               {collapsed && idx > 0 && (
-                <div className="w-6 h-px bg-slate-800/80 mx-auto my-1.5" aria-hidden="true" />
+                <div className="w-7 h-px bg-slate-200 dark:bg-slate-800/80 mx-auto my-1.5" aria-hidden="true" />
               )}
 
               {/* Items Container */}
               {(!isSectionCollapsed || collapsed) && (
-                <div className="space-y-0.5">
+                <div className={collapsed ? 'w-full space-y-1 flex flex-col items-center' : 'space-y-0.5'}>
                   {group.items.map((item) => (
                     <NavItem
                       key={item.to}
@@ -401,8 +413,13 @@ export default function Sidebar({ onOpenHelp }) {
       </nav>
 
       {/* ─── Footer: Secondary Actions & User Profile Card ─── */}
+      {/* ─── Footer: Secondary Actions & User Profile Card ─── */}
       <div
-        className={`shrink-0 px-2.5 py-2.5 border-t space-y-1 mt-auto z-10 ${
+        className={`shrink-0 border-t mt-auto z-10 ${
+          collapsed
+            ? 'px-2 py-2.5 flex flex-col items-center gap-1.5'
+            : 'px-2.5 py-2.5 space-y-1'
+        } ${
           isDark ? 'border-slate-800 bg-slate-950' : 'border-[#E6E8EC] bg-white'
         }`}
       >
@@ -411,10 +428,10 @@ export default function Sidebar({ onOpenHelp }) {
           <NavLink
             to="/admin/settings"
             className={({ isActive }) =>
-              `relative flex items-center gap-2.5 rounded-lg text-xs font-medium transition-all group outline-none focus-visible:ring-2 focus-visible:ring-primary-500/50 ${
+              `relative transition-all group outline-none focus-visible:ring-2 focus-visible:ring-primary-500/50 ${
                 collapsed
-                  ? 'w-10 h-9 mx-auto justify-center'
-                  : 'px-2.5 py-1.5'
+                  ? 'w-10 h-10 mx-auto flex items-center justify-center rounded-xl'
+                  : 'flex items-center gap-2.5 rounded-lg text-xs font-medium px-2.5 py-1.5'
               } ${
                 isActive
                   ? isDark
@@ -429,7 +446,7 @@ export default function Sidebar({ onOpenHelp }) {
             <SettingsIcon className="w-4.5 h-4.5 shrink-0" style={{ width: '1.125rem', height: '1.125rem' }} />
             {!collapsed && <span>Settings</span>}
             {collapsed && (
-              <div className="absolute left-[68px] top-1/2 -translate-y-1/2 px-2.5 py-1 bg-slate-900 text-white text-xs font-medium rounded-md shadow-xl border border-slate-800 z-50 whitespace-nowrap pointer-events-none">
+              <div className="absolute left-[70px] top-1/2 -translate-y-1/2 px-2.5 py-1 bg-slate-900 text-white text-xs font-medium rounded-md shadow-xl border border-slate-800 z-50 whitespace-nowrap pointer-events-none opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all">
                 Settings
               </div>
             )}
@@ -441,10 +458,10 @@ export default function Sidebar({ onOpenHelp }) {
           <NavLink
             to="/teacher/preferences"
             className={({ isActive }) =>
-              `relative flex items-center gap-2.5 rounded-lg text-xs font-medium transition-all group outline-none focus-visible:ring-2 focus-visible:ring-primary-500/50 ${
+              `relative transition-all group outline-none focus-visible:ring-2 focus-visible:ring-primary-500/50 ${
                 collapsed
-                  ? 'w-10 h-9 mx-auto justify-center'
-                  : 'px-2.5 py-1.5'
+                  ? 'w-10 h-10 mx-auto flex items-center justify-center rounded-xl'
+                  : 'flex items-center gap-2.5 rounded-lg text-xs font-medium px-2.5 py-1.5'
               } ${
                 isActive
                   ? isDark
@@ -459,7 +476,7 @@ export default function Sidebar({ onOpenHelp }) {
             <SettingsIcon className="w-4.5 h-4.5 shrink-0" style={{ width: '1.125rem', height: '1.125rem' }} />
             {!collapsed && <span>Preferences</span>}
             {collapsed && (
-              <div className="absolute left-[68px] top-1/2 -translate-y-1/2 px-2.5 py-1 bg-slate-900 text-white text-xs font-medium rounded-md shadow-xl border border-slate-800 z-50 whitespace-nowrap pointer-events-none">
+              <div className="absolute left-[70px] top-1/2 -translate-y-1/2 px-2.5 py-1 bg-slate-900 text-white text-xs font-medium rounded-md shadow-xl border border-slate-800 z-50 whitespace-nowrap pointer-events-none opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all">
                 Preferences
               </div>
             )}
@@ -470,10 +487,10 @@ export default function Sidebar({ onOpenHelp }) {
         <button
           type="button"
           onClick={onOpenHelp}
-          className={`flex items-center gap-2.5 rounded-lg text-xs font-medium transition-all group relative text-left outline-none focus-visible:ring-2 focus-visible:ring-primary-500/50 ${
+          className={`relative transition-all group outline-none focus-visible:ring-2 focus-visible:ring-primary-500/50 ${
             collapsed
-              ? 'w-10 h-9 mx-auto justify-center'
-              : 'w-full px-2.5 py-1.5'
+              ? 'w-10 h-10 mx-auto flex items-center justify-center rounded-xl'
+              : 'w-full flex items-center gap-2.5 rounded-lg text-xs font-medium text-left px-2.5 py-1.5'
           } ${
             isDark
               ? 'text-slate-400 hover:text-slate-100 hover:bg-slate-800/60'
@@ -484,7 +501,7 @@ export default function Sidebar({ onOpenHelp }) {
           <HelpCircleIcon className="w-4.5 h-4.5 shrink-0" style={{ width: '1.125rem', height: '1.125rem' }} />
           {!collapsed && <span>Help & Guides</span>}
           {collapsed && (
-            <div className="absolute left-[68px] top-1/2 -translate-y-1/2 px-2.5 py-1 bg-slate-900 text-white text-xs font-medium rounded-md shadow-xl border border-slate-800 z-50 whitespace-nowrap pointer-events-none">
+            <div className="absolute left-[70px] top-1/2 -translate-y-1/2 px-2.5 py-1 bg-slate-900 text-white text-xs font-medium rounded-md shadow-xl border border-slate-800 z-50 whitespace-nowrap pointer-events-none opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all">
               Help & Guides
             </div>
           )}
@@ -542,10 +559,10 @@ export default function Sidebar({ onOpenHelp }) {
             onClick={handleLogout}
             aria-label="Sign out"
             title="Sign out"
-            className="w-10 h-9 mx-auto flex items-center justify-center rounded-lg text-slate-400 hover:text-rose-500 hover:bg-rose-50 transition-all group relative mt-1 outline-none focus-visible:ring-2 focus-visible:ring-rose-500/50"
+            className="w-10 h-10 mx-auto flex items-center justify-center rounded-xl text-slate-400 hover:text-rose-500 hover:bg-rose-50 transition-all group relative mt-1 outline-none focus-visible:ring-2 focus-visible:ring-rose-500/50"
           >
             <LogoutIcon className="w-4.5 h-4.5 shrink-0" />
-            <div className="absolute left-[68px] top-1/2 -translate-y-1/2 px-2.5 py-1 bg-slate-900 text-white text-xs font-medium rounded-md shadow-xl border border-slate-800 z-50 whitespace-nowrap pointer-events-none">
+            <div className="absolute left-[70px] top-1/2 -translate-y-1/2 px-2.5 py-1 bg-slate-900 text-white text-xs font-medium rounded-md shadow-xl border border-slate-800 z-50 whitespace-nowrap pointer-events-none opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all">
               Sign out
             </div>
           </button>
