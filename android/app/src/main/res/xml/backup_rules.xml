@@ -1,13 +1,13 @@
-<?xml version="1.0" encoding="utf-8"?><!--
-   Sample backup rules file; uncomment and customize as necessary.
-   See https://developer.android.com/guide/topics/data/autobackup
-   for details.
-   Note: This file is ignored for devices older than API 31
-   See https://developer.android.com/about/versions/12/backup-restore
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Full backup rules for Android 6.0 to Android 11 (API < 31).
+    Critical security rule: Hardware Keystore-backed EncryptedSharedPreferences (faflow_secure_prefs)
+    must NEVER be backed up, because AndroidKeyStore hardware keys are non-exportable.
+    Restoring encrypted preferences without the corresponding Keystore key causes
+    AEADBadTagException / KeyStoreException crashes upon decryption.
 -->
 <full-backup-content>
-    <!--
-   <include domain="sharedpref" path="."/>
-   <exclude domain="sharedpref" path="device.xml"/>
--->
+    <exclude domain="sharedpref" path="faflow_secure_prefs.xml" />
+    <exclude domain="sharedpref" path="faflow_secure_prefs.bak" />
+    <exclude domain="sharedpref" path="__androidx_security_crypto_encrypted_file_pref__.xml" />
 </full-backup-content>

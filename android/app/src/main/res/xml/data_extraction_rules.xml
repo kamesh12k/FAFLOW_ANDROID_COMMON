@@ -1,19 +1,21 @@
-<?xml version="1.0" encoding="utf-8"?><!--
-   Sample data extraction rules file; uncomment and customize as necessary.
-   See https://developer.android.com/about/versions/12/backup-restore#xml-changes
-   for details.
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Data extraction rules for Android 12+ (API 31+).
+    Critical security rule: Hardware Keystore-backed EncryptedSharedPreferences (faflow_secure_prefs)
+    must NEVER be backed up to the cloud or transferred across devices, because AndroidKeyStore
+    hardware keys are non-exportable and bound to the local device hardware instance.
+    Restoring encrypted preferences without the corresponding Keystore key causes
+    AEADBadTagException / KeyStoreException crashes upon decryption.
 -->
 <data-extraction-rules>
     <cloud-backup>
-        <!-- TODO: Use <include> and <exclude> to control what is backed up.
-        <include .../>
-        <exclude .../>
-        -->
+        <exclude domain="sharedpref" path="faflow_secure_prefs.xml" />
+        <exclude domain="sharedpref" path="faflow_secure_prefs.bak" />
+        <exclude domain="sharedpref" path="__androidx_security_crypto_encrypted_file_pref__.xml" />
     </cloud-backup>
-    <!--
     <device-transfer>
-        <include .../>
-        <exclude .../>
+        <exclude domain="sharedpref" path="faflow_secure_prefs.xml" />
+        <exclude domain="sharedpref" path="faflow_secure_prefs.bak" />
+        <exclude domain="sharedpref" path="__androidx_security_crypto_encrypted_file_pref__.xml" />
     </device-transfer>
-    -->
 </data-extraction-rules>

@@ -26,8 +26,27 @@ class AttendanceSyncWorker(
 ) : CoroutineWorker(appContext, workerParams) {
 
     override suspend fun doWork(): Result {
+        val tag = "[AttendanceSync]"
+        val tokenManager = try {
+            TokenManager(applicationContext)
+        } catch (e: Exception) {
+            android.util.Log.w(TAG, "$tag Failed to initialize TokenManager (${e.message}). Skipping sync.")
+            return Result.success()
+        }
+
+        val token = try {
+            tokenManager.getToken()
+        } catch (e: Exception) {
+            android.util.Log.w(TAG, "$tag Failed to retrieve auth token (${e.message}). Skipping sync.")
+            return Result.success()
+        }
+
+        if (token.isNullOrBlank()) {
+            android.util.Log.w(TAG, "$tag No valid authentication token present (not logged in). Skipping this run.")
+            return Result.success()
+        }
+
         val queue = AttendanceLocalQueue(applicationContext)
-        val tokenManager = TokenManager(applicationContext)
         val apiService = FaflowApiClient.create(tokenManager)
         val repository = AttendanceRepository(apiService, queue)
 
@@ -49,6 +68,7 @@ class AttendanceSyncWorker(
     }
 
     companion object {
+        private const val TAG = "AttendanceSyncWorker"
         private const val UNIQUE_WORK_NAME_ONE_TIME = "faflow_attendance_sync_immediate"
         private const val UNIQUE_WORK_NAME_PERIODIC = "faflow_attendance_sync_periodic"
 

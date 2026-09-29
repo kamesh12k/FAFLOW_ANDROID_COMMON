@@ -25,8 +25,23 @@ class NotificationSyncWorker(
 ) : CoroutineWorker(appContext, workerParams) {
 
     override suspend fun doWork(): Result {
-        val tokenManager = TokenManager(applicationContext)
-        if (!tokenManager.hasValidToken()) {
+        val tag = "[NotificationSync]"
+        val tokenManager = try {
+            TokenManager(applicationContext)
+        } catch (e: Exception) {
+            android.util.Log.w(TAG, "$tag Failed to initialize TokenManager (${e.message}). Skipping sync.")
+            return Result.success()
+        }
+
+        val hasValidToken = try {
+            tokenManager.hasValidToken()
+        } catch (e: Exception) {
+            android.util.Log.w(TAG, "$tag Failed to verify auth token (${e.message}). Skipping sync.")
+            false
+        }
+
+        if (!hasValidToken) {
+            android.util.Log.i(TAG, "$tag No valid authentication token present (not logged in). Skipping this run.")
             return Result.success()
         }
 
@@ -50,6 +65,7 @@ class NotificationSyncWorker(
     }
 
     companion object {
+        private const val TAG = "NotificationSyncWorker"
         private const val UNIQUE_WORK_NAME_ONE_TIME = "faflow_notification_sync_immediate"
         private const val UNIQUE_WORK_NAME_PERIODIC = "faflow_notification_sync_periodic"
 

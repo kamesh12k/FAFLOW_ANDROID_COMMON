@@ -37,11 +37,23 @@ class StudentAttendanceSyncWorker(
         val tag = "[StudentAttendanceSync]"
         Log.i(TAG, "$tag Worker started. attemptCount=$runAttemptCount")
 
-        val tokenManager = TokenManager(applicationContext)
-        val token = tokenManager.getToken()
+        val tokenManager = try {
+            TokenManager(applicationContext)
+        } catch (e: Exception) {
+            Log.w(TAG, "$tag Failed to initialize TokenManager (${e.message}). Skipping sync.")
+            return Result.success()
+        }
+
+        val token = try {
+            tokenManager.getToken()
+        } catch (e: Exception) {
+            Log.w(TAG, "$tag Failed to retrieve auth token (${e.message}). Skipping sync.")
+            return Result.success()
+        }
+
         if (token.isNullOrBlank()) {
-            Log.w(TAG, "$tag No valid authentication token present. Deferring sync.")
-            return Result.retry()
+            Log.w(TAG, "$tag No valid authentication token present (not logged in). Skipping this run.")
+            return Result.success()
         }
 
         // Ensure base URL is initialized in this worker process
