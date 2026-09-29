@@ -851,6 +851,27 @@ def test_substitution_teacher_schedule_and_attendance_rights(client: TestClient,
     assert submitted.actual_teacher_id == test_teacher2.id
 
 
+def test_create_session_attendance_type_normalization():
+    """
+    Verifies that CreateAttendanceSessionRequest normalizes uppercase strings
+    ('NORMAL', 'REGISTERED_SUBSTITUTION', 'EMERGENCY') to valid AttendanceType enums
+    preventing 422 validation errors.
+    """
+    req1 = CreateAttendanceSessionRequest(attendance_type="NORMAL")
+    assert req1.attendance_type == AttendanceType.normal
+
+    req2 = CreateAttendanceSessionRequest(attendance_type="REGISTERED_SUBSTITUTION")
+    assert req2.attendance_type == AttendanceType.registered_substitution
+
+    req3 = CreateAttendanceSessionRequest(attendance_type="EMERGENCY")
+    assert req3.attendance_type == AttendanceType.emergency
+
+    # Test raw schema validation rejection for truly invalid type
+    with pytest.raises(Exception):
+        CreateAttendanceSessionRequest(attendance_type="invalid_type_xyz")
+
+
+
 
 
 

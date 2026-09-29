@@ -1316,8 +1316,9 @@ export default function PrincipalStudentAttendance() {
                   })
                   .map((sess) => {
                     const isSub = sess.is_substitution || (sess.scheduled_teacher_id && sess.actual_teacher_id && sess.scheduled_teacher_id !== sess.actual_teacher_id)
-                    const isEmerg = sess.is_emergency || sess.attendance_type === 'EMERGENCY'
+                    const isEmerg = sess.is_emergency || (sess.attendance_type || '').toUpperCase() === 'EMERGENCY'
                     const isLate = sess.is_late_submission || sess.status === 'SUBMITTED_LATE'
+
 
                     return (
                       <tr key={`${sess.class_id}_${sess.period_number}`} className="hover:bg-slate-50/70 transition-colors">

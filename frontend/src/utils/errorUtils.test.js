@@ -124,4 +124,25 @@ describe('errorUtils - formatErrorMessage', () => {
     const result = formatErrorMessage(circular)
     expect(typeof result).toBe('string')
   })
+
+  it('sanitizes raw Pydantic attendance_type validation errors into friendly messages', () => {
+    const rawPydanticError = [
+      {
+        type: 'enum',
+        loc: ['body', 'attendance_type'],
+        msg: "Input should be 'normal', 'registered_substitution' or 'emergency'",
+        input: 'NORMAL',
+        ctx: { expected: "'normal', 'registered_substitution' or 'emergency'" }
+      }
+    ]
+
+    const formatted = formatErrorMessage(rawPydanticError)
+    expect(formatted).toBe('Invalid attendance session type. Please select a valid session type.')
+    expect(formatted).not.toContain('Input should be')
+
+    // Also test direct string message sanitization
+    const stringError = "attendance_type: Input should be 'normal', 'registered_substitution' or 'emergency'"
+    expect(formatErrorMessage(stringError)).toBe('Invalid attendance session type. Please select a valid session type.')
+  })
 })
+

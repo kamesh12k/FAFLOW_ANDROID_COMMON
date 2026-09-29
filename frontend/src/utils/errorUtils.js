@@ -38,8 +38,12 @@ export function formatErrorMessage(err, fallback) {
   // 1. If it's already a string
   if (typeof err === 'string') {
     const trimmed = err.trim()
+    if (trimmed.includes('attendance_type') && trimmed.includes('Input should be')) {
+      return 'Invalid attendance session type. Please select a valid session type.'
+    }
     return trimmed || effectiveFallback
   }
+
 
   // 2. If it's an Axios error or has response.data
   if (err?.response?.data) {
@@ -66,12 +70,20 @@ export function formatErrorMessage(err, fallback) {
   if (Array.isArray(err)) {
     if (err.length === 0) return effectiveFallback
     const messages = err.map((item) => {
-      if (typeof item === 'string') return item
+      if (typeof item === 'string') {
+        if (item.includes('attendance_type') && item.includes('Input should be')) {
+          return 'Invalid attendance session type. Please select a valid session type.'
+        }
+        return item
+      }
       if (item && typeof item === 'object') {
         const fieldLoc = Array.isArray(item.loc)
           ? item.loc.filter((part) => part !== 'body' && part !== 'query' && part !== 'path').join('.')
           : ''
         const msg = item.msg || item.message || JSON.stringify(item)
+        if (fieldLoc.includes('attendance_type') || (typeof msg === 'string' && msg.includes("'normal', 'registered_substitution'"))) {
+          return 'Invalid attendance session type. Please select a valid session type.'
+        }
         return fieldLoc ? `${fieldLoc}: ${msg}` : msg
       }
       return String(item)
@@ -79,6 +91,7 @@ export function formatErrorMessage(err, fallback) {
 
     return messages.length > 0 ? messages.join('; ') : effectiveFallback
   }
+
 
   // 4. If it's an object with detail, message, msg, or error properties
   if (typeof err === 'object') {

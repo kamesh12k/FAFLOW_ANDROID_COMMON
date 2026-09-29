@@ -1,4 +1,4 @@
-from pydantic import BaseModel, ConfigDict, computed_field
+from pydantic import BaseModel, ConfigDict, computed_field, field_validator
 from typing import List, Optional, Dict, Any
 from datetime import date, datetime, time
 from app.models.student_attendance import AttendanceType, SessionStatus, StudentAttendanceStatus
@@ -132,6 +132,16 @@ class CreateAttendanceSessionRequest(BaseModel):
     attendance_date: Optional[date] = None
     substitution_id: Optional[int] = None
     attendance_type: Optional[AttendanceType] = None
+
+    @field_validator("attendance_type", mode="before")
+    @classmethod
+    def normalize_attendance_type(cls, v):
+        if isinstance(v, str):
+            clean = v.strip().lower()
+            if clean in ("normal", "registered_substitution", "emergency"):
+                return clean
+        return v
+
 
 
 class SubmitAttendanceRequest(BaseModel):

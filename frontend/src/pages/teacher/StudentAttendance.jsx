@@ -96,7 +96,7 @@ export default function StudentAttendance() {
         isSubstitution: Boolean(periodSlot.is_substitution),
         substitutionId: periodSlot.substitution_id || null,
         scheduledTeacherName: periodSlot.scheduled_teacher_name || null,
-        attendanceType: periodSlot.is_substitution ? 'REGISTERED_SUBSTITUTION' : 'NORMAL'
+        attendanceType: periodSlot.is_substitution ? 'registered_substitution' : 'normal'
       })
 
       // 2. If session already exists, load session details
@@ -123,7 +123,7 @@ export default function StudentAttendance() {
           class_id: periodSlot.class_id,
           subject_id: periodSlot.subject_id || null,
           substitution_id: periodSlot.substitution_id || null,
-          attendance_type: periodSlot.is_substitution ? 'REGISTERED_SUBSTITUTION' : 'NORMAL'
+          attendance_type: periodSlot.is_substitution ? 'registered_substitution' : 'normal'
         })
         setActiveSession(createRes.data)
       }
@@ -170,8 +170,9 @@ export default function StudentAttendance() {
         endTime: emergRes.data.scheduled_end_time || '',
         slotId: emergRes.data.timetable_slot_id,
         isEmergency: true,
-        attendanceType: 'EMERGENCY'
+        attendanceType: 'emergency'
       })
+
     } catch (err) {
       console.error('Error initiating emergency attendance', err)
       setError(formatErrorMessage(err, 'Failed to start emergency attendance'))
