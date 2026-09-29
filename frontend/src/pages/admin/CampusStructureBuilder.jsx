@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react'
 import { campusStructureApi, departmentsApi, roomsApi, classesApi } from '../../api/services'
-import { Spinner, ErrorAlert, Modal, Badge } from '../../components/ui'
+import { Spinner, ErrorAlert, Modal, Badge, formatErrorMessage } from '../../components/ui'
 import { useAuth } from '../../context/AuthContext'
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -312,7 +312,7 @@ function BulkAssignDeptModal({ target, type, departments: propDepartments = [], 
 
   return (
     <div className="space-y-4">
-      {error && <div className="p-3 bg-rose-50 border border-rose-200 rounded-xl text-sm text-rose-700">{error}</div>}
+      {error && <div className="p-3 bg-rose-50 border border-rose-200 rounded-xl text-sm text-rose-700">{formatErrorMessage(error)}</div>}
       {loading ? <div className="flex justify-center py-6"><Spinner /></div> : (
         <>
           {type === 'block' && floors.length > 0 && (
@@ -701,7 +701,7 @@ function QuickEditRoomModal({ room, departments, classes, onClose, onSuccess }) 
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
-      {error && <div className="p-3 bg-rose-50 border border-rose-200 rounded-xl text-sm text-rose-700">{error}</div>}
+      {error && <div className="p-3 bg-rose-50 border border-rose-200 rounded-xl text-sm text-rose-700">{formatErrorMessage(error)}</div>}
       <div className="grid grid-cols-2 gap-3">
         <div>
           <label className="block text-xs font-bold text-slate-600 mb-1">Room Number *</label>
@@ -1842,7 +1842,7 @@ function AutoFillWizard({ onClose, onSuccess }) {
         </div>
       </div>
 
-      {error && <div className="p-3 bg-rose-50 border border-rose-200 rounded-xl text-sm text-rose-700">{error}</div>}
+      {error && <div className="p-3 bg-rose-50 border border-rose-200 rounded-xl text-sm text-rose-700">{formatErrorMessage(error)}</div>}
 
       {step === 1 && (
         <div className="space-y-3">
@@ -2220,7 +2220,7 @@ function BulkRoomGenerator({ block, onClose, onSuccess }) {
 
   return (
     <div className="space-y-4">
-      {error && <div className="p-3 bg-rose-50 border border-rose-200 rounded-xl text-sm text-rose-700">{error}</div>}
+      {error && <div className="p-3 bg-rose-50 border border-rose-200 rounded-xl text-sm text-rose-700">{formatErrorMessage(error)}</div>}
       {loadingFloors ? <div className="flex justify-center py-8"><Spinner /></div> : (
         <>
           <div className="grid grid-cols-2 gap-3">
@@ -2356,7 +2356,7 @@ function AddFloorModal({ block, onClose, onSuccess }) {
 
   return (
     <div className="space-y-3">
-      {error && <div className="p-3 bg-rose-50 border border-rose-200 rounded-xl text-sm text-rose-700">{error}</div>}
+      {error && <div className="p-3 bg-rose-50 border border-rose-200 rounded-xl text-sm text-rose-700">{formatErrorMessage(error)}</div>}
       <div>
         <label className="block text-xs font-bold text-slate-600 mb-1">Floor Name *</label>
         <input value={form.floor_name} onChange={e => setForm(f => ({ ...f, floor_name: e.target.value }))}
@@ -2434,7 +2434,7 @@ function BlockDutyConfigModal({ block, onClose, onSuccess }) {
 
   return (
     <div className="space-y-4">
-      {error && <div className="p-3 bg-rose-50 border border-rose-200 rounded-xl text-xs font-semibold text-rose-700">{error}</div>}
+      {error && <div className="p-3 bg-rose-50 border border-rose-200 rounded-xl text-xs font-semibold text-rose-700">{formatErrorMessage(error)}</div>}
 
       {/* Block Information & Respected Department Header */}
       <div className="p-3.5 bg-gradient-to-r from-slate-900 to-indigo-950 rounded-2xl text-white shadow-sm border border-indigo-900/50">
@@ -2779,7 +2779,7 @@ function BlockModal({ block, departments = [], onClose, onSuccess }) {
 
   return (
     <div className="space-y-3">
-      {error && <div className="p-3 bg-rose-50 border border-rose-200 rounded-xl text-sm text-rose-700">{error}</div>}
+      {error && <div className="p-3 bg-rose-50 border border-rose-200 rounded-xl text-sm text-rose-700">{formatErrorMessage(error)}</div>}
       <div className="grid grid-cols-2 gap-3">
         <div className="col-span-2">
           <label className="block text-xs font-bold text-slate-600 mb-1">Block Name *</label>

@@ -4,6 +4,7 @@ import { operationalStaffApi } from '../../api/services'
 import { useAuth } from '../../context/AuthContext'
 import { Spinner } from '../../components/ui'
 import { UsersIcon, DoorIcon, BookIcon, PlusIcon, CheckCircleIcon } from '../../components/icons'
+import { formatErrorMessage } from '../../utils/errorUtils'
 
 export default function ManagerDashboard() {
   const { user } = useAuth()
@@ -14,7 +15,7 @@ export default function ManagerDashboard() {
   useEffect(() => {
     operationalStaffApi.getStats()
       .then(res => setStats(res.data))
-      .catch(err => setError(err.response?.data?.detail || 'Failed to load dashboard metrics'))
+      .catch(err => setError(formatErrorMessage(err, 'Failed to load dashboard metrics')))
       .finally(() => setLoading(false))
   }, [])
 
@@ -39,7 +40,7 @@ export default function ManagerDashboard() {
 
       {error && (
         <div className="rounded-xl bg-rose-50 border border-rose-200 p-3 text-xs sm:text-sm text-rose-700 font-semibold">
-          {error}
+          {formatErrorMessage(error)}
         </div>
       )}
 

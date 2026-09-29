@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from 'react'
 import { studentAttendanceApi, departmentsApi, intelligenceApi } from '../../api/services'
 import { Card, Spinner, Badge, Table, Tabs } from '../../components/ui'
+import { formatErrorMessage } from '../../utils/errorUtils'
 import {
   UsersIcon, CalIcon, ClockIcon, AlertTriangleIcon, SearchIcon,
   CheckCircleIcon, XCircleIcon, DownloadIcon, LockIcon, UnlockIcon,
@@ -570,7 +571,7 @@ export default function PrincipalStudentAttendance() {
         <div className="p-4 bg-rose-50 border border-rose-200 text-rose-800 rounded-xl text-sm flex items-center justify-between gap-2 shadow-sm">
           <div className="flex items-center gap-2">
             <AlertTriangleIcon className="w-5 h-5 text-rose-600 flex-shrink-0" />
-            <span>{error}</span>
+            <span>{formatErrorMessage(error)}</span>
           </div>
           <button onClick={() => setError('')} className="text-rose-500 hover:text-rose-700 text-xs font-bold">Dismiss</button>
         </div>

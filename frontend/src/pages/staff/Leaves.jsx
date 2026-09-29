@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { staffPortalApi } from '../../api/services'
 import { useAuth } from '../../context/AuthContext'
+import { formatErrorMessage } from '../../utils/errorUtils'
 import {
   CalendarIcon,
   PlusIcon,
@@ -59,7 +60,7 @@ export default function StaffMyLeaves() {
       setLeaves(leavesRes.data)
       setLedger(ledgerRes.data)
     } catch (err) {
-      setError(err.response?.data?.detail || 'Failed to load your leave and ledger records')
+      setError(formatErrorMessage(err, 'Failed to load your leave and ledger records'))
     } finally {
       setLoading(false)
     }
@@ -91,7 +92,7 @@ export default function StaffMyLeaves() {
       })
       loadData()
     } catch (err) {
-      setError(err.response?.data?.detail || 'Failed to submit leave application')
+      setError(formatErrorMessage(err, 'Failed to submit leave application'))
     } finally {
       setSubmitting(false)
     }
@@ -106,7 +107,7 @@ export default function StaffMyLeaves() {
       setSuccess('Leave request cancelled.')
       loadData()
     } catch (err) {
-      setError(err.response?.data?.detail || 'Failed to cancel leave request')
+      setError(formatErrorMessage(err, 'Failed to cancel leave request'))
     }
   }
 
@@ -144,7 +145,7 @@ export default function StaffMyLeaves() {
       {/* Alerts */}
       {error && (
         <div className="rounded-xl bg-rose-50 border border-rose-200 p-4 text-xs sm:text-sm text-rose-700 font-semibold flex items-center justify-between">
-          <span>{error}</span>
+          <span>{formatErrorMessage(error)}</span>
           <button onClick={() => setError('')} className="text-rose-500 hover:text-rose-700 font-bold">✕</button>
         </div>
       )}

@@ -4,6 +4,7 @@ import { staffPortalApi, managerLeavesApi } from '../../api/services'
 import { useAuth } from '../../context/AuthContext'
 import { Spinner } from '../../components/ui'
 import { DoorIcon, UsersIcon, CheckCircleIcon, CalIcon, ClockIcon, BookIcon, DocIcon, PlusIcon } from '../../components/icons'
+import { formatErrorMessage } from '../../utils/errorUtils'
 
 export default function StaffDashboard() {
   const { user, isManager, isAdmin } = useAuth()
@@ -33,7 +34,7 @@ export default function StaffDashboard() {
           setSelectedDayOrder(res.data.today_day_order)
         }
       })
-      .catch(err => setError(err.response?.data?.detail || 'Failed to load staff dashboard data'))
+      .catch(err => setError(formatErrorMessage(err, 'Failed to load staff dashboard data')))
       .finally(() => setLoading(false))
   }
 
@@ -70,7 +71,7 @@ export default function StaffDashboard() {
       setAdjustData({ change: '1.0', category: 'overtime_duty', reason: '' })
       loadDashboard(selectedRoomId)
     } catch (err) {
-      setError(err.response?.data?.detail || 'Failed to adjust staff credit balance')
+      setError(formatErrorMessage(err, 'Failed to adjust staff credit balance'))
     } finally {
       setProcessing(false)
     }
@@ -140,7 +141,7 @@ export default function StaffDashboard() {
 
       {error && (
         <div className="rounded-xl bg-rose-50 border border-rose-200 p-3.5 text-xs sm:text-sm text-rose-700 font-semibold flex items-center justify-between">
-          <span>{error}</span>
+          <span>{formatErrorMessage(error)}</span>
           <button onClick={() => setError('')} className="text-rose-500 hover:text-rose-700 font-bold">✕</button>
         </div>
       )}

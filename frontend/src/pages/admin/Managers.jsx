@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { managersApi, departmentsApi } from '../../api/services'
 import { Spinner, Modal, EmptyState } from '../../components/ui'
 import { PlusIcon, SearchIcon, UsersIcon, CheckCircleIcon, XCircleIcon } from '../../components/icons'
+import { formatErrorMessage } from '../../utils/errorUtils'
 
 export default function Managers() {
   const [managers, setManagers] = useState([])
@@ -35,7 +36,7 @@ export default function Managers() {
       setManagers(mgrRes.data)
       setDepartments(deptRes.data)
     } catch (err) {
-      setError(err.response?.data?.detail || 'Failed to load managers')
+      setError(formatErrorMessage(err, 'Failed to load managers'))
     } finally {
       setLoading(false)
     }
@@ -62,7 +63,7 @@ export default function Managers() {
       setFormData({ name: '', username: '', password: '', department_id: '' })
       loadData()
     } catch (err) {
-      setError(err.response?.data?.detail || 'Failed to create manager account')
+      setError(formatErrorMessage(err, 'Failed to create manager account'))
     } finally {
       setSaving(false)
     }
@@ -85,7 +86,7 @@ export default function Managers() {
       setEditTarget(null)
       loadData()
     } catch (err) {
-      setError(err.response?.data?.detail || 'Failed to update manager account')
+      setError(formatErrorMessage(err, 'Failed to update manager account'))
     } finally {
       setSaving(false)
     }
@@ -101,7 +102,7 @@ export default function Managers() {
       setDeleteTarget(null)
       loadData()
     } catch (err) {
-      setError(err.response?.data?.detail || 'Failed to delete manager')
+      setError(formatErrorMessage(err, 'Failed to delete manager'))
     } finally {
       setSaving(false)
     }
@@ -148,7 +149,7 @@ export default function Managers() {
 
       {error && (
         <div className="rounded-xl bg-rose-50 border border-rose-200 p-3 text-xs sm:text-sm text-rose-700 font-semibold flex items-center justify-between">
-          <span>{error}</span>
+          <span>{formatErrorMessage(error)}</span>
           <button onClick={() => setError('')} className="text-rose-500 hover:text-rose-700 text-xs font-bold ml-2">✕</button>
         </div>
       )}

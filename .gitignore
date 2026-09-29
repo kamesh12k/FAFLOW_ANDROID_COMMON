@@ -88,3 +88,4 @@ Thumbs.db
 *.swp
 *.orig
 *.winmd
+logs/

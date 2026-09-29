@@ -6,6 +6,7 @@ import { campusDutiesApi, roomsApi, policyEnforcementApi, leavePoliciesApi } fro
 import api from '../../api/client'
 import { Spinner, Card, StatCard, Table, Badge } from '../../components/ui'
 import { UsersIcon } from '../../components/icons'
+import { formatErrorMessage } from '../../utils/errorUtils'
 
 // ─── helpers ──────────────────────────────────────────────────────────────────
 function today() {
@@ -155,8 +156,7 @@ function SixDayOrderSchedule() {
         setSelectedDayIdx(0)
       }
     } catch (e) {
-      const detail = e?.response?.data?.detail
-      setError(typeof detail === 'string' ? detail : 'Activation failed — check backend logs.')
+      setError(formatErrorMessage(e, 'Activation failed — check backend logs.'))
     } finally {
       setActivating(false)
     }
@@ -284,7 +284,7 @@ function SixDayOrderSchedule() {
         {error && (
           <div className="p-3 bg-rose-900/40 border border-rose-500/30 rounded-xl text-rose-300 text-sm">
             <p className="font-bold mb-1">⚠️ Error</p>
-            <p>{error}</p>
+            <p>{formatErrorMessage(error)}</p>
           </div>
         )}
 
@@ -707,7 +707,7 @@ function PolicyEnforcementSection() {
       setSuccessMsg(`Leave policy "${editFormData.name}" updated successfully.`)
       loadData()
     } catch (err) {
-      setError(err.response?.data?.detail || 'Failed to update leave policy')
+      setError(formatErrorMessage(err, 'Failed to update leave policy'))
     } finally {
       setSavingPolicy(false)
     }
@@ -727,7 +727,7 @@ function PolicyEnforcementSection() {
         setReport(reportRes.data)
       })
       .catch(err => {
-        setError(err.response?.data?.detail || 'Failed to load policy enforcement data')
+        setError(formatErrorMessage(err, 'Failed to load policy enforcement data'))
       })
       .finally(() => setLoading(false))
   }, [])
@@ -752,7 +752,7 @@ function PolicyEnforcementSection() {
       setSuccessMsg(`Successfully updated policy enforcement mode to ${targetMode}`)
       loadData()
     } catch (err) {
-      setError(err.response?.data?.detail || 'Failed to update enforcement mode')
+      setError(formatErrorMessage(err, 'Failed to update enforcement mode'))
     } finally {
       setUpdating(false)
     }
@@ -772,7 +772,7 @@ function PolicyEnforcementSection() {
     <div className="space-y-6">
       {error && (
         <div className="p-4 bg-rose-50 border border-rose-200 text-rose-800 rounded-xl text-sm font-medium">
-          {error}
+          {formatErrorMessage(error)}
         </div>
       )}
       {successMsg && (
@@ -1220,7 +1220,7 @@ export default function PrincipalDashboard() {
   useEffect(() => {
     api.get('/principal/overview')
       .then(r => setData(r.data))
-      .catch(err => setError(err.response?.data?.detail || 'Failed to load overview'))
+      .catch(err => setError(formatErrorMessage(err, 'Failed to load overview')))
       .finally(() => setLoading(false))
   }, [])
 
@@ -1232,7 +1232,7 @@ export default function PrincipalDashboard() {
 
   if (error) return (
     <div className="bg-rose-50 border border-rose-200 rounded-xl p-4 text-rose-700 text-sm">
-      {error}
+      {formatErrorMessage(error)}
     </div>
   )
 

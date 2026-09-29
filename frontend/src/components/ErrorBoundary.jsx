@@ -7,6 +7,11 @@ const CHUNK_ERROR_KEY = 'faflow_chunk_reload_attempted'
  * Special case: "Failed to fetch dynamically imported module" (stale chunk hash
  * after a deploy) triggers an automatic hard-reload ONCE, then shows the UI if
  * it still fails.
+ * 
+ * Supports:
+ * - `fallback`: Custom fallback component or render function `(error, retry) => ReactNode`
+ * - `inline`: Boolean indicating whether to render in-card (for route/widget wrapping)
+ * - `title`: Optional custom heading
  */
 class ErrorBoundary extends React.Component {
   constructor(props) {
@@ -46,6 +51,10 @@ class ErrorBoundary extends React.Component {
     }
   }
 
+  handleRetry = () => {
+    this.setState({ hasError: false, error: null, errorInfo: null, isChunkError: false })
+  }
+
   handleReset = () => {
     sessionStorage.removeItem(CHUNK_ERROR_KEY)
     this.setState({ hasError: false, error: null, errorInfo: null, isChunkError: false })
@@ -54,7 +63,70 @@ class ErrorBoundary extends React.Component {
 
   render() {
     if (this.state.hasError) {
-      const { isChunkError } = this.state
+      if (this.props.fallback) {
+        return typeof this.props.fallback === 'function'
+          ? this.props.fallback(this.state.error, this.handleRetry)
+          : this.props.fallback
+      }
+
+      const { isChunkError, error, errorInfo } = this.state
+      const isInline = this.props.inline ?? false
+      const title = this.props.title || (isChunkError ? 'New version available' : 'Something went wrong')
+
+      if (isInline) {
+        return (
+          <div className="max-w-2xl mx-auto my-8 p-6 sm:p-8 bg-white border border-rose-200 rounded-2xl shadow-sm text-center space-y-4">
+            <div className="w-12 h-12 mx-auto rounded-full bg-rose-50 flex items-center justify-center text-2xl text-rose-600">
+              {isChunkError ? '🔄' : '⚠️'}
+            </div>
+            <div>
+              <h2 className="text-lg font-bold text-slate-900 tracking-tight">{title}</h2>
+              <p className="mt-1 text-xs text-slate-500 max-w-md mx-auto">
+                {isChunkError
+                  ? 'FAFLOW was updated. Please reload the page to load the latest version.'
+                  : 'An unexpected rendering error occurred on this screen. You can try reloading or return to the dashboard.'}
+              </p>
+            </div>
+
+            {!isChunkError && error && (
+              <details className="text-left bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs">
+                <summary className="font-semibold text-slate-600 cursor-pointer select-none">
+                  Technical Details
+                </summary>
+                <pre className="mt-2 p-2 bg-rose-50 text-rose-800 rounded-lg overflow-x-auto whitespace-pre-wrap font-mono text-[11px]">
+                  {String(error?.message || error)}
+                  {'\n\n'}
+                  {errorInfo?.componentStack}
+                </pre>
+              </details>
+            )}
+
+            <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
+              <button
+                type="button"
+                onClick={this.handleRetry}
+                className="px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white font-bold text-xs rounded-xl shadow-xs transition"
+              >
+                Try Again
+              </button>
+              <button
+                type="button"
+                onClick={() => window.location.reload()}
+                className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl border border-slate-200 transition"
+              >
+                Reload Page
+              </button>
+              <button
+                type="button"
+                onClick={this.handleReset}
+                className="px-4 py-2 bg-white hover:bg-slate-50 text-slate-600 font-medium text-xs rounded-xl border border-slate-200 transition"
+              >
+                Dashboard
+              </button>
+            </div>
+          </div>
+        )
+      }
 
       return (
         <div style={{
@@ -63,8 +135,8 @@ class ErrorBoundary extends React.Component {
           flexDirection: 'column',
           alignItems: 'center',
           justifyContent: 'center',
-          background: 'var(--bg-primary, #0f172a)',
-          color: 'var(--text-primary, #f1f5f9)',
+          background: 'var(--bg-primary, #F8FAFC)',
+          color: 'var(--text-primary, #0F172A)',
           fontFamily: 'Inter, system-ui, sans-serif',
           padding: '2rem',
           textAlign: 'center',
@@ -72,32 +144,32 @@ class ErrorBoundary extends React.Component {
         }}>
           <div style={{ fontSize: '3rem' }}>{isChunkError ? '🔄' : '⚠️'}</div>
           <h1 style={{ fontSize: '1.5rem', fontWeight: 700, margin: 0 }}>
-            {isChunkError ? 'New version available' : 'Something went wrong'}
+            {title}
           </h1>
-          <p style={{ color: 'var(--text-secondary, #94a3b8)', maxWidth: '480px', margin: 0 }}>
+          <p style={{ color: '#64748B', maxWidth: '480px', margin: 0, fontSize: '0.9rem' }}>
             {isChunkError
               ? 'FAFLOW was updated while this tab was open. Please reload to get the latest version.'
               : 'An unexpected error occurred in the application. This has been logged for investigation.'}
           </p>
-          {!isChunkError && this.state.error && (
+          {!isChunkError && error && (
             <details style={{ maxWidth: '640px', width: '100%', textAlign: 'left' }}>
-              <summary style={{ color: '#94a3b8', cursor: 'pointer', fontSize: '0.85rem', marginBottom: '0.5rem' }}>
+              <summary style={{ color: '#64748B', cursor: 'pointer', fontSize: '0.85rem', marginBottom: '0.5rem' }}>
                 Error Details
               </summary>
               <pre style={{
-                background: 'rgba(239,68,68,0.1)',
-                border: '1px solid rgba(239,68,68,0.3)',
+                background: 'rgba(239,68,68,0.06)',
+                border: '1px solid rgba(239,68,68,0.2)',
                 borderRadius: '0.5rem',
                 padding: '1rem',
                 fontSize: '0.75rem',
                 textAlign: 'left',
                 overflowX: 'auto',
-                color: '#fca5a5',
+                color: '#B91C1C',
                 whiteSpace: 'pre-wrap',
                 wordBreak: 'break-word',
               }}>
-                {String(this.state.error)}{'\n\n'}
-                {this.state.errorInfo?.componentStack}
+                {String(error?.message || error)}{'\n\n'}
+                {errorInfo?.componentStack}
               </pre>
             </details>
           )}
@@ -108,9 +180,9 @@ class ErrorBoundary extends React.Component {
                 window.location.href = window.location.href.split('?')[0] + '?v=' + Date.now()
               }}
               style={{
-                background: isChunkError ? 'var(--accent, #6366f1)' : 'rgba(255,255,255,0.1)',
+                background: 'var(--primary-600, #2563EB)',
                 color: '#fff',
-                border: isChunkError ? 'none' : '1px solid rgba(255,255,255,0.2)',
+                border: 'none',
                 borderRadius: '0.5rem',
                 padding: '0.75rem 1.5rem',
                 fontSize: '0.9rem',
@@ -124,9 +196,9 @@ class ErrorBoundary extends React.Component {
               <button
                 onClick={this.handleReset}
                 style={{
-                  background: 'var(--accent, #6366f1)',
-                  color: '#fff',
-                  border: 'none',
+                  background: '#F1F5F9',
+                  color: '#334155',
+                  border: '1px solid #CBD5E1',
                   borderRadius: '0.5rem',
                   padding: '0.75rem 1.5rem',
                   fontSize: '0.9rem',
@@ -145,4 +217,5 @@ class ErrorBoundary extends React.Component {
     return this.props.children
   }
 }
+
 export default ErrorBoundary

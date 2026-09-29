@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { studentAttendanceApi, intelligenceApi } from '../../api/services'
 import { Card, Spinner, Modal } from '../../components/ui'
+import { formatErrorMessage } from '../../utils/errorUtils'
 import {
   UsersIcon, CalIcon, ClockIcon, AlertTriangleIcon, SparklesIcon,
   RefreshIcon, CheckCircleIcon
@@ -223,7 +224,7 @@ export default function HodStudentAttendance() {
       {error && (
         <div className="p-4 bg-rose-50 border border-rose-200 text-rose-800 rounded-xl text-sm flex items-center gap-2">
           <AlertTriangleIcon className="w-5 h-5 text-rose-600" />
-          <span>{error}</span>
+          <span>{formatErrorMessage(error)}</span>
         </div>
       )}
 

@@ -15,6 +15,7 @@ import {
   SearchIcon,
   SettingsIcon,
 } from '../../components/icons'
+import { formatErrorMessage } from '../../utils/errorUtils'
 
 
 const LEAVE_TYPE_COLORS = {
@@ -90,7 +91,7 @@ export default function StaffLeaves() {
         setLeaves(leavesRes.data)
       }
     } catch (err) {
-      setError(err.response?.data?.detail || 'Failed to load staff leave records')
+      setError(formatErrorMessage(err, 'Failed to load staff leave records'))
     } finally {
       setLoading(false)
     }
@@ -117,7 +118,7 @@ export default function StaffLeaves() {
       setApprovalRemarks('')
       loadData()
     } catch (err) {
-      setError(err.response?.data?.detail || `Failed to ${actionModal.type} leave request`)
+      setError(formatErrorMessage(err, `Failed to ${actionModal.type} leave request`))
     } finally {
       setProcessing(false)
     }
@@ -143,7 +144,7 @@ export default function StaffLeaves() {
         openStaffLedger(ledgerStaff)
       }
     } catch (err) {
-      setError(err.response?.data?.detail || 'Failed to adjust staff credit balance')
+      setError(formatErrorMessage(err, 'Failed to adjust staff credit balance'))
     } finally {
       setProcessing(false)
     }
@@ -168,7 +169,7 @@ export default function StaffLeaves() {
         openStaffLedger(ledgerStaff)
       }
     } catch (err) {
-      setError(err.response?.data?.detail || 'Failed to update leave quota limit')
+      setError(formatErrorMessage(err, 'Failed to update leave quota limit'))
     } finally {
       setProcessing(false)
     }
@@ -182,7 +183,7 @@ export default function StaffLeaves() {
       const res = await managerLeavesApi.getStaffLedger(st.staff_id || st.id)
       setLedgerSummary(res.data)
     } catch (err) {
-      setError(err.response?.data?.detail || 'Failed to load staff leave ledger')
+      setError(formatErrorMessage(err, 'Failed to load staff leave ledger'))
     } finally {
       setLoadingLedger(false)
     }
@@ -264,7 +265,7 @@ export default function StaffLeaves() {
       {/* Alerts */}
       {error && (
         <div className="rounded-xl bg-rose-50 border border-rose-200 p-4 text-xs sm:text-sm text-rose-700 font-semibold flex items-center justify-between">
-          <span>{error}</span>
+          <span>{formatErrorMessage(error)}</span>
           <button onClick={() => setError('')} className="text-rose-500 hover:text-rose-700 font-bold">✕</button>
         </div>
       )}

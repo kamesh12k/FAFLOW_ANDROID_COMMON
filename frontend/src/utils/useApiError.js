@@ -5,6 +5,10 @@
  *   catch (err) { setError(humanize(err)) }
  */
 
+import { formatErrorMessage } from './errorUtils'
+
+export { formatErrorMessage }
+
 const STATUS_MESSAGES = {
   400: 'The request could not be processed. Please check your input.',
   401: 'Your session has expired. Please sign in again.',
@@ -40,8 +44,8 @@ export function humanizeApiError(err, fallback = 'Something went wrong. Please t
       }
       return serverMsg
     }
-    if (Array.isArray(serverMsg)) {
-      return serverMsg.map(m => (typeof m === 'object' ? m.msg || JSON.stringify(m) : m)).join(', ')
+    if (Array.isArray(serverMsg) || (typeof serverMsg === 'object' && serverMsg !== null)) {
+      return formatErrorMessage(serverMsg, STATUS_MESSAGES[status] || fallback)
     }
     return STATUS_MESSAGES[status] || fallback
   }

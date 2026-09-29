@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { leavesApi, leaveBalancesApi } from '../../api/services'
 import { Spinner, StatusBadge, EmptyState, Modal } from '../../components/ui'
 import { PlusIcon, SearchIcon, FilterIcon, XCircleIcon, AlertTriangleIcon } from '../../components/icons'
+import { formatErrorMessage } from '../../utils/errorUtils'
 
 const PERIOD_TIMES = {
   1: '09:20–10:20',
@@ -82,7 +83,7 @@ export default function LeaveHistory() {
       if (viewDetailTarget && ids.includes(viewDetailTarget.id)) setViewDetailTarget(null)
       load()
     } catch (err) {
-      setError(err.response?.data?.detail || 'Failed to cancel leave.')
+      setError(formatErrorMessage(err, 'Failed to cancel leave.'))
     } finally {
       setActionLoading(null)
     }
@@ -228,7 +229,7 @@ export default function LeaveHistory() {
 
       {error && (
         <div className="rounded-xl bg-rose-50 border border-rose-200 p-3 text-xs sm:text-sm text-rose-700 font-semibold flex items-center justify-between">
-          <span>{error}</span>
+          <span>{formatErrorMessage(error)}</span>
           <button onClick={() => setError('')} className="text-rose-500 hover:text-rose-700 text-xs font-bold ml-2">✕</button>
         </div>
       )}

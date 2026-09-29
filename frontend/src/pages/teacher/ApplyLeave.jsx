@@ -3,7 +3,8 @@ import { useNavigate, Link } from 'react-router-dom'
 import { leavesApi, academicCalendarApi, campusOperationsApi, timetableApi, leavePoliciesApi, leaveBalancesApi, teachersApi } from '../../api/services'
 import { useAuth } from '../../context/AuthContext'
 import { ErrorAlert, Spinner } from '../../components/ui'
-import { CheckCircleIcon } from '../../components/icons'
+import { CheckCircleIcon, AlertTriangleIcon } from '../../components/icons'
+import { formatErrorMessage } from '../../utils/errorUtils'
 
 function ArrowLeftIcon(props) {
   return (
@@ -600,7 +601,7 @@ export default function ApplyLeave() {
 
       setTimeout(() => navigate('/teacher/leaves'), 2200)
     } catch (err) {
-      setError(err.response?.data?.detail || 'Failed to submit leave request. Please check your connection and try again.')
+      setError(formatErrorMessage(err, 'Failed to submit leave request. Please check your connection and try again.'))
     } finally {
       setLoading(false)
     }

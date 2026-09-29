@@ -2,6 +2,9 @@ import { useState, useMemo, useEffect, useRef } from 'react'
 import { Link } from 'react-router-dom'
 import { ChevronDownIcon, SearchIcon, CloseIcon, CheckCircleIcon, AlertTriangleIcon } from '../icons'
 import { FaflowColors, FaflowRoleColors, FaflowStatusColors } from '../../tokens/designTokens'
+import { formatErrorMessage } from '../../utils/errorUtils'
+
+export { formatErrorMessage }
 
 // 1. Spinner Loader
 export function Spinner({ size = 'md', className = '' }) {
@@ -163,31 +166,35 @@ export function EmptyState({ title = 'Nothing here yet', message, icon, action, 
 }
 
 // 7. Error Alert
-export function ErrorAlert({ message }) {
+export function ErrorAlert({ message, onClose, onDismiss }) {
   if (!message) return null
-  let displayMessage = message
-  if (Array.isArray(message)) {
-    displayMessage = message.map(x => (typeof x === 'object' && x?.msg) ? x.msg : JSON.stringify(x)).join(', ')
-  } else if (typeof message === 'object') {
-    displayMessage = message.detail || message.message || JSON.stringify(message)
-    if (Array.isArray(displayMessage)) {
-      displayMessage = displayMessage.map(x => (typeof x === 'object' && x?.msg) ? x.msg : JSON.stringify(x)).join(', ')
-    }
-  }
+  const displayMessage = formatErrorMessage(message)
+  if (!displayMessage) return null
   // Humanize common API errors
-  const humanized = String(displayMessage)
+  const humanized = displayMessage
     .replace(/500 internal server error/i, 'Something went wrong on the server. Please try again.')
     .replace(/404 not found/i, 'The requested resource was not found.')
     .replace(/401 unauthorized/i, 'Your session has expired. Please log in again.')
     .replace(/403 forbidden/i, "You don't have permission to perform this action.")
     .replace(/network error/i, 'Network error. Please check your connection.')
+  const handleClose = onClose || onDismiss
   return (
     <div className="rounded-xl bg-rose-50 border border-rose-200/60 p-4 text-sm text-rose-700 flex items-start gap-3" role="alert">
       <AlertTriangleIcon className="w-5 h-5 shrink-0 mt-0.5" />
-      <div>
+      <div className="flex-1">
         <h4 className="font-bold text-rose-800">Something went wrong</h4>
         <p className="mt-1 text-xs font-medium leading-relaxed">{humanized}</p>
       </div>
+      {handleClose && (
+        <button
+          type="button"
+          onClick={handleClose}
+          className="text-rose-500 hover:text-rose-700 font-bold p-1 rounded-md transition"
+          aria-label="Dismiss error"
+        >
+          <CloseIcon className="w-4 h-4" />
+        </button>
+      )}
     </div>
   )
 }
@@ -278,7 +285,7 @@ export function Input({ label, error, helperText, className = '', ...props }) {
         }`}
         {...props}
       />
-      {error && <p className="text-xs text-rose-600 font-semibold">{error}</p>}
+      {error && <p className="text-xs text-rose-600 font-semibold">{formatErrorMessage(error)}</p>}
       {helperText && !error && <p className="text-xs text-slate-500 font-medium">{helperText}</p>}
     </div>
   )
@@ -298,7 +305,7 @@ export function Textarea({ label, error, helperText, className = '', ...props })
         rows={3}
         {...props}
       />
-      {error && <p className="text-xs text-rose-600 font-semibold">{error}</p>}
+      {error && <p className="text-xs text-rose-600 font-semibold">{formatErrorMessage(error)}</p>}
       {helperText && !error && <p className="text-xs text-slate-500 font-medium">{helperText}</p>}
     </div>
   )
@@ -328,7 +335,7 @@ export function Select({ label, options = [], error, helperText, className = '',
           <ChevronDownIcon className="w-4 h-4" />
         </div>
       </div>
-      {error && <p className="text-xs text-rose-600 font-semibold">{error}</p>}
+      {error && <p className="text-xs text-rose-600 font-semibold">{formatErrorMessage(error)}</p>}
       {helperText && !error && <p className="text-xs text-slate-500 font-medium">{helperText}</p>}
     </div>
   )

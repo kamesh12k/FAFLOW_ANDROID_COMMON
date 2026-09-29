@@ -8,6 +8,7 @@ import AppShell from './components/layout/AppShell'
 import PageLoader from './components/common/PageLoader'
 import ScrollToTop from './components/common/ScrollToTop'
 import { ToastProvider } from './components/ui/Toast'
+import ErrorBoundary from './components/ErrorBoundary'
 import { registerServiceWorker } from './utils/pushNotifications'
 
 // Auth pages (lazy loaded)
@@ -224,7 +225,7 @@ export default function App() {
                 <Route path="/teacher/student-attendance" element={<StudentAttendance />} />
                 <Route path="/teacher/timetable" element={<TimetableView />} />
                 <Route path="/teacher/class-timetable" element={<ClasswiseTimetable />} />
-                <Route path="/teacher/leave/apply" element={<ApplyLeave />} />
+                <Route path="/teacher/leave/apply" element={<ErrorBoundary inline title="Apply Leave"><ApplyLeave /></ErrorBoundary>} />
                 <Route path="/teacher/leaves" element={<LeaveHistory />} />
                 <Route path="/teacher/substitution" element={<TeacherSubstitution />} />
                 <Route path="/teacher/today-coverage" element={<TodaySubstitutions />} />

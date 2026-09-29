@@ -8,7 +8,8 @@ import {
   Button, 
   StatusBadge, 
   SkeletonTable,
-  Pagination 
+  Pagination,
+  formatErrorMessage
 } from '../../components/ui'
 
 export default function AdminAttendance() {
@@ -431,7 +432,7 @@ export default function AdminAttendance() {
         <div className="space-y-4">
           {deleteError && (
             <div className="p-3 text-xs bg-rose-50 text-rose-700 border border-rose-200 rounded-xl font-semibold">
-              {deleteError}
+              {formatErrorMessage(deleteError)}
             </div>
           )}
 

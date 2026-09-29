@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { operationalStaffApi } from '../../api/services'
 import { Spinner, EmptyState } from '../../components/ui'
 import { SearchIcon, UsersIcon, DoorIcon, BookIcon } from '../../components/icons'
+import { formatErrorMessage } from '../../utils/errorUtils'
 
 export default function StaffDirectory() {
   const [staff, setStaff] = useState([])
@@ -14,7 +15,7 @@ export default function StaffDirectory() {
     setLoading(true)
     operationalStaffApi.list()
       .then(res => setStaff(res.data))
-      .catch(err => setError(err.response?.data?.detail || 'Failed to load staff directory'))
+      .catch(err => setError(formatErrorMessage(err, 'Failed to load staff directory')))
       .finally(() => setLoading(false))
   }, [])
 
@@ -43,7 +44,7 @@ export default function StaffDirectory() {
 
       {error && (
         <div className="rounded-xl bg-rose-50 border border-rose-200 p-3 text-xs sm:text-sm text-rose-700 font-semibold">
-          {error}
+          {formatErrorMessage(error)}
         </div>
       )}
 

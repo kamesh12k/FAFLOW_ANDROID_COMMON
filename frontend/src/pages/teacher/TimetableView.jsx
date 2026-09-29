@@ -2,6 +2,7 @@ import { useEffect, useState, useMemo } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 import { timetableApi } from '../../api/services'
+import { formatErrorMessage } from '../../utils/errorUtils'
 
 const PERIOD_TIMES = { 1:'9:20 – 10:20', 2:'10:20 – 11:15', 3:'11:40 – 12:35', 4:'13:35 – 14:30', 5:'14:55 – 15:50' }
 const ALL_PERIODS = [1, 2, 3, 4, 5]
@@ -98,7 +99,7 @@ export default function TimetableView() {
             </div>
           ) : error ? (
             <div className="py-16 text-center px-6">
-              <p className="text-sm font-bold text-rose-600">{error}</p>
+              <p className="text-sm font-bold text-rose-600">{formatErrorMessage(error)}</p>
               <button onClick={() => window.location.reload()} className="mt-3 text-xs font-bold text-indigo-600 hover:text-indigo-700">
                 Retry
               </button>

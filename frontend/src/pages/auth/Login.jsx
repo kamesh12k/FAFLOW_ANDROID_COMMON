@@ -6,6 +6,7 @@ import { BRAND_CONFIG } from '../../config/branding'
 import FacultyFlowLogo from '../../components/brand/FacultyFlowLogo'
 import { authApi } from '../../api/services'
 import { EyeIcon, EyeOffIcon, Spinner, ShieldCheckIcon, AlertTriangleIcon } from '../../components/icons'
+import { formatErrorMessage } from '../../utils/errorUtils'
 
 export default function Login() {
   const [form, setForm] = useState({ identifier: '', password: '' })
@@ -43,7 +44,7 @@ export default function Login() {
         }
       }
     } catch (err) {
-      setError(err.response?.data?.detail || 'Invalid username or password. Please try again.')
+      setError(formatErrorMessage(err, 'Invalid username or password. Please try again.'))
     } finally {
       setLoading(false)
     }
@@ -116,7 +117,7 @@ export default function Login() {
                 className="flex items-start gap-2.5 px-3.5 py-2.5 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-300 text-xs font-semibold animate-fadeIn"
               >
                 <AlertTriangleIcon className="w-4 h-4 text-rose-400 shrink-0 mt-0.5" />
-                <span className="leading-relaxed">{error}</span>
+                <span className="leading-relaxed">{formatErrorMessage(error)}</span>
               </div>
             )}
 

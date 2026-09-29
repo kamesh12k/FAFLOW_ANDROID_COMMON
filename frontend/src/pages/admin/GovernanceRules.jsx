@@ -6,6 +6,7 @@
  */
 import { useEffect, useState, useRef, useCallback } from 'react'
 import governanceApi from '../../api/governanceApi'
+import { formatErrorMessage } from '../../utils/errorUtils'
 
 /* ─── Category metadata & iconography ───────────────────────────────────── */
 const CATEGORY_META = {
@@ -230,7 +231,7 @@ function XIcon(props) {
 }
 
 function getApiErrorMessage(err, fallback = 'Operation failed') {
-  return err.response?.data?.detail || err.message || fallback
+  return formatErrorMessage(err, fallback)
 }
 
 /* ─── Edit Rule Modal ───────────────────────────────────────────────────── */
@@ -328,7 +329,7 @@ function EditRuleModal({ rule, onClose, onSaved }) {
           placeholder="Describe why this operational threshold is being adjusted..."
         />
 
-        {error && <div style={{ color: '#dc2626', fontSize: '0.83rem', fontWeight: 700, marginBottom: 10 }}>{error}</div>}
+        {error && <div style={{ color: '#dc2626', fontSize: '0.83rem', fontWeight: 700, marginBottom: 10 }}>{formatErrorMessage(error)}</div>}
 
         <div style={S.btnRow}>
           <button style={S.btnSecondary} onClick={handleReset} disabled={saving} title="Reset to factory default">
@@ -371,7 +372,7 @@ function RollbackModal({ entry, onClose, onDone }) {
         </div>
         <label style={S.label}>Justification Reason</label>
         <input style={S.input} value={reason} onChange={e => setReason(e.target.value)} />
-        {error && <div style={{ color: '#dc2626', fontSize: '0.83rem', fontWeight: 700, marginBottom: 10 }}>{error}</div>}
+        {error && <div style={{ color: '#dc2626', fontSize: '0.83rem', fontWeight: 700, marginBottom: 10 }}>{formatErrorMessage(error)}</div>}
         <div style={S.btnRow}>
           <button style={S.btnSecondary} onClick={onClose}>Cancel</button>
           <button style={S.btnDanger} onClick={handleRollback} disabled={saving}>{saving ? 'Rolling back…' : 'Confirm Rollback'}</button>
@@ -461,7 +462,7 @@ function PeriodEditor({ onClose, onSaved }) {
             ))}
           </>
         )}
-        {error && <div style={{ color: '#dc2626', fontSize: '0.83rem', fontWeight: 700, margin: '0.75rem 0' }}>{error}</div>}
+        {error && <div style={{ color: '#dc2626', fontSize: '0.83rem', fontWeight: 700, margin: '0.75rem 0' }}>{formatErrorMessage(error)}</div>}
         <div style={S.btnRow}>
           <button style={S.btnSecondary} onClick={onClose}>Cancel</button>
           <button style={S.btnPrimary} onClick={handleSave} disabled={saving || loading}>
@@ -508,7 +509,7 @@ function RulesTab({ onHistoryOpen }) {
   }
 
   if (loading) return <div style={{ textAlign: 'center', color: '#475569', padding: '3rem 0', fontWeight: 700 }}>Loading rules…</div>
-  if (error) return <div style={{ color: '#dc2626', padding: '1rem', fontWeight: 700 }}>{error}</div>
+  if (error) return <div style={{ color: '#dc2626', padding: '1rem', fontWeight: 700 }}>{formatErrorMessage(error)}</div>
 
   return (
     <>
@@ -661,7 +662,7 @@ function HistoryTab({ filterKey, setFilterKey }) {
       {loading ? (
         <div style={{ textAlign: 'center', color: '#475569', padding: '2.5rem 0', fontWeight: 700 }}>Loading history…</div>
       ) : error ? (
-        <div style={{ color: '#dc2626', fontWeight: 700 }}>{error}</div>
+        <div style={{ color: '#dc2626', fontWeight: 700 }}>{formatErrorMessage(error)}</div>
       ) : history.length === 0 ? (
         <div style={{ color: '#475569', textAlign: 'center', padding: '2.5rem 0', fontWeight: 600 }}>No history entries found.</div>
       ) : (

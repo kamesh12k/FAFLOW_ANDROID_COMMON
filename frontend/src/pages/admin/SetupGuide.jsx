@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo } from 'react'
 import { Link } from 'react-router-dom'
 import { setupGuideApi } from '../../api/services'
 import { Spinner } from '../../components/ui'
+import { formatErrorMessage } from '../../utils/errorUtils'
 
 export default function SetupGuide() {
   const [activeTab, setActiveTab] = useState('roadmap') // 'roadmap' | 'dependency_map' | 'data_flow' | 'module_readiness' | 'knowledge_hub'
@@ -27,7 +28,7 @@ export default function SetupGuide() {
       }
     } catch (err) {
       console.error('Failed to load setup readiness:', err)
-      setError(err.response?.data?.detail || 'Failed to calculate system setup readiness.')
+      setError(formatErrorMessage(err, 'Failed to calculate system setup readiness.'))
     } finally {
       setLoading(false)
     }
@@ -219,7 +220,7 @@ export default function SetupGuide() {
         <div className="card p-8 bg-rose-50 border border-rose-200 text-rose-800 rounded-2xl flex items-center justify-between">
           <div className="space-y-1">
             <h3 className="font-bold">Error loading setup guide</h3>
-            <p className="text-xs text-rose-600">{error}</p>
+            <p className="text-xs text-rose-600">{formatErrorMessage(error)}</p>
           </div>
           <button onClick={loadReadiness} className="btn bg-rose-600 text-white text-xs font-bold px-3 py-1.5 rounded-lg">
             Retry

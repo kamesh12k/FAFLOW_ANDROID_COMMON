@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { operationalStaffApi, departmentsApi } from '../../api/services'
 import { Spinner, Modal, EmptyState } from '../../components/ui'
 import { PlusIcon, SearchIcon, UsersIcon } from '../../components/icons'
+import { formatErrorMessage } from '../../utils/errorUtils'
 
 export default function NonTeachingStaff() {
   const [staff, setStaff] = useState([])
@@ -43,7 +44,7 @@ export default function NonTeachingStaff() {
       setStaff(staffRes.data)
       setDepartments(deptRes.data)
     } catch (err) {
-      setError(err.response?.data?.detail || 'Failed to load non-teaching staff')
+      setError(formatErrorMessage(err, 'Failed to load non-teaching staff'))
     } finally {
       setLoading(false)
     }
@@ -74,7 +75,7 @@ export default function NonTeachingStaff() {
       })
       loadData()
     } catch (err) {
-      setError(err.response?.data?.detail || 'Failed to add non-teaching staff')
+      setError(formatErrorMessage(err, 'Failed to add non-teaching staff'))
     } finally {
       setSaving(false)
     }
@@ -99,7 +100,7 @@ export default function NonTeachingStaff() {
       setEditTarget(null)
       loadData()
     } catch (err) {
-      setError(err.response?.data?.detail || 'Failed to update staff')
+      setError(formatErrorMessage(err, 'Failed to update staff'))
     } finally {
       setSaving(false)
     }
@@ -114,7 +115,7 @@ export default function NonTeachingStaff() {
       setDeleteTarget(null)
       loadData()
     } catch (err) {
-      setError(err.response?.data?.detail || 'Failed to delete staff')
+      setError(formatErrorMessage(err, 'Failed to delete staff'))
     } finally {
       setSaving(false)
     }
@@ -176,7 +177,7 @@ export default function NonTeachingStaff() {
 
       {error && (
         <div className="rounded-xl bg-rose-50 border border-rose-200 p-3 text-xs sm:text-sm text-rose-700 font-semibold flex items-center justify-between">
-          <span>{error}</span>
+          <span>{formatErrorMessage(error)}</span>
           <button onClick={() => setError('')} className="text-rose-500 hover:text-rose-700 text-xs font-bold ml-2">✕</button>
         </div>
       )}

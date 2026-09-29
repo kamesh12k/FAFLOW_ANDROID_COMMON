@@ -8,6 +8,7 @@ import { Spinner } from '../../components/ui'
 import { useAuth } from '../../context/AuthContext'
 import { useToast } from '../../components/ui/Toast'
 import { announcementApi } from '../../api/announcements'
+import { formatErrorMessage } from '../../utils/errorUtils'
 import AnnouncementComposerModal from './AnnouncementComposerModal'
 import AnnouncementDetail from './AnnouncementDetail'
 import AnnouncementAnalyticsModal from './AnnouncementAnalyticsModal'
@@ -62,7 +63,7 @@ export default function AnnouncementFeed() {
       const res = await announcementApi.listAnnouncements(params)
       setAnnouncements(res.data)
     } catch (err) {
-      const msg = err.response?.data?.detail || 'Failed to load announcements feed'
+      const msg = formatErrorMessage(err, 'Failed to load announcements feed')
       setError(msg)
       showToast(msg, 'error')
     } finally {
@@ -378,7 +379,7 @@ export default function AnnouncementFeed() {
           <AlertTriangleIcon className="w-8 h-8 text-rose-500 mx-auto" />
           <h3 className="font-bold text-sm text-slate-900">Unable to load announcements</h3>
           <p className="text-xs text-slate-500 max-w-sm mx-auto">
-            {error}. Please check your connection and try again.
+            {formatErrorMessage(error)}. Please check your connection and try again.
           </p>
           <button
             type="button"

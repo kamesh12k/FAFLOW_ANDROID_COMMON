@@ -1,4 +1,5 @@
 import axios from 'axios'
+import { formatErrorMessage } from '../utils/errorUtils'
 
 const isPort5173 = window.location.port === '5173';
 const api = axios.create({
@@ -138,15 +139,7 @@ export async function cachedGet(url, config = {}, ttlMs = 15000) {
 
 export function getApiErrorMessage(err, fallbackMessage = 'An unexpected error occurred.') {
   if (!err) return fallbackMessage
-  const detail = err.response?.data?.detail
-  if (typeof detail === 'string') return detail
-  if (detail && typeof detail === 'object') {
-    if (detail.title) return detail.title
-    if (detail.reason) return detail.reason
-    if (detail.message) return detail.message
-  }
-  if (err.message) return err.message
-  return fallbackMessage
+  return formatErrorMessage(err, fallbackMessage)
 }
 
 export default api

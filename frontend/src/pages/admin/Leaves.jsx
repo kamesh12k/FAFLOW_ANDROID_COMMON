@@ -1,6 +1,6 @@
 import { useEffect, useState, useMemo } from 'react'
 import { leavesApi, adminApi, departmentsApi, leaveBalancesApi, leavePoliciesApi } from '../../api/services'
-import { Spinner, StatusBadge, Modal, EmptyState, AssignmentTypeBadge } from '../../components/ui'
+import { Spinner, StatusBadge, Modal, EmptyState, AssignmentTypeBadge, formatErrorMessage } from '../../components/ui'
 import {
   SwapIcon,
   LockIcon,
@@ -1987,7 +1987,7 @@ export default function AdminLeaves() {
           <form onSubmit={handleAdjustSubmit} className="space-y-4 text-xs sm:text-sm text-slate-700">
             {adjustModal.error && (
               <div className="p-3 bg-rose-50 border border-rose-200 text-rose-700 rounded-xl text-xs font-semibold">
-                {adjustModal.error}
+                {formatErrorMessage(adjustModal.error)}
               </div>
             )}
 
@@ -2195,7 +2195,7 @@ export default function AdminLeaves() {
             </label>
 
             {exceptionModal.error && (
-              <p className="text-xs text-rose-600 font-bold">{exceptionModal.error}</p>
+              <p className="text-xs text-rose-600 font-bold">{formatErrorMessage(exceptionModal.error)}</p>
             )}
 
             <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-100">

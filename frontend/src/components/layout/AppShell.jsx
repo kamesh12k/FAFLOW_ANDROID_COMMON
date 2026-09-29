@@ -8,6 +8,7 @@ import MobileDrawer from './MobileDrawer'
 import PolicyConsentModal from '../onboarding/PolicyConsentModal'
 import GuidedTour from '../onboarding/GuidedTour'
 import HelpGuideModal from '../onboarding/HelpGuideModal'
+import ErrorBoundary from '../ErrorBoundary'
 
 export default function AppShell() {
   const { user, updateUser } = useAuth()
@@ -74,7 +75,9 @@ export default function AppShell() {
           tabIndex={-1}
         >
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6">
-            <Outlet />
+            <ErrorBoundary inline>
+              <Outlet />
+            </ErrorBoundary>
           </div>
         </main>
       </div>

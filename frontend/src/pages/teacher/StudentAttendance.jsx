@@ -3,6 +3,7 @@ import { studentAttendanceApi, classesApi } from '../../api/services'
 import { useAuth } from '../../context/AuthContext'
 import { Card, Spinner, Badge } from '../../components/ui'
 import { CalIcon, UsersIcon, CheckIcon, AlertTriangleIcon, ClockIcon } from '../../components/icons'
+import { formatErrorMessage } from '../../utils/errorUtils'
 
 export default function StudentAttendance() {
   const { user } = useAuth()
@@ -45,7 +46,7 @@ export default function StudentAttendance() {
       setAllClasses(clsRes.data || [])
     } catch (err) {
       console.error('Failed to load schedule', err)
-      setError(err.response?.data?.detail || 'Failed to load schedule for today')
+      setError(formatErrorMessage(err, 'Failed to load schedule for today'))
     } finally {
       setLoading(false)
     }
@@ -128,7 +129,7 @@ export default function StudentAttendance() {
       }
     } catch (err) {
       console.error('Error starting attendance', err)
-      setError(err.response?.data?.detail || 'Failed to initialize attendance session')
+      setError(formatErrorMessage(err, 'Failed to initialize attendance session'))
     } finally {
       setRosterLoading(false)
     }
@@ -173,7 +174,7 @@ export default function StudentAttendance() {
       })
     } catch (err) {
       console.error('Error initiating emergency attendance', err)
-      setError(err.response?.data?.detail || 'Failed to start emergency attendance')
+      setError(formatErrorMessage(err, 'Failed to start emergency attendance'))
     } finally {
       setRosterLoading(false)
     }
@@ -242,7 +243,7 @@ export default function StudentAttendance() {
       loadSchedule()
     } catch (err) {
       console.error('Error submitting attendance', err)
-      setError(err.response?.data?.detail || 'Failed to submit attendance')
+      setError(formatErrorMessage(err, 'Failed to submit attendance'))
     } finally {
       setSubmitting(false)
     }
@@ -263,7 +264,7 @@ export default function StudentAttendance() {
       setSubmitSuccess(`Updated student ${correctingStudent.roll_number} to ${newStatus}`)
     } catch (err) {
       console.error('Correction failed', err)
-      const detail = err.response?.data?.detail || 'Correction failed'
+      const detail = formatErrorMessage(err, 'Correction failed')
       setError(detail)
       // If server rejected because window closed, refresh session to lock controls
       if (detail.toLowerCase().includes('closed') || detail.toLowerCase().includes('expired') || detail.toLowerCase().includes('locked')) {
@@ -327,7 +328,7 @@ export default function StudentAttendance() {
       {error && (
         <div className="p-4 bg-rose-50 border border-rose-200 text-rose-800 rounded-xl text-sm flex items-start gap-3">
           <AlertTriangleIcon className="w-5 h-5 flex-shrink-0 text-rose-600 mt-0.5" />
-          <div className="flex-1">{error}</div>
+          <div className="flex-1">{formatErrorMessage(error)}</div>
           <button onClick={() => setError('')} className="text-rose-500 hover:text-rose-700 font-bold">×</button>
         </div>
       )}
