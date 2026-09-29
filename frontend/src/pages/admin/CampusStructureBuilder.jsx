@@ -1751,7 +1751,7 @@ function AutoFillWizard({ onClose, onSuccess }) {
     block_prefix: '',
     num_floors: 2,
     rooms_per_floor: 10,
-    room_number_pattern: '{floor_code}{number:02d}',
+    room_number_pattern: '{block_prefix}{floor_code}{number:02d}',
     room_type: 'classroom',
     room_capacity: 60,
     pad_digits: 2,
@@ -1766,9 +1766,9 @@ function AutoFillWizard({ onClose, onSuccess }) {
   const upd = (k, v) => setForm(f => ({ ...f, [k]: v }))
 
   const PATTERNS = [
-    { label: '001, 002… / 101, 102… (Standard 3-Digit)', value: '{floor_code}{number:02d}' },
-    { label: 'A001, A002… / A101, A102… (Prefix + 3-Digit)', value: '{block_prefix}{floor_code}{number:02d}' },
-    { label: 'Block-A-101 …', value: '{block_prefix}-{floor_code}-{n}' },
+    { label: 'A-001, A-002… / A-101, A-102… (Block Prefix + Floor + 2-Digit, Recommended)', value: '{block_prefix}{floor_code}{number:02d}' },
+    { label: 'Block-A-101 … (Prefix with dash)', value: '{block_prefix}-{floor_code}-{n}' },
+    { label: '001, 002… / 101, 102… (Standard 3-Digit, Single-Block)', value: '{floor_code}{number:02d}' },
     { label: 'Room 101, Room 102 …', value: 'Room {n}' },
   ]
 

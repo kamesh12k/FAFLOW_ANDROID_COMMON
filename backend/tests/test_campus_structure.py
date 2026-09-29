@@ -154,6 +154,74 @@ def test_smart_autofill_block(db: Session, structure_setup):
     assert "SE-208" in room_numbers
 
 
+def test_smart_autofill_with_colliding_room_numbers(db: Session, structure_setup):
+    # Calling smart_autofill with identical generic patterns (e.g., {floor_code}{number:02d} -> 001)
+    # must NOT crash with unique constraint violation and must assign unique room numbers
+    req1 = SmartBlockAutoFillRequest(
+        block_name="Block One",
+        block_code="B1",
+        description="First block with generic numbers",
+        floors=[
+            SmartFloorConfig(
+                floor_number=0,
+                floor_name="Ground",
+                room_count=3,
+                start_num=1,
+                pattern="{floor_code}{number:02d}",
+                room_type=RoomType.classroom,
+                capacity=60
+            )
+        ]
+    )
+    res1 = CampusStructureService.smart_autofill_block(db, req1)
+    assert res1.total_rooms_created == 3
+
+    # Now create Block Two with the EXACT SAME generic pattern
+    req2 = SmartBlockAutoFillRequest(
+        block_name="Block Two",
+        block_code="B2",
+        description="Second block with identical pattern",
+        floors=[
+            SmartFloorConfig(
+                floor_number=0,
+                floor_name="Ground",
+                room_count=3,
+                start_num=1,
+                pattern="{floor_code}{number:02d}",
+                room_type=RoomType.classroom,
+                capacity=60
+            )
+        ]
+    )
+    res2 = CampusStructureService.smart_autofill_block(db, req2)
+    assert res2.total_rooms_created == 3
+
+    # Now create Block Three with the EXACT SAME generic pattern again (would trigger 001_1 collision)
+    req3 = SmartBlockAutoFillRequest(
+        block_name="Block Three",
+        block_code="B3",
+        description="Third block with identical pattern",
+        floors=[
+            SmartFloorConfig(
+                floor_number=0,
+                floor_name="Ground",
+                room_count=3,
+                start_num=1,
+                pattern="{floor_code}{number:02d}",
+                room_type=RoomType.classroom,
+                capacity=60
+            )
+        ]
+    )
+    res3 = CampusStructureService.smart_autofill_block(db, req3)
+    assert res3.total_rooms_created == 3
+
+    # All room numbers across all 3 blocks must be completely unique
+    all_rooms = db.query(Room.room_number).all()
+    room_number_list = [r[0] for r in all_rooms]
+    assert len(room_number_list) == len(set(room_number_list))
+
+
 def test_room_pattern_preview_and_bulk_generation(db: Session, structure_setup):
     # 1. Test Preview
     preview_req = RoomPatternPreviewRequest(

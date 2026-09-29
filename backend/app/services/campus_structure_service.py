@@ -363,8 +363,16 @@ class CampusStructureService:
                 )
 
                 if room_no in existing_room_numbers:
-                    # Append unique discriminator if needed
-                    room_no = f"{room_no}_{total_rooms+1}"
+                    # If room number collides, first try prefixing with block code
+                    candidate = f"{block.code}-{room_no}"
+                    if candidate not in existing_room_numbers:
+                        room_no = candidate
+                    else:
+                        # Find the first guaranteed-unique suffix
+                        suffix = 1
+                        while f"{candidate}_{suffix}" in existing_room_numbers:
+                            suffix += 1
+                        room_no = f"{candidate}_{suffix}"
 
                 # Determine room_type with potential override
                 cur_room_type = f_cfg.room_type
@@ -462,7 +470,12 @@ class CampusStructureService:
                     new_room_no = f"{data.new_block_code}-{new_room_no}"
 
                 if new_room_no in existing_room_numbers:
-                    new_room_no = f"{new_room_no}_copy"
+                    candidate = f"{new_room_no}_copy"
+                    suffix = 1
+                    while candidate in existing_room_numbers:
+                        suffix += 1
+                        candidate = f"{new_room_no}_copy{suffix}"
+                    new_room_no = candidate
 
                 new_room = Room(
                     room_number=new_room_no,
