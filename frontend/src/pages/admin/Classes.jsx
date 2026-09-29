@@ -58,6 +58,13 @@ export default function AdminClasses() {
   const [deleting, setDeleting] = useState(false)
   const [deleteError, setDeleteError] = useState('')
 
+  // Quick Assign Base Room State
+  const [assignRoomModalOpen, setAssignRoomModalOpen] = useState(false)
+  const [selectedClassForRoom, setSelectedClassForRoom] = useState(null)
+  const [targetRoomId, setTargetRoomId] = useState('')
+  const [roomAssignSaving, setRoomAssignSaving] = useState(false)
+  const [roomAssignError, setRoomAssignError] = useState('')
+
   const load = () => classesApi.list().then(r => setClasses(r.data)).finally(() => setLoading(false))
 
   useEffect(() => {
@@ -242,6 +249,36 @@ export default function AdminClasses() {
       setDeleting(false)
     }
   }
+
+  const handleOpenAssignRoomModal = (cls) => {
+    setSelectedClassForRoom(cls)
+    setTargetRoomId(cls.default_room_id ? String(cls.default_room_id) : '')
+    setRoomAssignError('')
+    setAssignRoomModalOpen(true)
+  }
+
+  const handleSaveRoomAssignment = async (e) => {
+    if (e && e.preventDefault) e.preventDefault()
+    if (!selectedClassForRoom) return
+    setRoomAssignError('')
+    setRoomAssignSaving(true)
+    try {
+      await classesApi.update(selectedClassForRoom.id, {
+        name: selectedClassForRoom.name,
+        section: selectedClassForRoom.section,
+        department_id: selectedClassForRoom.department_id,
+        semester: selectedClassForRoom.semester,
+        default_room_id: targetRoomId ? Number(targetRoomId) : null,
+      })
+      setAssignRoomModalOpen(false)
+      load()
+    } catch (err) {
+      setRoomAssignError(err.response?.data?.detail || 'Failed to update base classroom.')
+    } finally {
+      setRoomAssignSaving(false)
+    }
+  }
+
 
   const deptName = (id) => departments.find(d => d.id === id)?.name || '—'
   const canManageClass = (c) => isSystemAdmin || !user?.department_id || c.department_id === user.department_id
@@ -449,13 +486,35 @@ export default function AdminClasses() {
                     <td className="px-5 py-3 text-gray-500">Sem {c.semester}</td>
                     <td className="px-5 py-3 text-gray-500">
                       {c.default_room_number ? (
-                        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                          🏢 {c.default_room_number} {c.default_room_type ? `(${c.default_room_type})` : ''}
-                        </span>
+                        <button
+                          type="button"
+                          onClick={() => manageable && handleOpenAssignRoomModal(c)}
+                          disabled={!manageable}
+                          className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200 transition-all shadow-xs group ${
+                            manageable ? 'hover:bg-emerald-100 hover:border-emerald-300 cursor-pointer active:scale-95' : 'cursor-default'
+                          }`}
+                          title={manageable ? "Click to change base classroom" : "Base classroom"}
+                        >
+                          <span>🏢</span>
+                          <span>{c.default_room_number}</span>
+                          {c.default_room_type && <span className="text-[10px] text-emerald-600 font-normal">({c.default_room_type})</span>}
+                          {manageable && <span className="text-[10px] text-emerald-500 group-hover:text-emerald-700 font-bold">✎</span>}
+                        </button>
+                      ) : manageable ? (
+                        <button
+                          type="button"
+                          onClick={() => handleOpenAssignRoomModal(c)}
+                          className="text-[11px] font-bold text-indigo-700 hover:text-indigo-900 bg-indigo-50/80 hover:bg-indigo-100 px-2.5 py-1 rounded-lg border border-indigo-200/90 transition-all inline-flex items-center gap-1 shadow-xs active:scale-95"
+                          title={`Assign base classroom for ${c.name} - ${c.section}`}
+                        >
+                          <span>🏢</span>
+                          <span>+ Assign Room</span>
+                        </button>
                       ) : (
                         <span className="text-gray-400 text-xs italic">Unassigned</span>
                       )}
                     </td>
+
                     <td className="px-5 py-3 text-right">
                       {manageable ? (
                         <div className="flex justify-end gap-3 items-center">
@@ -805,6 +864,64 @@ export default function AdminClasses() {
         departmentId={!isSystemAdmin ? user?.department_id : null}
         onCompleted={load}
       />
+
+      {/* Quick Assign Base Room Modal */}
+      <Modal open={assignRoomModalOpen} onClose={() => setAssignRoomModalOpen(false)} title="Assign Base Classroom">
+        <form onSubmit={handleSaveRoomAssignment} className="space-y-4">
+          <ErrorAlert message={roomAssignError} />
+
+          <div className="p-3 bg-slate-50 border border-slate-200/90 rounded-xl">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-bold text-slate-800">
+                {selectedClassForRoom?.name} - Section {selectedClassForRoom?.section}
+              </span>
+              <span className="text-[10px] font-semibold px-2 py-0.5 rounded bg-indigo-50 text-indigo-700 border border-indigo-200">
+                Sem {selectedClassForRoom?.semester}
+              </span>
+            </div>
+            <div className="text-[11px] text-slate-500 mt-1">
+              Department: <span className="font-medium text-slate-700">{deptName(selectedClassForRoom?.department_id)}</span>
+            </div>
+          </div>
+
+          <div>
+            <label htmlFor="quick-assign-room-select" className="block text-xs font-medium text-gray-700 mb-1">
+              Select Base Classroom
+            </label>
+            <select
+              id="quick-assign-room-select"
+              className="input w-full"
+              value={targetRoomId}
+              onChange={e => setTargetRoomId(e.target.value)}
+            >
+              <option value="">No base room (Unassigned / Floating)</option>
+              {rooms.map(r => {
+                const isCurrent = String(r.id) === String(selectedClassForRoom?.default_room_id)
+                const isOccupied = r.primary_class_name && !isCurrent
+                return (
+                  <option key={r.id} value={r.id}>
+                    Room {r.room_number} ({r.room_type} · Cap: {r.capacity})
+                    {isCurrent ? ' ✓ Currently Assigned' : ''}
+                    {isOccupied ? ` [Home to ${r.primary_class_name}]` : ''}
+                  </option>
+                )
+              })}
+            </select>
+            <p className="text-[11px] text-gray-400 mt-1.5">
+              Designates the primary home classroom where this class attends scheduled lectures. Automatically synchronizes with Campus Structure.
+            </p>
+          </div>
+
+          <div className="flex gap-2 pt-2">
+            <button type="button" onClick={() => setAssignRoomModalOpen(false)} className="btn-secondary flex-1">
+              Cancel
+            </button>
+            <button type="submit" disabled={roomAssignSaving} className="btn-primary flex-1">
+              {roomAssignSaving ? 'Saving…' : 'Save Room Assignment'}
+            </button>
+          </div>
+        </form>
+      </Modal>
     </div>
   )
 }

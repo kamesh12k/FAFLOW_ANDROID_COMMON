@@ -165,5 +165,41 @@ class TestClassService:
         assert updated.default_room_id is None
         assert updated.default_room_number is None
 
+    def test_base_room_bidirectional_sync(self, db_session):
+        from app.models.room import Room, RoomType
+        from app.services.room_service import update_room
+        from app.schemas.room import RoomUpdate
+
+        dept = create_department(db_session, name="ECE", code="ECE")
+        room1 = Room(room_number="R-201", room_type=RoomType.classroom, capacity=60, department_id=dept.id)
+        room2 = Room(room_number="R-202", room_type=RoomType.classroom, capacity=60, department_id=dept.id)
+        db_session.add_all([room1, room2])
+        db_session.commit()
+
+        cls = factory_class(db_session, department_id=dept.id, name="ECE-A")
+        assert cls.default_room_id is None
+
+        # 1. Assign room via update_class -> Room.primary_class_id syncs
+        updated_cls = update_class(cls.id, ClassUpdate(default_room_id=room1.id), db_session)
+        assert updated_cls.default_room_id == room1.id
+        assert updated_cls.default_room_number == "R-201"
+        
+        db_session.refresh(room1)
+        assert room1.primary_class_id == cls.id
+
+        # 2. Reassign to room2 -> room1 unlinked, room2 linked
+        update_class(cls.id, ClassUpdate(default_room_id=room2.id), db_session)
+        db_session.refresh(room1)
+        db_session.refresh(room2)
+        assert room1.primary_class_id is None
+        assert room2.primary_class_id == cls.id
+
+        # 3. Assign via update_room -> Class.default_room_id syncs
+        cls2 = factory_class(db_session, department_id=dept.id, name="ECE-B")
+        update_room(room1.id, RoomUpdate(primary_class_id=cls2.id), db_session)
+        db_session.refresh(cls2)
+        assert cls2.default_room_id == room1.id
+
+
 
 

@@ -108,11 +108,20 @@ def update_room(room_id: int, data: RoomUpdate, db: Session) -> Room:
     room = db.query(Room).filter(Room.id == room_id).first()
     if not room:
         raise HTTPException(status_code=404, detail="Room not found")
-    for key, value in data.model_dump(exclude_unset=True).items():
+    update_dict = data.model_dump(exclude_unset=True)
+    for key, value in update_dict.items():
         setattr(room, key, value)
+    if "primary_class_id" in update_dict:
+        from app.models.class_ import Class
+        new_class_id = update_dict["primary_class_id"]
+        # Clear previous class that pointed to this room
+        db.query(Class).filter(Class.default_room_id == room.id).update({Class.default_room_id: None}, synchronize_session=False)
+        if new_class_id:
+            db.query(Class).filter(Class.id == new_class_id).update({Class.default_room_id: room.id}, synchronize_session=False)
     db.commit()
     db.refresh(room)
     return room
+
 
 
 def delete_room(room_id: int, db: Session) -> None:

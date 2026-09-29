@@ -142,14 +142,25 @@ def update_class(class_id: int, data: ClassUpdate, db: Session, tenant_departmen
     if tenant_department_id is not None and cls.department_id != tenant_department_id:
         raise HTTPException(status_code=403, detail="You can only edit classes belonging to your own department")
         
-    for key, value in data.model_dump(exclude_unset=True).items():
+    update_dict = data.model_dump(exclude_unset=True)
+    for key, value in update_dict.items():
         if key == "department_id" and tenant_department_id is not None and value != tenant_department_id:
             raise HTTPException(status_code=403, detail="Cannot assign class to another department")
         setattr(cls, key, value)
         
+    # Bidirectional sync: keep Room.primary_class_id consistent with Class.default_room_id
+    if "default_room_id" in update_dict:
+        from app.models.room import Room
+        new_room_id = update_dict["default_room_id"]
+        # Clear previous room's primary_class_id if it pointed to this class
+        db.query(Room).filter(Room.primary_class_id == cls.id).update({Room.primary_class_id: None}, synchronize_session=False)
+        if new_room_id:
+            db.query(Room).filter(Room.id == new_room_id).update({Room.primary_class_id: cls.id}, synchronize_session=False)
+
     db.commit()
     db.refresh(cls)
     return _enrich_class(cls)
+
 
 
 def delete_class(class_id: int, db: Session, tenant_department_id: int | None = None) -> None:
