@@ -13,20 +13,22 @@ test.describe('Teacher Leave Application Flow', () => {
     });
     page.on('pageerror', (err) => console.log(`[Browser PageError] ${err.message}`));
 
-    // Seed authenticated teacher session
-    await page.addInitScript(() => {
-      localStorage.setItem('credits_token', 'mock-teacher-token');
-      localStorage.setItem(
-        'credits_user',
-        JSON.stringify({
-          id: 5,
-          username: 'teacher_jane',
-          name: 'Jane Smith',
-          role: 'teacher',
-          must_change_credentials: false,
-        })
-      );
-    });
+const TEACHER_TOKEN = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMSIsInJvbGUiOiJ0ZWFjaGVyIiwiZXhwIjoxODIyMjE1NzUwfQ.-C8Zvgm9nOQs1SGkUG-Adg2_Wvx3ZBCUnICNY10PkW8';
+const TEACHER_USER = {
+  id: 11,
+  username: 'teacher_aishwarya',
+  name: 'AISHWARYA G',
+  role: 'teacher',
+  must_change_credentials: false,
+  policy_version_accepted: 'v1.0.0',
+  onboarding_completed: true,
+};
+
+    // Seed authenticated teacher session with real JWT
+    await page.addInitScript(({ token, user }) => {
+      localStorage.setItem('credits_token', token);
+      localStorage.setItem('credits_user', JSON.stringify(user));
+    }, { token: TEACHER_TOKEN, user: TEACHER_USER });
 
     // Public settings
     await page.route('**/settings/public', (route) =>

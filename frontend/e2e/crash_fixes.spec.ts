@@ -1,21 +1,25 @@
 import { test, expect } from '@playwright/test';
 
+const TEACHER_TOKEN = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMSIsInJvbGUiOiJ0ZWFjaGVyIiwiZXhwIjoxODIyMjE2NjE3fQ.H403w9ube8C2LIj0BKTPFeDaNzO8LdCDVdALoPkm6sI';
+const TEACHER_USER = {
+  id: 11,
+  username: '25CSGAA',
+  name: 'AISHWARYA G',
+  role: 'teacher',
+  department_id: 1,
+  department: 'Computer Science & Engineering',
+  must_change_credentials: false,
+  policy_version_accepted: 'v1.0.0',
+  onboarding_completed: true,
+};
+
 test.describe('Phase 1 Crash Fixes Reproduction & Verification', () => {
   test.beforeEach(async ({ page }) => {
     // Seed authenticated teacher session
-    await page.addInitScript(() => {
-      localStorage.setItem('credits_token', 'mock-teacher-token');
-      localStorage.setItem(
-        'credits_user',
-        JSON.stringify({
-          id: 5,
-          username: 'teacher_jane',
-          name: 'Jane Smith',
-          role: 'teacher',
-          must_change_credentials: false,
-        })
-      );
-    });
+    await page.addInitScript(({ token, user }) => {
+      localStorage.setItem('credits_token', token);
+      localStorage.setItem('credits_user', JSON.stringify(user));
+    }, { token: TEACHER_TOKEN, user: TEACHER_USER });
 
     // Public settings
     await page.route('**/settings/public', (route) =>
@@ -81,6 +85,11 @@ test.describe('Phase 1 Crash Fixes Reproduction & Verification', () => {
   test('Bug 4 — /teacher/student-attendance handles 422 validation errors without React Error #31', async ({ page }) => {
     const pageErrors: Error[] = [];
     page.on('pageerror', (err) => pageErrors.push(err));
+    page.on('response', (res) => {
+      if (res.status() === 401) {
+        console.log(`401 DETECTED: ${res.request().method()} ${res.url()}`);
+      }
+    });
 
     // Mock classes endpoint to prevent 401 redirect
     await page.route('**/classes**', (route) =>

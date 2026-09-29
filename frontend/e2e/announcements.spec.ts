@@ -54,6 +54,146 @@ async function setAuth(page: any, token: string, user: object) {
 }
 
 test.describe('Phase 4 Bug Fix Verification — Announcements Module', () => {
+  let announcements: Array<any>;
+
+  test.beforeEach(async ({ page }) => {
+    page.on('console', (msg) => console.log('BROWSER CONSOLE:', msg.type(), msg.text()));
+    page.on('pageerror', (err) => console.log('PAGE ERROR:', err.message, err.stack));
+    announcements = [
+      {
+        id: 1,
+        title: 'Test Directive - Examination Protocol',
+        body: 'Official directive regarding examination schedule and protocol compliance.',
+        type: 'CIRCULAR',
+        priority: 'HIGH',
+        status: 'PUBLISHED',
+        version: 1,
+        author_name: 'SUBRAMANIAM',
+        author_role: 'admin',
+        department_name: 'Computer Science',
+        department_id: 1,
+        target_audience: ['DEPT:1', 'ROLE:TEACHER'],
+        targets: [
+          { target_type: 'DEPARTMENT', department_id: 1, department_name: 'Computer Science' },
+          { target_type: 'ROLE', role_name: 'TEACHER' },
+        ],
+        published_at: new Date().toISOString(),
+        created_at: new Date().toISOString(),
+        is_read: false,
+        is_pinned: false,
+        is_locked: false,
+        requires_acknowledgement: true,
+        is_acknowledged: false,
+        acknowledged_at: null,
+        can_acknowledge: true,
+        can_delete: true,
+        can_moderate: true,
+        can_view_analytics: true,
+        attachments: [],
+      },
+    ];
+
+    // Public settings & background endpoints
+    await page.route('**/settings/public', (route) =>
+      route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ institution_name: 'FAFLOW University' }),
+      })
+    );
+    await page.route('**/policy/current', (route) =>
+      route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ enforce_biometrics: false }) })
+    );
+    await page.route('**/notifications/**', (route) =>
+      route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ count: 0, unread_count: 0 }) })
+    );
+    await page.route('**/academic-calendar/resolve**', (route) =>
+      route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ date: '2026-09-29', is_working_day: true, day_order: 1 }),
+      })
+    );
+    await page.route('**/departments/**', (route) =>
+      route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify([
+          { id: 1, name: 'Computer Science', code: 'CS' },
+          { id: 2, name: 'Electrical Engineering', code: 'EE' },
+        ]),
+      })
+    );
+
+    // Dynamic Announcements API Mock
+    await page.route('**/api/announcements**', async (route) => {
+      const url = route.request().url();
+      if (url.includes('/src/') || url.endsWith('.js') || url.endsWith('.jsx') || route.request().resourceType() === 'script') {
+        return route.continue();
+      }
+      const method = route.request().method();
+
+      if (url.includes('/unread-count')) {
+        return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ count: 1 }) });
+      }
+
+      if (url.includes('/candidates')) {
+        return route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          body: JSON.stringify({
+            departments: [{ id: 1, name: 'Computer Science', code: 'CS' }],
+            faculty: [{ id: 11, name: 'AISHWARYA G', department_id: 1, email: 'aishwarya@example.com' }],
+          }),
+        });
+      }
+
+      if (url.includes('/messages')) {
+        return route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          body: JSON.stringify([]),
+        });
+      }
+
+      if (url.includes('/acknowledge') && method === 'POST') {
+        announcements[0].is_acknowledged = true;
+        announcements[0].acknowledged_at = new Date().toISOString();
+        return route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          body: JSON.stringify({ ok: true, is_acknowledged: true, acknowledged_at: announcements[0].acknowledged_at }),
+        });
+      }
+
+      const matchId = url.match(/\/announcements\/(\d+)(?:[?#]|$)/);
+      if (matchId && method === 'GET') {
+        const id = parseInt(matchId[1], 10);
+        const item = announcements.find((a) => a.id === id) || announcements[0];
+        return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(item) });
+      }
+
+      if (method === 'POST') {
+        return route.fulfill({
+          status: 201,
+          contentType: 'application/json',
+          body: JSON.stringify({ id: 2, ok: true, message: 'Created' }),
+        });
+      }
+
+      return route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          announcements: announcements,
+          total: announcements.length,
+          page: 1,
+          limit: 50,
+        }),
+      });
+    });
+  });
+
   // ─────────────────────────────────────────────────────────────────────────
   // Bug 5: Target Audience Display
   // Verify that target audience renders as human-readable text (e.g.

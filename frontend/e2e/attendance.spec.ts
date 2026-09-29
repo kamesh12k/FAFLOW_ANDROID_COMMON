@@ -7,21 +7,25 @@
 import { test, expect } from '@playwright/test';
 
 test.describe('Admin Attendance Dashboard', () => {
+const ADMIN_TOKEN = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI2Iiwicm9sZSI6ImFkbWluIiwiZXhwIjoxODIyMjE1NzUwfQ.A_vXtJcTa9znGLVZx7CYZcMzyBrRWEmDq-mjJkpcNvk';
+const ADMIN_USER = {
+  id: 6,
+  username: 'CSHOD',
+  name: 'SUBRAMANIAM',
+  role: 'admin',
+  admin_level: 'super_admin',
+  department_id: 1,
+  must_change_credentials: false,
+  policy_version_accepted: 'v1.0.0',
+  onboarding_completed: true,
+};
+
   test.beforeEach(async ({ page }) => {
     // Seed authenticated admin session
-    await page.addInitScript(() => {
-      localStorage.setItem('credits_token', 'mock-admin-token');
-      localStorage.setItem(
-        'credits_user',
-        JSON.stringify({
-          id: 1,
-          username: 'admin',
-          role: 'admin',
-          admin_level: 'super_admin',
-          must_change_credentials: false,
-        })
-      );
-    });
+    await page.addInitScript(({ token, user }) => {
+      localStorage.setItem('credits_token', token);
+      localStorage.setItem('credits_user', JSON.stringify(user));
+    }, { token: ADMIN_TOKEN, user: ADMIN_USER });
 
     // Public settings
     await page.route('**/settings/public', (route) =>

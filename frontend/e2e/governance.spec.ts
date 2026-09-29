@@ -7,21 +7,23 @@
 import { test, expect } from '@playwright/test';
 
 test.describe('Governance Control Plane Dashboard', () => {
+const GOVERNANCE_TOKEN = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIyIiwicm9sZSI6ImdvdmVybmFuY2UiLCJleHAiOjE4MjIyMTU3NTB9.7o6SdN78Rrw24NEjrpzvCMOp2twsZicsaCKx54imvZs';
+const GOVERNANCE_USER = {
+  id: 2,
+  username: 'governence@26022006',
+  name: 'Governance Command Center',
+  role: 'governance',
+  must_change_credentials: false,
+  policy_version_accepted: 'v1.0.0',
+  onboarding_completed: true,
+};
+
   test.beforeEach(async ({ page }) => {
-    // Seed authenticated governance admin session
-    await page.addInitScript(() => {
-      localStorage.setItem('credits_token', 'mock-governance-token');
-      localStorage.setItem(
-        'credits_user',
-        JSON.stringify({
-          id: 99,
-          username: 'gov_officer',
-          name: 'Governance Officer',
-          role: 'governance',
-          must_change_credentials: false,
-        })
-      );
-    });
+    // Seed authenticated governance admin session with real JWT
+    await page.addInitScript(({ token, user }) => {
+      localStorage.setItem('credits_token', token);
+      localStorage.setItem('credits_user', JSON.stringify(user));
+    }, { token: GOVERNANCE_TOKEN, user: GOVERNANCE_USER });
 
     // Public settings
     await page.route('**/settings/public', (route) =>

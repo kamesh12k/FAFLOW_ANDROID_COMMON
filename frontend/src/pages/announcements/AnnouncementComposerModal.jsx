@@ -166,7 +166,7 @@ export default function AnnouncementComposerModal({ user, onClose, onCreated }) 
     setAttachments((prev) => prev.filter((_, i) => i !== index))
   }
 
-  const filteredFaculty = candidateData.faculty.filter((f) => {
+  const filteredFaculty = (candidateData?.faculty || []).filter((f) => {
     const matchesDept =
       facultyDeptFilter === 'all' || String(f.department_id) === String(facultyDeptFilter)
     const matchesSearch =
@@ -505,7 +505,7 @@ export default function AnnouncementComposerModal({ user, onClose, onCreated }) 
                       Select Target Departments:
                     </span>
                     <div className="flex items-center gap-1.5 flex-wrap">
-                      {candidateData.departments.map((dept) => {
+                      {(candidateData?.departments || []).map((dept) => {
                         const selected = selectedDeptIds.includes(dept.id)
                         return (
                           <button
@@ -545,7 +545,7 @@ export default function AnnouncementComposerModal({ user, onClose, onCreated }) 
                             className="text-xs bg-white border border-slate-200 rounded-lg px-2 py-1 text-slate-700"
                           >
                             <option value="all">All Departments</option>
-                            {candidateData.departments.map((d) => (
+                            {(candidateData?.departments || []).map((d) => (
                               <option key={d.id} value={d.id}>{d.name}</option>
                             ))}
                           </select>
