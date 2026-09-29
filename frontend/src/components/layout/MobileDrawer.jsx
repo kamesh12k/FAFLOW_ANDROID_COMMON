@@ -200,7 +200,7 @@ export default function MobileDrawer({ open, onClose, onOpenHelp }) {
                             )}
                             <div className="flex items-center gap-3 min-w-0">
                               <span
-                                className={`w-4.5 h-4.5 shrink-0 ${
+                                className={`w-4.5 h-4.5 shrink-0 flex items-center justify-center [&>svg]:w-4.5 [&>svg]:h-4.5 [&>svg]:shrink-0 ${
                                   isActive ? 'text-primary-600' : 'text-slate-500 group-hover:text-slate-800'
                                 }`}
                               >
@@ -238,7 +238,7 @@ export default function MobileDrawer({ open, onClose, onOpenHelp }) {
                 }`
               }
             >
-              <SettingsIcon className="w-4.5 h-4.5 shrink-0 text-slate-500" />
+              <SettingsIcon className="w-4.5 h-4.5 shrink-0 text-slate-500" style={{ width: '1.125rem', height: '1.125rem' }} />
               <span>Settings</span>
             </NavLink>
           )}
@@ -255,7 +255,7 @@ export default function MobileDrawer({ open, onClose, onOpenHelp }) {
                 }`
               }
             >
-              <SettingsIcon className="w-4.5 h-4.5 shrink-0 text-slate-500" />
+              <SettingsIcon className="w-4.5 h-4.5 shrink-0 text-slate-500" style={{ width: '1.125rem', height: '1.125rem' }} />
               <span>Substitution Preferences</span>
             </NavLink>
           )}
@@ -268,7 +268,7 @@ export default function MobileDrawer({ open, onClose, onOpenHelp }) {
             }}
             className="flex items-center gap-2.5 w-full px-3 py-2 rounded-lg text-xs font-semibold text-slate-600 hover:text-slate-900 hover:bg-slate-100/70 transition-colors text-left"
           >
-            <HelpCircleIcon className="w-4.5 h-4.5 shrink-0 text-slate-500" />
+            <HelpCircleIcon className="w-4.5 h-4.5 shrink-0 text-slate-500" style={{ width: '1.125rem', height: '1.125rem' }} />
             <span>Help & Guides</span>
           </button>
 
@@ -276,7 +276,7 @@ export default function MobileDrawer({ open, onClose, onOpenHelp }) {
             onClick={handleLogout}
             className="flex items-center gap-2.5 w-full px-3 py-2 rounded-lg text-xs font-bold text-rose-600 hover:bg-rose-50 transition-colors"
           >
-            <LogoutIcon className="w-4.5 h-4.5 shrink-0 text-rose-500" />
+            <LogoutIcon className="w-4.5 h-4.5 shrink-0 text-rose-500" style={{ width: '1.125rem', height: '1.125rem' }} />
             <span>Sign out</span>
           </button>
         </div>

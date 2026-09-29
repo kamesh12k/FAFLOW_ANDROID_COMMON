@@ -66,7 +66,7 @@ const NavItem = memo(function NavItem({ to, icon, label, end, collapsed, unreadC
           {/* Icon & Label */}
           <div className={`flex items-center gap-2.5 min-w-0 ${collapsed ? 'justify-center' : ''}`}>
             <span
-              className={`w-4.5 h-4.5 shrink-0 flex items-center justify-center transition-colors ${
+              className={`w-4.5 h-4.5 shrink-0 flex items-center justify-center transition-colors [&>svg]:w-4.5 [&>svg]:h-4.5 [&>svg]:shrink-0 ${
                 isActive
                   ? isDark ? 'text-primary-300' : 'text-primary-600'
                   : isDark
@@ -426,7 +426,7 @@ export default function Sidebar({ onOpenHelp }) {
               }`
             }
           >
-            <SettingsIcon className="w-4.5 h-4.5 shrink-0" />
+            <SettingsIcon className="w-4.5 h-4.5 shrink-0" style={{ width: '1.125rem', height: '1.125rem' }} />
             {!collapsed && <span>Settings</span>}
             {collapsed && (
               <div className="absolute left-[68px] top-1/2 -translate-y-1/2 px-2.5 py-1 bg-slate-900 text-white text-xs font-medium rounded-md shadow-xl border border-slate-800 z-50 whitespace-nowrap pointer-events-none">
@@ -456,7 +456,7 @@ export default function Sidebar({ onOpenHelp }) {
               }`
             }
           >
-            <SettingsIcon className="w-4.5 h-4.5 shrink-0" />
+            <SettingsIcon className="w-4.5 h-4.5 shrink-0" style={{ width: '1.125rem', height: '1.125rem' }} />
             {!collapsed && <span>Preferences</span>}
             {collapsed && (
               <div className="absolute left-[68px] top-1/2 -translate-y-1/2 px-2.5 py-1 bg-slate-900 text-white text-xs font-medium rounded-md shadow-xl border border-slate-800 z-50 whitespace-nowrap pointer-events-none">
@@ -481,7 +481,7 @@ export default function Sidebar({ onOpenHelp }) {
           }`}
           aria-label="Help and Documentation"
         >
-          <HelpCircleIcon className="w-4.5 h-4.5 shrink-0" />
+          <HelpCircleIcon className="w-4.5 h-4.5 shrink-0" style={{ width: '1.125rem', height: '1.125rem' }} />
           {!collapsed && <span>Help & Guides</span>}
           {collapsed && (
             <div className="absolute left-[68px] top-1/2 -translate-y-1/2 px-2.5 py-1 bg-slate-900 text-white text-xs font-medium rounded-md shadow-xl border border-slate-800 z-50 whitespace-nowrap pointer-events-none">

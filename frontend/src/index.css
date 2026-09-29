@@ -304,6 +304,23 @@
     background: rgba(148, 163, 184, 0.45);
   }
 
+  /* Sidebar and navigation icon size guards */
+  aside nav svg,
+  aside .sidebar-scrollbar svg,
+  aside [aria-label="Main Navigation"] svg {
+    width: 1.125rem;
+    height: 1.125rem;
+    min-width: 1.125rem;
+    min-height: 1.125rem;
+    flex-shrink: 0;
+  }
+  aside button svg:not([aria-label="Faculty Flow"]),
+  aside a svg:not([aria-label="Faculty Flow"]) {
+    max-width: 1.25rem;
+    max-height: 1.25rem;
+    flex-shrink: 0;
+  }
+
   /* ─── DIVIDERS ───────────────────────────────────────────────── */
 
   .divider {
