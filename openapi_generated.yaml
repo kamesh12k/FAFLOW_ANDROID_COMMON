@@ -19086,6 +19086,12 @@ components:
           - type: string
           - type: 'null'
           title: Notes
+        client_timestamp:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+          title: Client Timestamp
       type: object
       required:
       - class_id

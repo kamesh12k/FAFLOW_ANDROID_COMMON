@@ -8,6 +8,11 @@ import { test, expect } from '@playwright/test';
 
 test.describe('Teacher Leave Application Flow', () => {
   test.beforeEach(async ({ page }) => {
+    page.on('console', (msg) => {
+      if (msg.type() === 'error') console.log(`[Browser Console Error] ${msg.text()}`);
+    });
+    page.on('pageerror', (err) => console.log(`[Browser PageError] ${err.message}`));
+
     // Seed authenticated teacher session
     await page.addInitScript(() => {
       localStorage.setItem('credits_token', 'mock-teacher-token');
@@ -23,6 +28,15 @@ test.describe('Teacher Leave Application Flow', () => {
       );
     });
 
+    // Public settings
+    await page.route('**/settings/public', (route) =>
+      route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ institution_name: 'FAFLOW University' }),
+      })
+    );
+
     // Mock academic calendar
     await page.route('**/academic-calendar/**', (route) =>
       route.fulfill({
@@ -37,14 +51,37 @@ test.describe('Teacher Leave Application Flow', () => {
       })
     );
 
+    // Campus mode & policy
+    await page.route('**/campus-operations/mode', (route) =>
+      route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ mode: 'assisted' }),
+      })
+    );
+    await page.route('**/policy/current', (route) =>
+      route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({}),
+      })
+    );
+    await page.route('**/leaves/evaluate-policy', (route) =>
+      route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ can_submit: true, violations: [], projected_balance: 9 }),
+      })
+    );
+
     // Mock leave policies & balances
     await page.route('**/leave-policies**', (route) =>
       route.fulfill({
         status: 200,
         contentType: 'application/json',
         body: JSON.stringify([
-          { id: 1, name: 'Casual Leave', code: 'CL', max_days: 12 },
-          { id: 2, name: 'Earned Leave', code: 'EL', max_days: 20 },
+          { id: 1, name: 'Casual Leave', code: 'CL', entitlement: 12, period: 'YEAR' },
+          { id: 2, name: 'Earned Leave', code: 'EL', entitlement: 20, period: 'YEAR' },
         ]),
       })
     );
@@ -53,10 +90,13 @@ test.describe('Teacher Leave Application Flow', () => {
       route.fulfill({
         status: 200,
         contentType: 'application/json',
-        body: JSON.stringify([
-          { policy_id: 1, allocated: 12, used: 2, remaining: 10 },
-          { policy_id: 2, allocated: 20, used: 5, remaining: 15 },
-        ]),
+        body: JSON.stringify({
+          balances: [
+            { policy_id: 1, entitlement: 12, consumed: 2, remaining: 10 },
+            { policy_id: 2, entitlement: 20, consumed: 5, remaining: 15 },
+          ],
+          substitution_credit_balance: 0,
+        }),
       })
     );
 
@@ -67,11 +107,6 @@ test.describe('Teacher Leave Application Flow', () => {
         contentType: 'application/json',
         body: JSON.stringify([]),
       })
-    );
-
-    // Fallback catch-all for other endpoints
-    await page.route('**/api/**', (route) =>
-      route.fulfill({ status: 200, contentType: 'application/json', body: '{}' })
     );
   });
 

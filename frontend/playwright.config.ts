@@ -32,11 +32,9 @@ export default defineConfig({
   projects: [
     { name: 'chromium', use: { ...devices['Desktop Chrome'] } },
   ],
-  // Note: webServer config assumes manual startup for local dev.
-  // In CI the docker-compose or GitHub Actions services handle startup.
-  // Uncomment below if you want auto-start:
-  // webServer: [
-  //   { command: 'cd ../backend && venv/Scripts/python -m uvicorn app.main:app --port 8000', port: 8000, reuseExistingServer: !process.env.CI },
-  //   { command: 'npm run dev', port: 5173, reuseExistingServer: !process.env.CI },
-  // ],
+  webServer: {
+    command: 'npm run dev',
+    port: 5173,
+    reuseExistingServer: !process.env.CI,
+  },
 });

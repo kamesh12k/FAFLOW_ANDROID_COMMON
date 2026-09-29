@@ -1,7 +1,7 @@
 import React from 'react'
 import { describe, it, expect } from 'vitest'
 import { render, screen } from '@testing-library/react'
-import { Button, StatusBadge, ErrorAlert, CreditChip, RoleBadge, Chip } from './index'
+import { Button, StatusBadge, ErrorAlert, CreditChip, RoleBadge, Chip, Pagination } from './index'
 
 describe('UI Components', () => {
   describe('Button', () => {
@@ -102,6 +102,45 @@ describe('UI Components', () => {
       const removeBtn = screen.getByRole('button', { name: /remove biometrics/i })
       removeBtn.click()
       expect(removed).toBe(true)
+    })
+  })
+
+  describe('Pagination', () => {
+    it('returns null when totalPages <= 1', () => {
+      const { container } = render(<Pagination page={1} totalPages={1} onChange={() => {}} />)
+      expect(container.firstChild).toBeNull()
+    })
+
+    it('renders page info and navigation buttons when totalPages > 1', () => {
+      let currentPage = 2
+      render(
+        <Pagination
+          page={currentPage}
+          totalPages={5}
+          onChange={(p) => { currentPage = p }}
+        />
+      )
+      expect(screen.getByText('Page 2 of 5')).toBeInTheDocument()
+      const prevBtn = screen.getByRole('button', { name: /previous page/i })
+      const nextBtn = screen.getByRole('button', { name: /next page/i })
+      expect(prevBtn).not.toBeDisabled()
+      expect(nextBtn).not.toBeDisabled()
+
+      nextBtn.click()
+      expect(currentPage).toBe(3)
+
+      prevBtn.click()
+      expect(currentPage).toBe(1)
+    })
+
+    it('disables Prev button on first page and Next button on last page', () => {
+      const { rerender } = render(<Pagination page={1} totalPages={3} onChange={() => {}} />)
+      expect(screen.getByRole('button', { name: /previous page/i })).toBeDisabled()
+      expect(screen.getByRole('button', { name: /next page/i })).not.toBeDisabled()
+
+      rerender(<Pagination page={3} totalPages={3} onChange={() => {}} />)
+      expect(screen.getByRole('button', { name: /previous page/i })).not.toBeDisabled()
+      expect(screen.getByRole('button', { name: /next page/i })).toBeDisabled()
     })
   })
 })

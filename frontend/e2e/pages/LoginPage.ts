@@ -17,19 +17,18 @@ export class LoginPage {
 
   constructor(page: Page) {
     this.page = page;
-    // Support both username and email login forms
-    this.usernameInput = page.getByLabel(/username/i).or(page.getByPlaceholder(/username/i));
-    this.emailInput = page.getByLabel(/email/i).or(page.getByPlaceholder(/email/i));
-    this.passwordInput = page.getByLabel(/password/i).or(page.getByPlaceholder(/password/i));
-    this.submitButton = page
-      .getByRole('button', { name: /sign in|login|submit/i })
-      .or(page.getByRole('button', { name: /log in/i }));
+    this.usernameInput = page.locator('#identifier-input');
+    this.emailInput = page.locator('#identifier-input');
+    this.passwordInput = page.locator('#password-input');
+    this.submitButton = page.getByRole('button', { name: /sign in/i });
     this.errorMessage = page.getByRole('alert').or(page.locator('[data-testid="login-error"]'));
     this.roleSelector = page.getByLabel(/role/i).or(page.getByRole('combobox'));
   }
 
   async goto() {
     await this.page.goto('/login');
+    await this.page.evaluate(() => localStorage.clear());
+    await this.page.reload();
   }
 
   async loginWithUsername(username: string, password: string) {

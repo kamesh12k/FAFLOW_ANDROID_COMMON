@@ -23,38 +23,12 @@ test.describe('Admin Attendance Dashboard', () => {
       );
     });
 
-    // Mock live attendance supervisor API
-    await page.route('**/attendance/supervisor-live**', (route) =>
+    // Public settings
+    await page.route('**/settings/public', (route) =>
       route.fulfill({
         status: 200,
         contentType: 'application/json',
-        body: JSON.stringify({
-          checked_in_count: 42,
-          checked_out_count: 18,
-          not_reported_count: 5,
-          total_staff: 65,
-          records: [
-            {
-              id: 101,
-              user_id: 12,
-              name: 'Dr. Sarah Connor',
-              department: 'Computer Science',
-              check_in_time: '2026-09-28T08:45:00',
-              status: 'CHECKED_IN',
-              method: 'facial_biometric',
-            },
-            {
-              id: 102,
-              user_id: 15,
-              name: 'Prof. John Matrix',
-              department: 'Mechanical',
-              check_in_time: '2026-09-28T08:30:00',
-              check_out_time: '2026-09-28T16:30:00',
-              status: 'CHECKED_OUT',
-              method: 'facial_biometric',
-            },
-          ],
-        }),
+        body: JSON.stringify({ institution_name: 'FAFLOW University' }),
       })
     );
 
@@ -70,9 +44,39 @@ test.describe('Admin Attendance Dashboard', () => {
       })
     );
 
-    // Catch-all mock for other background fetches
-    await page.route('**/api/**', (route) =>
-      route.fulfill({ status: 200, contentType: 'application/json', body: '[]' })
+    // Mock live attendance supervisor API
+    await page.route('**/attendance/admin/live-status**', (route) =>
+      route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          checked_in_count: 42,
+          checked_out_count: 18,
+          not_reported_count: 5,
+          total_staff: 65,
+          all_shifts: [
+            {
+              id: 101,
+              user_id: 12,
+              staff_name: 'Dr. Sarah Connor',
+              department_name: 'Computer Science',
+              check_in_time: '2026-09-28T08:45:00',
+              status: 'CHECKED_IN',
+              method: 'facial_biometric',
+            },
+            {
+              id: 102,
+              user_id: 15,
+              staff_name: 'Prof. John Matrix',
+              department_name: 'Mechanical',
+              check_in_time: '2026-09-28T08:30:00',
+              check_out_time: '2026-09-28T16:30:00',
+              status: 'CHECKED_OUT',
+              method: 'facial_biometric',
+            },
+          ],
+        }),
+      })
     );
   });
 

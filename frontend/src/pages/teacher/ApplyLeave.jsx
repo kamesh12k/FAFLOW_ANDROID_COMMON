@@ -1677,7 +1677,7 @@ export default function ApplyLeave() {
                 <span className="text-[10px] uppercase font-bold text-slate-400 block">Calendar Status</span>
                 <span className="font-bold text-slate-900 block mt-0.5">
                   {calendarInfo ? (
-                    calendarInfo.day_type === 'working' ? 'Working Day' : calendarInfo.day_type.replace('_', ' ')
+                    calendarInfo.day_type === 'working' || calendarInfo.is_working_day ? 'Working Day' : (calendarInfo.day_type?.replace('_', ' ') || 'Non-working Day')
                   ) : (
                     '—'
                   )}

@@ -23,33 +23,31 @@ test.describe('Governance Control Plane Dashboard', () => {
       );
     });
 
-    // Mock governance dashboard stats
-    await page.route('**/governance/dashboard**', (route) =>
+    // Public settings
+    await page.route('**/settings/public', (route) =>
+      route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ institution_name: 'FAFLOW University' }),
+      })
+    );
+
+    // Mock governance overview
+    await page.route('**/governance/overview', (route) =>
       route.fulfill({
         status: 200,
         contentType: 'application/json',
         body: JSON.stringify({
-          active_violations: 0,
-          unresolved_incidents: 1,
-          pending_overrides: 2,
-          enforcement_mode: 'STRICT',
-          system_health: 'OPTIMAL',
+          critical_status: {
+            needs_cover_count: 0,
+            on_leave_count: 2,
+            available_count: 14,
+            overrides_today: 1,
+          },
+          needs_cover_items: [],
+          extended_leaves: [],
         }),
       })
-    );
-
-    // Mock live supervisor attendance status for governance
-    await page.route('**/attendance/**', (route) =>
-      route.fulfill({
-        status: 200,
-        contentType: 'application/json',
-        body: JSON.stringify({ checked_in_count: 50, checked_out_count: 20 }),
-      })
-    );
-
-    // Catch-all
-    await page.route('**/api/**', (route) =>
-      route.fulfill({ status: 200, contentType: 'application/json', body: '{}' })
     );
   });
 
@@ -59,8 +57,13 @@ test.describe('Governance Control Plane Dashboard', () => {
     // Verify main governance command center renders
     await expect(page).toHaveURL(/\/governance/);
 
-    // Verify emergency override trigger button or KPI cards render
-    const bodyText = page.locator('body');
-    await expect(bodyText).toBeVisible({ timeout: 8000 });
+    // Verify Command Center header & KPI cards
+    await expect(page.getByText(/Command Center/i).first()).toBeVisible({ timeout: 8000 });
+    await expect(page.getByText('Need Cover').first()).toBeVisible();
+    await expect(page.getByText('Overrides Today').first()).toBeVisible();
+
+    // Verify emergency override action button
+    const overrideBtn = page.getByRole('button', { name: /Override/i }).first();
+    await expect(overrideBtn).toBeVisible();
   });
 });

@@ -11,6 +11,16 @@ import { test, expect } from '@playwright/test';
 import { LoginPage } from './pages/LoginPage';
 
 test.describe('Authentication', () => {
+  test.beforeEach(async ({ page }) => {
+    await page.route('**/settings/public', (route) =>
+      route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ institution_name: 'FAFLOW University' }),
+      })
+    );
+  });
+
   test('login page renders key elements', async ({ page }) => {
     // Intercept – no real backend needed for render test
     const loginPage = new LoginPage(page);
@@ -39,7 +49,7 @@ test.describe('Authentication', () => {
   });
 
   test('successful login redirects away from login page', async ({ page }) => {
-    // Mock a successful login response with an access token
+    // Mock a successful login response with an access token matching backend Token schema
     await page.route('**/auth/login', (route) =>
       route.fulfill({
         status: 200,
@@ -47,15 +57,16 @@ test.describe('Authentication', () => {
         body: JSON.stringify({
           access_token: 'mock-jwt-token',
           token_type: 'bearer',
-          role: 'teacher',
-          user_id: 1,
-          name: 'Test Teacher',
+          user: {
+            id: 1,
+            name: 'Test Teacher',
+            email: 'teacher1@college.edu',
+            role: 'teacher',
+            department: 'Computer Science',
+            must_change_credentials: false,
+          },
         }),
       })
-    );
-    // Mock all subsequent API calls that happen after login
-    await page.route('**/api/**', (route) =>
-      route.fulfill({ status: 200, contentType: 'application/json', body: '{}' })
     );
 
     const loginPage = new LoginPage(page);

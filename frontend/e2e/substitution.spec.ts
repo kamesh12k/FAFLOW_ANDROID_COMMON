@@ -23,6 +23,24 @@ test.describe('Teacher Substitution Workflow', () => {
       );
     });
 
+    // Public settings
+    await page.route('**/settings/public', (route) =>
+      route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ institution_name: 'FAFLOW University' }),
+      })
+    );
+
+    // Substitution enabled status
+    await page.route('**/teacher/substitution/enabled', (route) =>
+      route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ teachers_mode_enabled: true }),
+      })
+    );
+
     // Mock teacher leaves requiring substitution
     await page.route('**/teacher/substitution/my-leaves**', (route) =>
       route.fulfill({
@@ -36,9 +54,18 @@ test.describe('Teacher Substitution Workflow', () => {
             period_number: 2,
             reason: 'Medical checkup',
             is_emergency: false,
-            status: 'APPROVED',
+            is_expired: false,
+            status: 'approved',
           },
         ]),
+      })
+    );
+
+    await page.route('**/leaves/my**', (route) =>
+      route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify([]),
       })
     );
 
@@ -64,11 +91,6 @@ test.describe('Teacher Substitution Workflow', () => {
         contentType: 'application/json',
         body: JSON.stringify([{ id: 1, name: 'Computer Science' }]),
       })
-    );
-
-    // Fallback catch-all
-    await page.route('**/api/**', (route) =>
-      route.fulfill({ status: 200, contentType: 'application/json', body: '[]' })
     );
   });
 
