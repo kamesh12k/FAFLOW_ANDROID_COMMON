@@ -9,5 +9,8 @@
 <full-backup-content>
     <exclude domain="sharedpref" path="faflow_secure_prefs.xml" />
     <exclude domain="sharedpref" path="faflow_secure_prefs.bak" />
+    <exclude domain="sharedpref" path="faflow_biometric_templates.xml" />
+    <exclude domain="sharedpref" path="faflow_biometric_templates.bak" />
     <exclude domain="sharedpref" path="__androidx_security_crypto_encrypted_file_pref__.xml" />
+    <exclude domain="sharedpref" path="__androidx_security_crypto_encrypted_file_pref__.bak" />
 </full-backup-content>

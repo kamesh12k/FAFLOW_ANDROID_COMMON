@@ -1,6 +1,9 @@
 package com.governence.faflow.attendance.biometrics.enrollment
 
 import android.content.Context
+import android.content.SharedPreferences
+import android.os.Build
+import android.util.Log
 import androidx.security.crypto.EncryptedSharedPreferences
 import androidx.security.crypto.MasterKey
 import com.governence.faflow.attendance.biometrics.alignment.FaceAlignmentConfig
@@ -9,6 +12,11 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.json.JSONArray
 import org.json.JSONObject
+import java.io.File
+import java.io.IOException
+import java.security.GeneralSecurityException
+import java.security.KeyStoreException
+import javax.crypto.AEADBadTagException
 
 /**
  * Enrolled biometric face template metadata for a staff member.
@@ -56,22 +64,155 @@ interface FaceEnrollmentRepository {
 
 /**
  * EncryptedSharedPreferences implementation of FaceEnrollmentRepository.
+ * Hardened against AndroidKeyStore AEADBadTagException, KeyStoreException, and
+ * corrupted XML cache on app updates / device restores.
  */
 class LocalFaceEnrollmentRepository(
-    private val context: Context
+    private val context: Context,
+    private val customPrefsProvider: ((Context) -> SharedPreferences)? = null
 ) : FaceEnrollmentRepository {
 
-    private val masterKey = MasterKey.Builder(context)
-        .setKeyScheme(MasterKey.KeyScheme.AES256_GCM)
-        .build()
+    companion object {
+        private const val TAG = "FaceEnrollmentRepo"
+        const val PREFS_FILE_NAME = "faflow_biometric_templates"
 
-    private val sharedPreferences = EncryptedSharedPreferences.create(
-        context,
-        "faflow_biometric_templates",
-        masterKey,
-        EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
-        EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM
-    )
+        @androidx.annotation.VisibleForTesting
+        var testPrefsProvider: ((Context) -> SharedPreferences)? = null
+
+        @androidx.annotation.VisibleForTesting
+        var resetCount: Int = 0
+    }
+
+    private val appContext = context.applicationContext
+
+    @Volatile
+    private var cachedPrefs: SharedPreferences? = null
+
+    private fun isSecurityOrIoException(t: Throwable): Boolean {
+        var current: Throwable? = t
+        while (current != null) {
+            if (current is GeneralSecurityException ||
+                current is IOException ||
+                current is KeyStoreException ||
+                current is AEADBadTagException ||
+                current.javaClass.name.contains("KeyStore", ignoreCase = true) ||
+                current.javaClass.name.contains("AEADBadTag", ignoreCase = true)
+            ) {
+                return true
+            }
+            current = current.cause
+        }
+        return false
+    }
+
+    private fun createEncryptedSharedPreferences(): SharedPreferences {
+        val provider = customPrefsProvider ?: testPrefsProvider
+        if (provider != null) {
+            return provider(appContext)
+        }
+
+        val masterKey = MasterKey.Builder(appContext)
+            .setKeyScheme(MasterKey.KeyScheme.AES256_GCM)
+            .build()
+
+        return EncryptedSharedPreferences.create(
+            appContext,
+            PREFS_FILE_NAME,
+            masterKey,
+            EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
+            EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM
+        )
+    }
+
+    @Synchronized
+    fun resetStore() {
+        cachedPrefs = null
+        resetCount++
+
+        // 1. Delete SharedPreferences via context
+        try {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                appContext.deleteSharedPreferences(PREFS_FILE_NAME)
+            }
+        } catch (e: Throwable) {
+            Log.w(TAG, "Failed deleting biometric shared preferences via context: ${e.message}")
+        }
+
+        // 2. Delete physical .xml and .bak files from disk
+        try {
+            val dataDir = appContext.applicationInfo?.dataDir ?: appContext.filesDir?.parent
+            if (dataDir != null) {
+                val sharedPrefsDir = File(dataDir, "shared_prefs")
+                val xmlFile = File(sharedPrefsDir, "$PREFS_FILE_NAME.xml")
+                if (xmlFile.exists()) xmlFile.delete()
+                val bakFile = File(sharedPrefsDir, "$PREFS_FILE_NAME.bak")
+                if (bakFile.exists()) bakFile.delete()
+            }
+        } catch (e: Throwable) {
+            Log.w(TAG, "Failed deleting biometric shared preferences files: ${e.message}")
+        }
+    }
+
+    @Synchronized
+    private fun getPrefs(): SharedPreferences? {
+        cachedPrefs?.let { return it }
+        return try {
+            createEncryptedSharedPreferences().also { cachedPrefs = it }
+        } catch (e: Throwable) {
+            if (isSecurityOrIoException(e)) {
+                Log.w(TAG, "Biometric prefs corrupted or key mismatch, resetting store: ${e.message}")
+                resetStore()
+                try {
+                    // Attempt fresh creation once after reset
+                    createEncryptedSharedPreferences().also { cachedPrefs = it }
+                } catch (retryEx: Throwable) {
+                    Log.w(TAG, "Failed to re-initialize encrypted preferences after reset: ${retryEx.message}, falling back to unencrypted private prefs")
+                    try {
+                        appContext.getSharedPreferences(PREFS_FILE_NAME + "_fallback", Context.MODE_PRIVATE).also { cachedPrefs = it }
+                    } catch (fallbackEx: Throwable) {
+                        Log.e(TAG, "Failed to open fallback preferences: ${fallbackEx.message}")
+                        null
+                    }
+                }
+            } else {
+                Log.w(TAG, "Unexpected error opening biometric prefs, resetting: ${e.message}")
+                resetStore()
+                null
+            }
+        }
+    }
+
+    private inline fun <T> safeRead(defaultValue: T, block: (SharedPreferences) -> T): T {
+        val prefs = getPrefs() ?: return defaultValue
+        return try {
+            block(prefs)
+        } catch (e: Throwable) {
+            if (isSecurityOrIoException(e)) {
+                Log.w(TAG, "Biometric prefs read corrupted: ${e.message}, resetting store")
+                resetStore()
+            } else {
+                Log.e(TAG, "Error reading biometric preferences: ${e.message}", e)
+            }
+            defaultValue
+        }
+    }
+
+    private inline fun safeWrite(block: (SharedPreferences.Editor) -> Unit): Boolean {
+        val prefs = getPrefs() ?: return false
+        return try {
+            val editor = prefs.edit()
+            block(editor)
+            editor.commit()
+        } catch (e: Throwable) {
+            if (isSecurityOrIoException(e)) {
+                Log.w(TAG, "Biometric prefs write failed with security exception: ${e.message}, resetting store")
+                resetStore()
+            } else {
+                Log.e(TAG, "Error writing biometric preferences: ${e.message}", e)
+            }
+            false
+        }
+    }
 
     override suspend fun saveEnrollment(
         staffId: String,
@@ -113,19 +254,21 @@ class LocalFaceEnrollmentRepository(
                 put("updatedAt", now)
             }
 
-            sharedPreferences.edit()
-                .putString("enrollment_$staffId", jsonObject.toString())
-                .commit()
+            safeWrite { editor ->
+                editor.putString("enrollment_$staffId", jsonObject.toString())
+            }
         } catch (_: Exception) {
             false
         }
     }
 
     override suspend fun getEnrollment(staffId: String): StaffFaceEnrollment? = withContext(Dispatchers.IO) {
-        try {
-            val raw = sharedPreferences.getString("enrollment_$staffId", null) ?: return@withContext null
-            val json = JSONObject(raw)
+        val raw = safeRead<String?>(null) { prefs ->
+            prefs.getString("enrollment_$staffId", null)
+        } ?: return@withContext null
 
+        try {
+            val json = JSONObject(raw)
             val jsonArray = json.getJSONArray("embedding")
             val embedding = FloatArray(jsonArray.length())
             for (i in 0 until jsonArray.length()) {
@@ -163,14 +306,14 @@ class LocalFaceEnrollmentRepository(
     }
 
     override suspend fun hasEnrollment(staffId: String): Boolean = withContext(Dispatchers.IO) {
-        sharedPreferences.contains("enrollment_$staffId")
+        safeRead(false) { prefs ->
+            prefs.contains("enrollment_$staffId")
+        }
     }
 
     override suspend fun deleteEnrollment(staffId: String): Boolean = withContext(Dispatchers.IO) {
-        try {
-            sharedPreferences.edit().remove("enrollment_$staffId").commit()
-        } catch (_: Exception) {
-            false
+        safeWrite { editor ->
+            editor.remove("enrollment_$staffId")
         }
     }
 }
