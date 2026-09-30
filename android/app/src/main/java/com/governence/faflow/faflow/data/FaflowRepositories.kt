@@ -114,11 +114,17 @@ class LeaveRepositoryImpl(
             val key = if (!leave.batchId.isNullOrBlank()) {
                 "${leave.date}__batch_${leave.batchId}"
             } else {
-                val createdDay = leave.createdAt?.substringBefore('T') ?: ""
+                val createdTimestamp = leave.createdAt?.take(19) ?: ""
                 val normReason = leave.reason.trim().lowercase()
-                "${leave.date}__${createdDay}__${leave.status}__$normReason"
+                "${leave.date}__${createdTimestamp}__${leave.status}__$normReason"
             }
-            map.getOrPut(key) { mutableListOf() }.add(leave)
+            var targetKey = key
+            var collisionIndex = 1
+            while (map[targetKey]?.any { it.periodNumber == leave.periodNumber } == true) {
+                targetKey = "${key}__dup_${collisionIndex}"
+                collisionIndex++
+            }
+            map.getOrPut(targetKey) { mutableListOf() }.add(leave)
         }
 
         return map.map { (key, groupList) ->

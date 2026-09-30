@@ -1,9 +1,9 @@
 {
   "summary": {
     "spec_source": "openapi_generated.yaml",
-    "spec_paths": 333,
+    "spec_paths": 334,
     "android_raw_calls": 90,
-    "frontend_raw_calls": 505,
+    "frontend_raw_calls": 506,
     "total_mismatches": 0,
     "high_severity": 0,
     "medium_severity": 0,
@@ -378,6 +378,10 @@
     {
       "original": "/rooms/{room_id}",
       "normalised": "/rooms/{*}"
+    },
+    {
+      "original": "/rooms/bulk-delete",
+      "normalised": "/rooms/bulk-delete"
     },
     {
       "original": "/rooms/availability/dashboard",
@@ -2078,6 +2082,10 @@
     {
       "original": "/rooms/bulk-assign",
       "normalised": "/rooms/bulk-assign"
+    },
+    {
+      "original": "/rooms/bulk-delete",
+      "normalised": "/rooms/bulk-delete"
     },
     {
       "original": "/rooms/${id}",

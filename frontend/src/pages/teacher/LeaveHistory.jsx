@@ -172,11 +172,25 @@ export default function LeaveHistory() {
   const groupedLeavesByDate = useMemo(() => {
     const map = new Map()
     for (const leave of filteredLeaves) {
-      const createdDate = leave.created_at ? leave.created_at.split('T')[0] : ''
-      const key = `${leave.date}__${createdDate}__${leave.status}__${leave.reason || ''}`
-      if (!map.has(key)) {
-        map.set(key, {
-          id: key,
+      let key
+      if (leave.batch_id) {
+        key = `${leave.date}__batch_${leave.batch_id}`
+      } else {
+        const createdTimestamp = leave.created_at ? leave.created_at.slice(0, 19) : ''
+        key = `${leave.date}__${createdTimestamp}__${leave.status}__${leave.reason || ''}`
+      }
+
+      // Period collision protection: a single application can never have duplicate period numbers
+      let targetKey = key
+      let collisionIndex = 1
+      while (map.has(targetKey) && map.get(targetKey).leaves.some(l => l.period_number === leave.period_number)) {
+        targetKey = `${key}__dup_${collisionIndex}`
+        collisionIndex++
+      }
+
+      if (!map.has(targetKey)) {
+        map.set(targetKey, {
+          id: targetKey,
           date: leave.date,
           day_order: leave.day_order,
           created_at: leave.created_at,
@@ -185,11 +199,14 @@ export default function LeaveHistory() {
           is_emergency: leave.is_emergency,
           leave_policy: leave.leave_policy,
           leave_type: leave.leave_type,
+          batch_id: leave.batch_id,
           leaves: [],
         })
       }
-      const group = map.get(key)
-      group.leaves.push(leave)
+      const group = map.get(targetKey)
+      if (!group.leaves.some(l => l.id === leave.id)) {
+        group.leaves.push(leave)
+      }
       if (leave.is_emergency) group.is_emergency = true
       if (leave.leave_policy && !group.leave_policy) group.leave_policy = leave.leave_policy
       if (leave.leave_type && !group.leave_type) group.leave_type = leave.leave_type
@@ -780,7 +797,8 @@ export default function LeaveHistory() {
       {/* ── View Details Modal ── */}
       <Modal open={!!viewDetailTarget} onClose={() => setViewDetailTarget(null)} title="Leave Request Details">
         {viewDetailTarget && (() => {
-          const sameDayLeaves = leaves.filter(l => l.date === viewDetailTarget.date).sort((a, b) => a.period_number - b.period_number)
+          const targetGroup = groupedLeavesByDate.find(g => g.leaves.some(l => l.id === viewDetailTarget.id))
+          const sameGroupLeaves = targetGroup ? targetGroup.leaves : [viewDetailTarget]
           return (
             <div className="space-y-4 text-slate-800">
               <div className="flex items-center justify-between pb-3 border-b border-slate-100">
@@ -791,10 +809,10 @@ export default function LeaveHistory() {
                 <StatusBadge status={viewDetailTarget.status} />
               </div>
 
-              {sameDayLeaves.length > 1 && (
+              {sameGroupLeaves.length > 1 && (
                 <div className="flex items-center gap-1.5 pb-1 overflow-x-auto">
                   <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mr-1">Switch Period:</span>
-                  {sameDayLeaves.map(l => (
+                  {sameGroupLeaves.map(l => (
                     <button
                       key={l.id}
                       type="button"

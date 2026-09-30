@@ -334,11 +334,24 @@ export default function AdminLeaves() {
   const groupLeaves = (leavesList) => {
     const map = {}
     leavesList.forEach(l => {
-      const createdDate = l.created_at ? l.created_at.split('T')[0] : ''
-      const key = `${l.teacher_id}_${l.date}_${l.status}_${l.reason || ''}_${createdDate}`
-      if (!map[key]) {
-        map[key] = {
-          key,
+      let key
+      if (l.batch_id) {
+        key = `${l.teacher_id}_${l.date}_batch_${l.batch_id}`
+      } else {
+        const createdTimestamp = l.created_at ? l.created_at.slice(0, 19) : ''
+        key = `${l.teacher_id}_${l.date}_${l.status}_${l.reason || ''}_${createdTimestamp}`
+      }
+
+      let targetKey = key
+      let collisionIndex = 1
+      while (map[targetKey] && map[targetKey].requests.some(r => r.period_number === l.period_number)) {
+        targetKey = `${key}_dup_${collisionIndex}`
+        collisionIndex++
+      }
+
+      if (!map[targetKey]) {
+        map[targetKey] = {
+          key: targetKey,
           teacher_id: l.teacher_id,
           teacher: l.teacher,
           date: l.date,
@@ -352,23 +365,23 @@ export default function AdminLeaves() {
           policy_enforcement_mode: null,
         }
       }
-      if (!map[key].requests.some(r => r.id === l.id)) {
-        map[key].requests.push(l)
+      if (!map[targetKey].requests.some(r => r.id === l.id)) {
+        map[targetKey].requests.push(l)
       }
       if (l.is_emergency) {
-        map[key].is_emergency = true
+        map[targetKey].is_emergency = true
       }
       if (l.policy_violation) {
-        map[key].policy_violation = true
+        map[targetKey].policy_violation = true
       }
       if (l.policy_evaluation_snapshot) {
-        map[key].policy_evaluation_snapshot = l.policy_evaluation_snapshot
+        map[targetKey].policy_evaluation_snapshot = l.policy_evaluation_snapshot
       }
       if (l.exception_reason) {
-        map[key].exception_reason = l.exception_reason
+        map[targetKey].exception_reason = l.exception_reason
       }
       if (l.policy_enforcement_mode) {
-        map[key].policy_enforcement_mode = l.policy_enforcement_mode
+        map[targetKey].policy_enforcement_mode = l.policy_enforcement_mode
       }
     })
 

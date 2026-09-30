@@ -86,9 +86,19 @@ data class HodLeaveGroup(
 fun groupDepartmentLeaves(leaves: List<LeaveOutDto>): List<HodLeaveGroup> {
     val map = linkedMapOf<String, MutableList<LeaveOutDto>>()
     for (leave in leaves) {
-        val createdDate = leave.createdAt?.substringBefore("T") ?: ""
-        val key = "${leave.teacherId}__${leave.date}__${leave.status.lowercase()}__${leave.reason ?: ""}__${createdDate}"
-        map.getOrPut(key) { mutableListOf() }.add(leave)
+        val key = if (!leave.batchId.isNullOrBlank()) {
+            "${leave.teacherId}__${leave.date}__batch_${leave.batchId}"
+        } else {
+            val createdTimestamp = leave.createdAt?.take(19) ?: ""
+            "${leave.teacherId}__${leave.date}__${leave.status.lowercase()}__${leave.reason ?: ""}__${createdTimestamp}"
+        }
+        var targetKey = key
+        var collisionIndex = 1
+        while (map[targetKey]?.any { it.periodNumber == leave.periodNumber } == true) {
+            targetKey = "${key}__dup_${collisionIndex}"
+            collisionIndex++
+        }
+        map.getOrPut(targetKey) { mutableListOf() }.add(leave)
     }
     return map.map { (key, groupLeaves) ->
         val first = groupLeaves.first()

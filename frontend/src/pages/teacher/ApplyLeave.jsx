@@ -487,6 +487,7 @@ export default function ApplyLeave() {
 
   const handleSubmit = async (e) => {
     e.preventDefault()
+    if (loading) return
     setError('')
 
     if (!selectedPolicyId) {

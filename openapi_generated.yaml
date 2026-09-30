@@ -3673,6 +3673,33 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
+  /rooms/bulk-delete:
+    post:
+      tags:
+      - Rooms
+      summary: Bulk Delete Rooms
+      operationId: bulk_delete_rooms_rooms_bulk_delete_post
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BulkRoomDeleteIn'
+        required: true
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BulkRoomDeleteOut'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+      security:
+      - HTTPBearer: []
   /rooms/availability/dashboard:
     get:
       tags:
@@ -15460,6 +15487,30 @@ components:
       - skipped_count
       - message
       title: BulkRoomCreateOut
+    BulkRoomDeleteIn:
+      properties:
+        room_ids:
+          items:
+            type: integer
+          type: array
+          title: Room Ids
+      type: object
+      required:
+      - room_ids
+      title: BulkRoomDeleteIn
+    BulkRoomDeleteOut:
+      properties:
+        deleted_count:
+          type: integer
+          title: Deleted Count
+        message:
+          type: string
+          title: Message
+      type: object
+      required:
+      - deleted_count
+      - message
+      title: BulkRoomDeleteOut
     BulkRoomGenerateRequest:
       properties:
         block_id:
@@ -19150,6 +19201,11 @@ components:
           format: time
           title: End Time
           default: '13:00:00'
+        session:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Session
         title:
           type: string
           title: Title
@@ -23329,6 +23385,26 @@ components:
           - type: string
           - type: 'null'
           title: Primary Class Name
+        block_id:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Block Id
+        floor_id:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Floor Id
+        block_name:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Block Name
+        floor_name:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Floor Name
         is_exam_eligible:
           type: boolean
           title: Is Exam Eligible

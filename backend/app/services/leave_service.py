@@ -136,6 +136,7 @@ def submit_leave(teacher_id: int, data: LeaveCreate, db: Session) -> LeaveReques
         )
     leave_policy_id = eval_res["leave_policy"].get("id") if eval_res["leave_policy"] else None
 
+    batch_id = uuid.uuid4()
     leave = LeaveRequest(
         teacher_id=teacher_id,
         date=data.date,
@@ -143,6 +144,7 @@ def submit_leave(teacher_id: int, data: LeaveCreate, db: Session) -> LeaveReques
         period_number=data.period_number,
         reason=data.reason,
         status=status,
+        batch_id=batch_id,
         proposed_substitute_id=proposed_sub_id,
         leave_policy_id=leave_policy_id,
         document_url=getattr(data, "document_url", None),
